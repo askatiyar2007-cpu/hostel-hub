@@ -1,0 +1,623 @@
+'use client';
+
+import React, { useEffect, useState, useMemo } from 'react';
+import { supabase } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/context';
+import toast from 'react-hot-toast';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { DashboardShell } from '@/components/dashboard-shell';
+import { useQuery, useMutation } from '@tanstack/react-query';
+
+export default function AssignStudentPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [beds, setBeds] = useState<{ id: string; bed_number: string }[]>([]);
+
+  const [formData, setFormData] = useState({
+    // Student Personal Info
+    student_name: '',
+    student_email: '',
+    student_phone: '',
+
+    // Address
+    address: '',
+
+    // Parent/Guardian Info
+    parent_name: '',
+    parent_phone: '',
+    parent_email: '',
+
+    // Emergency Contact
+    emergency_name: '',
+    emergency_phone: '',
+
+    // Assignment Details
+    hostel_id: '',
+    room_id: '',
+    bed_id: '',
+    start_date: new Date().toISOString().split('T')[0]
+  });
+
+  // Fetch hostels owned by this owner
+  const { data: hostelsResponse } = useQuery({
+    queryKey: ['owner-hostels'],
+    queryFn: async () => {
+      return supabase
+        .from('hostels')
+        .select('id, name')
+        .eq('owner_id', user?.id);
+    }
+  });
+
+  // Use memoization to avoid infinite re-render loop due to unstable array references
+  const hostels = useMemo(() => hostelsResponse?.data || [], [hostelsResponse?.data]);
+
+  // Fetch rooms when hostel selection changes
+  const { data: roomsResponse } = useQuery({
+    queryKey: ['hostel-rooms', formData.hostel_id],
+    queryFn: async () => {
+      return supabase
+        .from('rooms')
+        .select('id, room_number, occupied_count, capacity, rent')
+        .eq('hostel_id', formData.hostel_id);
+    },
+    enabled: !!formData.hostel_id
+  });
+
+  // Use memoization to avoid infinite re-render loop due to unstable array references
+  const rooms = useMemo(() => roomsResponse?.data || [], [roomsResponse?.data]);
+
+  // Auto-select first hostel
+  useEffect(() => {
+    if (hostels.length > 0 && !formData.hostel_id) {
+      setFormData(prev => ({ ...prev, hostel_id: hostels[0].id }));
+    }
+  }, [hostels, formData.hostel_id]);
+
+  // Auto-select first room when rooms list loads
+  useEffect(() => {
+    if (rooms.length > 0) {
+      const roomExists = rooms.some(r => r.id === formData.room_id);
+      if (!roomExists) {
+        setFormData(prev => ({ ...prev, room_id: rooms[0].id }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, room_id: '', bed_id: '' }));
+    }
+  }, [rooms, formData.room_id]);
+
+  // Fetch beds when room selection changes
+  useEffect(() => {
+    async function fetchBeds() {
+      if (!formData.room_id) {
+        setBeds([]);
+        return;
+      }
+      const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
+      const isShared = selectedRoomObj ? selectedRoomObj.capacity > 1 : false;
+
+      if (!isShared) {
+        setBeds([]);
+        setFormData(prev => ({ ...prev, bed_id: '' }));
+        return;
+      }
+
+      const { data } = await supabase
+        .from('beds')
+        .select('id, bed_number')
+        .eq('room_id', formData.room_id)
+        .eq('status', 'available');
+
+      const bedList = data || [];
+      setBeds(bedList);
+      if (bedList.length > 0) {
+        setFormData(prev => ({ ...prev, bed_id: bedList[0].id }));
+      } else {
+        setFormData(prev => ({ ...prev, bed_id: '' }));
+      }
+    }
+    fetchBeds();
+  }, [formData.room_id, rooms]);
+
+  const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
+  const isShared = selectedRoomObj ? selectedRoomObj.capacity > 1 : false;
+
+  // Simple mutation pattern without queryClient
+  const { mutate: assignStudent, isPending } = useMutation({
+    mutationFn: async (data: {
+      studentId: string;
+      roomId: string;
+      hostelId: string;
+      checkInDate: string;
+    }) => {
+      const { data: result, error } = await supabase.rpc('assign_student_to_room', {
+        p_student_id: data.studentId,
+        p_room_id: data.roomId,
+        p_hostel_id: data.hostelId,
+        p_start_date: data.checkInDate
+      });
+
+      if (error) throw new Error(error.message);
+
+      // Handle custom error fields inside the JSON response
+      if (result && typeof result === 'object') {
+        const resObj = result as any;
+        if (resObj.success === false) {
+          throw new Error(resObj.message || 'Failed to assign student');
+        }
+        if (resObj.error) {
+          throw new Error(resObj.error || 'Failed to assign student');
+        }
+      }
+      return result;
+    }
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!formData.student_name.trim()) return toast.error('Student Name is required');
+    if (!formData.student_email.trim() || !emailRegex.test(formData.student_email)) return toast.error('Valid Student Email is required');
+    if (!formData.student_phone.trim() || !phoneRegex.test(formData.student_phone)) return toast.error('Student Phone must be exactly 10 digits');
+    if (!formData.address.trim()) return toast.error('Address is required');
+    if (!formData.parent_name.trim()) return toast.error('Parent Name is required');
+    if (!formData.parent_phone.trim() || !phoneRegex.test(formData.parent_phone)) return toast.error('Parent Phone must be exactly 10 digits');
+    if (!formData.parent_email.trim() || !emailRegex.test(formData.parent_email)) return toast.error('Valid Parent Email is required');
+    if (!formData.emergency_name.trim()) return toast.error('Emergency Contact Name is required');
+    if (!formData.emergency_phone.trim() || !phoneRegex.test(formData.emergency_phone)) return toast.error('Emergency Contact Phone must be exactly 10 digits');
+    if (!formData.hostel_id) return toast.error('Please select a Hostel');
+    if (!formData.room_id) return toast.error('Please select a Room');
+    if (isShared && !formData.bed_id) return toast.error('Please select a Bed');
+    if (!formData.start_date) return toast.error('Check-in Date is required');
+
+    setLoading(true);
+
+    try {
+      // Find or Create Student Profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', formData.student_email.trim().toLowerCase())
+        .maybeSingle();
+
+      let profileId: string | null = null;
+
+      if (existingProfile) {
+        profileId = existingProfile.id;
+      } else {
+        // Create user in Auth (this triggers profiles creation in DB)
+        const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: formData.student_email.trim().toLowerCase(),
+          password: tempPassword,
+          options: {
+            data: {
+              full_name: formData.student_name,
+              role: 'student'
+            }
+          }
+        });
+
+        if (signUpError) {
+          const isAlreadyRegistered = signUpError.status === 422 || 
+                                      signUpError.message.toLowerCase().includes('already registered') || 
+                                      signUpError.message.toLowerCase().includes('already exists');
+          
+          if (isAlreadyRegistered) {
+            // Gracefully handle "User already registered" error by looking up profile again
+            const { data: retryProfile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', formData.student_email.trim().toLowerCase())
+              .maybeSingle();
+
+            if (retryProfile) {
+              profileId = retryProfile.id;
+            } else {
+              throw new Error('This student email is already registered in the system, but RLS policies prevent retrieving their profile. Please ask the student to submit a room request first.');
+            }
+          } else {
+            throw new Error('Failed to create student account: ' + signUpError.message);
+          }
+        } else if (signUpData.user) {
+          // Fetch newly created profile
+          const { data: newProfile, error: queryProfileErr } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', formData.student_email.trim().toLowerCase())
+            .single();
+
+          if (queryProfileErr || !newProfile) {
+            throw new Error('Failed to retrieve new student profile from database. Please verify the profile exists or RLS permissions.');
+          }
+
+          profileId = newProfile.id;
+        } else {
+          throw new Error('Failed to register student user');
+        }
+      }
+
+      if (!profileId) {
+        throw new Error('Failed to resolve student profile');
+      }
+
+      // Ensure Student Record exists in public.students table
+      let studentId: string | null = null;
+      let { data: studentRecord } = await supabase
+        .from('students')
+        .select('id')
+        .eq('profile_id', profileId)
+        .maybeSingle();
+
+      if (studentRecord) {
+        studentId = studentRecord.id;
+      } else {
+        // Generate a new UUID client-side to bypass RLS select restrictions on insert returning
+        const generatedStudentId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+          ? crypto.randomUUID() 
+          : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+              const r = Math.random() * 16 | 0;
+              const v = c === 'x' ? r : (r & 0x3 | 0x8);
+              return v.toString(16);
+            });
+
+        const { error: studentInsertErr } = await supabase
+          .from('students')
+          .insert({
+            id: generatedStudentId,
+            profile_id: profileId,
+            status: 'active'
+          });
+
+        if (studentInsertErr) {
+          // If the error is a duplicate key constraint violation, the record already exists
+          if (studentInsertErr.code === '23505') {
+            const { data: retryStudent } = await supabase
+              .from('students')
+              .select('id')
+              .eq('profile_id', profileId)
+              .maybeSingle();
+            
+            if (retryStudent) {
+              studentId = retryStudent.id;
+            } else {
+              throw new Error('Student record already exists for this profile, but RLS policies prevent retrieving it.');
+            }
+          } else {
+            throw new Error('Failed to create student record: ' + studentInsertErr.message);
+          }
+        } else {
+          studentId = generatedStudentId;
+        }
+      }
+
+      if (!studentId) {
+        throw new Error('Failed to associate student record (student ID is null)');
+      }
+
+      // Call assignStudent mutation with callbacks
+      assignStudent({
+        studentId: studentId,
+        roomId: formData.room_id,
+        hostelId: formData.hostel_id,
+        checkInDate: formData.start_date
+      }, {
+        onSuccess: async (assignResult: any) => {
+          try {
+            let allocationId: string | null = null;
+            let feesCount = 0;
+
+            if (assignResult && typeof assignResult === 'object') {
+              allocationId = assignResult.allocation_id;
+              feesCount = Number(assignResult.fees_count || assignResult.feesCount || 0);
+            }
+
+            if (!allocationId) {
+              throw new Error('Failed to retrieve allocation ID from response');
+            }
+
+            // Update Bed Status to 'occupied' & set bed_id/booking_type on allocation if applicable
+            if (isShared && formData.bed_id) {
+              const { error: bedErr } = await supabase
+                .from('beds')
+                .update({ status: 'occupied' })
+                .eq('id', formData.bed_id);
+              if (bedErr) console.error('Bed status update failed:', bedErr.message);
+
+              const { error: allocUpdateErr } = await supabase
+                .from('room_allocations')
+                .update({ bed_id: formData.bed_id, booking_type: 'shared_bed' })
+                .eq('id', allocationId);
+              if (allocUpdateErr) console.error('Allocation bed update failed:', allocUpdateErr.message);
+            } else if (!isShared) {
+              // Update booking_type to entire_room
+              const { error: allocUpdateErr } = await supabase
+                .from('room_allocations')
+                .update({ booking_type: 'entire_room' })
+                .eq('id', allocationId);
+              if (allocUpdateErr) console.error('Allocation booking type update failed:', allocUpdateErr.message);
+            }
+
+            toast.success(`Student assigned with ${feesCount} fees`);
+            setTimeout(() => {
+              router.push('/owner/requests');
+            }, 1500);
+          } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || 'An error occurred during allocation setup');
+            setLoading(false);
+          }
+        },
+        onError: (error: any) => {
+          toast.error(error.message || 'An error occurred during student assignment');
+          setLoading(false);
+        }
+      });
+
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'An error occurred during student assignment');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DashboardShell
+      title="Manual Student Assignment"
+      subtitle="Fill in student details and assign them to a hostel room directly without OTP."
+      badge="Hostel Owner"
+    >
+      <div className="mb-6">
+        <Link href="/owner/students" className="inline-flex items-center text-sm font-semibold text-muted-foreground hover:text-foreground">
+          <ArrowLeft size={16} className="mr-2" /> Back to Student List
+        </Link>
+      </div>
+
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column - Information Fields */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Card 1: Student Information */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="text-lg font-bold font-display mb-4 text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+              Student Personal Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Student Name *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="John Doe"
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.student_name}
+                  onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Student Email *</label>
+                <input
+                  required
+                  type="email"
+                  placeholder="student@example.com"
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.student_email}
+                  onChange={(e) => setFormData({ ...formData, student_email: e.target.value })}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Student Phone *</label>
+                <input
+                  required
+                  type="tel"
+                  placeholder="10-digit phone number"
+                  maxLength={10}
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.student_phone}
+                  onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Parent/Guardian Details */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="text-lg font-bold font-display mb-4 text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+              Parent / Guardian Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Parent Name *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Father's or Mother's Name"
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.parent_name}
+                  onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Parent Email *</label>
+                <input
+                  required
+                  type="email"
+                  placeholder="parent@example.com"
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.parent_email}
+                  onChange={(e) => setFormData({ ...formData, parent_email: e.target.value })}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Parent Phone *</label>
+                <input
+                  required
+                  type="tel"
+                  placeholder="10-digit parent phone number"
+                  maxLength={10}
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.parent_phone}
+                  onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Address & Emergency Contact */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="text-lg font-bold font-display mb-4 text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+              Address & Emergency Contact
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Full Permanent Address *</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="House No, Street, City, State, Pincode"
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground resize-none"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Emergency Contact Name *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Emergency Contact Person"
+                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                    value={formData.emergency_name}
+                    onChange={(e) => setFormData({ ...formData, emergency_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Emergency Contact Phone *</label>
+                  <input
+                    required
+                    type="tel"
+                    placeholder="10-digit emergency phone number"
+                    maxLength={10}
+                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                    value={formData.emergency_phone}
+                    onChange={(e) => setFormData({ ...formData, emergency_phone: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Room & Confirmation Details */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sticky top-6">
+            <h3 className="text-lg font-bold font-display mb-4 text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">4</span>
+              Room Assignment
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Hostel *</label>
+                <select
+                  required
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.hostel_id}
+                  onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
+                >
+                  <option value="">Select Hostel</option>
+                  {hostels.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Room *</label>
+                <select
+                  required
+                  disabled={!formData.hostel_id}
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
+                  value={formData.room_id}
+                  onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
+                >
+                  <option value="">Select Room</option>
+                  {rooms.map(r => (
+                    <option key={r.id} value={r.id}>Room {r.room_number} ({r.capacity} sharing)</option>
+                  ))}
+                </select>
+              </div>
+
+              {isShared && (
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Bed Number *</label>
+                  <select
+                    required
+                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                    value={formData.bed_id}
+                    onChange={(e) => setFormData({ ...formData, bed_id: e.target.value })}
+                  >
+                    <option value="">Select Bed</option>
+                    {beds.map(b => (
+                      <option key={b.id} value={b.id}>Bed {b.bed_number}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Check-in Date *</label>
+                <input
+                  required
+                  type="date"
+                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
+              </div>
+
+              {selectedRoomObj && (
+                <div className="rounded-xl bg-muted/50 p-4 border border-border mt-4 space-y-2 text-xs">
+                  <span className="font-bold text-foreground block font-display uppercase tracking-wider">Assignment Details</span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Booking Option:</span>
+                    <span className="font-semibold text-foreground">{isShared ? 'Shared Bed' : 'Entire Room'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Monthly Rent:</span>
+                    <span className="font-bold text-primary">₹{Number(selectedRoomObj.rent || 0).toLocaleString()}/mo</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isPending || loading || !formData.hostel_id || !formData.room_id || (isShared && !formData.bed_id)}
+                className="w-full mt-6 bg-primary hover:bg-primary/95 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isPending || loading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Assigning Student...</span>
+                  </>
+                ) : (
+                  'Confirm Assignment'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </DashboardShell>
+  );
+}

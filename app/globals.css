@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 40 33% 98%;
+  --foreground: 30 15% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 30 15% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 30 15% 15%;
+  --primary: 15 85% 60%;
+  --primary-foreground: 40 33% 98%;
+  --primary-soft: 15 85% 95%;
+  --secondary: 40 15% 95%;
+  --secondary-foreground: 30 15% 15%;
+  --muted: 40 10% 96%;
+  --muted-foreground: 30 10% 45%;
+  --accent: 30 85% 90%;
+  --accent-foreground: 30 40% 30%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 70% 45%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --border: 30 10% 90%;
+  --input: 30 10% 90%;
+  --ring: 15 85% 60%;
+  --radius: 0.875rem;
+}
+
+.dark {
+  --background: 30 15% 10%;
+  --foreground: 40 5% 95%;
+  --card: 30 15% 12%;
+  --card-foreground: 40 5% 95%;
+  --popover: 30 15% 12%;
+  --popover-foreground: 40 5% 95%;
+  --primary: 15 85% 65%;
+  --primary-foreground: 30 15% 10%;
+  --primary-soft: 15 85% 20%;
+  --secondary: 30 10% 15%;
+  --secondary-foreground: 40 5% 95%;
+  --muted: 30 10% 15%;
+  --muted-foreground: 30 5% 65%;
+  --accent: 30 15% 20%;
+  --accent-foreground: 40 5% 95%;
+  --destructive: 0 84% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 10% 20%;
+  --input: 30 10% 20%;
+  --ring: 15 85% 65%;
+}
+
+* {
+  @apply border-border;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-feature-settings: "rounding-mode" auto;
+}
+
+/* Typography */
+h1 {
+  @apply font-display text-4xl font-bold tracking-tight;
+}
+
+h2 {
+  @apply font-display text-3xl font-bold tracking-tight;
+}
+
+h3 {
+  @apply font-display text-2xl font-bold tracking-tight;
+}
+
+h4 {
+  @apply font-display text-xl font-bold tracking-tight;
+}
+
+p {
+  @apply text-base leading-relaxed;
+}
+
+/* Components */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  .card {
+    @apply rounded-lg border border-border bg-card p-6 shadow-sm;
+  }
+
+  .input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary;
+  }
+
+  .section {
+    @apply py-16 md:py-20;
+  }
+
+  .container-max {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse rounded-md bg-muted;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  @apply h-2 w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-muted hover:bg-muted-foreground;
+}
