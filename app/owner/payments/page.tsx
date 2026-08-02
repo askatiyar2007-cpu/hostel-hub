@@ -38,6 +38,7 @@ export default function OwnerPaymentsDashboard() {
   // Modals state
   const [selectedFeeForMark, setSelectedFeeForMark] = useState<any | null>(null);
   const [selectedFeeForView, setSelectedFeeForView] = useState<any | null>(null);
+  const [activeStudentsCount, setActiveStudentsCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     const ownerId = user?.id || profile?.id;
@@ -56,71 +57,116 @@ export default function OwnerPaymentsDashboard() {
       const hostelIds = hostelsData?.map((h) => h.id) || [];
       if (hostelIds.length === 0) {
         setFees([]);
+        setActiveStudentsCount(0);
         setLoading(false);
         return;
       }
 
-      // 2. Fetch Student Fees for these hostels
+      // 2. Fetch Active Allocations for Distinct Students Count
+      const { data: activeAllocations, error: activeAllocationsError } = await supabase
+        .from('room_allocations')
+        .select('student_id')
+        .eq('active', true)
+        .in('hostel_id', hostelIds);
+
+      if (activeAllocationsError) throw activeAllocationsError;
+      const activeCount = new Set(activeAllocations?.map((a: any) => a.student_id) || []).size;
+      setActiveStudentsCount(activeCount);
+
+      // 3. Fetch Student Fees for these hostels
       const { data: feesData, error: feesError } = await supabase
         .from('student_fees')
-        .select(`
-          id,
-          amount_due,
-          due_date,
-          status,
-          student_id,
-          hostel_id,
-          students (
-            id,
-            profiles (
-              user_id,
-              full_name,
-              email,
-              phone_number
-            )
-          ),
-          room_allocations (
-            id,
-            student_name,
-            student_email,
-            student_phone,
-            rooms (
-              room_number
-            )
-          ),
-          hostels (
-            id,
-            name
-          ),
-          payments (
-            id,
-            amount_paid,
-            payment_method,
-            reference_number,
-            payment_status,
-            paid_date,
-            notes,
-            proof_url,
-            auto_verified,
-            gateway_order_id
-          )
-        `)
+        .select('id, amount_due, due_date, status, student_id, hostel_id, billing_period, allocation_id')
         .in('hostel_id', hostelIds)
         .order('due_date', { ascending: false });
 
       if (feesError) throw feesError;
 
-      // Map backend fields to local format
+      // Extract unique IDs for separate batch queries to let frontend join the data
+      const studentIds = Array.from(new Set(feesData?.map((f: any) => f.student_id).filter(Boolean) || []));
+      const allocationIds = Array.from(new Set(feesData?.map((f: any) => f.allocation_id).filter(Boolean) || []));
+      const feeIds = feesData?.map((f: any) => f.id) || [];
+
+      // 4. Batch Fetch Students & Profiles
+      let studentsData: any[] = [];
+      if (studentIds.length > 0) {
+        const { data, error } = await supabase
+          .from('students')
+          .select(`
+            id,
+            profile_id,
+            college,
+            course,
+            year,
+            profiles (
+              id,
+              user_id,
+              full_name,
+              email,
+              phone_number
+            )
+          `)
+          .in('id', studentIds);
+        if (error) throw error;
+        studentsData = data ?? [];
+      }
+
+      // 5. Batch Fetch Room Allocations & Rooms
+      let allocationsData: any[] = [];
+      if (allocationIds.length > 0) {
+        const { data, error } = await supabase
+          .from('room_allocations')
+          .select(`
+            id,
+            student_name,
+            student_email,
+            student_phone,
+            room_id,
+            rooms (
+              room_number
+            )
+          `)
+          .in('id', allocationIds);
+        if (error) throw error;
+        allocationsData = data ?? [];
+      }
+
+      // 6. Batch Fetch Payments
+      let paymentsData: any[] = [];
+      if (feeIds.length > 0) {
+        const { data, error } = await supabase
+          .from('payments')
+          .select('id, fee_id, amount_paid, payment_method, reference_number, payment_status, paid_date, notes, proof_url, auto_verified, gateway_order_id')
+          .in('fee_id', feeIds);
+        if (error) throw error;
+        paymentsData = data ?? [];
+      }
+
+      // Create maps for fast O(1) lookups
+      const hostelsMap = new Map(hostelsData.map((h) => [h.id, h]));
+      const studentsMap = new Map(studentsData.map((s) => [s.id, s]));
+      const allocationsMap = new Map(allocationsData.map((a) => [a.id, a]));
+
+      // Map backend fields to local format with frontend joins
       const formattedFees = (feesData ?? []).map((fee: any) => {
+        const student = studentsMap.get(fee.student_id) || null;
+        const allocation = allocationsMap.get(fee.allocation_id) || null;
+        const hostel = hostelsMap.get(fee.hostel_id) || null;
+        const feePayments = paymentsData.filter((p: any) => p.fee_id === fee.id);
+
         // Find latest/active payment record
-        const payment = fee.payments && fee.payments.length > 0
-          ? fee.payments.find((p: any) => p.payment_status === 'pending_verification') || fee.payments[0]
+        const payment = feePayments.length > 0
+          ? feePayments.find((p: any) => p.payment_status === 'pending_verification') || feePayments[0]
           : null;
 
         return {
           ...fee,
           amount: fee.amount_due,
           billing_period: fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          students: student,
+          room_allocations: allocation,
+          hostels: hostel,
+          payments: feePayments,
           payment
         };
       });
@@ -132,7 +178,7 @@ export default function OwnerPaymentsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.id, user?.id]);
 
   useEffect(() => {
     fetchData();
@@ -336,7 +382,7 @@ export default function OwnerPaymentsDashboard() {
     totalCollected: fees.filter((f) => f.status === 'paid').reduce((sum, f) => sum + Number(f.amount), 0),
     pendingAmount: fees.filter((f) => f.status === 'pending' || f.status === 'pending_verification').reduce((sum, f) => sum + Number(f.amount), 0),
     overdueAmount: fees.filter((f) => f.status === 'overdue').reduce((sum, f) => sum + Number(f.amount), 0),
-    totalStudents: new Set(fees.map((f) => f.student_id)).size
+    totalStudents: activeStudentsCount
   };
 
   if (loading && fees.length === 0) {

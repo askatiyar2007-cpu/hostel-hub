@@ -196,9 +196,9 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   }
 
   const profile = student.profiles;
-  const studentName = profile?.full_name || allocation.student_name || 'N/A';
-  const studentEmail = profile?.email || allocation.student_email || 'N/A';
-  const studentPhone = profile?.phone_number || allocation.student_phone || 'N/A';
+  const studentName = allocation.student_name || profile?.full_name || '-';
+  const studentEmail = allocation.student_email || profile?.email || '-';
+  const studentPhone = allocation.student_phone || profile?.phone_number || '-';
   
   const dobFormatted = profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString(undefined, { dateStyle: 'medium' }) : null;
   const parentName = latestRequest?.parent_name || student?.parent_name;

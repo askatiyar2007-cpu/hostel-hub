@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Profile, UserRole } from '@/types/database';
 import { User } from '@supabase/supabase-js';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export interface AuthContextType {
   user: User | null;
@@ -31,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const router = useRouter();
 
   // Memory lock to prevent concurrent student record checks/insert requests
@@ -555,7 +565,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Signs the user out.
    */
-  const signOut = async (): Promise<void> => {
+  const handleActualSignOut = async (): Promise<void> => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] [signOut] Processing logout`);
     try {
@@ -572,7 +582,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const errMsg = error instanceof Error ? error.message : 'Signout failed';
       console.error(`[${timestamp}] [signOut] Error during signout:`, errMsg);
       throw error;
+    } finally {
+      setShowLogoutConfirm(false);
     }
+  };
+
+  const signOut = async (): Promise<void> => {
+    setShowLogoutConfirm(true);
   };
 
   return (
@@ -593,6 +609,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+
+      {/* Global Logout Confirmation Dialog */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to logout?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleActualSignOut}>
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AuthContext.Provider>
   );
 }

@@ -14,7 +14,6 @@ export default function AssignStudentPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [beds, setBeds] = useState<{ id: string; bed_number: string }[]>([]);
 
   const [formData, setFormData] = useState({
     // Student Personal Info
@@ -37,7 +36,6 @@ export default function AssignStudentPage() {
     // Assignment Details
     hostel_id: '',
     room_id: '',
-    bed_id: '',
     start_date: new Date().toISOString().split('T')[0]
   });
 
@@ -85,42 +83,9 @@ export default function AssignStudentPage() {
         setFormData(prev => ({ ...prev, room_id: rooms[0].id }));
       }
     } else {
-      setFormData(prev => ({ ...prev, room_id: '', bed_id: '' }));
+      setFormData(prev => ({ ...prev, room_id: '' }));
     }
   }, [rooms, formData.room_id]);
-
-  // Fetch beds when room selection changes
-  useEffect(() => {
-    async function fetchBeds() {
-      if (!formData.room_id) {
-        setBeds([]);
-        return;
-      }
-      const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
-      const isShared = selectedRoomObj ? selectedRoomObj.capacity > 1 : false;
-
-      if (!isShared) {
-        setBeds([]);
-        setFormData(prev => ({ ...prev, bed_id: '' }));
-        return;
-      }
-
-      const { data } = await supabase
-        .from('beds')
-        .select('id, bed_number')
-        .eq('room_id', formData.room_id)
-        .eq('status', 'available');
-
-      const bedList = data || [];
-      setBeds(bedList);
-      if (bedList.length > 0) {
-        setFormData(prev => ({ ...prev, bed_id: bedList[0].id }));
-      } else {
-        setFormData(prev => ({ ...prev, bed_id: '' }));
-      }
-    }
-    fetchBeds();
-  }, [formData.room_id, rooms]);
 
   const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
   const isShared = selectedRoomObj ? selectedRoomObj.capacity > 1 : false;
@@ -174,7 +139,6 @@ export default function AssignStudentPage() {
     if (!formData.emergency_phone.trim() || !phoneRegex.test(formData.emergency_phone)) return toast.error('Emergency Contact Phone must be exactly 10 digits');
     if (!formData.hostel_id) return toast.error('Please select a Hostel');
     if (!formData.room_id) return toast.error('Please select a Room');
-    if (isShared && !formData.bed_id) return toast.error('Please select a Bed');
     if (!formData.start_date) return toast.error('Check-in Date is required');
 
     setLoading(true);
@@ -323,27 +287,12 @@ export default function AssignStudentPage() {
               throw new Error('Failed to retrieve allocation ID from response');
             }
 
-            // Update Bed Status to 'occupied' & set bed_id/booking_type on allocation if applicable
-            if (isShared && formData.bed_id) {
-              const { error: bedErr } = await supabase
-                .from('beds')
-                .update({ status: 'occupied' })
-                .eq('id', formData.bed_id);
-              if (bedErr) console.error('Bed status update failed:', bedErr.message);
-
-              const { error: allocUpdateErr } = await supabase
-                .from('room_allocations')
-                .update({ bed_id: formData.bed_id, booking_type: 'shared_bed' })
-                .eq('id', allocationId);
-              if (allocUpdateErr) console.error('Allocation bed update failed:', allocUpdateErr.message);
-            } else if (!isShared) {
-              // Update booking_type to entire_room
-              const { error: allocUpdateErr } = await supabase
-                .from('room_allocations')
-                .update({ booking_type: 'entire_room' })
-                .eq('id', allocationId);
-              if (allocUpdateErr) console.error('Allocation booking type update failed:', allocUpdateErr.message);
-            }
+            // Simplify booking_type to 'shared_bed' (no variation needed)
+            const { error: allocUpdateErr } = await supabase
+              .from('room_allocations')
+              .update({ booking_type: 'shared_bed' })
+              .eq('id', allocationId);
+            if (allocUpdateErr) console.error('Allocation update failed:', allocUpdateErr.message);
 
             toast.success(`Student assigned with ${feesCount} fees`);
             setTimeout(() => {
@@ -558,22 +507,7 @@ export default function AssignStudentPage() {
                 </select>
               </div>
 
-              {isShared && (
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Bed Number *</label>
-                  <select
-                    required
-                    className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
-                    value={formData.bed_id}
-                    onChange={(e) => setFormData({ ...formData, bed_id: e.target.value })}
-                  >
-                    <option value="">Select Bed</option>
-                    {beds.map(b => (
-                      <option key={b.id} value={b.id}>Bed {b.bed_number}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {/* Bed selection removed */}
 
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Check-in Date *</label>
@@ -602,7 +536,7 @@ export default function AssignStudentPage() {
 
               <button
                 type="submit"
-                disabled={isPending || loading || !formData.hostel_id || !formData.room_id || (isShared && !formData.bed_id)}
+                disabled={isPending || loading || !formData.hostel_id || !formData.room_id}
                 className="w-full mt-6 bg-primary hover:bg-primary/95 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isPending || loading ? (
