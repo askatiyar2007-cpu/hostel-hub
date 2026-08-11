@@ -31,7 +31,7 @@ export default function OwnerComplaintsPage() {
   const [statusTab, setStatusTab] = useState('all');
 
   const fetchComplaints = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.user_id) return;
     try {
       const { data, error } = await supabase
         .from('complaints')
@@ -42,7 +42,7 @@ export default function OwnerComplaintsPage() {
           ),
           hostels!inner (name)
         `)
-        .eq('hostels.owner_id', profile.id)
+        .eq('hostels.owner_id', profile.user_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -52,7 +52,7 @@ export default function OwnerComplaintsPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.user_id]);
 
   useEffect(() => {
     fetchComplaints();

@@ -40,7 +40,7 @@ interface PaymentMethod {
 }
 
 export default function PaymentMethodsPage() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [activeFormTab, setActiveFormTab] = useState<'upi' | 'bank' | 'qr'>('upi');
   const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);
@@ -71,13 +71,13 @@ export default function PaymentMethodsPage() {
 
   // Fetch payment methods
   const { data: paymentMethods, isLoading } = useQuery<PaymentMethod[]>({
-    queryKey: ['owner-payment-methods', profile?.id],
-    enabled: !!profile?.id,
+    queryKey: ['owner-payment-methods', user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*, hostels(name)')
-        .eq('owner_id', profile!.id)
+        .eq('owner_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -92,7 +92,7 @@ export default function PaymentMethodsPage() {
       const { error: resetError } = await supabase
         .from('payment_methods')
         .update({ is_primary: false })
-        .eq('owner_id', profile!.id);
+        .eq('owner_id', user!.id);
 
       if (resetError) throw resetError;
 
@@ -197,7 +197,7 @@ export default function PaymentMethodsPage() {
 
               <EditMethodForm
                 method={editingMethod}
-                ownerId={profile?.id}
+                ownerId={user?.id}
                 onSuccess={() => {
                   setEditingMethod(null);
                   qc.invalidateQueries({ queryKey: ['owner-payment-methods'] });
@@ -277,9 +277,9 @@ export default function PaymentMethodsPage() {
                 </div>
               ) : (
                 <>
-                  {activeFormTab === 'upi' && <AddUPIForm ownerId={profile?.id} hostelId={selectedHostelId} onSuccess={() => qc.invalidateQueries({ queryKey: ['owner-payment-methods'] })} />}
-                  {activeFormTab === 'bank' && <AddBankDetailsForm ownerId={profile?.id} hostelId={selectedHostelId} onSuccess={() => qc.invalidateQueries({ queryKey: ['owner-payment-methods'] })} />}
-                  {activeFormTab === 'qr' && <AddQRCodeForm ownerId={profile?.id} hostelId={selectedHostelId} onSuccess={() => qc.invalidateQueries({ queryKey: ['owner-payment-methods'] })} />}
+                  {activeFormTab === 'upi' && <AddUPIForm ownerId={user?.id} hostelId={selectedHostelId} onSuccess={() => qc.invalidateQueries({ queryKey: ['owner-payment-methods'] })} />}
+                  {activeFormTab === 'bank' && <AddBankDetailsForm ownerId={user?.id} hostelId={selectedHostelId} onSuccess={() => qc.invalidateQueries({ queryKey: ['owner-payment-methods'] })} />}
+                  {activeFormTab === 'qr' && <AddQRCodeForm ownerId={user?.id} hostelId={selectedHostelId} onSuccess={() => qc.invalidateQueries({ queryKey: ['owner-payment-methods'] })} />}
                 </>
               )}
             </div>

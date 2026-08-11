@@ -25,7 +25,7 @@ export default function OwnerBillingPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchBills = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.user_id) return;
     try {
       const { data, error } = await supabase
         .from('bills')
@@ -36,7 +36,7 @@ export default function OwnerBillingPage() {
           ),
           hostels!inner (name)
         `)
-        .eq('hostels.owner_id', profile.id)
+        .eq('hostels.owner_id', profile.user_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -46,7 +46,7 @@ export default function OwnerBillingPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.user_id]);
 
   useEffect(() => {
     fetchBills();
