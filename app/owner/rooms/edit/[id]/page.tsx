@@ -30,13 +30,13 @@ export default function EditRoomPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!id || !profile?.id) return;
+      if (!id || !profile?.user_id) return;
 
       // Fetch hostels for dropdown
       const { data: hostelsData } = await supabase
         .from('hostels')
         .select('id, name')
-        .eq('owner_id', profile.id);
+        .eq('owner_id', profile.user_id);
       
       setHostels(hostelsData || []);
 

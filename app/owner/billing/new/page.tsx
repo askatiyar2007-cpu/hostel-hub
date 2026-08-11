@@ -38,7 +38,7 @@ export default function CreateBillPage() {
 
   useEffect(() => {
     async function fetchStudents() {
-      if (!profile?.id) return;
+      if (!profile?.user_id) return;
       const { data } = await supabase
         .from('room_allocations')
         .select(`
@@ -49,7 +49,7 @@ export default function CreateBillPage() {
           ),
           hostels!inner (name)
         `)
-        .eq('hostels.owner_id', profile.id)
+        .eq('hostels.owner_id', profile.user_id)
         .eq('active', true);
       
       setStudents((data as unknown as StudentAssignment[]) || []);
