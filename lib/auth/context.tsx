@@ -513,6 +513,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: 'google',
         options: {
           redirectTo,
+          ...(isSignup && {
+            queryParams: {
+              prompt: 'select_account',
+            },
+          }),
         },
       });
 
