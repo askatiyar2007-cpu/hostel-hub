@@ -75,8 +75,7 @@ export default function EditHostelPage() {
           contact_number: formData.contact_number,
           email: formData.email,
           rules: formData.rules,
-          amenities: formData.amenities.split(',').map(s => s.trim()).filter(s => s !== ''),
-          updated_at: new Date().toISOString()
+          amenities: formData.amenities.split(',').map(s => s.trim()).filter(s => s !== '')
         })
         .eq('id', id);
 

@@ -165,20 +165,8 @@ export default function OwnerRequestsPage() {
           student_name,
           student_email,
           student_phone,
-          rooms(
-            id,
-            room_number,
-            capacity,
-            occupancy,
-            occupied_count,
-            occupied_beds,
-            rent,
-            security_deposit
-          ),
-          hostels!inner(
-            name,
-            owner_id
-          )
+          rooms!inner(id, room_number, capacity, occupancy, occupied_count, rent),
+          hostels!inner(id, name, owner_id)
         `)
         .eq('hostels.owner_id', user!.id)
         .eq('active', true)
@@ -277,7 +265,6 @@ export default function OwnerRequestsPage() {
       }
 
       // Combine allocations with their fees and payments
-      // student_name/email/phone come directly from the allocation row (snapshot stored at approval time)
       const mappedData = (data ?? []).map((alloc: any) => {
         const allocFees = (feesData ?? []).filter((f: any) => f.allocation_id === alloc.id);
         const allocPayments = (paymentsData ?? []).filter((p: any) => p.allocation_id === alloc.id);
@@ -289,14 +276,18 @@ export default function OwnerRequestsPage() {
 
         const studentInfo = studentsMap.get(alloc.student_id) || null;
 
+        const fullName = alloc.student_name || studentInfo?.profiles?.full_name || '-';
+        const email = alloc.student_email || studentInfo?.profiles?.email || '-';
+        const phone = alloc.student_phone || studentInfo?.profiles?.phone_number || '-';
+
         return {
           ...alloc,
           students: {
             id: alloc.student_id,
             profiles: {
-              full_name: studentInfo?.profiles?.full_name || alloc.student_name || null,
-              email: studentInfo?.profiles?.email || alloc.student_email || null,
-              phone_number: studentInfo?.profiles?.phone_number || alloc.student_phone || null,
+              full_name: fullName,
+              email: email,
+              phone_number: phone,
               gender: studentInfo?.profiles?.gender || null,
               date_of_birth: studentInfo?.profiles?.date_of_birth || null,
               avatar_url: studentInfo?.profiles?.avatar_url || null
@@ -439,6 +430,31 @@ export default function OwnerRequestsPage() {
       toast.error(e.message);
       setSelectedConfirmAction(null);
     },
+  });
+
+  // 6.5 Mutation: Mark Monthly Fee Paid (calls mark_payment_paid RPC)
+  const markPaidMutation = useMutation({
+    mutationFn: async (feeId: string) => {
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] [markPaidMutation] Calling RPC: mark_payment_paid with id:`, feeId);
+      
+      const { data, error } = await supabase.rpc('mark_payment_paid', {
+        p_fee_id: feeId
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Payment marked as paid');
+      qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
+      refetchAllocations();
+    },
+    onError: (e: Error) => {
+      toast.error(e.message || 'Failed to mark payment as paid');
+    }
   });
 
   // Counts for Badges
@@ -711,8 +727,7 @@ export default function OwnerRequestsPage() {
                   }}
                   onMarkDepositPaid={() => setSelectedDepositAlloc(alloc)}
                   onMarkFeePaid={(feeId) => {
-                    setSelectedFeeAlloc(alloc);
-                    setSelectedFeeId(feeId);
+                    markPaidMutation.mutate(feeId);
                   }}
                   onViewHistory={() => setSelectedHistoryAlloc(alloc)}
                 />
@@ -1106,7 +1121,7 @@ function ApprovedAllocationCard({
         </div>
       </div>
 
-      {/* Monthly Fees Section */}
+      {/* Monthly Fees Section - Displaying exactly 2 months */}
       <div className="space-y-2 pt-2">
         <h4 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 font-display flex justify-between items-center">
           <span>Monthly Fees Schedule</span>
@@ -1115,17 +1130,50 @@ function ApprovedAllocationCard({
           </span>
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
-          {!alloc.student_fees || alloc.student_fees.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic col-span-2">No fees scheduled yet.</p>
-          ) : (
-            alloc.student_fees.map((fee: any) => {
+          {(() => {
+            // Sort student fees chronologically
+            const sortedFees = [...(alloc.student_fees || [])].sort(
+              (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+            );
+
+            // Find the earliest unpaid fee
+            const earliestUnpaidIndex = sortedFees.findIndex(f => f.status !== 'paid');
+
+            let displayFees: any[] = [];
+            let isMonth1List: boolean[] = [];
+
+            if (earliestUnpaidIndex !== -1) {
+              // Month 1: Earliest unpaid
+              displayFees.push(sortedFees[earliestUnpaidIndex]);
+              isMonth1List.push(true);
+              
+              // Month 2: Next upcoming month
+              if (earliestUnpaidIndex + 1 < sortedFees.length) {
+                displayFees.push(sortedFees[earliestUnpaidIndex + 1]);
+                isMonth1List.push(false);
+              }
+            } else if (sortedFees.length > 0) {
+              // If all are paid, show the last two paid fees as previews
+              const lastTwo = sortedFees.slice(-2);
+              displayFees = lastTwo;
+              isMonth1List = lastTwo.map(() => false);
+            }
+
+            if (displayFees.length === 0) {
+              return <p className="text-xs text-muted-foreground italic col-span-2">No fees scheduled yet.</p>;
+            }
+
+            return displayFees.map((fee: any, idx: number) => {
+              const isMonth1 = isMonth1List[idx];
               const hasProof = fee.status === 'pending_verification';
               const displayPeriod = fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
               return (
                 <div key={fee.id} className="p-3 border rounded-xl bg-card flex flex-col justify-between gap-2 shadow-sm border-border/60">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="font-bold text-xs text-foreground block">{displayPeriod}</span>
+                      <span className="font-bold text-xs text-foreground block">
+                        {displayPeriod} {isMonth1 ? '(Current Due)' : '(Upcoming)'}
+                      </span>
                       <span className="text-[10px] text-muted-foreground">Due: {new Date(fee.due_date).toLocaleDateString()}</span>
                     </div>
                     <span className="font-bold text-xs text-foreground">₹{fee.amount_due || fee.amount || 0}</span>
@@ -1142,7 +1190,7 @@ function ApprovedAllocationCard({
                       {fee.status.replace('_', ' ')}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      {fee.status !== 'paid' && (
+                      {isMonth1 && fee.status !== 'paid' && (
                         <button 
                           onClick={() => onMarkFeePaid(fee.id)}
                           className="bg-primary hover:bg-primary/95 text-white font-bold px-2 py-0.5 rounded text-[10px] transition-colors"
@@ -1167,8 +1215,8 @@ function ApprovedAllocationCard({
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
       </div>
 

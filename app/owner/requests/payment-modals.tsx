@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 ------------------------------------------------------------- */
 export function MarkDepositPaidModal({ 
   alloc, 
-  ownerUserId,
+  ownerUserId: _ownerUserId,
   onClose, 
   onSuccess 
 }: { 
@@ -50,16 +50,18 @@ export function MarkDepositPaidModal({
 
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('mark_deposit_paid', {
-        p_allocation_id: alloc.id,
-        p_amount: numericAmount,
-        p_date: date,
-        p_owner_id: ownerUserId || null
+      const depositFee = alloc.student_fees?.find(
+        (f: any) => f.billing_period?.toLowerCase().includes('deposit')
+      );
+      const feeId = depositFee?.id || alloc.id;
+
+      const { error } = await supabase.rpc('mark_payment_paid', {
+        p_fee_id: feeId
       });
 
       if (error) throw error;
 
-      toast.success('Security deposit marked as PAID!');
+      toast.success('Fee marked as paid successfully');
       onSuccess();
       onClose();
     } catch (err: any) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
@@ -10,17 +10,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export default function SetupPasswordPage() {
-  const { setPassword, user } = useAuth();
+  const { setPassword, user, profile } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
   });
+
+  // Check if password is already set, redirect to dashboard
+  useEffect(() => {
+    if (user?.user_metadata?.password_set && profile?.role) {
+      const redirectMap: Record<string, string> = {
+        'owner': '/owner/dashboard',
+        'student': '/student/dashboard',
+        'parent': '/parent/dashboard',
+        'super_admin': '/admin/dashboard',
+      };
+      const target = redirectMap[profile.role as string];
+      if (target) {
+        console.log(`[${new Date().toISOString()}] [SetupPasswordPage] Password already set, redirecting to: ${target}`);
+        router.push(target);
+      }
+    }
+  }, [user, profile, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -47,12 +64,12 @@ export default function SetupPasswordPage() {
 
     setLoading(true);
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [SetupPasswordPage] Initiating mandatory password setup...`);
+    console.log(`[${timestamp}] [SetupPasswordPage] Initiating password setup...`);
 
     try {
       // Wait for password setting to complete on Supabase
       await setPassword(formData.password);
-      
+
       console.log(`[${timestamp}] [SetupPasswordPage] Password saved successfully`);
       toast.success('Password set successfully!');
       setSuccess(true);
@@ -60,7 +77,25 @@ export default function SetupPasswordPage() {
 
       // Delay redirect to show success state
       setTimeout(() => {
-        router.push('/auth/select-role?setup=complete');
+        if (profile?.role) {
+          const redirectMap: Record<string, string> = {
+            'owner': '/owner/dashboard',
+            'student': '/student/dashboard',
+            'parent': '/parent/dashboard',
+            'super_admin': '/admin/dashboard',
+          };
+          const target = redirectMap[profile.role as string];
+          if (target) {
+            console.log(`[${timestamp}] [SetupPasswordPage] Redirecting to: ${target}`);
+            router.push(target);
+          } else {
+            console.error(`[${timestamp}] [SetupPasswordPage] Invalid role: ${profile.role}`);
+            router.push('/auth/select-role');
+          }
+        } else {
+          console.warn(`[${timestamp}] [SetupPasswordPage] No profile found, redirecting to role selection`);
+          router.push('/auth/select-role');
+        }
       }, 2000);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Failed to set password';
@@ -117,7 +152,7 @@ export default function SetupPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -150,7 +185,7 @@ export default function SetupPasswordPage() {
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm new password"
+                    placeholder="Confirm password"
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}

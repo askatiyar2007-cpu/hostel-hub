@@ -66,7 +66,7 @@ export default function AdminDashboard() {
   }
 
   const pending = hostels?.filter((h) => h.status === "pending").length ?? 0;
-  const owners = profiles?.filter((p) => p.role === "hostel_owner").length ?? 0;
+  const owners = profiles?.filter((p) => p.role === "owner").length ?? 0;
   const students = profiles?.filter((p) => p.role === "student").length ?? 0;
 
   return (

@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'hostel_owner' | 'student' | 'parent';
+export type UserRole = 'super_admin' | 'owner' | 'student' | 'parent';
 
 export interface Profile {
   id: string;
@@ -38,7 +38,7 @@ export interface Hostel {
   rating: number;
   total_reviews: number;
   created_at: string;
-  updated_at: string;
+  starting_price?: number;
 }
 
 export interface Room {

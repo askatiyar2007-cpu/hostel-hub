@@ -5,20 +5,38 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Profile, UserRole } from '@/types/database';
 import { User } from '@supabase/supabase-js';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, phone: string, role: UserRole) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    phone: string,
+    role: UserRole
+  ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: (role?: UserRole) => Promise<void>;
+  signInWithGoogle: (isSignup?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
   setPassword: (password: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (password: string) => Promise<void>;
   updateUserRole: (role: UserRole) => Promise<void>;
   isAuthenticated: boolean;
+  existingGoogleSignupRejected: boolean;
+  resetRejectionState: () => void;
+  rejectedGoogleSignupRef: React.MutableRefObject<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,10 +49,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const router = useRouter();
+
+  const [existingGoogleSignupRejected, setExistingGoogleSignupRejected] = useState(false);
+
+  const resetRejectionState = () => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [AuthProvider resetRejectionState] Clearing signup rejection states`);
+    setExistingGoogleSignupRejected(false);
+    rejectedGoogleSignupRef.current = false;
+    rejectionInProgressRef.current = false;
+  };
 
   // Memory lock to prevent concurrent student record checks/insert requests
   const ensuredProfilesRef = useRef<Set<string>>(new Set());
+
+  // Guard to prevent SIGNED_IN handler from executing after signup rejection
+  const rejectedGoogleSignupRef = useRef(false);
+
+  // Guard to prevent duplicate rejection flows (React Strict Mode)
+  const rejectionInProgressRef = useRef(false);
+
+  // Guard to prevent SIGNED_IN handler from redirecting during email signup
+  const isEmailSigningUpRef = useRef(false);
 
   /**
    * Idempotent check and insert for student records.
@@ -127,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('profiles')
           .select('*')
           .eq('user_id', sessionUser.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error(`[${time}] [AuthProvider] Profile fetch error:`, profileError.message);
@@ -138,12 +176,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (profileData) {
           console.log(`[${time}] [AuthProvider] Profile loaded. Role: ${profileData.role}, Profile ID: ${profileData.id}`);
-          setProfile(profileData as Profile);
           
+          let isComplete = true;
           if (profileData.role === 'student') {
-            console.log(`[${time}] [AuthProvider] Calling ensureStudentRecord for student`);
-            await ensureStudentRecord(profileData.id);
+            const { data: student } = await supabase
+              .from('students')
+              .select('id')
+              .eq('profile_id', profileData.id)
+              .maybeSingle();
+            if (!student) {
+              isComplete = false;
+            }
           }
+
+          if (isComplete) {
+            setProfile(profileData as Profile);
+            if (profileData.role === 'student') {
+              console.log(`[${time}] [AuthProvider] Calling ensureStudentRecord for student`);
+              await ensureStudentRecord(profileData.id);
+            }
+          } else {
+            console.log(`[${time}] [AuthProvider] Profile role is student but no student record exists - setting role to null in state`);
+            setProfile({ ...profileData, role: null } as Profile);
+          }
+        } else {
+          console.log(`[${time}] [AuthProvider] No profile found for user - onboarding required`);
         }
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : 'Unknown exception';
@@ -159,7 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log(`[${time}] [AuthProvider initializeAuth] Fetching session...`);
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           console.error(`[${time}] [AuthProvider initializeAuth] Session fetch error:`, sessionError.message);
           if (isMounted) setLoading(false);
@@ -168,6 +225,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (session?.user) {
           console.log(`[${time}] [AuthProvider initializeAuth] Active session found for User: ${session.user.email}`);
+
+          // Check for signup intent during initial session load
+          const googleAuthIntent = typeof window !== 'undefined' ? sessionStorage.getItem('googleAuthIntent') : null;
+          if (googleAuthIntent === 'signup') {
+            console.log(`[${time}] [AuthProvider initializeAuth] Signup intent detected during initial session - checking for existing profile`);
+
+            // Check if rejection is already in progress (React Strict Mode guard)
+            if (rejectionInProgressRef.current) {
+              console.log(`[${time}] [AuthProvider initializeAuth] Rejection already in progress, skipping duplicate flow`);
+              return;
+            }
+
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+
+            if (profileData) {
+              console.log(`[${time}] [AuthProvider initializeAuth] Existing profile found during signup initialization - rejecting`);
+
+              // Mark rejection as in progress BEFORE any other operations
+              rejectionInProgressRef.current = true;
+              rejectedGoogleSignupRef.current = true;
+
+              console.log(`[${time}] [AuthProvider initializeAuth] Rejection guard enabled BEFORE signOut`);
+
+              sessionStorage.removeItem('googleAuthIntent');
+
+              console.log(`[${time}] [AuthProvider initializeAuth] Signing out rejected signup session`);
+              const { error: signOutError } = await supabase.auth.signOut();
+
+              if (signOutError) {
+                console.error(`[${time}] [AuthProvider initializeAuth] Failed to sign out rejected signup session:`, signOutError);
+              } else {
+                console.log(`[${time}] [AuthProvider initializeAuth] Rejected signup session signed out successfully`);
+              }
+
+              if (isMounted) {
+                setUser(null);
+                setProfile(null);
+                setExistingGoogleSignupRejected(true);
+                setLoading(false);
+              }
+
+              console.log(`[${time}] [AuthProvider initializeAuth] Existing Google signup rejected - notifying login UI`);
+              return;
+            }
+          }
+
           if (isMounted) setUser(session.user);
           await handleProfileAndStudent(session.user);
         } else {
@@ -204,6 +311,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (session?.user) {
+        // Synchronous check for rejection guard
+        if (rejectedGoogleSignupRef.current) {
+          console.log(`[${time}] [AuthProvider onAuthStateChange] Ignoring SIGNED_IN event because Google signup was already rejected`);
+          return;
+        }
+
+        if (isEmailSigningUpRef.current) {
+          console.log(`[${time}] [AuthProvider onAuthStateChange] Ignoring SIGNED_IN event because email signup is in progress`);
+          return;
+        }
+
+        const googleAuthIntent = typeof window !== 'undefined' ? sessionStorage.getItem('googleAuthIntent') : null;
+        if (googleAuthIntent === 'signup') {
+          // Check if profile exists before setting user or profile state in React
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          if (profileData) {
+            if (rejectionInProgressRef.current) {
+              console.log(`[${time}] [AuthProvider onAuthStateChange] Rejection already in progress, skipping duplicate flow`);
+              return;
+            }
+
+            console.log(`[${time}] [AuthProvider onAuthStateChange] Signup with existing Google account detected BEFORE setting state - rejecting`);
+            rejectionInProgressRef.current = true;
+            rejectedGoogleSignupRef.current = true;
+
+            sessionStorage.removeItem('googleAuthIntent');
+
+            const { error: signOutError } = await supabase.auth.signOut();
+            if (signOutError) {
+              console.error(`[${time}] [AuthProvider onAuthStateChange] Failed to sign out rejected signup session:`, signOutError);
+            } else {
+              console.log(`[${time}] [AuthProvider onAuthStateChange] Rejected signup session signed out successfully`);
+            }
+
+            if (isMounted) {
+              setUser(null);
+              setProfile(null);
+              setExistingGoogleSignupRejected(true);
+            }
+            return;
+          }
+        }
+
         if (isMounted) {
           setUser(session.user);
         }
@@ -212,8 +367,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Manual log in / sign up redirect triggers
         if (event === 'SIGNED_IN' && isMounted) {
+          // Check if this SIGNED_IN should be ignored due to prior signup rejection
+          if (rejectedGoogleSignupRef.current) {
+            console.log(`[${time}] [AuthProvider onAuthStateChange] Ignoring SIGNED_IN because Google signup was already rejected`);
+            return;
+          }
+
           const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-          console.log('[onAuthStateChange] SIGNED_IN event fired. Current path:', currentPath);
+          console.log(`[${time}] [AuthProvider onAuthStateChange] SIGNED_IN event fired. Current path: ${currentPath}`);
+
+          if (googleAuthIntent === 'signup') {
+            console.log(`[${time}] [AuthProvider onAuthStateChange] Google signup intent detected`);
+          }
+          if (googleAuthIntent === 'login') {
+            console.log(`[${time}] [AuthProvider onAuthStateChange] Google login intent detected`);
+          }
 
           // List of pages where we should NOT auto-redirect
           const noRedirectPaths = [
@@ -242,23 +410,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (isPublicPage) {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('role')
+              .select('id, role')
               .eq('user_id', session.user.id)
-              .single();
-            
+              .maybeSingle();
+
+            // Clear intent after rejection check
+            if (googleAuthIntent) {
+              sessionStorage.removeItem('googleAuthIntent');
+            }
+
+            // Reset rejection guard on successful login (not rejected signup)
+            if (googleAuthIntent === 'login' || !googleAuthIntent) {
+              rejectedGoogleSignupRef.current = false;
+              rejectionInProgressRef.current = false;
+            }
+
             if (profileData) {
-              const redirectMap: Record<string, string> = {
-                hostel_owner: '/owner/dashboard',
-                student: '/student/dashboard',
-                parent: '/parent/dashboard',
-                super_admin: '/admin/dashboard',
-              };
-              const target = redirectMap[profileData.role as string] ?? '/student/dashboard';
-              console.log(`[${time}] [AuthProvider onAuthStateChange] Redirecting logged in user to: ${target}`);
-              router.push(target);
+              let hasRole = false;
+              if (profileData.role === 'student') {
+                const { data: student } = await supabase
+                  .from('students')
+                  .select('id')
+                  .eq('profile_id', profileData.id)
+                  .maybeSingle();
+                if (student) {
+                  hasRole = true;
+                }
+              } else if (profileData.role && profileData.role !== 'student') {
+                hasRole = true;
+              }
+
+              if (hasRole) {
+                const redirectMap: Record<string, string> = {
+                  owner: '/owner/dashboard',
+                  student: '/student/dashboard',
+                  parent: '/parent/dashboard',
+                  super_admin: '/admin/dashboard',
+                };
+                const target = redirectMap[profileData.role as string];
+                if (!target) {
+                  console.error(`[${time}] [AuthProvider onAuthStateChange] Invalid role: ${profileData.role}. Redirecting to role selection.`);
+                  router.push('/auth/select-role');
+                  return;
+                }
+                console.log(`[${time}] [AuthProvider onAuthStateChange] Redirecting logged in user to: ${target}`);
+                router.push(target);
+              } else {
+                console.log(`[${time}] [AuthProvider onAuthStateChange] Role is student but student record does not exist - redirecting to /auth/select-role`);
+                router.push('/auth/select-role');
+              }
+            } else {
+              console.log(`[${time}] [AuthProvider onAuthStateChange] No profile found - redirecting to role selection`);
+              router.push('/auth/select-role');
             }
           } else {
-            console.log(`[onAuthStateChange] SKIPPING auto-redirect - preserved location: ${currentPath}`);
+            console.log(`[${time}] [AuthProvider onAuthStateChange] SKIPPING auto-redirect - preserved location: ${currentPath}`);
           }
         }
       }
@@ -273,36 +479,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authListener) {
         authListener.unsubscribe();
       }
+      // Reset rejection guards on unmount (for React Strict Mode remount)
+      rejectedGoogleSignupRef.current = false;
+      rejectionInProgressRef.current = false;
     };
   }, [router]);
 
   /**
    * Triggers redirection to Google OAuth endpoint.
-   * 
-   * @param role The student/hostel owner/parent role string.
+   *
+   * @param isSignup Whether this is initiated from signup flow (true) or login flow (false)
    */
-  const signInWithGoogle = async (role?: UserRole): Promise<void> => {
+  const signInWithGoogle = async (isSignup: boolean = false): Promise<void> => {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [signInWithGoogle] Initiating Google login. Role: ${role || 'None'}`);
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
+    console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] Button clicked`);
+    console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] Current pathname: ${currentPath}`);
     try {
-      const redirectTo = typeof window !== 'undefined' 
-        ? `${window.location.origin}/auth/callback` 
-        : 'http://localhost:8080/auth/callback';
-      
-      console.log(`[${timestamp}] [signInWithGoogle] Callback redirect URL: ${redirectTo}`);
-      const isValidRole = typeof role === 'string' && ['student', 'hostel_owner', 'parent', 'super_admin'].includes(role);
-      
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Store signup intent in session storage for client-side AuthProvider
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('googleAuthIntent', isSignup ? 'signup' : 'login');
+        console.log(`[${timestamp}] [GOOGLE AUTH] Stored intent: ${isSignup ? 'signup' : 'login'}`);
+      }
+
+      const redirectTo = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback?isSignup=${isSignup}`
+        : `http://localhost:3000/auth/callback?isSignup=${isSignup}`;
+
+      console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] redirectTo: ${redirectTo}`);
+      console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] OAuth request starting`);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
-          ...(isValidRole ? { data: { role } } : {}),
         },
       });
+
+      console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] OAuth request returned`);
+      console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] Data:`, data);
+      console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] Error:`, error);
+
       if (error) throw error;
+
+      // If Supabase returns a URL, explicitly navigate to it
+      if (data?.url && typeof window !== 'undefined') {
+        console.log(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] Navigating to OAuth URL: ${data.url}`);
+        window.location.assign(data.url);
+      }
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Google OAuth redirection failed';
-      console.error(`[${timestamp}] [signInWithGoogle] Redirect failed:`, errMsg);
+      console.error(`[${timestamp}] [GOOGLE ${isSignup ? 'SIGNUP' : 'LOGIN'}] Redirect failed:`, errMsg);
       throw error;
     }
   };
@@ -310,10 +537,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Registers a user account with metadata attributes.
    */
-  const signUp = async (email: string, password: string, fullName: string, phone: string, role: UserRole): Promise<void> => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    phone: string,
+    role: UserRole
+  ): Promise<void> => {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [signUp] Registering user: ${email}, role: ${role}`);
+    console.log(`[${timestamp}] [signUp] Registering user: ${email} with role: ${role}`);
+    isEmailSigningUpRef.current = true;
     try {
+      // Check if email already exists in profiles table
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingProfile) {
+        console.log(`[${timestamp}] [signUp] Account already exists with email: ${email}`);
+        throw new Error('Account already exists. Please login instead.');
+      }
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -321,17 +567,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName,
             phone_number: phone,
-            role,
+            password_set: true,
+            role_selected: true,
           }
         }
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        // Handle case where Supabase auth already has this email
+        if (signUpError.message.includes('already registered') || signUpError.status === 400) {
+          console.log(`[${timestamp}] [signUp] Email already registered in Supabase auth: ${email}`);
+          throw new Error('Account already exists. Please login instead.');
+        }
+        throw signUpError;
+      }
+
       if (!authData.user) throw new Error('Auth account creation failed');
 
       console.log(`[${timestamp}] [signUp] Auth user record created. ID: ${authData.user.id}`);
 
-      // Handle fallback manual profiles table insertions
+      // Create profile in profiles table with explicit role
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -360,26 +615,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (profileData) {
-        setProfile(profileData as Profile);
-        if (profileData.role === 'student') {
+        if (role === 'student') {
+          console.log(`[${timestamp}] [signUp] Provisioning student record for Profile ID: ${profileData.id}`);
           await ensureStudentRecord(profileData.id);
         }
+        setProfile(profileData as Profile);
       }
 
       setUser(authData.user);
-      
-      const redirectMap: Record<UserRole, string> = {
-        'hostel_owner': '/owner/dashboard',
+
+      const redirectMap: Record<string, string> = {
+        'owner': '/owner/dashboard',
         'student': '/student/dashboard',
         'parent': '/parent/dashboard',
         'super_admin': '/admin/dashboard',
       };
-
-      router.push(redirectMap[role]);
+      const redirectPath = redirectMap[role];
+      if (redirectPath) {
+        console.log(`[${timestamp}] [signUp] Redirecting to: ${redirectPath}`);
+        router.push(redirectPath);
+      } else {
+        console.log(`[${timestamp}] [signUp] Redirecting to role selection: /auth/select-role`);
+        router.push('/auth/select-role');
+      }
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Registration process failed';
       console.error(`[${timestamp}] [signUp] Error during signup:`, errMsg);
       throw error;
+    } finally {
+      isEmailSigningUpRef.current = false;
     }
   };
 
@@ -410,7 +674,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('user_id', authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
@@ -421,16 +685,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await ensureStudentRecord(profileData.id);
         }
 
-        const redirectMap: Record<UserRole, string> = {
-          'hostel_owner': '/owner/dashboard',
+        const redirectMap: Record<string, string> = {
+          'owner': '/owner/dashboard',
           'student': '/student/dashboard',
           'parent': '/parent/dashboard',
           'super_admin': '/admin/dashboard',
         };
 
-        const path = redirectMap[profileData.role as UserRole];
+        const path = redirectMap[profileData.role as string];
+        if (!path) {
+          console.error(`[${timestamp}] [signIn] Invalid role: ${profileData.role}. Redirecting to role selection.`);
+          router.push('/auth/select-role');
+          return;
+        }
         console.log(`[${timestamp}] [signIn] Redirecting to: ${path}`);
         router.push(path);
+      } else {
+        console.error(`[${timestamp}] [signIn] No profile found for user - redirecting to role selection`);
+        router.push('/auth/select-role');
       }
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Login failed';
@@ -510,8 +782,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Updates the role profile of the currently logged-in user.
-   * Clears old permission roles in user_roles and updates user profiles role.
-   * 
+   * Creates profile if it doesn't exist, then updates the role.
+   *
    * @param role The target UserRole selection.
    */
   const updateUserRole = async (role: UserRole): Promise<void> => {
@@ -520,30 +792,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user) throw new Error('No authenticated user session found');
 
-      // 1. Update profiles table role
-      const { error: profileError } = await supabase
+      // 1. Check if profile exists
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({ role })
-        .eq('user_id', user.id);
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (existingProfile) {
+        console.log(`[${timestamp}] [updateUserRole] Profile exists, updating role`);
+        // Update existing profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ role })
+          .eq('user_id', user.id);
+
+        if (profileError) throw profileError;
+      } else {
+        console.log(`[${timestamp}] [updateUserRole] No profile found, creating new profile`);
+        // Create new profile for Google user
+        const { data: userData } = await supabase.auth.getUser();
+        const currentUser = userData.user;
+
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            full_name: currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || '',
+            email: currentUser?.email || '',
+            phone_number: currentUser?.user_metadata?.phone_number || '',
+            role,
+          });
+
+        if (profileError) throw profileError;
+      }
 
       // 2. Fetch fresh profile state to sync provider React state immediately
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profileData) {
         setProfile(profileData as Profile);
-        
+
         // 3. Automatically provision student record if role is student
         if (role === 'student') {
           await ensureStudentRecord(profileData.id);
         }
+      } else {
+        console.warn(`[${timestamp}] [updateUserRole] Profile not found after update - unexpected state`);
       }
-      
+
       console.log(`[${timestamp}] [updateUserRole] Role update successfully synced`);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Role sync failed';
@@ -555,7 +856,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Signs the user out.
    */
-  const signOut = async (): Promise<void> => {
+  const handleActualSignOut = async (): Promise<void> => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] [signOut] Processing logout`);
     try {
@@ -572,7 +873,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const errMsg = error instanceof Error ? error.message : 'Signout failed';
       console.error(`[${timestamp}] [signOut] Error during signout:`, errMsg);
       throw error;
+    } finally {
+      setShowLogoutConfirm(false);
     }
+  };
+
+  const signOut = async (): Promise<void> => {
+    setShowLogoutConfirm(true);
   };
 
   return (
@@ -590,9 +897,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resetPassword,
         updateUserRole,
         isAuthenticated: !!user,
+        existingGoogleSignupRejected,
+        resetRejectionState,
+        rejectedGoogleSignupRef,
       }}
     >
       {children}
+
+      {/* Global Logout Confirmation Dialog */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to logout?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleActualSignOut}>
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AuthContext.Provider>
   );
 }

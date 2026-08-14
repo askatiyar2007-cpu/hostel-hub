@@ -223,12 +223,13 @@ export default function OwnerStudentsPage() {
                   </td>
                 </tr>
               ) : filteredAssignments.map((item) => {
-                const profile = item.students?.profiles;
-                const studentName = profile?.full_name || item.student_name || 'N/A';
-                const studentEmail = profile?.email || item.student_email || 'N/A';
-                const studentPhone = profile?.phone_number || item.student_phone || 'N/A';
-                const hostelName = item.hostels?.name || 'N/A';
-                const roomNum = item.rooms?.room_number || 'N/A';
+                const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
+                const profile = studentInfo?.profiles;
+                const studentName = item.student_name || profile?.full_name || '-';
+                const studentEmail = item.student_email || profile?.email || '-';
+                const studentPhone = item.student_phone || profile?.phone_number || '-';
+                const hostelName = item.hostels?.name || '-';
+                const roomNum = item.rooms?.room_number || '-';
                 const bookingType = item.booking_type === 'entire_room' ? 'Private Room' : 'Shared Bed';
                 const rent = item.rooms?.rent || 0;
 

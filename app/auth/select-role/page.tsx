@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
-import { GraduationCap, Building2, Users, Check, ArrowRight } from 'lucide-react';
+import { GraduationCap, Building2, Check, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@/types/database';
 
@@ -26,22 +26,13 @@ export default function SelectRolePage() {
       activeColor: 'border-blue-600 bg-blue-50/50 dark:bg-blue-950/20 ring-2 ring-blue-500/30'
     },
     {
-      id: 'hostel_owner' as UserRole,
+      id: 'owner' as UserRole,
       title: 'Hostel Owner',
       description: 'List hostels, manage room layouts, allocate students, verify billing payments, and check requests.',
       icon: Building2,
       color: 'from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50',
       hoverColor: 'hover:border-emerald-500 dark:hover:border-emerald-400',
       activeColor: 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-emerald-500/30'
-    },
-    {
-      id: 'parent' as UserRole,
-      title: 'Parent',
-      description: 'Track student room allocations, monitor invoices/billing statements, and verify files/documents.',
-      icon: Users,
-      color: 'from-purple-500/20 to-fuchsia-500/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/50',
-      hoverColor: 'hover:border-purple-500 dark:hover:border-purple-400',
-      activeColor: 'border-purple-600 bg-purple-50/50 dark:bg-purple-950/20 ring-2 ring-purple-500/30'
     }
   ];
 
@@ -67,18 +58,11 @@ export default function SelectRolePage() {
       if (metadataError) throw metadataError;
 
       console.log(`[${timestamp}] [SelectRolePage] Role saved and metadata flags sync completed successfully`);
-      toast.success('Profile created successfully!');
+      toast.success('Role saved successfully!');
 
-      // Redirect to correct dashboard based on role selection
-      const redirectMap: Record<UserRole, string> = {
-        'student': '/student/dashboard',
-        'hostel_owner': '/owner/dashboard',
-        'parent': '/parent/dashboard',
-        'super_admin': '/admin/dashboard'
-      };
-
-      const path = redirectMap[selectedRole];
-      router.push(path);
+      // Redirect to password setup
+      console.log(`[${timestamp}] [SelectRolePage] Redirecting to /auth/setup-password`);
+      router.push('/auth/setup-password');
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Failed to update user role';
       toast.error(errMsg);
@@ -115,14 +99,14 @@ export default function SelectRolePage() {
             <span className="text-2xl font-semibold tracking-tight font-display text-foreground">HostelHub</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-foreground">
-            What describes you best?
+            What is your role?
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
-            Choose your profile role to unlock the specialized dashboards, permissions, and management tools.
+            Are you a Hostel Owner or Student? Choose your profile role to unlock the specialized dashboards, permissions, and management tools.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 max-w-3xl mx-auto">
           {roles.map((role) => {
             const Icon = role.icon;
             const isSelected = selectedRole === role.id;
@@ -162,7 +146,7 @@ export default function SelectRolePage() {
             size="lg"
             className="h-12 px-8 rounded-full shadow-lg gap-2 text-base font-semibold transition-all hover:scale-105"
           >
-            {loading ? 'Setting up your profile...' : 'Continue to Dashboard'}
+            {loading ? 'Setting up your profile...' : 'Continue'}
             <ArrowRight className="h-5 w-5" />
           </Button>
         </div>

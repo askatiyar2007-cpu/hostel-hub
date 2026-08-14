@@ -22,13 +22,18 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading && profile) {
       const redirectMap: Record<string, string> = {
-        hostel_owner: '/owner/dashboard',
+        owner: '/owner/dashboard',
         student: '/student/dashboard',
         parent: '/parent/dashboard',
         super_admin: '/admin/dashboard',
       };
-      const path = redirectMap[profile.role] ?? '/student/dashboard';
-      router.push(path);
+      const path = redirectMap[profile.role];
+      if (path) {
+        router.push(path);
+      } else {
+        console.error(`Invalid role: ${profile.role}. Redirecting to role selection.`);
+        router.push('/auth/select-role');
+      }
     }
   }, [profile, loading, router]);
 

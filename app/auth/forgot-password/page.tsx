@@ -50,9 +50,9 @@ export default function ForgotPasswordPage() {
             </div>
             <span className="text-2xl font-semibold tracking-tight font-display text-foreground">HostelHub</span>
           </Link>
-          <h2 className="text-3xl font-bold tracking-tight font-display">Forgot Password?</h2>
+          <h2 className="text-3xl font-bold tracking-tight font-display">Forgot your password?</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Enter your email address and we&apos;ll send you a reset link
+            Enter your email and we'll send you a password reset link
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full h-11 rounded-full shadow-lg"
               >
-                {loading ? 'Sending link...' : 'Send Reset Email'}
+                {loading ? 'Sending reset link...' : 'Send Reset Link'}
               </Button>
 
               <div className="text-center pt-2">

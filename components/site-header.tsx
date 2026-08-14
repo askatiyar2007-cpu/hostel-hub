@@ -47,7 +47,7 @@ export function SiteHeader() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem asChild>
                   <Link href={
-                    profile?.role === 'hostel_owner'
+                    profile?.role === 'owner'
                       ? '/owner/dashboard'
                       : profile?.role === 'student'
                       ? '/student/dashboard'

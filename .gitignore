@@ -1,1 +1,8 @@
 node_modules
+.next
+build
+.env.local
+.env*.local
+
+# debug / temp build logs
+build-*.txt

@@ -34,7 +34,7 @@ interface NavItem {
 }
 
 const roleNavItems: Record<UserRole, NavItem[]> = {
-  hostel_owner: [
+  owner: [
     { name: 'Dashboard', href: '/owner/dashboard', icon: LayoutDashboard },
     { name: 'Hostels', href: '/owner/hostels', icon: Building2 },
     { name: 'Rooms', href: '/owner/rooms', icon: Home },
@@ -74,7 +74,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
-  
+
   const role = profile?.role as UserRole || 'student';
   const navItems = roleNavItems[role] || [];
 
