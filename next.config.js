@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
+const isVercel = !!process.env.VERCEL;
+
 const nextConfig = {
-  // Use 'build' instead of '.next' — the tracked .next folder causes Windows file-lock errors
-  distDir: 'build',
+  // Use a custom `distDir` only for local/windows development to avoid
+  // locking issues; on Vercel use the default '.next' by not setting it.
+  ...(isVercel ? {} : { distDir: 'build' }),
   images: {
     domains: [
       'localhost',
