@@ -25,12 +25,14 @@ export async function POST(req: NextRequest) {
     // 2. Verify user role from profiles using service role to bypass RLS
     const { data: profile, error: profileError } = await supabaseServer
       .from('profiles')
-      .select('role')
+      .select('id, role, user_id')
       .eq('user_id', user.id)
       .single();
 
     console.log('[Assignment API] Profile check:', { 
       userId: user?.id,
+      profileId: profile?.id,
+      profileUserId: profile?.user_id,
       hasProfile: !!profile,
       role: profile?.role,
       profileError: profileError?.message
@@ -84,15 +86,43 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = student_email.trim().toLowerCase();
 
-    // 4. Generate cryptographically secure random token & its SHA-256 hash
+    // 4. Verify hostel ownership before proceeding
+    const { data: hostel, error: hostelError } = await supabaseServer
+      .from('hostels')
+      .select('id, owner_id, name')
+      .eq('id', hostel_id)
+      .single();
+
+    console.log('[Assignment API] Hostel ownership check:', {
+      requestedHostelId: hostel_id,
+      hostelOwnerId: hostel?.owner_id,
+      authenticatedUserId: user.id,
+      hostelExists: !!hostel,
+      hostelError: hostelError?.message
+    });
+
+    if (hostelError || !hostel) {
+      console.log('[Assignment API] Hostel not found');
+      return NextResponse.json({ error: 'Hostel not found' }, { status: 404 });
+    }
+
+    if (hostel.owner_id !== user.id) {
+      console.log('[Assignment API] Authorization failed - user does not own this hostel');
+      return NextResponse.json(
+        { error: 'Forbidden: You do not own this hostel' },
+        { status: 403 }
+      );
+    }
+
+    // 5. Generate cryptographically secure random token & its SHA-256 hash
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
-    // 5. Calculate expiration date (7 days from now)
+    // 6. Calculate expiration date (7 days from now)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // 6. Invoke database RPC via supabaseServer (service role) to run atomically
+    // 7. Invoke database RPC via supabaseServer (service role) to run atomically
     const { data: rpcResult, error: rpcErr } = await supabaseServer.rpc(
       'create_manual_assignment_with_invite',
       {
@@ -120,11 +150,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: rpcErr.message }, { status: 400 });
     }
 
-    // 7. Construct public invitation URL
+    // 8. Construct public invitation URL
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
     const invitationUrl = `${siteUrl}/invite/${rawToken}`;
 
-    // 8. Fetch hostel and room details for the email
+    // 9. Fetch hostel and room details for the email
     const { data: hostelData } = await supabaseServer
       .from('hostels')
       .select('name')
@@ -140,7 +170,7 @@ export async function POST(req: NextRequest) {
     const hostelName = hostelData?.name || 'Your Hostel';
     const roomName = roomData?.room_number ? `Room ${roomData.room_number}` : 'Your Room';
 
-    // 9. Send invitation email via Brevo (non-blocking - don't fail if email fails)
+    // 10. Send invitation email via Brevo (non-blocking - don't fail if email fails)
     let emailSent = false;
     let emailError = null;
 
@@ -164,7 +194,7 @@ export async function POST(req: NextRequest) {
       emailError = error instanceof Error ? error.message : 'Unknown error';
     }
 
-    // 10. Return success response with email status
+    // 11. Return success response with email status
     return NextResponse.json({
       success: true,
       allocation_id: rpcResult.allocation_id,
