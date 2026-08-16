@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
     console.log('[Assignment API] Auth check:', { 
       hasUser: !!user, 
       authError: authError?.message,
-      userId: user?.id 
+      userId: user?.id,
+      userEmail: user?.email
     });
 
     if (authError || !user) {
