@@ -4,7 +4,20 @@
 -- 1. Make students.profile_id nullable (DROP NOT NULL)
 ALTER TABLE public.students ALTER COLUMN profile_id DROP NOT NULL;
 
--- 2. Create public.student_invitations table
+-- 2. Add admission_date column if missing
+ALTER TABLE public.students 
+ADD COLUMN IF NOT EXISTS admission_date DATE;
+
+-- Set default value for existing null records to current date
+UPDATE public.students 
+SET admission_date = CURRENT_DATE 
+WHERE admission_date IS NULL;
+
+-- Add a default constraint for future inserts
+ALTER TABLE public.students 
+ALTER COLUMN admission_date SET DEFAULT CURRENT_DATE;
+
+-- 3. Create public.student_invitations table
 CREATE TABLE IF NOT EXISTS public.student_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
@@ -230,32 +243,48 @@ SET search_path = public
 AS $$
 DECLARE
     v_profile_id UUID;
+    v_student_name TEXT;
+    v_student_email TEXT;
 BEGIN
-    -- a) Fetch profile_id for user_id
+    -- a) Fetch student details for profile creation if needed
+    SELECT student_name, student_email INTO v_student_name, v_student_email
+    FROM public.students
+    WHERE id = p_student_id;
+
+    -- b) Try to fetch existing profile_id for user_id
     SELECT id INTO v_profile_id FROM public.profiles WHERE user_id = p_profile_user_id;
+
+    -- c) If profile doesn't exist, create it (handles trigger race condition/missing trigger)
     IF v_profile_id IS NULL THEN
-        RAISE EXCEPTION 'Profile not found for this user';
+        INSERT INTO public.profiles (user_id, full_name, email, role)
+        VALUES (
+            p_profile_user_id,
+            v_student_name,
+            v_student_email,
+            'student'
+        )
+        RETURNING id INTO v_profile_id;
     END IF;
 
-    -- b) Update profile phone number if provided and currently empty
+    -- d) Update profile phone number if provided and currently empty
     IF p_phone_number IS NOT NULL AND p_phone_number <> '' THEN
         UPDATE public.profiles
         SET phone_number = COALESCE(phone_number, p_phone_number)
         WHERE id = v_profile_id;
     END IF;
 
-    -- c) Update student record (link profile and activate)
+    -- e) Update student record (link profile and activate)
     UPDATE public.students
     SET profile_id = v_profile_id,
         status = 'active'
     WHERE id = p_student_id;
 
-    -- d) Mark invitation as used (ensure it hasn't been used yet)
+    -- f) Mark invitation as used (ensure it hasn't been used yet)
     UPDATE public.student_invitations
     SET used_at = NOW()
     WHERE id = p_invitation_id AND used_at IS NULL;
-    
-    -- e) Verify the invitation was successfully marked as used
+
+    -- g) Verify the invitation was successfully marked as used
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Invitation has already been used';
     END IF;
