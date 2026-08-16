@@ -31,15 +31,34 @@ export async function POST(req: NextRequest) {
 
     console.log('[Assignment API] Profile check:', { 
       userId: user?.id,
+      userEmail: user?.email,
       profileId: profile?.id,
       profileUserId: profile?.user_id,
+      profileRole: profile?.role,
       hasProfile: !!profile,
-      role: profile?.role,
-      profileError: profileError?.message
+      profileError: profileError?.message,
+      userIdMatchesProfileUserId: user?.id === profile?.user_id,
+      userIdMatchesProfileId: user?.id === profile?.id
     });
 
-    if (profileError || !profile || profile.role !== 'owner') {
-      console.log('[Assignment API] Authorization failed - not an owner');
+    if (profileError) {
+      console.log('[Assignment API] Profile lookup failed:', profileError.message);
+      return NextResponse.json(
+        { error: 'Forbidden: Failed to verify user profile' },
+        { status: 403 }
+      );
+    }
+
+    if (!profile) {
+      console.log('[Assignment API] No profile found for user');
+      return NextResponse.json(
+        { error: 'Forbidden: User profile not found' },
+        { status: 403 }
+      );
+    }
+
+    if (profile.role !== 'owner') {
+      console.log('[Assignment API] Authorization failed - not an owner. Actual role:', profile.role);
       return NextResponse.json(
         { error: 'Forbidden: Only hostel owners can assign students.' },
         { status: 403 }
@@ -97,8 +116,14 @@ export async function POST(req: NextRequest) {
       requestedHostelId: hostel_id,
       hostelOwnerId: hostel?.owner_id,
       authenticatedUserId: user.id,
+      authenticatedUserEmail: user.email,
+      profileId: profile?.id,
+      profileUserId: profile?.user_id,
       hostelExists: !!hostel,
-      hostelError: hostelError?.message
+      hostelError: hostelError?.message,
+      userMatchesHostelOwner: hostel?.owner_id === user.id,
+      profileIdMatchesHostelOwner: hostel?.owner_id === profile?.id,
+      profileUserIdMatchesHostelOwner: hostel?.owner_id === profile?.user_id
     });
 
     if (hostelError || !hostel) {
