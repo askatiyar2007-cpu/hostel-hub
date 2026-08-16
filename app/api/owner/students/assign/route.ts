@@ -9,18 +9,34 @@ export async function POST(req: NextRequest) {
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    // Debug logging (safe - no sensitive data)
+    console.log('[Assignment API] Auth check:', { 
+      hasUser: !!user, 
+      authError: authError?.message,
+      userId: user?.id 
+    });
+
     if (authError || !user) {
+      console.log('[Assignment API] Authentication failed:', authError?.message);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Verify user role from profiles
-    const { data: profile, error: profileError } = await supabase
+    // 2. Verify user role from profiles using service role to bypass RLS
+    const { data: profile, error: profileError } = await supabaseServer
       .from('profiles')
       .select('role')
       .eq('user_id', user.id)
       .single();
 
+    console.log('[Assignment API] Profile check:', { 
+      userId: user?.id,
+      hasProfile: !!profile,
+      role: profile?.role,
+      profileError: profileError?.message
+    });
+
     if (profileError || !profile || profile.role !== 'owner') {
+      console.log('[Assignment API] Authorization failed - not an owner');
       return NextResponse.json(
         { error: 'Forbidden: Only hostel owners can assign students.' },
         { status: 403 }
@@ -41,8 +57,15 @@ export async function POST(req: NextRequest) {
       emergency_phone,
       hostel_id,
       room_id,
-      start_date
+      start_date,
+      booking_type = 'shared_bed'
     } = body;
+
+    // Validate booking_type
+    const validBookingTypes = ['shared_bed', 'entire_room'];
+    if (!validBookingTypes.includes(booking_type)) {
+      return NextResponse.json({ error: 'Invalid booking type. Must be shared_bed or entire_room' }, { status: 400 });
+    }
 
     // Simple validation checks
     if (!student_name?.trim()) return NextResponse.json({ error: 'Student Name is required' }, { status: 400 });
@@ -86,7 +109,8 @@ export async function POST(req: NextRequest) {
         p_start_date: start_date,
         p_token_hash: tokenHash,
         p_expires_at: expiresAt.toISOString(),
-        p_owner_id: user.id
+        p_owner_id: user.id,
+        p_booking_type: booking_type
       }
     );
 
@@ -125,7 +149,8 @@ export async function POST(req: NextRequest) {
         studentName: student_name.trim(),
         hostelName,
         roomName,
-        invitationUrl
+        invitationUrl,
+        bookingType: booking_type as 'shared_bed' | 'entire_room'
       });
 
       emailSent = emailResult.success;
@@ -145,7 +170,8 @@ export async function POST(req: NextRequest) {
       invitation_url: invitationUrl,
       expires_at: expiresAt.toISOString(),
       email_sent: emailSent,
-      email_error: emailError
+      email_error: emailError,
+      booking_type: rpcResult.booking_type
     });
 
   } catch (error: any) {

@@ -13,6 +13,8 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 
+type BookingType = 'shared_bed' | 'entire_room';
+
 export default function AssignStudentPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function AssignStudentPage() {
     hostel_name: string;
     room_number: string;
     invitation_url: string;
+    booking_type: BookingType;
     email_sent?: boolean;
   } | null>(null);
 
@@ -48,7 +51,8 @@ export default function AssignStudentPage() {
     // Assignment Details
     hostel_id: '',
     room_id: '',
-    start_date: new Date().toISOString().split('T')[0]
+    start_date: new Date().toISOString().split('T')[0],
+    booking_type: 'shared_bed' as 'shared_bed' | 'entire_room'
   });
 
   // Fetch hostels owned by this owner
@@ -100,7 +104,6 @@ export default function AssignStudentPage() {
   }, [rooms, formData.room_id]);
 
   const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
-  const isShared = selectedRoomObj ? selectedRoomObj.capacity > 1 : false;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,7 +146,8 @@ export default function AssignStudentPage() {
           emergency_phone: formData.emergency_phone,
           hostel_id: formData.hostel_id,
           room_id: formData.room_id,
-          start_date: formData.start_date
+          start_date: formData.start_date,
+          booking_type: formData.booking_type
         }),
       });
 
@@ -163,7 +167,8 @@ export default function AssignStudentPage() {
         email: formData.student_email,
         hostel_name: selectedHostel?.name || 'Selected Hostel',
         room_number: selectedRoom?.room_number || 'Selected Room',
-        invitation_url: result.invitation_url
+        invitation_url: result.invitation_url,
+        booking_type: formData.booking_type as BookingType
       });
       setShowSuccessDialog(true);
       
@@ -408,12 +413,40 @@ export default function AssignStudentPage() {
                 />
               </div>
 
+                <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Booking Option *</label>
+                <div className="flex gap-6 mt-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="booking_type"
+                      value="shared_bed"
+                      checked={formData.booking_type === 'shared_bed'}
+                      onChange={() => setFormData(prev => ({ ...prev, booking_type: 'shared_bed' }))}
+                      className="text-primary focus:ring-primary h-4 w-4"
+                    />
+                    <span className="text-sm font-medium">Shared Bed</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="booking_type"
+                      value="entire_room"
+                      checked={formData.booking_type === 'entire_room'}
+                      onChange={() => setFormData(prev => ({ ...prev, booking_type: 'entire_room' }))}
+                      className="text-primary focus:ring-primary h-4 w-4"
+                    />
+                    <span className="text-sm font-medium">Entire Room</span>
+                  </label>
+                </div>
+              </div>
+
               {selectedRoomObj && (
                 <div className="rounded-xl bg-muted/50 p-4 border border-border mt-4 space-y-2 text-xs">
                   <span className="font-bold text-foreground block font-display uppercase tracking-wider">Assignment Details</span>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Booking Option:</span>
-                    <span className="font-semibold text-foreground">{isShared ? 'Shared Bed' : 'Entire Room'}</span>
+                    <span className="font-semibold text-foreground capitalize">{formData.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Monthly Rent:</span>
@@ -484,6 +517,10 @@ export default function AssignStudentPage() {
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Room</p>
                   <p className="font-semibold text-foreground">{invitationData.room_number}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Booking Type</p>
+                  <p className="font-semibold text-foreground capitalize">{invitationData.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}</p>
                 </div>
               </div>
 

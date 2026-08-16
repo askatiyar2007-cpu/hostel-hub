@@ -9,6 +9,7 @@ interface SendStudentInvitationEmailParams {
   hostelName: string;
   roomName: string;
   invitationUrl: string;
+  bookingType?: 'shared_bed' | 'entire_room';
 }
 
 interface BrevoEmailResponse {
@@ -22,7 +23,8 @@ export async function sendStudentInvitationEmail({
   studentName,
   hostelName,
   roomName,
-  invitationUrl
+  invitationUrl,
+  bookingType = 'shared_bed'
 }: SendStudentInvitationEmailParams): Promise<BrevoEmailResponse> {
   const apiKey = process.env.BREVO_API_KEY;
   
@@ -168,6 +170,10 @@ export async function sendStudentInvitationEmail({
               <div class="detail-item">
                 <div class="detail-label">Room</div>
                 <div class="detail-value">${roomName}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Booking Type</div>
+                <div class="detail-value">${bookingType === 'entire_room' ? 'Entire Room' : 'Shared Bed'}</div>
               </div>
             </div>
 
