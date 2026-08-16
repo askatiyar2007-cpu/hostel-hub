@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
       .from('profiles')
       .select('id, role, user_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    console.log('[Assignment API] Profile check:', { 
+    console.log('[Assignment API] Profile check:', {
       userId: user?.id,
       userEmail: user?.email,
       profileId: profile?.id,
