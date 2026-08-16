@@ -128,16 +128,16 @@ export default function RoomRequestPage() {
     staleTime: 10 * 1000,
     queryFn: async () => {
       // Direct query fetch to prevent nested relationship query failures
-      const { data: allocation, error: allocError } = await supabase
+      const { data: allocation, error: simpleAllocError } = await supabase
         .from('room_allocations')
         .select('*')
         .eq('student_id', studentRecord!.id)
         .eq('active', true)
         .maybeSingle();
 
-      if (allocError) {
-        console.error("Error fetching active allocation directly:", allocError);
-        throw allocError;
+      if (simpleAllocError) {
+        console.error("Error fetching active allocation directly:", simpleAllocError);
+        throw simpleAllocError;
       }
 
       if (!allocation) return null;
@@ -173,29 +173,40 @@ export default function RoomRequestPage() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch rooms without relying on denormalized occupancy
+      const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
-        .select('id, hostel_id, type, room_type, capacity, occupied_beds, occupied_count, occupancy, rent, room_number, facilities, available')
+        .select('id, hostel_id, type, room_type, capacity, rent, room_number, facilities, available')
         .eq('hostel_id', hostel!.id)
         .eq('available', true);
       
-      if (error) throw error;
+      if (roomsError) throw roomsError;
       
-      // Map schema columns
-      return (data ?? []).map((r: any) => {
-        const roomType = r.type || r.room_type || 'double';
-        const occupied = r.occupied_beds !== undefined && r.occupied_beds !== null
-          ? r.occupied_beds
-          : (r.occupied_count !== undefined && r.occupied_count !== null 
-            ? r.occupied_count 
-            : (r.occupancy !== undefined && r.occupancy !== null ? r.occupancy : 0));
-        return {
-          ...r,
-          room_type: roomType,
-          occupied_beds: occupied,
-          occupancy: occupied
-        };
-      });
+      // For each room, count active allocations to get real occupancy
+      const roomsWithRealOccupancy = await Promise.all(
+        (roomsData ?? []).map(async (room: any) => {
+          const { data: allocations, error: roomAllocError } = await supabase
+            .from('room_allocations')
+            .select('id')
+            .eq('room_id', room.id)
+            .eq('active', true);
+          
+          if (roomAllocError) {
+            console.error(`Error fetching allocations for room ${room.id}:`, roomAllocError);
+            return { ...room, occupied_beds: 0, occupancy: 0 };
+          }
+          
+          const occupiedCount = allocations?.length || 0;
+          return {
+            ...room,
+            room_type: room.type || room.room_type || 'double',
+            occupied_beds: occupiedCount,
+            occupancy: occupiedCount
+          };
+        })
+      );
+      
+      return roomsWithRealOccupancy;
     },
   });
 
@@ -316,30 +327,37 @@ export default function RoomRequestPage() {
       }
 
       // Check if student already has active allocation
-      const { data: activeAlloc, error: allocErr } = await supabase
+      const { data: activeAlloc, error: activeAllocErr } = await supabase
         .from('room_allocations')
         .select('id')
         .eq('student_id', studentRecord.id)
         .eq('active', true)
         .maybeSingle();
       
-      if (allocErr) throw allocErr;
+      if (activeAllocErr) throw activeAllocErr;
       if (activeAlloc) {
         throw new Error('You already have an active room allocation.');
       }
 
-      // Check room capacity in real-time
+      // Check room capacity in real-time using actual active allocations
       const { data: roomData, error: roomErr } = await supabase
         .from('rooms')
-        .select('capacity, occupied_count, occupancy')
+        .select('capacity')
         .eq('id', selectedRoom.id)
         .single();
       
       if (roomErr || !roomData) throw new Error('Room details not found.');
       const capacity = roomData.capacity ?? 0;
-      const occupied = roomData.occupied_count !== undefined && roomData.occupied_count !== null 
-        ? roomData.occupied_count 
-        : (roomData.occupancy ?? 0);
+      
+      // Count actual active allocations for this room
+      const { data: activeAllocations, error: roomCapacityErr } = await supabase
+        .from('room_allocations')
+        .select('id')
+        .eq('room_id', selectedRoom.id)
+        .eq('active', true);
+      
+      if (roomCapacityErr) throw roomCapacityErr;
+      const occupied = activeAllocations?.length ?? 0;
       
       if (occupied >= capacity) {
         throw new Error('This room is already at full capacity.');

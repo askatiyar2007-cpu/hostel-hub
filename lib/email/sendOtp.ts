@@ -36,12 +36,12 @@ export async function sendEmailOTP(email: string): Promise<{ success: boolean; m
       throw new Error(`Database error: ${dbError.message}`);
     }
 
-    // Dev logging
-    console.log(`[EMAIL OTP] OTP for ${cleanEmail} is: ${generatedOtp}`);
+    // Dev logging (DO NOT log actual OTP)
+    console.log('[EMAIL OTP] OTP sent successfully');
 
     return {
       success: true,
-      message: `Verification code generated successfully! (Dev mode testing code: ${generatedOtp})`,
+      message: `Verification code generated successfully!`,
       otp: generatedOtp
     };
   } catch (error) {

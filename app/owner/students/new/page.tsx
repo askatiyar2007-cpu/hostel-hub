@@ -5,15 +5,27 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import toast from 'react-hot-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/dashboard-shell';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function AssignStudentPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [invitationData, setInvitationData] = useState<{
+    student_name: string;
+    email: string;
+    hostel_name: string;
+    room_number: string;
+    invitation_url: string;
+    email_sent?: boolean;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     // Student Personal Info
@@ -90,37 +102,6 @@ export default function AssignStudentPage() {
   const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
   const isShared = selectedRoomObj ? selectedRoomObj.capacity > 1 : false;
 
-  // Simple mutation pattern without queryClient
-  const { mutate: assignStudent, isPending } = useMutation({
-    mutationFn: async (data: {
-      studentId: string;
-      roomId: string;
-      hostelId: string;
-      checkInDate: string;
-    }) => {
-      const { data: result, error } = await supabase.rpc('assign_student_to_room', {
-        p_student_id: data.studentId,
-        p_room_id: data.roomId,
-        p_hostel_id: data.hostelId,
-        p_start_date: data.checkInDate
-      });
-
-      if (error) throw new Error(error.message);
-
-      // Handle custom error fields inside the JSON response
-      if (result && typeof result === 'object') {
-        const resObj = result as any;
-        if (resObj.success === false) {
-          throw new Error(resObj.message || 'Failed to assign student');
-        }
-        if (resObj.error) {
-          throw new Error(resObj.error || 'Failed to assign student');
-        }
-      }
-      return result;
-    }
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -144,177 +125,84 @@ export default function AssignStudentPage() {
     setLoading(true);
 
     try {
-      // Find or Create Student Profile
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', formData.student_email.trim().toLowerCase())
-        .maybeSingle();
-
-      let profileId: string | null = null;
-
-      if (existingProfile) {
-        profileId = existingProfile.id;
-      } else {
-        // Create user in Auth (this triggers profiles creation in DB)
-        const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: formData.student_email.trim().toLowerCase(),
-          password: tempPassword,
-          options: {
-            data: {
-              full_name: formData.student_name,
-              role: 'student'
-            }
-          }
-        });
-
-        if (signUpError) {
-          const isAlreadyRegistered = signUpError.status === 422 || 
-                                      signUpError.message.toLowerCase().includes('already registered') || 
-                                      signUpError.message.toLowerCase().includes('already exists');
-          
-          if (isAlreadyRegistered) {
-            // Gracefully handle "User already registered" error by looking up profile again
-            const { data: retryProfile } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('email', formData.student_email.trim().toLowerCase())
-              .maybeSingle();
-
-            if (retryProfile) {
-              profileId = retryProfile.id;
-            } else {
-              throw new Error('This student email is already registered in the system, but RLS policies prevent retrieving their profile. Please ask the student to submit a room request first.');
-            }
-          } else {
-            throw new Error('Failed to create student account: ' + signUpError.message);
-          }
-        } else if (signUpData.user) {
-          // Fetch newly created profile
-          const { data: newProfile, error: queryProfileErr } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('email', formData.student_email.trim().toLowerCase())
-            .single();
-
-          if (queryProfileErr || !newProfile) {
-            throw new Error('Failed to retrieve new student profile from database. Please verify the profile exists or RLS permissions.');
-          }
-
-          profileId = newProfile.id;
-        } else {
-          throw new Error('Failed to register student user');
-        }
-      }
-
-      if (!profileId) {
-        throw new Error('Failed to resolve student profile');
-      }
-
-      // Ensure Student Record exists in public.students table
-      let studentId: string | null = null;
-      let { data: studentRecord } = await supabase
-        .from('students')
-        .select('id')
-        .eq('profile_id', profileId)
-        .maybeSingle();
-
-      if (studentRecord) {
-        studentId = studentRecord.id;
-      } else {
-        // Generate a new UUID client-side to bypass RLS select restrictions on insert returning
-        const generatedStudentId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
-          ? crypto.randomUUID() 
-          : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-              const r = Math.random() * 16 | 0;
-              const v = c === 'x' ? r : (r & 0x3 | 0x8);
-              return v.toString(16);
-            });
-
-        const { error: studentInsertErr } = await supabase
-          .from('students')
-          .insert({
-            id: generatedStudentId,
-            profile_id: profileId,
-            status: 'active'
-          });
-
-        if (studentInsertErr) {
-          // If the error is a duplicate key constraint violation, the record already exists
-          if (studentInsertErr.code === '23505') {
-            const { data: retryStudent } = await supabase
-              .from('students')
-              .select('id')
-              .eq('profile_id', profileId)
-              .maybeSingle();
-            
-            if (retryStudent) {
-              studentId = retryStudent.id;
-            } else {
-              throw new Error('Student record already exists for this profile, but RLS policies prevent retrieving it.');
-            }
-          } else {
-            throw new Error('Failed to create student record: ' + studentInsertErr.message);
-          }
-        } else {
-          studentId = generatedStudentId;
-        }
-      }
-
-      if (!studentId) {
-        throw new Error('Failed to associate student record (student ID is null)');
-      }
-
-      // Call assignStudent mutation with callbacks
-      assignStudent({
-        studentId: studentId,
-        roomId: formData.room_id,
-        hostelId: formData.hostel_id,
-        checkInDate: formData.start_date
-      }, {
-        onSuccess: async (assignResult: any) => {
-          try {
-            let allocationId: string | null = null;
-            let feesCount = 0;
-
-            if (assignResult && typeof assignResult === 'object') {
-              allocationId = assignResult.allocation_id;
-              feesCount = Number(assignResult.fees_count || assignResult.feesCount || 0);
-            }
-
-            if (!allocationId) {
-              throw new Error('Failed to retrieve allocation ID from response');
-            }
-
-            // Simplify booking_type to 'shared_bed' (no variation needed)
-            const { error: allocUpdateErr } = await supabase
-              .from('room_allocations')
-              .update({ booking_type: 'shared_bed' })
-              .eq('id', allocationId);
-            if (allocUpdateErr) console.error('Allocation update failed:', allocUpdateErr.message);
-
-            toast.success(`Student assigned with ${feesCount} fees`);
-            setTimeout(() => {
-              router.push('/owner/requests');
-            }, 1500);
-          } catch (err: any) {
-            console.error(err);
-            toast.error(err.message || 'An error occurred during allocation setup');
-            setLoading(false);
-          }
+      // Call the new secure API endpoint for manual assignment with invitation
+      const response = await fetch('/api/owner/students/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        onError: (error: any) => {
-          toast.error(error.message || 'An error occurred during student assignment');
-          setLoading(false);
-        }
+        body: JSON.stringify({
+          student_name: formData.student_name,
+          student_email: formData.student_email,
+          student_phone: formData.student_phone,
+          parent_name: formData.parent_name,
+          parent_phone: formData.parent_phone,
+          parent_email: formData.parent_email,
+          address: formData.address,
+          emergency_name: formData.emergency_name,
+          emergency_phone: formData.emergency_phone,
+          hostel_id: formData.hostel_id,
+          room_id: formData.room_id,
+          start_date: formData.start_date
+        }),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to assign student');
+      }
+
+      // Get hostel and room names for the success dialog
+      const selectedHostel = hostels.find(h => h.id === formData.hostel_id);
+      const selectedRoom = rooms.find(r => r.id === formData.room_id);
+
+      // Show success dialog with invitation URL
+      setInvitationData({
+        student_name: formData.student_name,
+        email: formData.student_email,
+        hostel_name: selectedHostel?.name || 'Selected Hostel',
+        room_number: selectedRoom?.room_number || 'Selected Room',
+        invitation_url: result.invitation_url
+      });
+      setShowSuccessDialog(true);
+      
+      // Show appropriate success message based on email status
+      if (result.email_sent) {
+        toast.success('Student assigned successfully! Invitation email sent.');
+      } else {
+        toast.success('Student assigned successfully! Please copy the invitation link manually.');
+      }
 
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'An error occurred during student assignment');
+    } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyLink = async () => {
+    if (!invitationData?.invitation_url) return;
+    
+    try {
+      await navigator.clipboard.writeText(invitationData.invitation_url);
+      toast.success('Invitation link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy link. Please copy manually.');
+    }
+  };
+
+  const handleOpenLink = () => {
+    if (!invitationData?.invitation_url) return;
+    window.open(invitationData.invitation_url, '_blank');
+  };
+
+  const handleDone = () => {
+    setShowSuccessDialog(false);
+    setInvitationData(null);
+    router.push('/owner/students');
   };
 
   return (
@@ -536,10 +424,10 @@ export default function AssignStudentPage() {
 
               <button
                 type="submit"
-                disabled={isPending || loading || !formData.hostel_id || !formData.room_id}
+                disabled={loading || !formData.hostel_id || !formData.room_id}
                 className="w-full mt-6 bg-primary hover:bg-primary/95 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isPending || loading ? (
+                {loading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     <span>Assigning Student...</span>
@@ -552,6 +440,90 @@ export default function AssignStudentPage() {
           </div>
         </div>
       </form>
+
+      {/* Success Dialog with Invitation Link */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              Student Assigned Successfully!
+            </DialogTitle>
+          </DialogHeader>
+          
+          {invitationData && (
+            <div className="space-y-4 py-4">
+              {invitationData.email_sent !== undefined && (
+                <div className={`flex items-center gap-2 p-3 rounded-lg ${invitationData.email_sent ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
+                  {invitationData.email_sent ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <span className="text-sm text-green-800">Invitation email sent successfully</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-5 w-5 text-amber-600" />
+                      <span className="text-sm text-amber-800">Email delivery failed. Please copy the link manually.</span>
+                    </>
+                  )}
+                </div>
+              )}
+              <div className="rounded-xl bg-muted/50 p-4 border border-border space-y-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Student</p>
+                  <p className="font-semibold text-foreground">{invitationData.student_name}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Email</p>
+                  <p className="font-semibold text-foreground">{invitationData.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Hostel</p>
+                  <p className="font-semibold text-foreground">{invitationData.hostel_name}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Room</p>
+                  <p className="font-semibold text-foreground">{invitationData.room_number}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Invitation Link</p>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={invitationData.invitation_url}
+                    className="flex-1 px-3 py-2 bg-muted border border-input rounded-lg text-xs text-muted-foreground outline-none"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className="px-3 py-2 bg-primary hover:bg-primary/95 text-white rounded-lg font-semibold text-xs transition-all flex items-center gap-1"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </button>
+                  <button
+                    onClick={handleOpenLink}
+                    className="px-3 py-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg font-semibold text-xs transition-all flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <button
+              onClick={handleDone}
+              className="w-full bg-primary hover:bg-primary/95 text-white py-2 px-4 rounded-xl font-bold text-sm transition-all"
+            >
+              Done
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }

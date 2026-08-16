@@ -102,14 +102,14 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; messag
       }
     }
 
-    // Dev logging
-    console.log(`[SMS OTP] OTP for ${cleanPhone} is: ${generatedOtp} (Provider: ${providerUsed})`);
+    // Dev logging (DO NOT log actual OTP)
+    console.log(`[SMS OTP] OTP sent successfully to ${cleanPhone} (Provider: ${providerUsed})`);
 
     return {
       success: true,
       message: smsSent 
         ? `Verification code sent to parent phone!` 
-        : `Verification code generated successfully! (Dev mode testing code: ${generatedOtp})`,
+        : `Verification code generated successfully!`,
       otp: generatedOtp
     };
   } catch (error) {

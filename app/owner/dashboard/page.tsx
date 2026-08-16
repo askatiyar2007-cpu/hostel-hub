@@ -56,6 +56,20 @@ export default function OwnerDashboard() {
     },
   });
 
+  const { data: allocations } = useQuery({
+    queryKey: ["owner-allocations", user?.id],
+    enabled: !!hostels?.length,
+    queryFn: async () => {
+      const ids = hostels!.map((h) => h.id);
+      const { data } = await supabase
+        .from("room_allocations")
+        .select("room_id")
+        .in("hostel_id", ids)
+        .eq("active", true);
+      return data ?? [];
+    },
+  });
+
   const { data: bills } = useQuery({
     queryKey: ["owner-bills", user?.id],
     enabled: !!hostels?.length,
@@ -66,7 +80,8 @@ export default function OwnerDashboard() {
     },
   });
 
-  const occupiedBeds = rooms?.reduce((s, r) => s + (r.occupancy ?? 0), 0) ?? 0;
+  // Calculate real occupancy from active allocations
+  const occupiedBeds = allocations?.length ?? 0;
   const totalBeds = rooms?.reduce((s, r) => s + (r.capacity ?? 0), 0) ?? 0;
   const pending = bills?.filter((b) => b.status === "pending").reduce((s, b) => s + Number(b.amount), 0) ?? 0;
   const collected = bills?.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.amount), 0) ?? 0;

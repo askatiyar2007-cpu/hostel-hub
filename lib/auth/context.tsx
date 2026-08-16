@@ -402,6 +402,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             '/owner/students',
             '/owner/settings',
             '/parent/dashboard',           // ← Parent pages - stay here
+            '/invite',                    // ← Invitation pages - stay here
           ];
 
           // Only redirect if on public pages
