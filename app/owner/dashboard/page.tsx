@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
@@ -297,7 +297,10 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Add a new hostel</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Add a new hostel</DialogTitle>
+          <DialogDescription>Enter the details for the new hostel you want to add.</DialogDescription>
+        </DialogHeader>
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
           <div><Label>Name</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -336,7 +339,10 @@ function AddRoomDialog({ hostelId, onCreated }: { hostelId: string; onCreated: (
         <Button size="sm" variant="ghost" className="h-7 text-xs"><Plus className="mr-1 h-3 w-3" /> Room</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Add room</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Add room</DialogTitle>
+          <DialogDescription>Enter the details for the new room you want to add to this hostel.</DialogDescription>
+        </DialogHeader>
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Room number</Label><Input required value={form.room_number} onChange={(e) => setForm({ ...form, room_number: e.target.value })} /></div>

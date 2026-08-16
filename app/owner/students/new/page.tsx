@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 
 type BookingType = 'shared_bed' | 'entire_room';
@@ -168,7 +168,8 @@ export default function AssignStudentPage() {
         hostel_name: selectedHostel?.name || 'Selected Hostel',
         room_number: selectedRoom?.room_number || 'Selected Room',
         invitation_url: result.invitation_url,
-        booking_type: formData.booking_type as BookingType
+        booking_type: formData.booking_type as BookingType,
+        email_sent: result.email_sent
       });
       setShowSuccessDialog(true);
       
@@ -208,6 +209,39 @@ export default function AssignStudentPage() {
     setShowSuccessDialog(false);
     setInvitationData(null);
     router.push('/owner/students');
+  };
+
+  const handleRetryEmail = async () => {
+    if (!invitationData) return;
+
+    try {
+      const response = await fetch('/api/owner/students/resend-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invitation_url: invitationData.invitation_url,
+          student_name: invitationData.student_name,
+          hostel_name: invitationData.hostel_name,
+          room_number: invitationData.room_number,
+          booking_type: invitationData.booking_type,
+          email: invitationData.email
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.success('Invitation email resent successfully!');
+        setInvitationData(prev => prev ? { ...prev, email_sent: true } : null);
+      } else {
+        toast.error(result.error || 'Failed to resend email');
+      }
+    } catch (err) {
+      console.error('Retry email error:', err);
+      toast.error('Failed to resend email. Please try again.');
+    }
   };
 
   return (
@@ -482,6 +516,9 @@ export default function AssignStudentPage() {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
               Student Assigned Successfully!
             </DialogTitle>
+            <DialogDescription>
+              Student has been assigned to the room. Share the invitation link with them to complete their registration.
+            </DialogDescription>
           </DialogHeader>
           
           {invitationData && (
@@ -552,12 +589,29 @@ export default function AssignStudentPage() {
           )}
 
           <DialogFooter>
-            <button
-              onClick={handleDone}
-              className="w-full bg-primary hover:bg-primary/95 text-white py-2 px-4 rounded-xl font-bold text-sm transition-all"
-            >
-              Done
-            </button>
+            {invitationData && invitationData.email_sent === false ? (
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={handleRetryEmail}
+                  className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground py-2 px-4 rounded-xl font-bold text-sm transition-all"
+                >
+                  Retry Email
+                </button>
+                <button
+                  onClick={handleDone}
+                  className="flex-1 bg-primary hover:bg-primary/95 text-white py-2 px-4 rounded-xl font-bold text-sm transition-all"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleDone}
+                className="w-full bg-primary hover:bg-primary/95 text-white py-2 px-4 rounded-xl font-bold text-sm transition-all"
+              >
+                Done
+              </button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
