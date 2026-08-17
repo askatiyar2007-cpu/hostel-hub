@@ -8,6 +8,7 @@ import {
   User, Lock, Bell, ShieldCheck, FileText, LogOut, 
   Building2, Calendar, CheckCircle2, ShieldAlert
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ import { useAuth } from '@/lib/auth/context';
 
 export default function StudentSettingsPage() {
   const { user, profile, signOut } = useAuth();
+  const router = useRouter();
 
   // Change Password Modal State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -114,8 +116,8 @@ export default function StudentSettingsPage() {
   // Change Password Mutation
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long.');
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters long.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -430,7 +432,19 @@ export default function StudentSettingsPage() {
 
             <form onSubmit={handleChangePassword} className="space-y-4 text-sm">
               <div className="space-y-1">
-                <Label htmlFor="old-pass">Current Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="old-pass">Current Password</Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPasswordModalOpen(false);
+                      router.push('/auth/forgot-password');
+                    }}
+                    className="text-xs text-primary hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
+                  >
+                    Forgot your current password?
+                  </button>
+                </div>
                 <Input 
                   id="old-pass" 
                   type="password" 
@@ -447,7 +461,7 @@ export default function StudentSettingsPage() {
                   id="new-pass" 
                   type="password" 
                   required 
-                  placeholder="Min. 6 characters"
+                  placeholder="Min. 8 characters"
                   value={newPassword} 
                   onChange={(e) => setNewPassword(e.target.value)} 
                 />
@@ -468,7 +482,7 @@ export default function StudentSettingsPage() {
               <div className="rounded-xl bg-muted/30 p-3 border space-y-1 text-xs text-muted-foreground">
                 <span className="font-bold text-foreground block uppercase text-[9px] tracking-wider font-display">Password Requirements</span>
                 <p className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3 w-3 text-primary shrink-0" /> Minimum 6 characters
+                  <CheckCircle2 className="h-3 w-3 text-primary shrink-0" /> Minimum 8 characters
                 </p>
                 <p className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3 w-3 text-primary shrink-0" /> Numbers, symbols, and uppercase letters recommended

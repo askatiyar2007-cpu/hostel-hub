@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import type { Hostel } from '@/types/database';
-import { sendEmailOTP } from '@/lib/email/sendOtp';
 
 type Step = 'hostel' | 'room' | 'details' | 'otp' | 'done';
 
@@ -238,167 +237,93 @@ export default function RoomRequestPage() {
   }, [hostelIdInput]);
 
   const sendOtp = useCallback(async () => {
-    if (!details.parent_email.trim()) {
-      toast.error('Parent email address is required');
+    if (!selectedRoom?.id || !hostel?.id) {
+      toast.error('Please select a room first');
       return;
     }
+
     setOtpLoading(true);
     try {
-      const res = await sendEmailOTP(details.parent_email);
-      if (res.success) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const response = await fetch('/api/room-request/request-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          hostelId: hostel.id,
+          roomId: selectedRoom.id,
+          bookingType,
+          details
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
         setOtpSent(true);
-        toast.success(res.message, {
-          duration: 8000
-        });
+        toast.success(data.message, { duration: 8000 });
       } else {
-        toast.error(res.message);
+        toast.error(data.error || 'Failed to send verification code');
       }
     } catch (e: any) {
       toast.error(e.message || 'Failed to send verification code');
     } finally {
       setOtpLoading(false);
     }
-  }, [details.parent_email]);
+  }, [hostel, selectedRoom, bookingType, details]);
 
   const verifyOtp = useCallback(async () => {
-    if (!details.parent_email.trim() || !otp.trim()) return;
+    if (!otp.trim()) {
+      toast.error('Please enter the verification code');
+      return;
+    }
+
     setOtpLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('email_verifications')
-        .select('*')
-        .eq('email', details.parent_email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (error || !data) {
-        throw new Error('Verification record not found. Please resend code.');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Authentication required');
+        return;
       }
 
-      if (data.otp !== otp.trim()) {
-        throw new Error('Invalid code');
+      const response = await fetch('/api/room-request/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          email: profile?.email,
+          otp: otp.trim(),
+          hostelId: hostel?.id,
+          roomId: selectedRoom?.id,
+          bookingType,
+          details
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Room request submitted successfully!');
+        qc.invalidateQueries({ queryKey: ['my-room-requests'] });
+        setStep('done');
+      } else {
+        toast.error(data.error || 'Failed to verify code');
       }
-
-      if (new Date() > new Date(data.expires_at)) {
-        throw new Error('Code expired. Please resend a new code.');
-      }
-
-      const { error: updateError } = await supabase
-        .from('email_verifications')
-        .update({ verified: true })
-        .eq('email', details.parent_email.trim().toLowerCase());
-
-      if (updateError) throw updateError;
-
-      toast.success('Email verified successfully!');
-      submitMutation.mutate();
     } catch (e: any) {
-      toast.error(e.message || 'Failed to verify email');
+      toast.error(e.message || 'Failed to verify code');
     } finally {
       setOtpLoading(false);
     }
-  }, [details.parent_email, otp]);
-
-  const submitMutation = useMutation({
-    instanceId: 'submit-request-mutation',
-    mutationFn: async () => {
-      if (!studentRecord?.id || !hostel?.id || !selectedRoom?.id || !details.parent_email.trim()) throw new Error('Missing data');
-      
-      // Perform security check
-      const { data: verifCheck, error: checkError } = await supabase
-        .from('email_verifications')
-        .select('verified')
-        .eq('email', details.parent_email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (checkError || !verifCheck || !verifCheck.verified) {
-        throw new Error('Parent email must be verified before submitting request.');
-      }
-
-      // Check if another pending request exists
-      const { data: pendingRequests, error: pendingErr } = await supabase
-        .from('room_requests')
-        .select('id')
-        .eq('student_id', studentRecord.id)
-        .eq('status', 'pending');
-      
-      if (pendingErr) throw pendingErr;
-      if (pendingRequests && pendingRequests.length > 0) {
-        throw new Error('You already have a pending room request.');
-      }
-
-      // Check if student already has active allocation
-      const { data: activeAlloc, error: activeAllocErr } = await supabase
-        .from('room_allocations')
-        .select('id')
-        .eq('student_id', studentRecord.id)
-        .eq('active', true)
-        .maybeSingle();
-      
-      if (activeAllocErr) throw activeAllocErr;
-      if (activeAlloc) {
-        throw new Error('You already have an active room allocation.');
-      }
-
-      // Check room capacity in real-time using actual active allocations
-      const { data: roomData, error: roomErr } = await supabase
-        .from('rooms')
-        .select('capacity')
-        .eq('id', selectedRoom.id)
-        .single();
-      
-      if (roomErr || !roomData) throw new Error('Room details not found.');
-      const capacity = roomData.capacity ?? 0;
-      
-      // Count actual active allocations for this room
-      const { data: activeAllocations, error: roomCapacityErr } = await supabase
-        .from('room_allocations')
-        .select('id')
-        .eq('room_id', selectedRoom.id)
-        .eq('active', true);
-      
-      if (roomCapacityErr) throw roomCapacityErr;
-      const occupied = activeAllocations?.length ?? 0;
-      
-      if (occupied >= capacity) {
-        throw new Error('This room is already at full capacity.');
-      }
-
-      const { error } = await supabase.from('room_requests').insert({
-        student_id: studentRecord.id,
-        hostel_id: hostel.id,
-        room_id: selectedRoom.id,
-        status: 'pending',
-        booking_type: bookingType,
-
-        // Student Personal Details
-        student_name: details.student_name,
-        student_email: details.student_email.trim().toLowerCase(),
-        student_phone: details.student_phone,
-
-        // Address
-        address: details.address,
-
-        // Parent / Guardian Details
-        parent_name: details.parent_name,
-        parent_phone: details.parent_phone,
-        parent_email: details.parent_email.trim().toLowerCase(),
-
-        // Emergency Contact
-        emergency_contact: `${details.emergency_name} - ${details.emergency_phone}`,
-        emergency_contact_name: details.emergency_name,
-        emergency_contact_phone: details.emergency_phone,
-        created_at: new Date().toISOString()
-      });
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success('Room request submitted successfully!');
-      qc.invalidateQueries({ queryKey: ['my-room-requests'] });
-      setStep('done');
-    },
-    onError: (e: Error) => toast.error(e.message),
-  } as any);
+  }, [otp, profile, hostel, selectedRoom, bookingType, details, qc]);
 
   const StatusBadge = ({ status }: { status: string }) => {
     const map: Record<string, { cls: string; label: string }> = {
@@ -919,7 +844,7 @@ export default function RoomRequestPage() {
                 disabled={isRoomFull}
                 className="rounded-full px-6 bg-primary hover:bg-primary/95 text-white font-bold"
               >
-                {detailsSubStep === 5 ? (isRoomFull ? 'Room Full' : 'Verify Parent Email') : 'Next / Continue'}
+                {detailsSubStep === 5 ? (isRoomFull ? 'Room Full' : 'Verify Your Email') : 'Next / Continue'}
               </Button>
             </div>
           </div>
@@ -930,14 +855,14 @@ export default function RoomRequestPage() {
         <div className="mx-auto max-w-sm">
           <div className="mb-5 flex items-center gap-3">
             <button onClick={() => setStep('details')} className="text-sm text-muted-foreground hover:text-foreground">&larr; Back</button>
-            <h2 className="text-lg font-bold font-display">Verify Parent Email</h2>
+            <h2 className="text-lg font-bold font-display">Verify Your Email</h2>
           </div>
           <div className="rounded-2xl border border-border bg-card p-8 shadow-sm space-y-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mx-auto">
               <ShieldCheck className="h-7 w-7 text-primary" />
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              {otpSent ? `Verification code sent to ${details.parent_email}. Check your email or copy from the notification.` : 'Sending verification code...'}
+              {otpSent ? `Verification code sent to your registered email. Check your email for the code.` : 'Sending verification code...'}
             </p>
             <div>
               <Label htmlFor="otp">Enter Verification Code</Label>
@@ -951,9 +876,9 @@ export default function RoomRequestPage() {
              <Button
               className="w-full rounded-full"
               onClick={verifyOtp}
-              disabled={otpLoading || submitMutation.isPending || !otp.trim() || isRoomFull}
+              disabled={otpLoading || otp.length !== 6}
             >
-              {isRoomFull ? 'Room Full' : (submitMutation.isPending ? 'Submitting Request...' : 'Verify & Submit Request')}
+              {otpLoading ? 'Verifying...' : 'Verify & Submit Request'}
             </Button>
             <button
               onClick={sendOtp}

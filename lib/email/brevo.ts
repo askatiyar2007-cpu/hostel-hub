@@ -12,6 +12,17 @@ interface SendStudentInvitationEmailParams {
   bookingType?: 'shared_bed' | 'entire_room';
 }
 
+interface SendPasswordResetOtpEmailParams {
+  email: string;
+  otp: string;
+}
+
+interface SendRoomRequestOtpEmailParams {
+  email: string;
+  studentName: string;
+  otp: string;
+}
+
 interface BrevoEmailResponse {
   success: boolean;
   error?: string;
@@ -243,6 +254,354 @@ export async function sendStudentInvitationEmail({
 
   } catch (error) {
     console.error('Error sending Brevo email:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    };
+  }
+}
+
+export async function sendPasswordResetOtpEmail({
+  email,
+  otp
+}: SendPasswordResetOtpEmailParams): Promise<BrevoEmailResponse> {
+  const apiKey = process.env.BREVO_API_KEY;
+  
+  if (!apiKey) {
+    console.error('BREVO_API_KEY not configured in environment variables');
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  try {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset Code</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            padding: 30px;
+            text-align: center;
+          }
+          .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+          }
+          .content {
+            padding: 30px;
+          }
+          .greeting {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 20px;
+          }
+          .message {
+            color: #475569;
+            margin-bottom: 20px;
+          }
+          .otp-container {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+          }
+          .otp-code {
+            font-size: 32px;
+            font-weight: 700;
+            color: #f97316;
+            letter-spacing: 8px;
+            margin: 10px 0;
+          }
+          .footer {
+            background-color: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+          }
+          .warning {
+            background-color: #fff7ed;
+            border-left: 4px solid #f97316;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+          }
+          .warning p {
+            margin: 0;
+            color: #9a3412;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🏠 HostelHub</h1>
+          </div>
+          <div class="content">
+            <p class="greeting">Hello,</p>
+            <p class="message">
+              We received a request to reset your HostelHub password.
+            </p>
+            
+            <div class="otp-container">
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">Your verification code is:</p>
+              <div class="otp-code">${otp}</div>
+            </div>
+
+            <div class="warning">
+              <p>⚠️ This code expires in 10 minutes. Do not share this code with anyone.</p>
+            </div>
+
+            <p class="message">
+              If you did not request a password reset, you can safely ignore this email.
+            </p>
+          </div>
+          <div class="footer">
+            <p>If you have any questions, please contact our support team.</p>
+            <p>&copy; ${new Date().getFullYear()} HostelHub. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': apiKey
+      },
+      body: JSON.stringify({
+        sender: {
+          name: 'HostelHub',
+          email: 'askatiyar2007@gmail.com'
+        },
+        to: [{
+          email: email
+        }],
+        subject: "HostelHub Password Reset Code",
+        htmlContent: htmlContent,
+        textContent: `Hello,\n\nWe received a request to reset your HostelHub password.\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you did not request a password reset, you can safely ignore this email.\n\nDo not share this code with anyone.\n\nRegards,\nHostelHub Team\n\n© ${new Date().getFullYear()} HostelHub. All rights reserved.`
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Brevo API error:', data);
+      return { 
+        success: false, 
+        error: data.message || 'Failed to send email via Brevo' 
+      };
+    }
+
+    console.log('Password reset OTP email sent successfully');
+    return { 
+      success: true, 
+      messageId: data.messageId 
+    };
+
+  } catch (error) {
+    console.error('Error sending password reset OTP email:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    };
+  }
+}
+
+export async function sendRoomRequestOtpEmail({
+  email,
+  studentName,
+  otp
+}: SendRoomRequestOtpEmailParams): Promise<BrevoEmailResponse> {
+  const apiKey = process.env.BREVO_API_KEY;
+  
+  if (!apiKey) {
+    console.error('BREVO_API_KEY not configured in environment variables');
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  try {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Room Request Verification Code</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            padding: 30px;
+            text-align: center;
+          }
+          .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+          }
+          .content {
+            padding: 30px;
+          }
+          .greeting {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 20px;
+          }
+          .message {
+            color: #475569;
+            margin-bottom: 20px;
+          }
+          .otp-container {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+          }
+          .otp-code {
+            font-size: 32px;
+            font-weight: 700;
+            color: #f97316;
+            letter-spacing: 8px;
+            margin: 10px 0;
+          }
+          .footer {
+            background-color: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+          }
+          .warning {
+            background-color: #fff7ed;
+            border-left: 4px solid #f97316;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+          }
+          .warning p {
+            margin: 0;
+            color: #9a3412;
+            font-size: 14px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🏠 HostelHub</h1>
+          </div>
+          <div class="content">
+            <p class="greeting">Hello ${studentName},</p>
+            <p class="message">
+              You are requesting a room through HostelHub.
+            </p>
+            
+            <div class="otp-container">
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">Your verification code is:</p>
+              <div class="otp-code">${otp}</div>
+            </div>
+
+            <div class="warning">
+              <p>⚠️ This code expires in 10 minutes. Enter this code in HostelHub to verify and submit your room request.</p>
+            </div>
+
+            <p class="message">
+              If you did not request a room, please ignore this email.
+            </p>
+          </div>
+          <div class="footer">
+            <p>If you have any questions, please contact your hostel owner directly.</p>
+            <p>&copy; ${new Date().getFullYear()} HostelHub. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': apiKey
+      },
+      body: JSON.stringify({
+        sender: {
+          name: 'HostelHub',
+          email: 'askatiyar2007@gmail.com'
+        },
+        to: [{
+          email: email,
+          name: studentName
+        }],
+        subject: "HostelHub Room Request Verification Code",
+        htmlContent: htmlContent,
+        textContent: `Hello ${studentName},\n\nYou are requesting a room through HostelHub.\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nEnter this code in HostelHub to verify and submit your room request.\n\nIf you did not request a room, please ignore this email.\n\nRegards,\nHostelHub Team\n\n© ${new Date().getFullYear()} HostelHub. All rights reserved.`
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Brevo API error:', data);
+      return { 
+        success: false, 
+        error: data.message || 'Failed to send email via Brevo' 
+      };
+    }
+
+    console.log('Room request OTP email sent successfully');
+    return { 
+      success: true, 
+      messageId: data.messageId 
+    };
+
+  } catch (error) {
+    console.error('Error sending room request OTP email:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
