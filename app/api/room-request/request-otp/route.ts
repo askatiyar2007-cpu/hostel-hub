@@ -1,32 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { sendRoomRequestOtpEmail } from '@/lib/email/brevo';
 
 export async function POST(req: NextRequest) {
   try {
     const { hostelId, roomId, bookingType, details } = await req.json();
 
-    // Get authenticated user from session
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    // Create Supabase client with cookies for authentication
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Get session from cookies
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseServer.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 }
-      );
-    }
+    const user = session.user;
 
     // Get student profile
-    const { data: student, error: studentError } = await supabaseServer
+    const { data: student, error: studentError } = await supabase
       .from('students')
       .select('id, profiles(full_name, email)')
       .eq('profile_id', user.id)
@@ -50,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call RPC to request OTP
-    const { data, error } = await supabaseServer.rpc('request_otp', {
+    const { data, error } = await supabase.rpc('request_otp', {
       p_email: studentEmail,
       p_purpose: 'room_request_verification',
       p_user_id: user.id

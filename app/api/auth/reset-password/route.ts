@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
@@ -32,8 +31,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Create Supabase client with anon key for RPC call
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
     // Call RPC to authorize password reset
-    const { data, error } = await supabaseServer.rpc('reset_password_with_token', {
+    const { data, error } = await supabase.rpc('reset_password_with_token', {
       p_reset_token: resetToken
     });
 

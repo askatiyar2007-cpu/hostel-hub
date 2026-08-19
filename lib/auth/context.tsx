@@ -324,38 +324,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const googleAuthIntent = typeof window !== 'undefined' ? sessionStorage.getItem('googleAuthIntent') : null;
         if (googleAuthIntent === 'signup') {
-          // Check if profile exists before setting user or profile state in React
+          // Check if profile exists and if account is complete before setting user or profile state in React
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, password_set')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
           if (profileData) {
-            if (rejectionInProgressRef.current) {
-              console.log(`[${time}] [AuthProvider onAuthStateChange] Rejection already in progress, skipping duplicate flow`);
+            // Check if this is a complete account (has password_set = true and appropriate role records)
+            let isCompleteAccount = false;
+            
+            if (profileData.password_set) {
+              // Check role-specific records exist
+              if (profileData.role === 'student') {
+                const { data: student } = await supabase
+                  .from('students')
+                  .select('id')
+                  .eq('profile_id', profileData.id)
+                  .maybeSingle();
+                isCompleteAccount = !!student;
+              } else if (profileData.role && profileData.role !== 'student') {
+                // For owner/admin, having a role and password_set is sufficient
+                isCompleteAccount = true;
+              }
+            }
+
+            if (isCompleteAccount) {
+              // This is an existing complete account - treat as login, not signup
+              if (rejectionInProgressRef.current) {
+                console.log(`[${time}] [AuthProvider onAuthStateChange] Rejection already in progress, skipping duplicate flow`);
+                return;
+              }
+
+              console.log(`[${time}] [AuthProvider onAuthStateChange] Google login with existing complete account detected - treating as login`);
+              rejectionInProgressRef.current = true;
+              rejectedGoogleSignupRef.current = true;
+
+              sessionStorage.removeItem('googleAuthIntent');
+
+              const { error: signOutError } = await supabase.auth.signOut();
+              if (signOutError) {
+                console.error(`[${time}] [AuthProvider onAuthStateChange] Failed to sign out rejected signup session:`, signOutError);
+              } else {
+                console.log(`[${time}] [AuthProvider onAuthStateChange] Rejected signup session signed out successfully`);
+              }
+
+              if (isMounted) {
+                setUser(null);
+                setProfile(null);
+                setExistingGoogleSignupRejected(true);
+              }
               return;
             }
-
-            console.log(`[${time}] [AuthProvider onAuthStateChange] Signup with existing Google account detected BEFORE setting state - rejecting`);
-            rejectionInProgressRef.current = true;
-            rejectedGoogleSignupRef.current = true;
-
-            sessionStorage.removeItem('googleAuthIntent');
-
-            const { error: signOutError } = await supabase.auth.signOut();
-            if (signOutError) {
-              console.error(`[${time}] [AuthProvider onAuthStateChange] Failed to sign out rejected signup session:`, signOutError);
-            } else {
-              console.log(`[${time}] [AuthProvider onAuthStateChange] Rejected signup session signed out successfully`);
-            }
-
-            if (isMounted) {
-              setUser(null);
-              setProfile(null);
-              setExistingGoogleSignupRejected(true);
-            }
-            return;
+            // If profile exists but account is incomplete, continue with signup flow
+            console.log(`[${time}] [AuthProvider onAuthStateChange] Profile exists but account incomplete - continuing with signup`);
           }
         }
 
@@ -552,16 +575,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log(`[${timestamp}] [signUp] Registering user: ${email} with role: ${role}`);
     isEmailSigningUpRef.current = true;
     try {
-      // Check if email already exists in profiles table
+      // Check if email already exists in profiles table with a complete account
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('email')
+        .select('id, role, password_set')
         .eq('email', email)
         .maybeSingle();
 
       if (existingProfile) {
-        console.log(`[${timestamp}] [signUp] Account already exists with email: ${email}`);
-        throw new Error('Account already exists. Please login instead.');
+        // Check if this is a complete account
+        let isCompleteAccount = false;
+        
+        if (existingProfile.password_set) {
+          if (existingProfile.role === 'student') {
+            const { data: student } = await supabase
+              .from('students')
+              .select('id')
+              .eq('profile_id', existingProfile.id)
+              .maybeSingle();
+            isCompleteAccount = !!student;
+          } else if (existingProfile.role && existingProfile.role !== 'student') {
+            isCompleteAccount = true;
+          }
+        }
+
+        if (isCompleteAccount) {
+          console.log(`[${timestamp}] [signUp] Complete account already exists with email: ${email}`);
+          throw new Error('Account already exists. Please login instead.');
+        }
+        
+        // If profile exists but account is incomplete, continue to complete the signup
+        console.log(`[${timestamp}] [signUp] Incomplete profile exists for email: ${email} - completing signup`);
       }
 
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -581,7 +625,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle case where Supabase auth already has this email
         if (signUpError.message.includes('already registered') || signUpError.status === 400) {
           console.log(`[${timestamp}] [signUp] Email already registered in Supabase auth: ${email}`);
-          throw new Error('Account already exists. Please login instead.');
+          
+          // Check if this might be a Google account
+          throw new Error('This email is already registered. If you signed up with Google, please use Google login instead.');
         }
         throw signUpError;
       }
@@ -590,28 +636,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log(`[${timestamp}] [signUp] Auth user record created. ID: ${authData.user.id}`);
 
-      // Create profile in profiles table with explicit role
+      // Create profile in profiles table with explicit role (idempotent)
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           user_id: authData.user.id,
           full_name: fullName,
           email,
           phone_number: phone,
           role,
+          password_set: true,
+        }, {
+          onConflict: 'user_id'
         });
 
       if (profileError) {
-        if (profileError.code !== '23505') {
-          console.error(`[${timestamp}] [signUp] Profile insertion error:`, profileError.message);
-          throw profileError;
-        }
-        console.log(`[${timestamp}] [signUp] Profile record already existed (trigger handled)`);
-      } else {
-        console.log(`[${timestamp}] [signUp] Profile record created successfully`);
+        console.error(`[${timestamp}] [signUp] Profile upsert error:`, profileError.message);
+        throw profileError;
       }
+      console.log(`[${timestamp}] [signUp] Profile record created/updated successfully`);
 
-      // Fetch newly created profile context
+      // Fetch profile context
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')

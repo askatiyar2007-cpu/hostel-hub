@@ -1,31 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
   try {
     const { email, otp, hostelId, roomId, bookingType, details } = await req.json();
 
-    // Get authenticated user from session
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    // Create Supabase client with cookies for authentication
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Get session from cookies
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseServer.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 }
-      );
-    }
+    const user = session.user;
 
     // Get student profile
-    const { data: student, error: studentError } = await supabaseServer
+    const { data: student, error: studentError } = await supabase
       .from('students')
       .select('id, profiles(email)')
       .eq('profile_id', user.id)
@@ -48,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify OTP
-    const { data, error } = await supabaseServer.rpc('verify_otp', {
+    const { data, error } = await supabase.rpc('verify_otp', {
       p_email: studentEmail,
       p_otp: otp,
       p_purpose: 'room_request_verification'
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Revalidate room availability before creating request
-    const { data: roomData, error: roomError } = await supabaseServer
+    const { data: roomData, error: roomError } = await supabase
       .from('rooms')
       .select('capacity')
       .eq('id', roomId)
@@ -84,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check room capacity
-    const { data: activeAllocations, error: allocationError } = await supabaseServer
+    const { data: activeAllocations, error: allocationError } = await supabase
       .from('room_allocations')
       .select('id')
       .eq('room_id', roomId)
@@ -106,7 +111,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for duplicate pending requests
-    const { data: pendingRequests, error: pendingError } = await supabaseServer
+    const { data: pendingRequests, error: pendingError } = await supabase
       .from('room_requests')
       .select('id')
       .eq('student_id', student.id)
@@ -127,7 +132,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create room request
-    const { error: insertError } = await supabaseServer.from('room_requests').insert({
+    const { error: insertError } = await supabase.from('room_requests').insert({
       student_id: student.id,
       hostel_id: hostelId,
       room_id: roomId,

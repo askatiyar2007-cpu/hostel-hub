@@ -172,7 +172,7 @@ export default function RoomRequestPage() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      // Fetch rooms without relying on denormalized occupancy
+      // Fetch rooms from rooms table
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('id, hostel_id, type, room_type, capacity, rent, room_number, facilities, available')
@@ -181,18 +181,23 @@ export default function RoomRequestPage() {
       
       if (roomsError) throw roomsError;
       
-      // For each room, count active allocations to get real occupancy
+      // Calculate real occupancy from room_allocations (authoritative source of truth)
       const roomsWithRealOccupancy = await Promise.all(
         (roomsData ?? []).map(async (room: any) => {
-          const { data: allocations, error: roomAllocError } = await supabase
+          const { data: allocations, error: allocationError } = await supabase
             .from('room_allocations')
             .select('id')
             .eq('room_id', room.id)
             .eq('active', true);
           
-          if (roomAllocError) {
-            console.error(`Error fetching allocations for room ${room.id}:`, roomAllocError);
-            return { ...room, occupied_beds: 0, occupancy: 0 };
+          if (allocationError) {
+            console.error(`Error fetching allocations for room ${room.id}:`, allocationError);
+            return {
+              ...room,
+              room_type: room.type || room.room_type || 'double',
+              occupied_beds: 0,
+              occupancy: 0
+            };
           }
           
           const occupiedCount = allocations?.length || 0;
