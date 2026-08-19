@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
@@ -31,20 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create Supabase client with anon key for RPC call
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    // Call RPC to authorize password reset
-    const { data, error } = await supabase.rpc('reset_password_with_token', {
+    // Call RPC to authorize password reset using service role
+    const { data, error } = await supabaseServer.rpc('reset_password_with_token', {
       p_reset_token: resetToken
     });
 
@@ -71,19 +59,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use service role client to update password (strictly server-side)
-    const supabaseService = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    const { error: updateError } = await supabaseService.auth.admin.updateUserById(
+    const { error: updateError } = await supabaseServer.auth.admin.updateUserById(
       userId,
       { password: newPassword }
     );

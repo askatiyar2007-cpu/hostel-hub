@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseServer } from '@/lib/supabase/server';
 import { sendPasswordResetOtpEmail } from '@/lib/email/brevo';
 
 export async function POST(req: NextRequest) {
@@ -23,20 +23,8 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Create Supabase client with anon key (unauthenticated endpoint)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    // Call RPC to request OTP (handles email enumeration internally)
-    const { data, error } = await supabase.rpc('request_otp', {
+    // Call RPC to request OTP (handles email enumeration internally) using service role to grant permissions
+    const { data, error } = await supabaseServer.rpc('request_otp', {
       p_email: normalizedEmail,
       p_purpose: 'password_reset',
       p_user_id: null

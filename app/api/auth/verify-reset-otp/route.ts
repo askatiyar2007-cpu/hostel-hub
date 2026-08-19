@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseServer } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
@@ -22,20 +22,8 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Create Supabase client with anon key (unauthenticated endpoint)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    // Call RPC to verify OTP
-    const { data, error } = await supabase.rpc('verify_otp', {
+    // Call RPC to verify OTP using service role
+    const { data, error } = await supabaseServer.rpc('verify_otp', {
       p_email: normalizedEmail,
       p_otp: otp.trim(),
       p_purpose: 'password_reset'

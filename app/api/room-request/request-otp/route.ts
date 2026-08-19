@@ -22,21 +22,37 @@ export async function POST(req: NextRequest) {
     const user = session.user;
 
     // Get student profile
-    const { data: student, error: studentError } = await supabase
-      .from('students')
-      .select('id, profiles(full_name, email)')
-      .eq('profile_id', user.id)
-      .single();
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    if (studentError || !student) {
+    if (profileError || !profile) {
+      console.error('Profile not found for user:', user.id, profileError);
       return NextResponse.json(
         { error: 'Student profile not found' },
         { status: 404 }
       );
     }
 
-    const studentEmail = (student.profiles as any)?.email;
-    const studentName = (student.profiles as any)?.full_name;
+    // Get student record
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('profile_id', profile.id)
+      .maybeSingle();
+
+    if (studentError || !student) {
+      console.error('Student record not found for profile:', profile.id, studentError);
+      return NextResponse.json(
+        { error: 'Student record not found' },
+        { status: 404 }
+      );
+    }
+
+    const studentEmail = profile.email;
+    const studentName = profile.full_name;
 
     if (!studentEmail) {
       return NextResponse.json(

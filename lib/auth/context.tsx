@@ -770,12 +770,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] [setPassword] Initiating password update...`);
     try {
+      if (!user) throw new Error('No authenticated user session found');
       const { error } = await supabase.auth.updateUser({ 
         password,
         data: { password_set: true }
       });
       if (error) throw error;
-      console.log(`[${timestamp}] [setPassword] Password updated successfully with metadata`);
+
+      // Update public.profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ password_set: true })
+        .eq('user_id', user.id);
+
+      if (profileError) {
+        console.error(`[${timestamp}] [setPassword] Profile update error:`, profileError.message);
+      }
+
+      console.log(`[${timestamp}] [setPassword] Password updated successfully with metadata and profile`);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Password update failed';
       console.error(`[${timestamp}] [setPassword] Error during password update:`, errMsg);
@@ -816,11 +828,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] [resetPassword] Initiating password reset...`);
     try {
+      if (!user) throw new Error('No authenticated user session found');
       const { error } = await supabase.auth.updateUser({ 
         password,
         data: { password_set: true }
       });
       if (error) throw error;
+
+      // Update public.profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ password_set: true })
+        .eq('user_id', user.id);
+
+      if (profileError) {
+        console.error(`[${timestamp}] [resetPassword] Profile update error:`, profileError.message);
+      }
+
       console.log(`[${timestamp}] [resetPassword] Password reset successfully`);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Password reset failed';

@@ -69,7 +69,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
       console.log(`[${timestamp}] [OAUTH CALLBACK] Checking profile`);
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id, user_id, role, email')
+        .select('id, user_id, role, email, password_set')
         .eq('user_id', currentUser.id)
         .maybeSingle();
 
@@ -97,7 +97,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
 
         // Existing user - check completion status
         console.log(`[${timestamp}] [OAUTH CALLBACK] Role: ${existingProfile.role}`);
-        const password_set = currentUser?.user_metadata?.password_set === true;
+        const password_set = existingProfile?.password_set === true || currentUser?.user_metadata?.password_set === true;
         let hasRole = !!(existingProfile.role) || currentUser?.user_metadata?.role_selected === true;
 
         // Additional check for students

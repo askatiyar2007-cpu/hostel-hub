@@ -24,7 +24,7 @@ export default function SetupPasswordPage() {
 
   // Check if password is already set, redirect to dashboard
   useEffect(() => {
-    if (user?.user_metadata?.password_set && profile?.role) {
+    if ((user?.user_metadata?.password_set || profile?.password_set) && profile?.role) {
       const redirectMap: Record<string, string> = {
         'owner': '/owner/dashboard',
         'student': '/student/dashboard',
