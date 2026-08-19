@@ -2,19 +2,23 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createServerClient as createSsrServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://pcwlceklvjuddghogfbf.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
 
 export const supabaseServer = createSupabaseClient(
   supabaseUrl,
-  supabaseServiceKey
+  supabaseServiceKey || supabaseKey
 );
 
 export function createServerClient() {
   return createSupabaseClient(
     supabaseUrl,
-    supabaseServiceKey
+    supabaseServiceKey || supabaseKey
   );
 }
 

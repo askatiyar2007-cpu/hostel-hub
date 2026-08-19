@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendRoomRequestOtpEmail } from '@/lib/email/brevo';
+import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
     const { hostelId, roomId, bookingType, details } = await req.json();
 
     // Create Supabase client with cookies for authentication
+    const cookieStore = cookies();
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         auth: {
-          autoRefreshToken: false,
-          persistSession: false
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false
         }
       }
     );
