@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { supabaseServer } from '@/lib/supabase/server';
 import { sendRoomRequestOtpEmail } from '@/lib/email/brevo';
 
 export async function POST(req: NextRequest) {
@@ -9,12 +9,14 @@ export async function POST(req: NextRequest) {
     const { hostelId, roomId, bookingType, details } = await req.json();
     console.log('[ROOM OTP] Request body validated:', { hostelId, roomId, bookingType });
 
-    // Create Supabase client with cookies for authentication
-    const supabase = createClient();
+    // Use service role client for RPC calls (same as forgot-password)
+    const supabase = supabaseServer;
     console.log('[ROOM OTP] Supabase client created');
 
-    // Get session from cookies
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get session from cookies using anon key SSR client for authentication check
+    const { createClient } = await import('@/lib/supabase/server');
+    const authClient = createClient();
+    const { data: { session }, error: sessionError } = await authClient.auth.getSession();
     console.log('[ROOM OTP] Session check completed:', { hasSession: !!session, sessionError: sessionError?.message });
 
     if (sessionError || !session) {
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
     const user = session.user;
     console.log('[ROOM OTP] Auth user found:', { userId: user.id, email: user.email });
 
-    // Get student profile
+    // Get student profile using service role client
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, email')
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get student record
+    // Get student record using service role client
     const { data: student, error: studentError } = await supabase
       .from('students')
       .select('id')
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     console.log('[ROOM OTP] Student data validated:', { email: studentEmail, name: studentName });
 
-    // Call RPC to request OTP
+    // Call RPC to request OTP using service role client
     console.log('[ROOM OTP] Calling request_otp RPC');
     const { data, error } = await supabase.rpc('request_otp', {
       p_email: studentEmail,

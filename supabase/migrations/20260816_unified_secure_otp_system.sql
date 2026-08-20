@@ -309,8 +309,8 @@ END;
 $$;
 
 -- 9. Grant execute permissions
-GRANT EXECUTE ON FUNCTION public.request_otp(TEXT, TEXT, UUID) TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION public.verify_otp(TEXT, TEXT, TEXT) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.request_otp(TEXT, TEXT, UUID) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.verify_otp(TEXT, TEXT, TEXT) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.reset_password_with_token(TEXT) TO service_role;
 
 -- 10. Create cleanup function for expired OTPs

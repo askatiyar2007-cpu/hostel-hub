@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { supabaseServer } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   try {
     const { email, otp, hostelId, roomId, bookingType, details } = await req.json();
 
-    // Create Supabase client with cookies for authentication
-    const supabase = createClient();
+    // Use service role client for RPC calls (same as forgot-password)
+    const supabase = supabaseServer;
 
-    // Get session from cookies
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get session from cookies using anon key SSR client for authentication check
+    const { createClient } = await import('@/lib/supabase/server');
+    const authClient = createClient();
+    const { data: { session }, error: sessionError } = await authClient.auth.getSession();
 
     if (sessionError || !session) {
       return NextResponse.json(
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     const user = session.user;
 
-    // Get student profile
+    // Get student profile using service role client
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, email')
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get student record
+    // Get student record using service role client
     const { data: student, error: studentError } = await supabase
       .from('students')
       .select('id')
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify OTP
+    // Verify OTP using service role client
     const { data, error } = await supabase.rpc('verify_otp', {
       p_email: studentEmail,
       p_otp: otp,
