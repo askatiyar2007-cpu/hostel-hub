@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 
 interface RoomWithHostel {
   id: string;
+  hostel_id: string;
   room_number: string;
   room_type: string;
   status: string;
@@ -19,11 +20,17 @@ interface RoomWithHostel {
   hostels: {
     name: string;
   };
+  room_allocations?: {
+    id: string;
+    active: boolean;
+  }[];
 }
 
 export default function OwnerRoomsPage() {
   const { profile } = useAuth();
   const [rooms, setRooms] = useState<RoomWithHostel[]>([]);
+  const [hostels, setHostels] = useState<{ id: string; name: string }[]>([]);
+  const [selectedHostel, setSelectedHostel] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
   const fetchRooms = useCallback(async () => {
@@ -31,7 +38,7 @@ export default function OwnerRoomsPage() {
     try {
       const { data, error } = await supabase
         .from('rooms')
-        .select('*, hostels!inner(name, owner_id)')
+        .select('*, hostels!inner(name, owner_id), room_allocations(id, active)')
         .eq('hostels.owner_id', profile.user_id);
 
       if (error) throw error;
@@ -44,8 +51,18 @@ export default function OwnerRoomsPage() {
   }, [profile?.user_id]);
 
   useEffect(() => {
+    async function fetchHostels() {
+      if (!profile?.user_id) return;
+      const { data } = await supabase
+        .from('hostels')
+        .select('id, name')
+        .eq('owner_id', profile.user_id)
+        .order('name');
+      setHostels(data || []);
+    }
+    fetchHostels();
     fetchRooms();
-  }, [fetchRooms]);
+  }, [profile?.user_id, fetchRooms]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this room? This will also delete all bed records associated with it.')) return;
@@ -65,33 +82,55 @@ export default function OwnerRoomsPage() {
     }
   };
 
+  const filteredRooms = rooms.filter(room => 
+    selectedHostel === 'all' || room.hostel_id === selectedHostel
+  );
+
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Rooms Management</h1>
           <p className="text-gray-500">Manage rooms and availability across your hostels</p>
         </div>
-        <Link href="/owner/rooms/new" className="btn-primary flex items-center space-x-2">
-          <Plus size={20} />
-          <span>Add Room</span>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <select 
+            value={selectedHostel}
+            onChange={(e) => setSelectedHostel(e.target.value)}
+            className="h-10 text-xs px-3 bg-white border border-gray-200 rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
+          >
+            <option value="all">All Hostels</option>
+            {hostels.map(h => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
+          <Link 
+            href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"} 
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus size={20} />
+            <span>Add Room</span>
+          </Link>
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center py-20 text-gray-500 font-medium">
           Loading rooms...
         </div>
-      ) : rooms.length === 0 ? (
+      ) : filteredRooms.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200">
            <p className="text-gray-400">No rooms found. Create your first room to get started.</p>
-           <Link href="/owner/rooms/new" className="text-blue-600 font-bold mt-2 inline-block hover:underline">
+           <Link 
+             href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"} 
+             className="text-blue-600 font-bold mt-2 inline-block hover:underline"
+           >
             Add Room →
            </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rooms.map((room) => (
+          {filteredRooms.map((room) => (
             <div key={room.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
@@ -134,9 +173,7 @@ export default function OwnerRoomsPage() {
                   <span className="font-semibold">{room.capacity} beds</span>
                 </div>
                 {(() => {
-                  const occupied = room.occupied_count !== undefined && room.occupied_count !== null 
-                    ? room.occupied_count 
-                    : (room.occupancy ?? 0);
+                  const occupied = room.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
                   const remaining = Math.max(0, room.capacity - occupied);
                   return (
                     <>
@@ -153,7 +190,7 @@ export default function OwnerRoomsPage() {
                 })()}
               </div>
 
-              <Link href={`/owner/rooms/${room.id}`} className="w-full btn-secondary py-2 flex items-center justify-center space-x-2">
+              <Link href={`/owner/rooms/edit/${room.id}`} className="w-full btn-secondary py-2 flex items-center justify-center space-x-2">
                 <span>View Details</span>
               </Link>
             </div>

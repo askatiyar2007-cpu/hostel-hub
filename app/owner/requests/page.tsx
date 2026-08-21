@@ -82,9 +82,11 @@ export default function OwnerRequestsPage() {
             occupancy,
             occupied_count,
             occupied_beds,
-            rent
+            rent,
+            room_allocations(id, active)
           ),
           hostels!inner(
+            id,
             name,
             owner_id
           )
@@ -165,7 +167,7 @@ export default function OwnerRequestsPage() {
           student_name,
           student_email,
           student_phone,
-          rooms!inner(id, room_number, capacity, occupancy, occupied_count, rent),
+          rooms!inner(id, room_number, capacity, occupancy, occupied_count, rent, room_allocations(id, active)),
           hostels!inner(id, name, owner_id)
         `)
         .eq('hostels.owner_id', user!.id)
@@ -325,6 +327,44 @@ export default function OwnerRequestsPage() {
     refetchOnWindowFocus: true
   });
 
+  // 2b. Fetch Owner's Hostels directly (source of truth)
+  const { data: ownerHostels } = useQuery({
+    queryKey: ['owner-hostels-list', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hostels')
+        .select('id, name')
+        .eq('owner_id', user!.id)
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // 2c. Fetch Owner's Rooms to build unique rooms filter list dynamically
+  const { data: ownerRooms } = useQuery({
+    queryKey: ['owner-rooms-list', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: hostelsData } = await supabase
+        .from('hostels')
+        .select('id')
+        .eq('owner_id', user!.id);
+      
+      const hostelIds = hostelsData?.map(h => h.id) || [];
+      if (hostelIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('id, room_number, hostel_id')
+        .in('hostel_id', hostelIds)
+        .order('room_number');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   // 3. Mutation: Approve Request
   const approveMutation = useMutation({
     mutationFn: async (req: any) => {
@@ -358,9 +398,8 @@ export default function OwnerRequestsPage() {
       
       return data;
     },
-    onSuccess: (data: any) => {
-      const feesCount = data?.fees_count || data?.feesCount || 0;
-      toast.success(`Request approved • ${feesCount} FEES`);
+    onSuccess: () => {
+      toast.success('Room request approved successfully.');
       setSelectedConfirmAction(null);
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
       qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
@@ -481,7 +520,7 @@ export default function OwnerRequestsPage() {
           studentPhone.includes(query) ||
           parentName.includes(query);
           
-        const matchesHostel = hostelFilter === 'all' || item.hostels?.name === hostelFilter;
+        const matchesHostel = hostelFilter === 'all' || item.hostel_id === hostelFilter;
         const matchesRoom = roomFilter === 'all' || item.rooms?.room_number === roomFilter;
         
         return matchesSearch && matchesHostel && matchesRoom;
@@ -505,8 +544,13 @@ export default function OwnerRequestsPage() {
   };
 
   // Get distinct list of hostels and rooms for filters dropdown
-  const uniqueHostels = Array.from(new Set(requests?.map((r: any) => r.hostels?.name).filter(Boolean) || []));
-  const uniqueRooms = Array.from(new Set(requests?.map((r: any) => r.rooms?.room_number).filter(Boolean) || []));
+  const uniqueHostels = ownerHostels || [];
+  const uniqueRooms = Array.from(new Set(
+    ownerRooms
+      ?.filter((r: any) => hostelFilter === 'all' || r.hostel_id === hostelFilter)
+      ?.map((r: any) => r.room_number)
+      .filter(Boolean) || []
+  ));
 
   const visiblePending = getFilteredItems(pendingRequests);
   const visibleApproved = getFilteredItems(approvedAllocations);
@@ -634,12 +678,15 @@ export default function OwnerRequestsPage() {
           {/* Filter by Hostel */}
           <select 
             value={hostelFilter}
-            onChange={(e) => setHostelFilter(e.target.value)}
+            onChange={(e) => {
+              setHostelFilter(e.target.value);
+              setRoomFilter('all');
+            }}
             className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
           >
             <option value="all">All Hostels</option>
             {uniqueHostels.map((hostel: any) => (
-              <option key={hostel} value={hostel}>{hostel}</option>
+              <option key={hostel.id} value={hostel.id}>{hostel.name}</option>
             ))}
           </select>
 
@@ -874,7 +921,7 @@ function EmptyState({ message }: { message: string }) {
 function RoomCapacityIndicator({ room }: { room: any }) {
   if (!room) return null;
   const capacity = room.capacity || 1;
-  const occupancy = room.occupancy ?? room.occupied_count ?? room.occupied_beds ?? 0;
+  const occupancy = room.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
   const percentage = Math.min(100, Math.round((occupancy / capacity) * 100));
   
   let badgeColor = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300';
@@ -930,7 +977,7 @@ function PendingRequestCard({ req, onApprove, onReject, onViewDetails }: { req: 
   
   const room = req.rooms;
   const capacity = room?.capacity ?? 0;
-  const occupancy = room?.occupancy ?? room?.occupied_count ?? room?.occupied_beds ?? 0;
+  const occupancy = room?.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
   const freeSlots = capacity - occupancy;
 
   return (

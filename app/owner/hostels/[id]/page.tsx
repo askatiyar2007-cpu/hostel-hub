@@ -123,7 +123,7 @@ export default function HostelDetailsPage() {
           <Link href={`/owner/hostels/edit/${hostel.id}`} className="btn-secondary px-6">
             Edit Details
           </Link>
-          <Link href="/owner/rooms/new" className="btn-primary flex items-center space-x-2">
+          <Link href={`/owner/rooms/new?hostelId=${hostel.id}`} className="btn-primary flex items-center space-x-2">
             <Plus size={20} />
             <span>Add Room</span>
           </Link>

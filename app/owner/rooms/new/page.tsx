@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AddRoomPage() {
+function AddRoomForm() {
   const { profile } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const defaultHostelId = searchParams.get('hostelId') || '';
   const [loading, setLoading] = useState(false);
   const [hostels, setHostels] = useState<{ id: string; name: string }[]>([]);
   
@@ -35,11 +37,14 @@ export default function AddRoomPage() {
       
       setHostels(data || []);
       if (data && data.length > 0) {
-        setFormData(prev => ({ ...prev, hostel_id: data[0].id }));
+        const initialHostelId = defaultHostelId && data.some(h => h.id === defaultHostelId)
+          ? defaultHostelId
+          : data[0].id;
+        setFormData(prev => ({ ...prev, hostel_id: initialHostelId }));
       }
     }
     fetchHostels();
-  }, [profile]);
+  }, [profile, defaultHostelId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,5 +252,13 @@ export default function AddRoomPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function AddRoomPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <AddRoomForm />
+    </Suspense>
   );
 }
