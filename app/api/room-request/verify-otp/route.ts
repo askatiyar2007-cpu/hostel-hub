@@ -1,26 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { createClient, supabaseServer } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, otp, hostelId, roomId, bookingType, details } = await req.json();
+    console.log('[ROOM VERIFY OTP] Request received');
+    
+    const { otp, hostelId, roomId, bookingType, details } = await req.json();
+    console.log('[ROOM VERIFY OTP] Request body validated:', { hostelId, roomId, bookingType });
 
-    // Use service role client for RPC calls (same as forgot-password)
-    const supabase = supabaseServer;
-
-    // Get session from cookies using anon key SSR client for authentication check
-    const { createClient } = await import('@/lib/supabase/server');
+    // Use SSR client for authentication check only
     const authClient = createClient();
-    const { data: { session }, error: sessionError } = await authClient.auth.getSession();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    console.log('[ROOM VERIFY OTP] Auth check completed:', { hasUser: !!user, authError: authError?.message });
 
-    if (sessionError || !session) {
+    if (authError || !user) {
+      console.error('[ROOM VERIFY OTP] Authentication failed:', authError);
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const user = session.user;
+    console.log('[ROOM VERIFY OTP] Auth user found:', { userId: user.id, email: user.email });
+
+    // Use service role client for database operations and RPC calls
+    const supabase = supabaseServer;
+    console.log('[ROOM VERIFY OTP] Service role client created');
 
     // Get student profile using service role client
     const { data: profile, error: profileError } = await supabase
@@ -29,8 +34,10 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .maybeSingle();
 
+    console.log('[ROOM VERIFY OTP] Profile lookup completed:', { hasProfile: !!profile, profileError: profileError?.message });
+
     if (profileError || !profile) {
-      console.error('Profile not found for user:', user.id, profileError);
+      console.error('[ROOM VERIFY OTP] Profile not found for user:', user.id, profileError);
       return NextResponse.json(
         { error: 'Student profile not found' },
         { status: 404 }
@@ -44,8 +51,10 @@ export async function POST(req: NextRequest) {
       .eq('profile_id', profile.id)
       .maybeSingle();
 
+    console.log('[ROOM VERIFY OTP] Student lookup completed:', { hasStudent: !!student, studentError: studentError?.message });
+
     if (studentError || !student) {
-      console.error('Student record not found for profile:', profile.id, studentError);
+      console.error('[ROOM VERIFY OTP] Student record not found for profile:', profile.id, studentError);
       return NextResponse.json(
         { error: 'Student record not found' },
         { status: 404 }
@@ -55,21 +64,26 @@ export async function POST(req: NextRequest) {
     const studentEmail = profile.email;
 
     if (!studentEmail) {
+      console.error('[ROOM VERIFY OTP] Student email missing from profile');
       return NextResponse.json(
         { error: 'Student email not found' },
         { status: 400 }
       );
     }
 
+    console.log('[ROOM VERIFY OTP] Student data validated:', { email: studentEmail });
+
     // Verify OTP using service role client
+    console.log('[ROOM VERIFY OTP] Calling verify_otp RPC');
     const { data, error } = await supabase.rpc('verify_otp', {
       p_email: studentEmail,
       p_otp: otp,
       p_purpose: 'room_request_verification'
     });
+    console.log('[ROOM VERIFY OTP] RPC completed:', { hasData: !!data, error: error?.message, success: data?.success });
 
     if (error) {
-      console.error('OTP verification error:', error);
+      console.error('[ROOM VERIFY OTP] OTP verification error:', error);
       return NextResponse.json(
         { error: error.message || 'Failed to verify code' },
         { status: 400 }
@@ -77,6 +91,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!data?.success) {
+      console.error('[ROOM VERIFY OTP] RPC returned failure:', data.error);
       return NextResponse.json(
         { error: data.error || 'Invalid or expired verification code' },
         { status: 400 }
@@ -84,6 +99,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Revalidate room availability before creating request
+    console.log('[ROOM VERIFY OTP] Checking room availability');
     const { data: roomData, error: roomError } = await supabase
       .from('rooms')
       .select('capacity')
@@ -91,6 +107,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (roomError || !roomData) {
+      console.error('[ROOM VERIFY OTP] Room not found:', roomError);
       return NextResponse.json(
         { error: 'Room not found' },
         { status: 404 }
@@ -105,6 +122,7 @@ export async function POST(req: NextRequest) {
       .eq('active', true);
 
     if (allocationError) {
+      console.error('[ROOM VERIFY OTP] Failed to check room availability:', allocationError);
       return NextResponse.json(
         { error: 'Failed to check room availability' },
         { status: 500 }
@@ -113,6 +131,7 @@ export async function POST(req: NextRequest) {
 
     const occupied = activeAllocations?.length || 0;
     if (occupied >= roomData.capacity) {
+      console.log('[ROOM VERIFY OTP] Room at full capacity:', { occupied, capacity: roomData.capacity });
       return NextResponse.json(
         { error: 'This room is now at full capacity. Please select a different room.' },
         { status: 400 }
@@ -127,6 +146,7 @@ export async function POST(req: NextRequest) {
       .eq('status', 'pending');
 
     if (pendingError) {
+      console.error('[ROOM VERIFY OTP] Failed to check existing requests:', pendingError);
       return NextResponse.json(
         { error: 'Failed to check existing requests' },
         { status: 500 }
@@ -134,6 +154,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (pendingRequests && pendingRequests.length > 0) {
+      console.log('[ROOM VERIFY OTP] Pending request already exists');
       return NextResponse.json(
         { error: 'You already have a pending room request' },
         { status: 400 }
@@ -141,6 +162,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create room request
+    console.log('[ROOM VERIFY OTP] Creating room request');
     const { error: insertError } = await supabase.from('room_requests').insert({
       student_id: student.id,
       hostel_id: hostelId,
@@ -161,20 +183,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (insertError) {
-      console.error('Room request creation error:', insertError);
+      console.error('[ROOM VERIFY OTP] Room request creation error:', insertError);
       return NextResponse.json(
         { error: 'Failed to create room request' },
         { status: 500 }
       );
     }
 
+    console.log('[ROOM VERIFY OTP] Request completed successfully');
     return NextResponse.json({
       success: true,
       message: 'Room request submitted successfully'
     });
 
   } catch (error: any) {
-    console.error('Room request verification error:', error);
+    console.error('[ROOM VERIFY OTP] Unexpected error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to verify and submit request' },
       { status: 500 }

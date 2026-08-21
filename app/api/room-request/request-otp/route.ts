@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { createClient, supabaseServer } from '@/lib/supabase/server';
 import { sendRoomRequestOtpEmail } from '@/lib/email/brevo';
 
 export async function POST(req: NextRequest) {
   try {
     console.log('[ROOM OTP] Request received');
     
-    const { hostelId, roomId, bookingType, details } = await req.json();
+    const { hostelId, roomId, bookingType } = await req.json();
     console.log('[ROOM OTP] Request body validated:', { hostelId, roomId, bookingType });
 
-    // Use service role client for RPC calls (same as forgot-password)
-    const supabase = supabaseServer;
-    console.log('[ROOM OTP] Supabase client created');
-
-    // Get session from cookies using anon key SSR client for authentication check
-    const { createClient } = await import('@/lib/supabase/server');
+    // Use SSR client for authentication check only
     const authClient = createClient();
-    const { data: { session }, error: sessionError } = await authClient.auth.getSession();
-    console.log('[ROOM OTP] Session check completed:', { hasSession: !!session, sessionError: sessionError?.message });
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    console.log('[ROOM OTP] Auth check completed:', { hasUser: !!user, authError: authError?.message });
 
-    if (sessionError || !session) {
-      console.error('[ROOM OTP] Authentication failed:', sessionError);
+    if (authError || !user) {
+      console.error('[ROOM OTP] Authentication failed:', authError);
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const user = session.user;
     console.log('[ROOM OTP] Auth user found:', { userId: user.id, email: user.email });
+
+    // Use service role client for database operations and RPC calls
+    const supabase = supabaseServer;
+    console.log('[ROOM OTP] Service role client created');
 
     // Get student profile using service role client
     const { data: profile, error: profileError } = await supabase

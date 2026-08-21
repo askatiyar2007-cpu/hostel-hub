@@ -8,6 +8,7 @@ export interface Profile {
   phone_number: string;
   role: UserRole;
   avatar_url?: string;
+  password_set?: boolean;
   created_at: string;
   updated_at: string;
 }

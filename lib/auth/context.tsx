@@ -327,7 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Check if profile exists and if account is complete before setting user or profile state in React
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('role, password_set')
+            .select('id, role, password_set')
             .eq('user_id', session.user.id)
             .maybeSingle();
 
