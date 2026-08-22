@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
+import { dashboardPathForRole } from '@/lib/auth/dashboard';
 import { Button } from '@/components/ui/button';
 import {
   Building2,
@@ -21,13 +22,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!loading && profile) {
-      const redirectMap: Record<string, string> = {
-        owner: '/owner/dashboard',
-        student: '/student/dashboard',
-        parent: '/parent/dashboard',
-        super_admin: '/admin/dashboard',
-      };
-      const path = redirectMap[profile.role];
+      const path = dashboardPathForRole(profile.role);
       if (path) {
         router.push(path);
       } else {

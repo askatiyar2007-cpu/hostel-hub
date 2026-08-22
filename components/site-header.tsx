@@ -12,9 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth/context";
+import { dashboardPathForRole } from "@/lib/auth/dashboard";
 
 export function SiteHeader() {
   const { isAuthenticated, profile, signOut } = useAuth();
+  const dashboardPath = dashboardPathForRole(profile?.role) ?? '/auth/select-role';
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -46,13 +48,7 @@ export function SiteHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem asChild>
-                  <Link href={
-                    profile?.role === 'owner'
-                      ? '/owner/dashboard'
-                      : profile?.role === 'student'
-                      ? '/student/dashboard'
-                      : '/parent/dashboard'
-                  }>Dashboard</Link>
+                  <Link href={dashboardPath}>Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>

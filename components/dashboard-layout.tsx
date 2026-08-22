@@ -33,8 +33,7 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-const roleNavItems: Record<UserRole, NavItem[]> = {
-  owner: [
+const ownerNavItems: NavItem[] = [
     { name: 'Dashboard', href: '/owner/dashboard', icon: LayoutDashboard },
     { name: 'Hostels', href: '/owner/hostels', icon: Building2 },
     { name: 'Rooms', href: '/owner/rooms', icon: Home },
@@ -43,7 +42,11 @@ const roleNavItems: Record<UserRole, NavItem[]> = {
     { name: 'Payments', href: '/owner/payments', icon: CreditCard },
     { name: 'Complaints', href: '/owner/complaints', icon: MessageSquare },
     { name: 'Settings', href: '/owner/settings', icon: Settings },
-  ],
+  ];
+
+const roleNavItems: Record<UserRole, NavItem[]> = {
+  owner: ownerNavItems,
+  hostel_owner: ownerNavItems,
   student: [
     { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Bills', href: '/student/bills', icon: CreditCard },

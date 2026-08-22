@@ -3,14 +3,19 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { GraduationCap, Building2, Check, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@/types/database';
 
+interface OnboardingResponse {
+  success?: unknown;
+  next?: unknown;
+  error?: unknown;
+}
+
 export default function SelectRolePage() {
-  const { updateUserRole, user } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
@@ -47,21 +52,22 @@ export default function SelectRolePage() {
     console.log(`[${timestamp}] [SelectRolePage] Selected role: ${selectedRole}. Initiating sync...`);
 
     try {
-      // 1. Save role in database (profiles + user_roles)
-      await updateUserRole(selectedRole);
-
-      // 2. Save role_selected flag to user metadata
-      const { error: metadataError } = await supabase.auth.updateUser({
-        data: { role_selected: true }
+      const response = await fetch('/api/auth/onboarding/role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: selectedRole }),
       });
+      const payload: OnboardingResponse | null = await response.json().catch(() => null);
 
-      if (metadataError) throw metadataError;
+      if (!response.ok || payload?.success !== true || payload.next !== 'password') {
+        const message = typeof payload?.error === 'string'
+          ? payload.error
+          : 'Unable to save your role. Please try again.';
+        throw new Error(message);
+      }
 
-      console.log(`[${timestamp}] [SelectRolePage] Role saved and metadata flags sync completed successfully`);
+      console.log(`[${timestamp}] [SelectRolePage] Role transition completed successfully`);
       toast.success('Role saved successfully!');
-
-      // Redirect to password setup
-      console.log(`[${timestamp}] [SelectRolePage] Redirecting to /auth/setup-password`);
       router.push('/auth/setup-password');
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Failed to update user role';

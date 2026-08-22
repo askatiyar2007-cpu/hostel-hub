@@ -17,6 +17,11 @@ interface SendPasswordResetOtpEmailParams {
   otp: string;
 }
 
+interface SendSignupOtpEmailParams {
+  email: string;
+  otp: string;
+}
+
 interface SendRoomRequestOtpEmailParams {
   email: string;
   studentName: string;
@@ -258,6 +263,74 @@ export async function sendStudentInvitationEmail({
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
     };
+  }
+}
+
+export async function sendSignupOtpEmail({
+  email,
+  otp
+}: SendSignupOtpEmailParams): Promise<BrevoEmailResponse> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!apiKey) {
+    console.error('BREVO_API_KEY not configured in environment variables');
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  if (!/^\d{6}$/.test(otp)) {
+    console.error('Invalid signup OTP delivery request');
+    return { success: false, error: 'Unable to send verification email' };
+  }
+
+  try {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HostelHub Signup Verification Code</title>
+      </head>
+      <body>
+        <p>Hello,</p>
+        <p>Use this code to verify signup for <strong>${normalizedEmail}</strong>:</p>
+        <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px;">${otp}</p>
+        <p>This code expires in 10 minutes. Do not share it with anyone.</p>
+      </body>
+      </html>
+    `;
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': apiKey
+      },
+      body: JSON.stringify({
+        sender: {
+          name: 'HostelHub',
+          email: 'askatiyar2007@gmail.com'
+        },
+        to: [{ email: normalizedEmail }],
+        subject: 'HostelHub Signup Verification Code',
+        htmlContent,
+        textContent: `Use this code to verify signup for ${normalizedEmail}: ${otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`
+      })
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      console.error('Brevo API error sending signup OTP:', data);
+      return { success: false, error: 'Unable to send verification email' };
+    }
+
+    console.log('Signup OTP email sent successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending signup OTP email:', error);
+    return { success: false, error: 'Unable to send verification email' };
   }
 }
 

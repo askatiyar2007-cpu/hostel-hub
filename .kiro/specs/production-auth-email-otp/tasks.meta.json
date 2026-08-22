@@ -1,0 +1,334 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Evolve OTP and grant storage in `supabase/migrations/20260817_production_signup_otp.sql`": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158241
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427169240
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427547841
+      }
+    ],
+    "1.2 Implement the canonical `get_account_state(normalized_email)` SQL classifier": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158355
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427568544
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427710132
+      }
+    ],
+    "1.3 Implement the service-role-only `request_signup_otp` RPC": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158556
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427719535
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427846258
+      }
+    ],
+    "1.4 Implement the service-role-only `verify_signup_otp` and invalidation RPCs": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158639
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427855409
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428089521
+      }
+    ],
+    "1.5 Implement atomic completion claims, grants, and the `handle_new_user` `BEFORE INSERT` gate": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158727
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428105766
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428380878
+      }
+    ],
+    "1.6 Implement idempotent incomplete-account completion and database access lockdown": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158827
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428399893
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428717029
+      }
+    ],
+    "2.1 Add typed signup OTP delivery to `lib/email/brevo.ts`": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427158919
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427172968
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427551646
+      }
+    ],
+    "2.2 Implement `POST /api/auth/signup/request-otp`": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159008
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427858851
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428095025
+      }
+    ],
+    "2.3 Implement `POST /api/auth/signup/verify-otp`": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159093
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428111296
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428384644
+      }
+    ],
+    "2.4 Implement `POST /api/auth/signup/complete`": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159184
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428725652
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428903817
+      }
+    ],
+    "2.5 Implement `POST /api/auth/oauth-intent`": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159286
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427176510
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427561346
+      }
+    ],
+    "3.1 Audit current role-selection and password-setup writes and add focused authenticated server routes/RPCs for any direct profile, role, password-state, or student mutations": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159406
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427862522
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428098715
+      }
+    ],
+    "3.2 Update affected onboarding pages to use the audited server endpoint/RPC contract": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159490
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428114940
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428388250
+      }
+    ],
+    "4.1 Convert the signup tab in `app/auth/login/page.tsx` into request-code, verify-code, and complete stages": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159575
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428926738
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787429135702
+      }
+    ],
+    "4.2 Make `app/auth/callback/route.ts` the sole authoritative Google completion handler": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159661
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428730480
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428916541
+      }
+    ],
+    "4.3 Simplify `lib/auth/context.tsx` to synchronization and user-initiated session actions": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159752
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428931435
+      },
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787429140184
+      }
+    ],
+    "5. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159849
+      },
+      {
+        "executionId": "3f365a75-d016-407b-8777-61a6b7690f14",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787435825436
+      },
+      {
+        "executionId": "3f365a75-d016-407b-8777-61a6b7690f14",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787437334608
+      }
+    ],
+    "7. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787427159952
+      },
+      {
+        "executionId": "3f365a75-d016-407b-8777-61a6b7690f14",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787437343111
+      }
+    ],
+    "3. Move remaining onboarding mutations behind authenticated server boundaries where needed": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428388366
+      }
+    ],
+    "1. Deliver the forward-safe database authorization foundation": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428717158
+      }
+    ],
+    "2. Add server-only email and OAuth entry points": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787428903953
+      }
+    ],
+    "4. Integrate the existing auth UI and canonical Google callback": [
+      {
+        "executionId": "b1aea803-913a-4968-852b-4de9f042fb40",
+        "chatSessionId": "sess_c5a6affc-35b3-46ad-b34a-4277951ea462",
+        "timestamp": 1787429140347
+      }
+    ]
+  }
+}

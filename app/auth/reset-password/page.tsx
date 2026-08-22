@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/lib/auth/context';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Lock, Building2 } from 'lucide-react';
@@ -11,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 function ResetPasswordForm() {
-  const { resetPassword } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -71,7 +69,9 @@ function ResetPasswordForm() {
     console.log(`[${timestamp}] [ResetPassword] Resetting password...`);
 
     try {
-      await resetPassword(formData.password);
+      const { error } = await supabase.auth.updateUser({ password: formData.password });
+      if (error) throw error;
+
       toast.success('Password reset successful! Redirecting to login...');
       console.log(`[${timestamp}] [ResetPassword] Password reset complete`);
       

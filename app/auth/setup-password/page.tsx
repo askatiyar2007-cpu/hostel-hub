@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
@@ -9,8 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+interface OnboardingResponse {
+  success?: unknown;
+  next?: unknown;
+  error?: unknown;
+}
+
 export default function SetupPasswordPage() {
-  const { setPassword, user, profile } = useAuth();
+  const { user, refreshAuthState } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -21,23 +27,6 @@ export default function SetupPasswordPage() {
     password: '',
     confirmPassword: '',
   });
-
-  // Check if password is already set, redirect to dashboard
-  useEffect(() => {
-    if ((user?.user_metadata?.password_set || profile?.password_set) && profile?.role) {
-      const redirectMap: Record<string, string> = {
-        'owner': '/owner/dashboard',
-        'student': '/student/dashboard',
-        'parent': '/parent/dashboard',
-        'super_admin': '/admin/dashboard',
-      };
-      const target = redirectMap[profile.role as string];
-      if (target) {
-        console.log(`[${new Date().toISOString()}] [SetupPasswordPage] Password already set, redirecting to: ${target}`);
-        router.push(target);
-      }
-    }
-  }, [user, profile, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -67,36 +56,43 @@ export default function SetupPasswordPage() {
     console.log(`[${timestamp}] [SetupPasswordPage] Initiating password setup...`);
 
     try {
-      // Wait for password setting to complete on Supabase
-      await setPassword(formData.password);
+      const passwordResponse = await fetch('/api/auth/onboarding/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: formData.password }),
+      });
+      const passwordPayload: OnboardingResponse | null = await passwordResponse.json().catch(() => null);
 
-      console.log(`[${timestamp}] [SetupPasswordPage] Password saved successfully`);
+      if (!passwordResponse.ok || passwordPayload?.success !== true ||
+          (passwordPayload.next !== 'student_onboarding' && passwordPayload.next !== 'complete')) {
+        const message = typeof passwordPayload?.error === 'string'
+          ? passwordPayload.error
+          : 'Unable to save your password. Please try again.';
+        throw new Error(message);
+      }
+
+      let destination = '/';
+      if (passwordPayload.next === 'student_onboarding') {
+        const studentResponse = await fetch('/api/auth/onboarding/student', { method: 'POST' });
+        const studentPayload: OnboardingResponse | null = await studentResponse.json().catch(() => null);
+
+        if (!studentResponse.ok || studentPayload?.success !== true || studentPayload.next !== 'complete') {
+          const message = typeof studentPayload?.error === 'string'
+            ? studentPayload.error
+            : 'Unable to complete student setup. Please try again.';
+          throw new Error(message);
+        }
+
+        destination = '/student/dashboard';
+      }
+
+      await refreshAuthState();
+      console.log(`[${timestamp}] [SetupPasswordPage] Password setup completed successfully`);
       toast.success('Password set successfully!');
       setSuccess(true);
       setLoading(false);
 
-      // Delay redirect to show success state
-      setTimeout(() => {
-        if (profile?.role) {
-          const redirectMap: Record<string, string> = {
-            'owner': '/owner/dashboard',
-            'student': '/student/dashboard',
-            'parent': '/parent/dashboard',
-            'super_admin': '/admin/dashboard',
-          };
-          const target = redirectMap[profile.role as string];
-          if (target) {
-            console.log(`[${timestamp}] [SetupPasswordPage] Redirecting to: ${target}`);
-            router.push(target);
-          } else {
-            console.error(`[${timestamp}] [SetupPasswordPage] Invalid role: ${profile.role}`);
-            router.push('/auth/select-role');
-          }
-        } else {
-          console.warn(`[${timestamp}] [SetupPasswordPage] No profile found, redirecting to role selection`);
-          router.push('/auth/select-role');
-        }
-      }, 2000);
+      setTimeout(() => router.push(destination), 2000);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Failed to set password';
       toast.error(errMsg);
@@ -146,7 +142,7 @@ export default function SetupPasswordPage() {
               </div>
               <h3 className="text-lg font-bold">Password Saved!</h3>
               <p className="text-sm text-muted-foreground">
-                Redirecting to role selection...
+                Redirecting to your dashboard...
               </p>
             </div>
           ) : (
