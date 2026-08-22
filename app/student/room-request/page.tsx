@@ -59,6 +59,7 @@ export default function RoomRequestPage() {
   });
 
   const [bookingType, setBookingType] = useState<'shared' | 'entire_room'>('shared');
+  const [showOccupancyAlert, setShowOccupancyAlert] = useState(false);
 
   const { data: studentRecord } = useQuery({
     queryKey: ['student-record', profile?.id],
@@ -172,12 +173,11 @@ export default function RoomRequestPage() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      // Fetch rooms from rooms table
+      // Fetch rooms from rooms table (fetch all rooms, do not hide full ones)
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('id, hostel_id, type, room_type, capacity, rent, room_number, facilities, available')
-        .eq('hostel_id', hostel!.id)
-        .eq('available', true);
+        .eq('hostel_id', hostel!.id);
       
       if (roomsError) throw roomsError;
       
@@ -186,7 +186,7 @@ export default function RoomRequestPage() {
         (roomsData ?? []).map(async (room: any) => {
           const { data: allocations, error: allocationError } = await supabase
             .from('room_allocations')
-            .select('id')
+            .select('id, booking_type')
             .eq('room_id', room.id)
             .eq('active', true);
           
@@ -200,7 +200,8 @@ export default function RoomRequestPage() {
             };
           }
           
-          const occupiedCount = allocations?.length || 0;
+          const hasEntireRoom = allocations?.some((a: any) => a.booking_type === 'entire_room');
+          const occupiedCount = hasEntireRoom ? room.capacity : (allocations?.length || 0);
           return {
             ...room,
             room_type: room.type || room.room_type || 'double',
@@ -365,6 +366,13 @@ export default function RoomRequestPage() {
       if (!details.emergency_name.trim()) return 'Emergency contact name is required';
       if (!details.emergency_phone.trim()) return 'Emergency contact phone number is required';
       if (!phoneRegex.test(details.emergency_phone)) return 'Emergency contact phone number must be exactly 10 digits';
+    }
+    if (stepNum === 5) {
+      const occupiedBeds = selectedRoom?.occupied_beds ?? selectedRoom?.occupancy ?? 0;
+      if (bookingType === 'entire_room' && occupiedBeds > 0) {
+        setShowOccupancyAlert(true);
+        return 'Entire room is unavailable because this room already has an occupant. Choose Shared Bed or another room.';
+      }
     }
     return null; // Passes validation
   };
@@ -570,7 +578,7 @@ export default function RoomRequestPage() {
                           <div className="mt-3">
                             <p className="text-lg font-bold">Room {room.room_number}</p>
                             <p className="text-sm opacity-70">
-                              {availableBeds} of {room.capacity} beds free
+                              {occupiedBeds} of {room.capacity} {room.capacity === 1 ? 'bed' : 'beds'} occupied / {availableBeds} {availableBeds === 1 ? 'bed' : 'beds'} free
                             </p>
                             <p className="mt-1 font-semibold">&#8377;{Number(room.rent).toLocaleString()}<span className="text-xs font-normal opacity-70">/mo</span></p>
                           </div>
@@ -797,7 +805,15 @@ export default function RoomRequestPage() {
                           name="booking_type"
                           value="entire_room"
                           checked={bookingType === 'entire_room'}
-                          onChange={() => setBookingType('entire_room')}
+                          onChange={() => {
+                            const occupiedBeds = selectedRoom?.occupied_beds ?? selectedRoom?.occupancy ?? 0;
+                            if (occupiedBeds > 0) {
+                              setShowOccupancyAlert(true);
+                              setBookingType('shared');
+                            } else {
+                              setBookingType('entire_room');
+                            }
+                          }}
                           className="text-primary focus:ring-primary h-4 w-4"
                         />
                         <span className="text-sm font-medium">Entire Room (Private)</span>
@@ -909,6 +925,25 @@ export default function RoomRequestPage() {
           >
             Submit Another Request
           </Button>
+        </div>
+      )}
+
+      {showOccupancyAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-border animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold font-display text-destructive mb-2">Entire Room Unavailable</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+              Entire room is unavailable because this room already has an occupant. Choose Shared Bed or another room.
+            </p>
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => setShowOccupancyAlert(false)}
+                className="rounded-full px-6 bg-primary hover:bg-primary/95 text-white font-bold"
+              >
+                Okay
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </DashboardShell>

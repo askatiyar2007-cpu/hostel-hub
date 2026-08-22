@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     // Check room capacity
     const { data: activeAllocations, error: allocationError } = await supabase
       .from('room_allocations')
-      .select('id')
+      .select('id, booking_type')
       .eq('room_id', roomId)
       .eq('active', true);
 
@@ -129,13 +129,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const occupied = activeAllocations?.length || 0;
-    if (occupied >= roomData.capacity) {
-      console.log('[ROOM VERIFY OTP] Room at full capacity:', { occupied, capacity: roomData.capacity });
-      return NextResponse.json(
-        { error: 'This room is now at full capacity. Please select a different room.' },
-        { status: 400 }
-      );
+    const hasEntireRoom = activeAllocations?.some(
+      (a: any) => a.booking_type === 'entire_room'
+    );
+    const actualOccupancy = hasEntireRoom ? roomData.capacity : (activeAllocations?.length || 0);
+    const normalizedBookingType = bookingType === 'entire_room' ? 'entire_room' : 'shared_bed';
+
+    if (normalizedBookingType === 'shared_bed') {
+      if (actualOccupancy >= roomData.capacity) {
+        console.log('[ROOM VERIFY OTP] Room at full capacity:', { actualOccupancy, capacity: roomData.capacity });
+        return NextResponse.json(
+          { error: 'This room is now at full capacity. Please select a different room.' },
+          { status: 400 }
+        );
+      }
+    } else if (normalizedBookingType === 'entire_room') {
+      if (actualOccupancy > 0) {
+        console.log('[ROOM VERIFY OTP] Entire room not available, occupancy:', actualOccupancy);
+        return NextResponse.json(
+          { error: 'Entire room is unavailable because this room already has an occupant. Choose Shared Bed or another room.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Check for duplicate pending requests
