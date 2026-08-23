@@ -69,7 +69,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (error || !isVerifiedSignupOtp(data)) {
       if (error) {
-        console.error('Signup OTP verification failed');
+        console.error('Signup OTP verification failed', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
       }
       return NextResponse.json(FAILURE_RESPONSE, { status: 400 });
     }
@@ -86,8 +91,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     return response;
-  } catch {
-    console.error('Unexpected signup OTP verification failure');
+  } catch (error) {
+    console.error('Unexpected signup OTP verification failure', error instanceof Error ? { message: error.message } : {});
     return NextResponse.json(FAILURE_RESPONSE, { status: 400 });
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
@@ -53,6 +53,7 @@ function AuthContent() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpAttempt, setOtpAttempt] = useState(0);
+  const verifyInFlightRef = useRef(false);
 
   useEffect(() => {
     if (resendCountdown <= 0) return;
@@ -206,7 +207,8 @@ function AuthContent() {
   };
 
   const submitVerificationCode = async (code: string) => {
-    if (loading) return;
+    if (loading || verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
     setLoading(true);
     try {
       const response = await fetch('/api/auth/signup/verify-otp', {
@@ -232,6 +234,7 @@ function AuthContent() {
         description: 'Please check the code and try again, or request a new one.',
       });
     } finally {
+      verifyInFlightRef.current = false;
       setLoading(false);
     }
   };
