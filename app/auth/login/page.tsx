@@ -40,7 +40,7 @@ function GoogleIcon() {
 }
 
 function AuthContent() {
-  const { isAuthenticated, profile, refreshAuthState } = useAuth();
+  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -57,6 +57,7 @@ function AuthContent() {
   const [otpAttempt, setOtpAttempt] = useState(0);
   const [authMessage, setAuthMessage] = useState<{ variant: 'error' | 'success'; title: string; description: string; action?: { label: string; onClick: () => void } } | null>(null);
   const verifyInFlightRef = useRef(false);
+  const googleRedirectInFlightRef = useRef(false);
 
   useEffect(() => {
     if (resendCountdown <= 0) return;
@@ -65,6 +66,18 @@ function AuthContent() {
     }, 1000);
     return () => clearInterval(interval);
   }, [resendCountdown]);
+
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted && googleRedirectInFlightRef.current) {
+        googleRedirectInFlightRef.current = false;
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialTab);
@@ -81,10 +94,22 @@ function AuthContent() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && profile) {
+    if (!isAuthenticated || !profile) return;
+
+    if (accountCompletionStep === 'role') {
+      router.push('/auth/select-role');
+      return;
+    }
+
+    if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
+      router.push('/auth/setup-password');
+      return;
+    }
+
+    if (accountCompletionStep === 'complete') {
       router.push(dashboardPathForRole(profile.role) || '/auth/select-role');
     }
-  }, [isAuthenticated, profile, router]);
+  }, [isAuthenticated, profile, accountCompletionStep, router]);
 
   useEffect(() => {
     const error = searchParams.get('error');
@@ -104,6 +129,23 @@ function AuthContent() {
         },
       });
       router.replace('/auth/login?tab=signup');
+      return;
+    }
+
+    if (reason === 'signin') {
+      setAuthMessage({
+        variant: 'error',
+        title: 'Account already exists',
+        description: 'An account with this Google email already exists. Please sign in instead.',
+        action: {
+          label: 'Sign in',
+          onClick: () => {
+            setAuthMessage(null);
+            setActiveTab('login');
+          },
+        },
+      });
+      router.replace('/auth/login?tab=login');
       return;
     }
 
@@ -367,6 +409,7 @@ function AuthContent() {
         throw error ?? new Error('OAuth redirect unavailable');
       }
 
+      googleRedirectInFlightRef.current = true;
       window.location.assign(data.url);
     } catch {
       toast.error('Google sign-in could not be started. Please try again.');

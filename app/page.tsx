@@ -17,11 +17,23 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { profile, loading } = useAuth();
+  const { profile, loading, accountCompletionStep } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && profile) {
+    if (loading || !profile) return;
+
+    if (accountCompletionStep === 'role') {
+      router.push('/auth/select-role');
+      return;
+    }
+
+    if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
+      router.push('/auth/setup-password');
+      return;
+    }
+
+    if (accountCompletionStep === 'complete') {
       const path = dashboardPathForRole(profile.role);
       if (path) {
         router.push(path);
@@ -30,7 +42,7 @@ export default function HomePage() {
         router.push('/auth/select-role');
       }
     }
-  }, [profile, loading, router]);
+  }, [profile, loading, accountCompletionStep, router]);
 
   if (loading || profile) {
     return (

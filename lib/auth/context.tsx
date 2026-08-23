@@ -8,9 +8,12 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase/client';
 import { Profile } from '@/types/database';
 
+export type AccountCompletionStep = 'role' | 'password' | 'student_onboarding' | 'complete';
+
 export interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  accountCompletionStep: AccountCompletionStep | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshAuthState: () => Promise<void>;
@@ -27,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [accountCompletionStep, setAccountCompletionStep] = useState<AccountCompletionStep | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -41,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!session?.user) {
       setUser(null);
       setProfile(null);
+      setAccountCompletionStep(null);
       return;
     }
 
@@ -57,6 +62,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // A missing profile represents an incomplete, onboarding-only session.
     // The provider deliberately does not create records or choose a route.
     setProfile(profileData as Profile | null);
+
+    if (!profileData) {
+      setAccountCompletionStep(null);
+      return;
+    }
+
+    // Mirrors the canonical server-side completion rule in get_account_state():
+    // a role must be present, the account password must be set, and a student
+    // role additionally requires its students row. This is a read-only check
+    // under existing RLS policies; it never creates or modifies any record.
+    if (!profileData.role) {
+      setAccountCompletionStep('role');
+      return;
+    }
+
+    if (!profileData.password_set) {
+      setAccountCompletionStep('password');
+      return;
+    }
+
+    if (profileData.role === 'student') {
+      const { data: studentRecord, error: studentError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('profile_id', profileData.id)
+        .maybeSingle();
+
+      if (studentError) throw studentError;
+
+      setAccountCompletionStep(studentRecord ? 'complete' : 'student_onboarding');
+      return;
+    }
+
+    setAccountCompletionStep('complete');
   };
 
   useEffect(() => {
@@ -115,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         profile,
+        accountCompletionStep,
         loading,
         signOut,
         refreshAuthState,

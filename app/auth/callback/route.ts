@@ -130,6 +130,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?tab=signup&reason=no-account');
     }
 
+    if (
+      intent === 'signup'
+      && !accountState.is_complete
+      && (accountState.missing_step === 'password' || accountState.missing_step === 'student_onboarding')
+      && accountState.user_id
+    ) {
+      // An abandoned Google signup already chose a role but never finished
+      // password setup. A fresh "Continue with Google" SIGNUP attempt must
+      // restart the signup flow rather than silently resuming password
+      // setup, so only the role assignment (and any dependent student row)
+      // is reset here -- never the profile or the underlying auth identity
+      // -- before routing back to the start of the signup flow. A login
+      // attempt on this same incomplete state is unaffected and still
+      // resumes at password setup via the existing branch below.
+      const { data: resetData, error: resetError } = await supabaseServer
+        .rpc('reset_incomplete_google_signup', { p_user_id: accountState.user_id });
+
+      if (resetError || !resetData?.success) {
+        console.error('OAuth callback could not reset abandoned Google signup.', resetError);
+        return genericLoginError(request);
+      }
+
+      return redirect(request, '/auth/select-role');
+    }
+
     if (accountState.is_complete) {
       const destination = accountState.role ? dashboardPathForRole(accountState.role) : undefined;
       return destination ? redirect(request, destination) : genericLoginError(request);

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -76,7 +76,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, loading, accountCompletionStep } = useAuth();
+  const router = useRouter();
 
   const role = profile?.role as UserRole || 'student';
   const navItems = roleNavItems[role] || [];
@@ -88,6 +89,39 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
+
+  // An account with a role but an incomplete required setup step (e.g. an
+  // abandoned Google signup that selected a role but never set a password)
+  // must never render or stay on a dashboard route. Resume at the exact
+  // missing step instead. This is a read-only redirect; it creates nothing.
+  useEffect(() => {
+    if (loading || !profile) return;
+
+    if (accountCompletionStep === 'role') {
+      router.push('/auth/select-role');
+      return;
+    }
+
+    if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
+      router.push('/auth/setup-password');
+    }
+  }, [loading, profile, accountCompletionStep, router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (profile && accountCompletionStep && accountCompletionStep !== 'complete') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-muted/30">
