@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OtpInput } from '@/components/otp-input';
+import { AuthMessage } from '@/components/auth-message';
 
 type SignupStage = 'request-code' | 'verify-code';
 type CompletionNext = 'profile' | 'role' | 'password' | 'student_onboarding' | 'complete';
@@ -54,6 +55,7 @@ function AuthContent() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpAttempt, setOtpAttempt] = useState(0);
+  const [authMessage, setAuthMessage] = useState<{ variant: 'error' | 'success'; title: string; description: string; action?: { label: string; onClick: () => void } } | null>(null);
   const verifyInFlightRef = useRef(false);
 
   useEffect(() => {
@@ -73,6 +75,7 @@ function AuthContent() {
   }, [searchParams]);
 
   const handleTabChange = (value: string) => {
+    setAuthMessage(null);
     setActiveTab(value as 'login' | 'signup');
     router.replace(`/auth/login?tab=${value}`);
   };
@@ -86,13 +89,30 @@ function AuthContent() {
   useEffect(() => {
     const error = searchParams.get('error');
     const reason = searchParams.get('reason');
+
     if (reason === 'no-account') {
-      toast.error('No HostelHub account exists with this Google email. Please create an account first.');
+      setAuthMessage({
+        variant: 'error',
+        title: 'Account not found',
+        description: 'No HostelHub account exists with this Google email. Please create an account first.',
+        action: {
+          label: 'Create account',
+          onClick: () => {
+            setAuthMessage(null);
+            setActiveTab('signup');
+          },
+        },
+      });
       router.replace('/auth/login?tab=signup');
       return;
     }
+
     if (error || reason) {
-      toast.error('Unable to complete that sign-in request. Please sign in to continue.');
+      setAuthMessage({
+        variant: 'error',
+        title: 'Sign-in issue',
+        description: 'Unable to complete that sign-in request. Please sign in to continue.',
+      });
       router.replace('/auth/login');
     }
   }, [searchParams, router]);
@@ -118,6 +138,7 @@ function AuthContent() {
 
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setAuthMessage(null);
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -167,6 +188,7 @@ function AuthContent() {
 
   const handleRequestCode = async (event: React.FormEvent) => {
     event.preventDefault();
+    setAuthMessage(null);
 
     if (!selectedRole) {
       toast.error('Please choose your role to continue.');
@@ -245,6 +267,22 @@ function AuthContent() {
         return;
       }
 
+      // The account/password mutation above happened through the service-role
+      // admin API, which never sets a browser session cookie. Sign in now with
+      // the same credentials so the next page's session guard (select-role,
+      // setup-password) sees an authenticated user instead of Access Denied.
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: signupFormData.email,
+        password: signupFormData.password,
+      });
+
+      if (signInError) {
+        setCompletionError(true);
+        toast.error(GENERIC_SIGNUP_ERROR);
+        return;
+      }
+
+      await refreshAuthState();
       router.push(onboardingDestinationForStep[next]);
     } catch {
       setCompletionError(true);
@@ -304,6 +342,7 @@ function AuthContent() {
   };
 
   const handleGoogleAuth = async (intent: OAuthIntent) => {
+    setAuthMessage(null);
     setLoading(true);
     try {
       const response = await fetch('/api/auth/oauth-intent', {
@@ -348,6 +387,15 @@ function AuthContent() {
         </div>
 
         <div className="mt-8 bg-card border border-border p-8 rounded-3xl shadow-sm space-y-6">
+          {authMessage && (
+            <AuthMessage
+              variant={authMessage.variant}
+              title={authMessage.title}
+              description={authMessage.description}
+              action={authMessage.action}
+              onDismiss={() => setAuthMessage(null)}
+            />
+          )}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/60 rounded-xl mb-6">
               <TabsTrigger value="login" className="rounded-lg h-9 font-medium transition-all">Sign In</TabsTrigger>
