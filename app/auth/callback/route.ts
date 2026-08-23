@@ -121,6 +121,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?tab=login&reason=signin');
     }
 
+    if (intent === 'login' && accountState.missing_step === 'profile') {
+      const { error: signOutError } = await sessionClient.auth.signOut();
+      if (signOutError) {
+        console.error('OAuth callback could not clear session for missing account.', signOutError);
+      }
+
+      return redirect(request, '/auth/login?tab=signup&reason=no-account');
+    }
+
     if (accountState.is_complete) {
       const destination = accountState.role ? dashboardPathForRole(accountState.role) : undefined;
       return destination ? redirect(request, destination) : genericLoginError(request);

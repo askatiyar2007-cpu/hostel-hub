@@ -86,6 +86,11 @@ function AuthContent() {
   useEffect(() => {
     const error = searchParams.get('error');
     const reason = searchParams.get('reason');
+    if (reason === 'no-account') {
+      toast.error('No HostelHub account exists with this Google email. Please create an account first.');
+      router.replace('/auth/login?tab=signup');
+      return;
+    }
     if (error || reason) {
       toast.error('Unable to complete that sign-in request. Please sign in to continue.');
       router.replace('/auth/login');
@@ -475,12 +480,20 @@ function AuthContent() {
                       setOtpError(false);
                       setCompletionError(false);
                     }}
-                    onComplete={(value) => void submitVerificationCode(value)}
                     disabled={loading}
                     error={otpError}
                     autoFocus
                   />
                 </div>
+
+                <Button
+                  type="button"
+                  disabled={loading || verificationCode.length !== 6}
+                  onClick={() => void submitVerificationCode(verificationCode)}
+                  className="w-full h-11 rounded-full shadow-lg font-semibold"
+                >
+                  {loading ? 'Verifying code...' : 'Verify code'}
+                </Button>
 
                 <div className="text-center text-sm text-muted-foreground">
                   Didn&apos;t receive it?{' '}

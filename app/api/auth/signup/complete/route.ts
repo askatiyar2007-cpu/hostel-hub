@@ -242,7 +242,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
       if (createUserError || !createdUser.user) {
-        console.error('Signup completion identity creation failed');
+        console.error('Signup completion identity creation failed', {
+          message: createUserError?.message,
+          status: createUserError?.status,
+          code: createUserError?.code,
+        });
         return retryFailure();
       }
 
@@ -262,7 +266,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
 
     if (passwordError) {
-      console.error('Signup completion password update failed');
+      console.error('Signup completion password update failed', {
+        message: passwordError.message,
+        status: passwordError.status,
+        code: passwordError.code,
+      });
       return retryFailure();
     }
 
