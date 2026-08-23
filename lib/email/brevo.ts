@@ -326,8 +326,15 @@ export async function sendSignupOtpEmail({
       return { success: false, error: 'Unable to send verification email' };
     }
 
-    console.log('Signup OTP email sent successfully');
-    return { success: true };
+    const data = await response.json().catch(() => null);
+
+    if (data?.messageId) {
+      console.log('Signup OTP email sent successfully', { messageId: data.messageId });
+    } else {
+      console.warn('Signup OTP email accepted by Brevo but no messageId was returned', { hasResponseBody: !!data });
+    }
+
+    return { success: true, messageId: data?.messageId };
   } catch (error) {
     console.error('Error sending signup OTP email:', error);
     return { success: false, error: 'Unable to send verification email' };

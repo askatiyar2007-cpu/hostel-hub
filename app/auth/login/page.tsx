@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { OtpInput } from '@/components/otp-input';
 
 type SignupStage = 'request-code' | 'verify-code' | 'complete';
 type CompletionNext = 'profile' | 'role' | 'password' | 'student_onboarding' | 'complete';
@@ -48,6 +49,18 @@ function AuthContent() {
   const [selectedRole, setSelectedRole] = useState<'student' | 'owner' | null>(null);
   const [signupStage, setSignupStage] = useState<SignupStage>('request-code');
   const [verificationCode, setVerificationCode] = useState('');
+  const [otpError, setOtpError] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [otpAttempt, setOtpAttempt] = useState(0);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCountdown((previous) => previous - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCountdown]);
 
   const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialTab);
@@ -127,6 +140,24 @@ function AuthContent() {
     }
   };
 
+  const requestVerificationCode = async () => {
+    const response = await fetch('/api/auth/signup/request-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: signupFormData.email }),
+    });
+
+    if (!response.ok) {
+      toast.error('Unable to request a verification code. Please try again.');
+      return false;
+    }
+
+    toast.success('Verification code sent', {
+      description: `We've sent a 6-digit code to ${signupFormData.email}. Check your inbox, and your spam folder if you don't see it.`,
+    });
+    return true;
+  };
+
   const handleRequestCode = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -141,20 +172,13 @@ function AuthContent() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/signup/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: signupFormData.email }),
-      });
-
-      if (!response.ok) {
-        toast.error('Unable to request a verification code. Please try again.');
-        return;
-      }
+      const ok = await requestVerificationCode();
+      if (!ok) return;
 
       setVerificationCode('');
+      setOtpError(false);
       setSignupStage('verify-code');
-      toast.success('If signup can continue, a verification code will be sent.');
+      setResendCountdown(60);
     } catch {
       toast.error('Unable to request a verification code. Please try again.');
     } finally {
@@ -162,28 +186,59 @@ function AuthContent() {
     }
   };
 
-  const handleVerifyCode = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleResendCode = async () => {
+    if (resendCountdown > 0 || resendLoading) return;
+
+    setResendLoading(true);
+    try {
+      const ok = await requestVerificationCode();
+      if (!ok) return;
+
+      setVerificationCode('');
+      setOtpError(false);
+      setOtpAttempt((previous) => previous + 1);
+      setResendCountdown(60);
+    } catch {
+      toast.error('Unable to request a verification code. Please try again.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const submitVerificationCode = async (code: string) => {
+    if (loading) return;
     setLoading(true);
     try {
       const response = await fetch('/api/auth/signup/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: signupFormData.email, otp: verificationCode }),
+        body: JSON.stringify({ email: signupFormData.email, otp: code }),
       });
 
       if (!response.ok) {
-        toast.error(GENERIC_CODE_ERROR);
+        setOtpError(true);
+        toast.error(GENERIC_CODE_ERROR, {
+          description: 'Please check the code and try again, or request a new one.',
+        });
         return;
       }
 
+      setOtpError(false);
       setSignupStage('complete');
       toast.success('Email verified. Confirm your details to finish signup.');
     } catch {
-      toast.error(GENERIC_CODE_ERROR);
+      setOtpError(true);
+      toast.error(GENERIC_CODE_ERROR, {
+        description: 'Please check the code and try again, or request a new one.',
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerifyCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    await submitVerificationCode(verificationCode);
   };
 
   const handleCompleteSignup = async () => {
@@ -390,12 +445,48 @@ function AuthContent() {
                 </form>
               </>}
 
-              {signupStage === 'verify-code' && <form onSubmit={handleVerifyCode} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-verification-code">Verification Code</Label>
-                  <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input id="signup-verification-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="\\d{6}" maxLength={6} placeholder="6-digit code" required value={verificationCode} onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, ''))} className="pl-10 h-11 tracking-[0.3em]" /></div>
+              {signupStage === 'verify-code' && <form onSubmit={handleVerifyCode} className="space-y-5">
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-bold text-foreground">Verify your email</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Enter the 6-digit code we sent to{' '}
+                    <span className="font-semibold text-foreground">{signupFormData.email}</span>
+                  </p>
                 </div>
-                <Button type="submit" disabled={loading || verificationCode.length !== 6} className="w-full h-11 rounded-full shadow-lg mt-2 font-semibold">{loading ? 'Verifying code...' : 'Verify code'}</Button>
+
+                <div className="flex justify-center">
+                  <OtpInput
+                    key={otpAttempt}
+                    id="signup-verification-code"
+                    length={6}
+                    value={verificationCode}
+                    onChange={(value) => {
+                      setVerificationCode(value);
+                      setOtpError(false);
+                    }}
+                    onComplete={(value) => void submitVerificationCode(value)}
+                    disabled={loading}
+                    error={otpError}
+                    autoFocus
+                    aria-describedby="signup-verification-code-hint"
+                  />
+                </div>
+                <p id="signup-verification-code-hint" className="sr-only">Enter the 6-digit verification code sent to your email</p>
+
+                <Button type="submit" disabled={loading || verificationCode.length !== 6} className="w-full h-11 rounded-full shadow-lg font-semibold">{loading ? 'Verifying code...' : 'Verify code'}</Button>
+
+                <div className="text-center text-sm text-muted-foreground">
+                  Didn&apos;t get the code?{' '}
+                  <button
+                    type="button"
+                    disabled={resendLoading || resendCountdown > 0}
+                    onClick={() => void handleResendCode()}
+                    className="font-semibold text-primary hover:underline underline-offset-4 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+                  >
+                    {resendLoading ? 'Sending...' : resendCountdown > 0 ? `Resend code in ${resendCountdown}s` : 'Resend code'}
+                  </button>
+                </div>
+
                 <Button type="button" variant="ghost" disabled={loading} onClick={() => setSignupStage('request-code')} className="w-full text-sm">Edit details or request a new code</Button>
               </form>}
 

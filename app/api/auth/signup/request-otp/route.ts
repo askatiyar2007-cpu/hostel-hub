@@ -97,7 +97,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         otp: data.otp
       });
 
-      if (!delivery.success) {
+      if (delivery.success) {
+        console.log('Signup OTP delivery accepted', {
+          challengeId: data.challenge_id,
+          messageId: delivery.messageId
+        });
+      } else {
         await invalidateUndeliveredChallenge(data.challenge_id);
       }
     } catch {
