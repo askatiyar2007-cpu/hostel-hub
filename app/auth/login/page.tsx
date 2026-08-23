@@ -239,11 +239,6 @@ function AuthContent() {
     }
   };
 
-  const handleVerifyCode = async (event: React.FormEvent) => {
-    event.preventDefault();
-    await submitVerificationCode(verificationCode);
-  };
-
   const handleCompleteSignup = async () => {
     if (!selectedRole) {
       toast.error(GENERIC_SIGNUP_ERROR);
@@ -387,7 +382,6 @@ function AuthContent() {
                 <h2 className="text-3xl font-bold tracking-tight font-display text-foreground">Find your place at HostelHub</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {signupStage === 'request-code' && 'Create your HostelHub account to get started.'}
-                  {signupStage === 'verify-code' && 'Enter the six-digit code sent to your email address.'}
                   {signupStage === 'complete' && 'Your email is verified. Confirm your details to finish signup.'}
                 </p>
               </div>
@@ -448,11 +442,12 @@ function AuthContent() {
                 </form>
               </>}
 
-              {signupStage === 'verify-code' && <form onSubmit={handleVerifyCode} className="space-y-5">
+              {signupStage === 'verify-code' && <div className="space-y-5">
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-bold text-foreground">Verify your email</h3>
                   <p className="text-sm text-muted-foreground">
-                    Enter the 6-digit code we sent to{' '}
+                    We sent a 6-digit verification code to
+                    <br />
                     <span className="font-semibold text-foreground">{signupFormData.email}</span>
                   </p>
                 </div>
@@ -471,15 +466,11 @@ function AuthContent() {
                     disabled={loading}
                     error={otpError}
                     autoFocus
-                    aria-describedby="signup-verification-code-hint"
                   />
                 </div>
-                <p id="signup-verification-code-hint" className="sr-only">Enter the 6-digit verification code sent to your email</p>
-
-                <Button type="submit" disabled={loading || verificationCode.length !== 6} className="w-full h-11 rounded-full shadow-lg font-semibold">{loading ? 'Verifying code...' : 'Verify code'}</Button>
 
                 <div className="text-center text-sm text-muted-foreground">
-                  Didn&apos;t get the code?{' '}
+                  Didn&apos;t receive it?{' '}
                   <button
                     type="button"
                     disabled={resendLoading || resendCountdown > 0}
@@ -490,8 +481,8 @@ function AuthContent() {
                   </button>
                 </div>
 
-                <Button type="button" variant="ghost" disabled={loading} onClick={() => setSignupStage('request-code')} className="w-full text-sm">Edit details or request a new code</Button>
-              </form>}
+                <Button type="button" variant="ghost" disabled={loading} onClick={() => setSignupStage('request-code')} className="w-full text-sm">Change email</Button>
+              </div>}
 
               {signupStage === 'complete' && <div className="space-y-4">
                 <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">Your email has been verified. We will now securely create or resume your account using the details you entered.</div>
