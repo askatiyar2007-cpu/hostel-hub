@@ -128,7 +128,7 @@ function AuthContent() {
           },
         },
       });
-      router.replace('/auth/login?tab=signup');
+      router.replace(`/auth/login?tab=${activeTab}`);
       return;
     }
 
@@ -145,7 +145,7 @@ function AuthContent() {
           },
         },
       });
-      router.replace('/auth/login?tab=login');
+      router.replace(`/auth/login?tab=${activeTab}`);
       return;
     }
 
@@ -157,7 +157,7 @@ function AuthContent() {
       });
       router.replace('/auth/login');
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, activeTab]);
 
   const [loginFormData, setLoginFormData] = useState({ email: '', password: '' });
   // This draft deliberately exists only in React component memory. It is never

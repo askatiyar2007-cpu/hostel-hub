@@ -1,0 +1,14 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test for Bug 1 (undeployed RPC breaks abandoned-signup restart)": {
+      "status": "passed",
+      "failingExample": "Test \"abandoned SIGNUP-intent restart redirects to /auth/select-role, not the generic oauth error\" FAILED as expected on unfixed code. Input: intent='signup', accountState={ user_id, role:'student', missing_step:'password', is_complete:false }, rpc('reset_incomplete_google_signup') mocked to return error={ code:'PGRST202', message:\"Could not find the function public.reset_incomplete_google_signup(p_user_id) in the schema cache\" }. Assertion failure: expected redirect location 'http://localhost/auth/login?error=oauth' to contain '/auth/select-role' -- received 'http://localhost/auth/login?error=oauth' instead. This confirms Bug 1: the callback's `if (resetError || !resetData?.success)` branch falls through to genericLoginError() when the RPC is unreachable, instead of restarting the signup at role selection.",
+      "lastRunTimestamp": 1787504565541
+    },
+    "3. Write preservation property tests for Bug 1 (BEFORE deploying migration / touching callback code)": {
+      "status": "passed",
+      "lastRunTimestamp": 1787504726944
+    }
+  },
+  "executionHistory": {}
+}

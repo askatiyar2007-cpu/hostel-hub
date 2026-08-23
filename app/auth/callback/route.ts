@@ -118,7 +118,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         console.error('OAuth callback could not clear rejected signup session.', signOutError);
       }
 
-      return redirect(request, '/auth/login?tab=login&reason=signin');
+      return redirect(request, '/auth/login?reason=signin');
     }
 
     if (intent === 'login' && accountState.missing_step === 'profile') {
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         console.error('OAuth callback could not clear session for missing account.', signOutError);
       }
 
-      return redirect(request, '/auth/login?tab=signup&reason=no-account');
+      return redirect(request, '/auth/login?reason=no-account');
     }
 
     if (
