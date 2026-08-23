@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * Account provisioning and all routing remain server- or page-owned concerns.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(null);
       setProfile(null);
+      router.replace('/auth/login');
     } finally {
       setShowLogoutConfirm(false);
     }
