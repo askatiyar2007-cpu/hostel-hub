@@ -198,7 +198,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (claimError) {
-      console.error('Signup completion claim failed');
+      console.error('Signup completion claim failed', {
+        code: claimError.code,
+        message: claimError.message,
+        details: claimError.details,
+        hint: claimError.hint,
+      });
       return retryFailure();
     }
 

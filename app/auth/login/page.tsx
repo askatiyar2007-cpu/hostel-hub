@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OtpInput } from '@/components/otp-input';
 
-type SignupStage = 'request-code' | 'verify-code' | 'complete';
+type SignupStage = 'request-code' | 'verify-code';
 type CompletionNext = 'profile' | 'role' | 'password' | 'student_onboarding' | 'complete';
 type OAuthIntent = 'login' | 'signup';
 
@@ -50,6 +50,7 @@ function AuthContent() {
   const [signupStage, setSignupStage] = useState<SignupStage>('request-code');
   const [verificationCode, setVerificationCode] = useState('');
   const [otpError, setOtpError] = useState(false);
+  const [completionError, setCompletionError] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpAttempt, setOtpAttempt] = useState(0);
@@ -206,46 +207,7 @@ function AuthContent() {
     }
   };
 
-  const submitVerificationCode = async (code: string) => {
-    if (loading || verifyInFlightRef.current) return;
-    verifyInFlightRef.current = true;
-    setLoading(true);
-    try {
-      const response = await fetch('/api/auth/signup/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: signupFormData.email, otp: code }),
-      });
-
-      if (!response.ok) {
-        setOtpError(true);
-        toast.error(GENERIC_CODE_ERROR, {
-          description: 'Please check the code and try again, or request a new one.',
-        });
-        return;
-      }
-
-      setOtpError(false);
-      setSignupStage('complete');
-      toast.success('Email verified. Confirm your details to finish signup.');
-    } catch {
-      setOtpError(true);
-      toast.error(GENERIC_CODE_ERROR, {
-        description: 'Please check the code and try again, or request a new one.',
-      });
-    } finally {
-      verifyInFlightRef.current = false;
-      setLoading(false);
-    }
-  };
-
-  const handleCompleteSignup = async () => {
-    if (!selectedRole) {
-      toast.error(GENERIC_SIGNUP_ERROR);
-      return;
-    }
-
-    setLoading(true);
+  const completeSignup = async () => {
     try {
       const response = await fetch('/api/auth/signup/complete', {
         method: 'POST',
@@ -263,6 +225,7 @@ function AuthContent() {
         : null;
 
       if (!response.ok || !next || !['profile', 'role', 'password', 'student_onboarding', 'complete'].includes(next)) {
+        setCompletionError(true);
         toast.error(GENERIC_SIGNUP_ERROR);
         return;
       }
@@ -279,8 +242,58 @@ function AuthContent() {
 
       router.push(onboardingDestinationForStep[next]);
     } catch {
+      setCompletionError(true);
       toast.error(GENERIC_SIGNUP_ERROR);
+    }
+  };
+
+  const submitVerificationCode = async (code: string) => {
+    if (loading || verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
+    setLoading(true);
+    setCompletionError(false);
+    try {
+      const response = await fetch('/api/auth/signup/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: signupFormData.email, otp: code }),
+      });
+
+      if (!response.ok) {
+        setOtpError(true);
+        toast.error(GENERIC_CODE_ERROR, {
+          description: 'Please check the code and try again, or request a new one.',
+        });
+        return;
+      }
+
+      setOtpError(false);
+
+      if (!selectedRole) {
+        toast.error(GENERIC_SIGNUP_ERROR);
+        return;
+      }
+
+      await completeSignup();
+    } catch {
+      setOtpError(true);
+      toast.error(GENERIC_CODE_ERROR, {
+        description: 'Please check the code and try again, or request a new one.',
+      });
     } finally {
+      verifyInFlightRef.current = false;
+      setLoading(false);
+    }
+  };
+
+  const retrySignupCompletion = async () => {
+    if (loading || verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
+    setLoading(true);
+    try {
+      await completeSignup();
+    } finally {
+      verifyInFlightRef.current = false;
       setLoading(false);
     }
   };
@@ -382,7 +395,6 @@ function AuthContent() {
                 <h2 className="text-3xl font-bold tracking-tight font-display text-foreground">Find your place at HostelHub</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {signupStage === 'request-code' && 'Create your HostelHub account to get started.'}
-                  {signupStage === 'complete' && 'Your email is verified. Confirm your details to finish signup.'}
                 </p>
               </div>
 
@@ -461,6 +473,7 @@ function AuthContent() {
                     onChange={(value) => {
                       setVerificationCode(value);
                       setOtpError(false);
+                      setCompletionError(false);
                     }}
                     onComplete={(value) => void submitVerificationCode(value)}
                     disabled={loading}
@@ -481,13 +494,11 @@ function AuthContent() {
                   </button>
                 </div>
 
-                <Button type="button" variant="ghost" disabled={loading} onClick={() => setSignupStage('request-code')} className="w-full text-sm">Change email</Button>
-              </div>}
+                <Button type="button" variant="ghost" disabled={loading} onClick={() => setSignupStage('request-code')} className="w-full text-sm">Change details</Button>
 
-              {signupStage === 'complete' && <div className="space-y-4">
-                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">Your email has been verified. We will now securely create or resume your account using the details you entered.</div>
-                <Button type="button" disabled={loading} onClick={() => void handleCompleteSignup()} className="w-full h-11 rounded-full shadow-lg mt-2 font-semibold">{loading ? 'Completing signup...' : 'Complete signup'}</Button>
-                <Button type="button" variant="ghost" disabled={loading} onClick={() => setSignupStage('verify-code')} className="w-full text-sm">Back to code verification</Button>
+                {completionError && (
+                  <Button type="button" variant="ghost" disabled={loading} onClick={() => void retrySignupCompletion()} className="w-full text-sm text-primary">Try again</Button>
+                )}
               </div>}
             </TabsContent>
           </Tabs>
