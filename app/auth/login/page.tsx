@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
@@ -40,7 +40,7 @@ function GoogleIcon() {
 }
 
 function AuthContent() {
-  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep } = useAuth();
+  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -95,6 +95,16 @@ function AuthContent() {
 
   useEffect(() => {
     if (!isAuthenticated || !profile) return;
+
+    // CRITICAL: password_set=false means NOT a HostelHub user.
+    // An abandoned signup must NOT be automatically restored to onboarding pages.
+    // Sign out and remain on login page to allow explicit "Create Account" restart.
+    if (password_set === false) {
+      console.log('[LoginPage] Detected incomplete account (password_set=false), staying on login');
+      // Don't redirect anywhere - user is already on login page
+      // They can explicitly choose "Create Account" to restart
+      return;
+    }
 
     if (accountCompletionStep === 'role') {
       router.push('/auth/select-role');

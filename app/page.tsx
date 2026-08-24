@@ -17,11 +17,21 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { profile, loading, accountCompletionStep } = useAuth();
+  const { profile, loading, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (loading || !profile) return;
+
+    // CRITICAL: password_set=false means NOT a HostelHub user.
+    // An abandoned signup (user closed tab at password page, later reopened site)
+    // must NOT be restored to /auth/setup-password. Instead, sign out and redirect to login.
+    // This check must come BEFORE accountCompletionStep routing to prevent fresh-visit restoration.
+    if (password_set === false) {
+      console.log('[HomePage] Detected incomplete account (password_set=false), redirecting to login');
+      router.push('/auth/login');
+      return;
+    }
 
     if (accountCompletionStep === 'role') {
       router.push('/auth/select-role');
@@ -201,8 +211,8 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { name: 'Starter', price: '₹999', features: ['1 Hostel', '50 Students', 'Basic Reports'] },
-              { name: 'Pro', price: '₹4,999', features: ['5 Hostels', '500 Students', 'Advanced Analytics', 'Priority Support'] },
+              { name: 'Starter', price: 'â‚¹999', features: ['1 Hostel', '50 Students', 'Basic Reports'] },
+              { name: 'Pro', price: 'â‚¹4,999', features: ['5 Hostels', '500 Students', 'Advanced Analytics', 'Priority Support'] },
               { name: 'Enterprise', price: 'Custom', features: ['Unlimited Hostels', 'Unlimited Users', 'API Access', 'Dedicated Support'] },
             ].map((plan, idx) => (
               <div

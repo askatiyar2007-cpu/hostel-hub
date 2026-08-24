@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from "next/link";
@@ -15,8 +15,13 @@ import { useAuth } from "@/lib/auth/context";
 import { dashboardPathForRole } from "@/lib/auth/dashboard";
 
 export function SiteHeader() {
-  const { isAuthenticated, profile, signOut } = useAuth();
+  const { isAuthenticated, profile, signOut, password_set, accountCompletionStep } = useAuth();
   const dashboardPath = dashboardPathForRole(profile?.role) ?? '/auth/select-role';
+  
+  // CRITICAL: Only show dashboard link for COMPLETED accounts.
+  // password_set=false means NOT a HostelHub user, so no dashboard link should be shown.
+  // An incomplete account in active onboarding should not see dashboard navigation.
+  const isCompleteUser = password_set === true && accountCompletionStep === 'complete';
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -47,10 +52,14 @@ export function SiteHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link href={dashboardPath}>Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {isCompleteUser && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={dashboardPath}>Dashboard</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
