@@ -19,14 +19,14 @@ import {
   SlidersHorizontal, 
   ArrowUpDown, 
   FileText, 
-  QrCode, 
   LogOut, 
   Eye, 
   RotateCcw,
   BookOpen,
   Check,
   X,
-  DollarSign
+  DollarSign,
+  Trash2
 } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { Button } from '@/components/ui/button';
@@ -56,8 +56,7 @@ export default function OwnerRequestsPage() {
 
   // Modal control states
   const [selectedDetailsItem, setSelectedDetailsItem] = useState<any | null>(null);
-  const [selectedConfirmAction, setSelectedConfirmAction] = useState<{ type: 'approve' | 'reject' | 'checkout' | 'rereview'; id: string; req?: any } | null>(null);
-  const [qrCodeModalData, setQrCodeModalData] = useState<any | null>(null);
+  const [selectedConfirmAction, setSelectedConfirmAction] = useState<{ type: 'approve' | 'reject' | 'checkout' | 'rereview' | 'delete'; id: string; req?: any } | null>(null);
   const [agreementModalData, setAgreementModalData] = useState<any | null>(null);
   const [selectedDepositAlloc, setSelectedDepositAlloc] = useState<any | null>(null);
   const [selectedFeeAlloc, setSelectedFeeAlloc] = useState<any | null>(null);
@@ -496,6 +495,32 @@ export default function OwnerRequestsPage() {
     }
   });
 
+  // 7. Mutation: Delete Rejected Request
+  // Real backend deletion, gated by Row Level Security (only the owner of the
+  // request's hostel can delete, and only while status = 'rejected' -- see
+  // migration 20260828000000_owner_dashboard_complaints_and_request_policies.sql).
+  // The .eq('status', 'rejected') filter below is defense-in-depth only; RLS
+  // is the actual security boundary.
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('room_requests')
+        .delete()
+        .eq('id', id)
+        .eq('status', 'rejected');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Rejected request deleted.');
+      setSelectedConfirmAction(null);
+      qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
+    },
+    onError: (e: Error) => {
+      toast.error(e.message);
+      setSelectedConfirmAction(null);
+    },
+  });
+
   // Counts for Badges
   const pendingRequests = requests?.filter((r: any) => r.status === 'pending') ?? [];
   const rejectedRequests = requests?.filter((r: any) => r.status === 'rejected') ?? [];
@@ -560,7 +585,7 @@ export default function OwnerRequestsPage() {
     activeTab === 'pending' ? visiblePending.length :
     activeTab === 'approved' ? visibleApproved.length : visibleRejected.length;
 
-  if (isRequestsLoading || isAllocationsLoading || approveMutation.isPending || checkoutMutation.isPending || rejectMutation.isPending || rereviewMutation.isPending) {
+  if (isRequestsLoading || isAllocationsLoading || approveMutation.isPending || checkoutMutation.isPending || rejectMutation.isPending || rereviewMutation.isPending || deleteMutation.isPending) {
     return (
       <DashboardShell title="Room Requests & Allocations" subtitle="Processing database updates..." badge="Owner">
         <div className="flex h-64 items-center justify-center">
@@ -575,6 +600,8 @@ export default function OwnerRequestsPage() {
                 ? "Rejecting request..."
                 : rereviewMutation.isPending
                 ? "Moving request back to pending..."
+                : deleteMutation.isPending
+                ? "Deleting rejected request..."
                 : "Loading allocations database..."}
             </p>
           </div>
@@ -767,7 +794,6 @@ export default function OwnerRequestsPage() {
                   key={alloc.id} 
                   alloc={alloc} 
                   onCheckout={() => setSelectedConfirmAction({ type: 'checkout', id: alloc.id })}
-                  onViewQR={() => setQrCodeModalData(alloc)}
                   onViewAgreement={() => setAgreementModalData(alloc)}
                   onViewDetails={() => {
                     setSelectedDetailsItem(alloc);
@@ -793,6 +819,7 @@ export default function OwnerRequestsPage() {
                   key={req.id} 
                   req={req} 
                   onRereview={() => setSelectedConfirmAction({ type: 'rereview', id: req.id })}
+                  onDelete={() => setSelectedConfirmAction({ type: 'delete', id: req.id })}
                   onViewDetails={() => {
                     setSelectedDetailsItem(req);
                   }}
@@ -826,22 +853,16 @@ export default function OwnerRequestsPage() {
               rereviewMutation.mutate(selectedConfirmAction.id);
             } else if (selectedConfirmAction.type === 'checkout') {
               checkoutMutation.mutate(selectedConfirmAction.id);
+            } else if (selectedConfirmAction.type === 'delete') {
+              deleteMutation.mutate(selectedConfirmAction.id);
             }
           }}
           onClose={() => setSelectedConfirmAction(null)}
-          loading={approveMutation.isPending || rejectMutation.isPending || rereviewMutation.isPending || checkoutMutation.isPending}
+          loading={approveMutation.isPending || rejectMutation.isPending || rereviewMutation.isPending || checkoutMutation.isPending || deleteMutation.isPending}
         />
       )}
 
-      {/* 6. QR Code Display Modal */}
-      {qrCodeModalData && (
-        <QrCodeModal 
-          alloc={qrCodeModalData}
-          onClose={() => setQrCodeModalData(null)}
-        />
-      )}
-
-      {/* 7. Agreement PDF Modal */}
+      {/* 6. Agreement PDF Modal */}
       {agreementModalData && (
         <AgreementModal 
           alloc={agreementModalData}
@@ -849,7 +870,7 @@ export default function OwnerRequestsPage() {
         />
       )}
 
-      {/* 8. Mark Deposit Paid Modal */}
+      {/* 7. Mark Deposit Paid Modal */}
       {selectedDepositAlloc && (
         <MarkDepositPaidModal
           alloc={selectedDepositAlloc}
@@ -859,7 +880,7 @@ export default function OwnerRequestsPage() {
         />
       )}
 
-      {/* 9. Mark Monthly Fee Paid Modal */}
+      {/* 8. Mark Monthly Fee Paid Modal */}
       {selectedFeeAlloc && (
         <MarkFeePaidModal
           alloc={selectedFeeAlloc}
@@ -873,7 +894,7 @@ export default function OwnerRequestsPage() {
         />
       )}
 
-      {/* 10. Payment History Modal */}
+      {/* 9. Payment History Modal */}
       {selectedHistoryAlloc && (
         <PaymentHistoryModal
           alloc={selectedHistoryAlloc}
@@ -1016,7 +1037,7 @@ function PendingRequestCard({ req, onApprove, onReject, onViewDetails }: { req: 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-2xl border border-border/50">
           <div className="space-y-3">
             <CardInfoRow icon={<Building2 size={14} />} label="Hostel" value={req.hostels?.name} />
-            <CardInfoRow icon={<Home size={14} />} label="Room / Type" value={`Room ${room?.room_number} (${req.booking_type === 'entire_room' ? 'Private' : 'Shared Bed'})`} />
+            <CardInfoRow icon={<Home size={14} />} label="Room / Type" value={`Room ${room?.room_number} (${req.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})`} />
             <CardInfoRow icon={<Mail size={14} />} label="Rent Details" value={`₹${Number(room?.rent).toLocaleString()}/month`} />
           </div>
           <div className="flex items-center justify-center">
@@ -1061,7 +1082,6 @@ function PendingRequestCard({ req, onApprove, onReject, onViewDetails }: { req: 
 function ApprovedAllocationCard({ 
   alloc, 
   onCheckout, 
-  onViewQR, 
   onViewAgreement, 
   onViewDetails,
   onMarkDepositPaid,
@@ -1070,7 +1090,6 @@ function ApprovedAllocationCard({
 }: { 
   alloc: any; 
   onCheckout: () => void; 
-  onViewQR: () => void; 
   onViewAgreement: () => void; 
   onViewDetails: () => void;
   onMarkDepositPaid: () => void;
@@ -1081,6 +1100,12 @@ function ApprovedAllocationCard({
   const studentName = student?.full_name || alloc.student_name || '-';
   const studentEmail = student?.email || alloc.student_email || '-';
   const studentPhone = student?.phone_number || alloc.student_phone || '-';
+
+  const studentRecord = Array.isArray(alloc.students) ? alloc.students[0] : alloc.students;
+  const emergencyContact = studentRecord?.emergency_contact
+    || (studentRecord?.emergency_contact_name && studentRecord?.emergency_contact_phone
+      ? `${studentRecord.emergency_contact_name} - ${studentRecord.emergency_contact_phone}`
+      : studentRecord?.emergency_contact_name || 'N/A');
 
   const room = alloc.rooms;
   const rent = room?.rent ?? 0;
@@ -1116,7 +1141,7 @@ function ApprovedAllocationCard({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-green-50/20 dark:bg-green-950/10 p-4 rounded-2xl border border-green-100/50 dark:border-green-900/20">
           <div className="space-y-3">
             <CardInfoRow icon={<Building2 size={14} />} label="Hostel" value={alloc.hostels?.name} />
-            <CardInfoRow icon={<Home size={14} />} label="Room Allocated" value={`Room ${room?.room_number} (${alloc.booking_type === 'entire_room' ? 'Private' : 'Shared Bed'})`} />
+            <CardInfoRow icon={<Home size={14} />} label="Room Allocated" value={`Room ${room?.room_number} (${alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})`} />
             <CardInfoRow icon={<Mail size={14} />} label="Monthly Rent" value={`₹${Number(rent).toLocaleString()}`} />
           </div>
           <div className="flex items-center justify-center">
@@ -1137,6 +1162,10 @@ function ApprovedAllocationCard({
             <div className="flex items-center gap-2 text-xs">
               <Phone size={12} className="text-muted-foreground" />
               <span className="text-foreground font-semibold">{studentPhone}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs pt-1.5 border-t border-dashed">
+              <BookOpen size={12} className="text-muted-foreground" />
+              <span className="text-foreground font-semibold truncate">Emergency: {emergencyContact}</span>
             </div>
           </div>
         </div>
@@ -1278,14 +1307,6 @@ function ApprovedAllocationCard({
           <FileText size={14} /> Agreement
         </Button>
         <Button 
-          onClick={onViewQR}
-          variant="outline" 
-          size="sm"
-          className="rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 text-xs font-semibold gap-1.5"
-        >
-          <QrCode size={14} /> QR Code
-        </Button>
-        <Button 
           onClick={onViewDetails}
           variant="outline" 
           size="sm"
@@ -1315,7 +1336,7 @@ function ApprovedAllocationCard({
   );
 }
 
-function RejectedRequestCard({ req, onRereview, onViewDetails }: { req: any; onRereview: () => void; onViewDetails: () => void }) {
+function RejectedRequestCard({ req, onRereview, onDelete, onViewDetails }: { req: any; onRereview: () => void; onDelete: () => void; onViewDetails: () => void }) {
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
   const studentName = student?.full_name || req.student_name || '-';
   const studentEmail = student?.email || req.student_email || '-';
@@ -1371,6 +1392,14 @@ function RejectedRequestCard({ req, onRereview, onViewDetails }: { req: any; onR
           className="rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 text-xs font-semibold gap-1"
         >
           <Eye size={14} /> View Details
+        </Button>
+        <Button 
+          onClick={onDelete}
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-bold gap-1"
+        >
+          <Trash2 size={14} /> Delete
         </Button>
         <Button 
           onClick={onRereview} 
@@ -1462,7 +1491,7 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
             <h4 className="text-xs font-bold uppercase tracking-wider text-orange-500 font-display border-b pb-1.5">Accommodation Details</h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               <span className="text-muted-foreground font-semibold">Hostel:</span> <span className="font-semibold text-foreground text-right">{item.hostels?.name}</span>
-              <span className="text-muted-foreground font-semibold">Room:</span> <span className="font-semibold text-foreground text-right">Room {item.rooms?.room_number} ({item.booking_type === 'entire_room' ? 'Private' : 'Shared Bed'})</span>
+              <span className="text-muted-foreground font-semibold">Room:</span> <span className="font-semibold text-foreground text-right">Room {item.rooms?.room_number} ({item.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})</span>
               <span className="text-muted-foreground font-semibold">Rent:</span> <span className="font-bold text-primary text-right">₹{Number(item.rooms?.rent).toLocaleString()}/mo</span>
             </div>
           </div>
@@ -1479,26 +1508,29 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
   );
 }
 
-function ConfirmationModal({ action, onConfirm, onClose, loading }: { action: 'approve' | 'reject' | 'checkout' | 'rereview'; onConfirm: () => void; onClose: () => void; loading: boolean }) {
+function ConfirmationModal({ action, onConfirm, onClose, loading }: { action: 'approve' | 'reject' | 'checkout' | 'rereview' | 'delete'; onConfirm: () => void; onClose: () => void; loading: boolean }) {
   const titles = {
     approve: 'Approve Request & Allocate Room?',
     reject: 'Reject Room Request?',
     checkout: 'Checkout Student?',
-    rereview: 'Move back to pending review?'
+    rereview: 'Move back to pending review?',
+    delete: 'Delete Rejected Request?'
   };
 
   const descriptions = {
     approve: 'This will issue a room allocation, block the room space/beds, and send a notification update to the student.',
     reject: 'This will reject the student request. You can re-review this decision later if required.',
     checkout: 'This action marks the student allocation as inactive, frees the bed, and archives their check-in details. This is irreversible.',
-    rereview: 'This moves the rejected record back into the pending queue for re-evaluation.'
+    rereview: 'This moves the rejected record back into the pending queue for re-evaluation.',
+    delete: 'This will permanently delete this rejected request from the database. This cannot be undone.'
   };
 
   const buttons = {
     approve: 'bg-green-600 hover:bg-green-700 text-white',
     reject: 'bg-red-600 hover:bg-red-700 text-white',
     checkout: 'bg-red-600 hover:bg-red-700 text-white',
-    rereview: 'bg-orange-600 hover:bg-orange-700 text-white'
+    rereview: 'bg-orange-600 hover:bg-orange-700 text-white',
+    delete: 'bg-red-600 hover:bg-red-700 text-white'
   };
 
   return (
@@ -1516,56 +1548,6 @@ function ConfirmationModal({ action, onConfirm, onClose, loading }: { action: 'a
             {loading ? 'Processing...' : 'Confirm Action'}
           </Button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function QrCodeModal({ alloc, onClose }: { alloc: any; onClose: () => void }) {
-  const student = Array.isArray(alloc.students) ? alloc.students[0]?.profiles : alloc.students?.profiles;
-  const studentName = student?.full_name || alloc.student_name || '-';
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl text-center space-y-6">
-        <div className="flex items-center justify-between border-b pb-2">
-          <h3 className="text-base font-bold text-foreground font-display flex items-center gap-1.5">
-            <QrCode size={16} className="text-orange-500" /> Digital Check-In QR
-          </h3>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl inline-flex items-center justify-center border border-zinc-200 shadow-inner">
-          {/* Simulated QR Code using plain SVG vectors */}
-          <svg className="h-44 w-44 text-zinc-900" viewBox="0 0 100 100">
-            <rect width="100" height="100" fill="none" />
-            <rect x="10" y="10" width="25" height="25" stroke="currentColor" strokeWidth="4" fill="none" />
-            <rect x="65" y="10" width="25" height="25" stroke="currentColor" strokeWidth="4" fill="none" />
-            <rect x="10" y="65" width="25" height="25" stroke="currentColor" strokeWidth="4" fill="none" />
-            <rect x="15" y="15" width="15" height="15" fill="currentColor" />
-            <rect x="70" y="15" width="15" height="15" fill="currentColor" />
-            <rect x="15" y="70" width="15" height="15" fill="currentColor" />
-            {/* Inner pixels */}
-            <rect x="45" y="10" width="10" height="10" fill="currentColor" />
-            <rect x="45" y="25" width="5" height="20" fill="currentColor" />
-            <rect x="10" y="45" width="15" height="5" fill="currentColor" />
-            <rect x="30" y="45" width="20" height="15" fill="currentColor" />
-            <rect x="55" y="65" width="30" height="10" fill="currentColor" />
-            <rect x="65" y="45" width="15" height="15" fill="currentColor" />
-            <rect x="85" y="80" width="10" height="15" fill="currentColor" />
-          </svg>
-        </div>
-
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-foreground">{studentName}</p>
-          <p className="text-xs text-muted-foreground">Allocation ID: {alloc.id.substring(0, 8)}...</p>
-        </div>
-
-        <Button onClick={onClose} className="w-full rounded-xl">
-          Close QR
-        </Button>
       </div>
     </div>
   );

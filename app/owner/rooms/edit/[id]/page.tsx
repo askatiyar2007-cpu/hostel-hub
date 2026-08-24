@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import toast from 'react-hot-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditRoomPage() {
@@ -103,40 +103,53 @@ export default function EditRoomPage() {
     }
   };
 
-  if (loading) return <div className="p-20 text-center">Loading room details...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm font-medium text-muted-foreground">Loading room details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <div className="flex items-center space-x-4 mb-8">
-        <Link href="/owner/rooms" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
+      <div className="mb-8 flex items-center space-x-4">
+        <Link href="/owner/rooms" className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
           <ArrowLeft size={24} />
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Edit Room</h1>
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">Edit Room</h1>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl border-2 border-gray-100 shadow-xl space-y-6"
+        className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm"
       >
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
-            Hostel
-          </label>
-          <select
-            required
-            className="input w-full"
-            value={formData.hostel_id}
-            onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
-          >
-            {hostels.map(h => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">1</span>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Hostel</h3>
+          </div>
+          <div className="relative">
+            <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <select
+              required
+              className="input h-12 w-full pl-10 text-base font-medium"
+              value={formData.hostel_id}
+              onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
+            >
+              {hostels.map(h => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Room Number
             </label>
             <input
@@ -151,7 +164,7 @@ export default function EditRoomPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Floor
             </label>
             <input
@@ -166,9 +179,9 @@ export default function EditRoomPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Room Type
             </label>
             <select
@@ -184,7 +197,7 @@ export default function EditRoomPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Capacity
             </label>
             <input
@@ -199,9 +212,9 @@ export default function EditRoomPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Monthly Rent (₹)
             </label>
             <input
@@ -216,7 +229,7 @@ export default function EditRoomPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Status
             </label>
             <select
@@ -232,7 +245,7 @@ export default function EditRoomPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Facilities (Comma separated)
           </label>
           <input
@@ -248,7 +261,7 @@ export default function EditRoomPage() {
         <button
           disabled={saving}
           type="submit"
-          className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-xl hover:bg-blue-700 transition-all shadow-lg"
+          className="w-full rounded-full bg-primary p-4 text-lg font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.01] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? 'Saving Changes...' : 'Save Changes'}
         </button>

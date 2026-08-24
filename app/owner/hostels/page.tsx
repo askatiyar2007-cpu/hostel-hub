@@ -15,7 +15,7 @@ export default function HostelsListPage() {
 
   const fetchHostels = useCallback(async () => {
     if (!profile?.user_id) return;
-    
+
     const { data } = await supabase
       .from('hostels')
       .select('*')
@@ -48,21 +48,21 @@ export default function HostelsListPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">
             Your Hostels
           </h1>
 
-          <p className="text-gray-500 mt-1">
+          <p className="mt-1 text-muted-foreground">
             Manage and monitor all your properties.
           </p>
         </div>
 
         <Link
           href="/owner/hostels/new"
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center space-x-2 hover:bg-blue-700 font-bold shadow-lg transition-all"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
         >
           <Plus size={20} />
           <span>Add New Hostel</span>
@@ -70,31 +70,34 @@ export default function HostelsListPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500 font-medium">
-          Loading your hostels...
+        <div className="flex items-center justify-center rounded-2xl border border-border bg-card py-20">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm font-medium text-muted-foreground">Loading your hostels...</p>
+          </div>
         </div>
       ) : hostels.length === 0 ? (
-        <div className="text-center py-20 bg-white border-2 border-dashed border-gray-200 rounded-2xl">
-          <p className="text-gray-400 text-lg">
+        <div className="rounded-2xl border-2 border-dashed border-border bg-muted/40 py-20 text-center">
+          <p className="text-lg text-muted-foreground">
             You haven&apos;t added any hostels yet.
           </p>
 
           <Link
             href="/owner/hostels/new"
-            className="text-blue-600 font-bold mt-2 inline-block hover:underline"
+            className="mt-2 inline-block font-semibold text-primary hover:underline"
           >
-            Add your first hostel →
+            Add your first hostel &rarr;
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {hostels.map((hostel) => (
             <div
               key={hostel.id}
-              className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all group"
+              className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md"
             >
-              <div className="h-40 bg-blue-50 flex items-center justify-center border-b border-gray-100 relative">
-                <div className="text-blue-200 group-hover:scale-110 transition-transform">
+              <div className="relative flex h-40 items-center justify-center border-b border-border bg-primary/5">
+                <div className="text-primary/30 transition-transform group-hover:scale-110">
                   <svg
                     width="64"
                     height="64"
@@ -112,42 +115,48 @@ export default function HostelsListPage() {
                     <path d="M10 10h4" />
                   </svg>
                 </div>
-                
+
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <Link
                     href={`/owner/hostels/edit/${hostel.id}`}
-                    className="p-2 bg-white/80 hover:bg-white text-blue-600 rounded-lg shadow-sm transition-all"
+                    className="rounded-lg bg-card/90 p-2 text-primary shadow-sm transition-all hover:bg-card"
                   >
                     <Edit size={16} />
                   </Link>
                   <button
                     onClick={() => handleDelete(hostel.id)}
-                    className="p-2 bg-white/80 hover:bg-white text-red-600 rounded-lg shadow-sm transition-all"
+                    className="rounded-lg bg-card/90 p-2 text-destructive shadow-sm transition-all hover:bg-card"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-4">
-                <h3 className="text-xl font-bold text-gray-900">
+              <div className="space-y-4 p-6">
+                <h3 className="text-xl font-semibold font-display text-foreground">
                   {hostel.name}
                 </h3>
 
                 <div className="space-y-2">
-                  <p className="text-gray-500 text-sm flex items-center space-x-2">
-                    <MapPin size={16} className="text-gray-400" />
+                  <p className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <MapPin size={16} className="text-muted-foreground" />
                     <span>
                       {hostel.city}, {hostel.address}
                     </span>
                   </p>
                 </div>
 
+                {(hostel.rating > 0 || hostel.total_reviews > 0) && (
+                  <p className="text-xs font-medium text-muted-foreground">
+                    &#9733; {hostel.rating.toFixed(1)} &middot; {hostel.total_reviews} review{hostel.total_reviews === 1 ? '' : 's'}
+                  </p>
+                )}
+
                 <div className="flex flex-wrap gap-2">
                   {hostel.amenities?.slice(0, 3).map((a: string) => (
                     <span
                       key={a}
-                      className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-md font-medium"
+                      className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
                     >
                       {a}
                     </span>
@@ -156,7 +165,7 @@ export default function HostelsListPage() {
 
                 <Link
                   href={`/owner/hostels/${hostel.id}`}
-                  className="block text-center bg-gray-900 text-white py-3 rounded-xl hover:bg-gray-800 font-bold transition-colors"
+                  className="block rounded-xl bg-foreground py-3 text-center font-semibold text-background transition-colors hover:bg-foreground/90"
                 >
                   Manage Hostel
                 </Link>

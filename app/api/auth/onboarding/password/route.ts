@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient, supabaseServer } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -37,10 +37,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'That setup step is no longer available.' }, { status: 409 });
   }
 
-  const { error: passwordError } = await supabaseServer.auth.admin.updateUserById(
-    user.id,
-    { password },
-  );
+  // Use session-based password update instead of admin API to preserve the
+  // browser session atomically. The admin API (updateUserById) invalidates all
+  // existing sessions as a security feature, causing the next API call to fail
+  // with 401. The session-based updateUser() updates the password AND refreshes
+  // the session in a single atomic operation, maintaining browser authentication.
+  const { error: passwordError } = await sessionClient.auth.updateUser({ password });
 
   if (passwordError) {
     console.error('Onboarding password update failed:', passwordError);

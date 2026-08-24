@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 /**
  * Synchronizes the browser session with its current application profile.
  * Account provisioning and all routing remain server- or page-owned concerns.
+ * 
+ * CRITICAL: This provider now uses /api/auth/account-state as the single source
+ * of truth for account completion instead of reimplementing the get_account_state()
+ * logic client-side. This ensures the database and client never diverge on what
+ * constitutes a "complete" account.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -51,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(session.user);
 
+    // Fetch profile for UI display purposes (full_name, email, etc.)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -59,8 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (profileError) throw profileError;
 
-    // A missing profile represents an incomplete, onboarding-only session.
-    // The provider deliberately does not create records or choose a route.
     setProfile(profileData as Profile | null);
 
     if (!profileData) {
@@ -68,34 +72,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Mirrors the canonical server-side completion rule in get_account_state():
-    // a role must be present, the account password must be set, and a student
-    // role additionally requires its students row. This is a read-only check
-    // under existing RLS policies; it never creates or modifies any record.
-    if (!profileData.role) {
-      setAccountCompletionStep('role');
-      return;
+    // Get canonical completion state from server (single source of truth).
+    // This replaces the previous client-side logic that duplicated the
+    // get_account_state() SQL function's completion rules. Any changes to
+    // account completion requirements now only need to update the SQL function.
+    try {
+      const response = await fetch('/api/auth/account-state');
+      if (response.ok) {
+        const state = await response.json();
+        // The API returns missing_step='complete' for completed accounts, or the
+        // actual missing step (role/password/student_onboarding) for incomplete ones
+        const step = state.missing_step === 'complete' ? 'complete' : state.missing_step;
+        setAccountCompletionStep(step as AccountCompletionStep);
+      } else {
+        // Fallback: if API fails, assume incomplete to be safe. This prevents
+        // accidentally granting dashboard access due to API errors.
+        console.error('Failed to fetch account state:', response.status);
+        setAccountCompletionStep(null);
+      }
+    } catch (error) {
+      console.error('Unable to fetch account state:', error);
+      // Same fallback: assume incomplete on error
+      setAccountCompletionStep(null);
     }
-
-    if (!profileData.password_set) {
-      setAccountCompletionStep('password');
-      return;
-    }
-
-    if (profileData.role === 'student') {
-      const { data: studentRecord, error: studentError } = await supabase
-        .from('students')
-        .select('id')
-        .eq('profile_id', profileData.id)
-        .maybeSingle();
-
-      if (studentError) throw studentError;
-
-      setAccountCompletionStep(studentRecord ? 'complete' : 'student_onboarding');
-      return;
-    }
-
-    setAccountCompletionStep('complete');
   };
 
   useEffect(() => {

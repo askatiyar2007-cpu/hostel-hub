@@ -12,15 +12,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+const CATEGORY_LABEL: Record<string, string> = {
+  electrical: 'Electrical',
+  plumbing: 'Plumbing',
+  wifi: 'WiFi',
+  cleaning: 'Cleaning',
+  furniture: 'Furniture',
+  security: 'Security',
+  other: 'Other'
+};
+
 interface ExtendedComplaint extends Complaint {
-  students: {
-    profiles: {
-      full_name: string;
-    } | null;
-  } | null;
   hostels: {
     name: string;
   } | null;
+  student_full_name: string | null;
 }
 
 export default function OwnerComplaintsPage() {
@@ -30,29 +36,53 @@ export default function OwnerComplaintsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusTab, setStatusTab] = useState('all');
 
+  // complaints.student_id is a foreign key to auth.users.id (confirmed via
+  // schema), not public.students.id -- there is no direct FK from
+  // complaints to students, so a `students!inner(...)` embed cannot resolve.
+  // Fetch complaints scoped to this owner's hostels first, then resolve each
+  // complaint's student name via profiles.user_id (the same pattern already
+  // used correctly in app/owner/students/[id]/page.tsx).
   const fetchComplaints = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.user_id) return;
     try {
       const { data, error } = await supabase
         .from('complaints')
         .select(`
           *,
-          students!inner (
-            profiles (full_name)
-          ),
           hostels!inner (name)
         `)
-        .eq('hostels.owner_id', profile.id)
+        .eq('hostels.owner_id', profile.user_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setComplaints((data as ExtendedComplaint[]) || []);
+
+      const rows = (data as unknown as (Complaint & { hostels: { name: string } | null })[]) || [];
+
+      const studentUserIds = Array.from(new Set(rows.map((c) => c.student_id).filter(Boolean)));
+      let namesByUserId = new Map<string, string>();
+      if (studentUserIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', studentUserIds);
+
+        if (profilesError) throw profilesError;
+
+        namesByUserId = new Map((profilesData ?? []).map((p) => [p.user_id, p.full_name]));
+      }
+
+      const withNames: ExtendedComplaint[] = rows.map((c) => ({
+        ...c,
+        student_full_name: namesByUserId.get(c.student_id) || null
+      }));
+
+      setComplaints(withNames);
     } catch (error) {
       console.error('Error fetching complaints:', error);
     } finally {
       setLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.user_id]);
 
   useEffect(() => {
     fetchComplaints();
@@ -95,7 +125,7 @@ export default function OwnerComplaintsPage() {
       const matchesSearch = 
         c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.students?.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
+        c.student_full_name?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesStatus = statusTab === 'all' || c.status === statusTab;
       
@@ -165,6 +195,9 @@ export default function OwnerComplaintsPage() {
                   <Badge variant="outline" className={getPriorityColor(complaint.priority)}>
                     {complaint.priority === 1 ? 'HIGH' : complaint.priority === 2 ? 'MEDIUM' : 'LOW'} PRIORITY
                   </Badge>
+                  <Badge variant="outline" className="text-purple-600 bg-purple-100 border-purple-200">
+                    {CATEGORY_LABEL[complaint.category] || complaint.category}
+                  </Badge>
                   {getStatusBadge(complaint.status)}
                 </div>
                 
@@ -176,9 +209,9 @@ export default function OwnerComplaintsPage() {
                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground font-medium">
                   <div className="flex items-center gap-1.5">
                     <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary">
-                      {complaint.students?.profiles?.full_name?.[0]}
+                      {complaint.student_full_name?.[0] || '?'}
                     </div>
-                    <span>{complaint.students?.profiles?.full_name}</span>
+                    <span>{complaint.student_full_name || 'Unknown student'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock size={14} />

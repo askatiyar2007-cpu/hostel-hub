@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
-import { Search, Filter, MoreVertical, Plus, Users, Building2, AlertTriangle } from 'lucide-react';
+import { Search, MoreVertical, Plus, Users, Building2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -17,6 +17,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+
+// User-facing labels for the two booking modes. The underlying persisted
+// value and public.booking_type enum are unchanged -- only the displayed
+// text differs: "entire_room" reads as "Entire Room" (whole room,
+// exclusive) and "shared_bed" reads as "Entire Shared Room" (shared with
+// other students under the existing bed-level allocation model).
+const BOOKING_TYPE_LABEL: Record<string, string> = {
+  entire_room: 'Entire Room',
+  shared_bed: 'Entire Shared Room'
+};
 
 export default function OwnerStudentsPage() {
   const { user } = useAuth();
@@ -158,8 +168,8 @@ export default function OwnerStudentsPage() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Filter size={18} />
+              <Button variant="outline" className="gap-2 border-primary/30 bg-primary/5 font-semibold text-foreground">
+                <Building2 size={18} className="text-primary" />
                 <span>{selectedHostel === 'all' ? 'All Hostels' : uniqueHostels.find(h => h.id === selectedHostel)?.name}</span>
               </Button>
             </DropdownMenuTrigger>
@@ -230,7 +240,7 @@ export default function OwnerStudentsPage() {
                 const studentPhone = item.student_phone || profile?.phone_number || '-';
                 const hostelName = item.hostels?.name || '-';
                 const roomNum = item.rooms?.room_number || '-';
-                const bookingType = item.booking_type === 'entire_room' ? 'Private Room' : 'Shared Bed';
+                const bookingType = BOOKING_TYPE_LABEL[item.booking_type] || BOOKING_TYPE_LABEL.shared_bed;
                 const rent = item.rooms?.rent || 0;
 
                 return (
@@ -277,7 +287,7 @@ export default function OwnerStudentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium text-foreground capitalize">{bookingType}</p>
+                        <p className="font-medium text-foreground">{bookingType}</p>
                         <p className="text-xs text-primary font-bold">₹{Number(rent).toLocaleString()}/mo</p>
                       </div>
                     </td>

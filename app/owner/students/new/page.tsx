@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Copy, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, CheckCircle2, AlertCircle, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +14,17 @@ import {
 } from '@/components/ui/dialog';
 
 type BookingType = 'shared_bed' | 'entire_room';
+
+// User-facing labels for the two booking modes. The underlying persisted
+// value (BookingType) and public.booking_type enum are unchanged -- only
+// the displayed text differs: "entire_room" reads as "Entire Room" (the
+// student gets the whole room exclusively) and "shared_bed" reads as
+// "Entire Shared Room" (the student shares the room with other students
+// under the existing bed-level allocation model).
+const BOOKING_TYPE_LABEL: Record<BookingType, string> = {
+  entire_room: 'Entire Room',
+  shared_bed: 'Entire Shared Room'
+};
 
 export default function AssignStudentPage() {
   const { user } = useAuth();
@@ -403,19 +414,22 @@ export default function AssignStudentPage() {
             </h3>
 
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Hostel *</label>
-                <select
-                  required
-                  className="w-full px-4 py-2.5 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-foreground"
-                  value={formData.hostel_id}
-                  onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
-                >
-                  <option value="">Select Hostel</option>
-                  {hostels.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                <label className="text-xs font-bold uppercase tracking-wider text-primary/80 block mb-2">Select Hostel *</label>
+                <div className="relative">
+                  <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <select
+                    required
+                    className="w-full h-11 pl-10 pr-3 bg-background border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm font-medium text-foreground"
+                    value={formData.hostel_id}
+                    onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
+                  >
+                    <option value="">Select Hostel</option>
+                    {hostels.map(h => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -459,7 +473,7 @@ export default function AssignStudentPage() {
                       onChange={() => setFormData(prev => ({ ...prev, booking_type: 'shared_bed' }))}
                       className="text-primary focus:ring-primary h-4 w-4"
                     />
-                    <span className="text-sm font-medium">Shared Bed</span>
+                    <span className="text-sm font-medium">{BOOKING_TYPE_LABEL.shared_bed}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
@@ -470,7 +484,7 @@ export default function AssignStudentPage() {
                       onChange={() => setFormData(prev => ({ ...prev, booking_type: 'entire_room' }))}
                       className="text-primary focus:ring-primary h-4 w-4"
                     />
-                    <span className="text-sm font-medium">Entire Room</span>
+                    <span className="text-sm font-medium">{BOOKING_TYPE_LABEL.entire_room}</span>
                   </label>
                 </div>
               </div>
@@ -480,7 +494,7 @@ export default function AssignStudentPage() {
                   <span className="font-bold text-foreground block font-display uppercase tracking-wider">Assignment Details</span>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Booking Option:</span>
-                    <span className="font-semibold text-foreground capitalize">{formData.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}</span>
+                    <span className="font-semibold text-foreground">{BOOKING_TYPE_LABEL[formData.booking_type]}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Monthly Rent:</span>
@@ -557,7 +571,7 @@ export default function AssignStudentPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Booking Type</p>
-                  <p className="font-semibold text-foreground capitalize">{invitationData.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}</p>
+                  <p className="font-semibold text-foreground">{BOOKING_TYPE_LABEL[invitationData.booking_type]}</p>
                 </div>
               </div>
 

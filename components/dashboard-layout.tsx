@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -94,6 +94,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // abandoned Google signup that selected a role but never set a password)
   // must never render or stay on a dashboard route. Resume at the exact
   // missing step instead. This is a read-only redirect; it creates nothing.
+  // Account completion check now uses server-derived state from AuthProvider,
+  // which calls /api/auth/account-state → get_account_state(). This is the
+  // single source of truth for account completion. Direct navigation to dashboard
+  // routes with an incomplete account will be caught here and redirected to the
+  // appropriate onboarding step. The OAuth callback handles intent-aware routing
+  // (signup vs login), while this guard handles direct navigation and ensures
+  // dashboard protection regardless of entry point.
   useEffect(() => {
     if (loading || !profile) return;
 

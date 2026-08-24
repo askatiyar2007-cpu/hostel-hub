@@ -87,17 +87,17 @@ export default function OwnerRoomsPage() {
   );
 
   return (
-    <div className="p-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Rooms Management</h1>
-          <p className="text-gray-500">Manage rooms and availability across your hostels</p>
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">Rooms Management</h1>
+          <p className="text-muted-foreground">Manage rooms and availability across your hostels</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <select 
             value={selectedHostel}
             onChange={(e) => setSelectedHostel(e.target.value)}
-            className="h-10 text-xs px-3 bg-white border border-gray-200 rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
+            className="h-10 rounded-xl border border-border bg-card px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="all">All Hostels</option>
             {hostels.map(h => (
@@ -106,7 +106,7 @@ export default function OwnerRoomsPage() {
           </select>
           <Link 
             href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"} 
-            className="btn-primary flex items-center space-x-2"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
           >
             <Plus size={20} />
             <span>Add Room</span>
@@ -115,28 +115,31 @@ export default function OwnerRoomsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500 font-medium">
-          Loading rooms...
+        <div className="flex items-center justify-center rounded-2xl border border-border bg-card py-20">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm font-medium text-muted-foreground">Loading rooms...</p>
+          </div>
         </div>
       ) : filteredRooms.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200">
-           <p className="text-gray-400">No rooms found. Create your first room to get started.</p>
+        <div className="rounded-2xl border-2 border-dashed border-border bg-muted/40 py-20 text-center">
+           <p className="text-muted-foreground">No rooms found. Create your first room to get started.</p>
            <Link 
              href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"} 
-             className="text-blue-600 font-bold mt-2 inline-block hover:underline"
+             className="mt-2 inline-block font-semibold text-primary hover:underline"
            >
-            Add Room →
+            Add Room &rarr;
            </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredRooms.map((room) => (
-            <div key={room.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+            <div key={room.id} className="group relative rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+              <div className="mb-4 flex items-start justify-between">
+                <div className="rounded-lg bg-primary/10 p-3 text-primary">
                   <Home size={24} />
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${
+                <span className={`rounded-full px-3 py-1 text-xs font-medium uppercase ${
                   room.status === 'available' ? 'bg-green-100 text-green-700' : 
                   room.status === 'occupied' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
                 }`}>
@@ -144,33 +147,33 @@ export default function OwnerRoomsPage() {
                 </span>
               </div>
               
-              <div className="absolute top-6 right-6 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Link href={`/owner/rooms/edit/${room.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+              <div className="absolute top-6 right-6 flex space-x-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Link href={`/owner/rooms/edit/${room.id}`} className="rounded-lg p-2 text-primary transition-colors hover:bg-primary/10">
                   <Edit2 size={16} />
                 </Link>
                 <button 
                   onClick={() => handleDelete(room.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="rounded-lg p-2 text-destructive transition-colors hover:bg-destructive/10"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
 
-              <h3 className="text-lg font-bold">Room {room.room_number}</h3>
-              <p className="text-sm text-gray-500 mb-2 flex items-center">
+              <h3 className="text-lg font-semibold font-display text-foreground">Room {room.room_number}</h3>
+              <p className="mb-2 flex items-center text-sm text-muted-foreground">
                 <MapPin size={14} className="mr-1" />
                 {room.hostels?.name}
               </p>
-              <p className="text-sm text-gray-500 mb-4 capitalize">{room.room_type} Sharing</p>
+              <p className="mb-4 text-sm capitalize text-muted-foreground">{room.room_type} Sharing</p>
               
-              <div className="space-y-2 mb-6 text-sm">
+              <div className="mb-6 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Monthly Rent</span>
-                  <span className="font-semibold">₹{Number(room.rent).toLocaleString()}</span>
+                  <span className="text-muted-foreground">Monthly Rent</span>
+                  <span className="font-semibold text-foreground">₹{Number(room.rent).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Capacity</span>
-                  <span className="font-semibold">{room.capacity} beds</span>
+                  <span className="text-muted-foreground">Capacity</span>
+                  <span className="font-semibold text-foreground">{room.capacity} beds</span>
                 </div>
                 {(() => {
                   const occupied = room.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
@@ -178,19 +181,19 @@ export default function OwnerRoomsPage() {
                   return (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Occupied</span>
-                        <span className="font-semibold">{occupied} beds</span>
+                        <span className="text-muted-foreground">Occupied</span>
+                        <span className="font-semibold text-foreground">{occupied} beds</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Remaining Beds</span>
-                        <span className="font-semibold">{remaining} beds</span>
+                        <span className="text-muted-foreground">Remaining Beds</span>
+                        <span className="font-semibold text-foreground">{remaining} beds</span>
                       </div>
                     </>
                   );
                 })()}
               </div>
 
-              <Link href={`/owner/rooms/edit/${room.id}`} className="w-full btn-secondary py-2 flex items-center justify-center space-x-2">
+              <Link href={`/owner/rooms/edit/${room.id}`} className="flex w-full items-center justify-center space-x-2 rounded-xl border border-border bg-muted/40 py-2 font-semibold text-foreground transition-colors hover:bg-muted">
                 <span>View Details</span>
               </Link>
             </div>

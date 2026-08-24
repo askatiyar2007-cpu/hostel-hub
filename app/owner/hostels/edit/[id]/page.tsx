@@ -91,24 +91,33 @@ export default function EditHostelPage() {
     }
   };
 
-  if (loading) return <div className="p-20 text-center">Loading hostel details...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm font-medium text-muted-foreground">Loading hostel details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <div className="flex items-center space-x-4 mb-8">
-        <Link href="/owner/hostels" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
+      <div className="mb-8 flex items-center space-x-4">
+        <Link href="/owner/hostels" className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
           <ArrowLeft size={24} />
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Edit Hostel</h1>
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">Edit Hostel</h1>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl border-2 border-gray-100 shadow-xl space-y-6"
+        className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Hostel Name
             </label>
             <input
@@ -123,7 +132,7 @@ export default function EditHostelPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Contact Email
             </label>
             <input
@@ -139,12 +148,12 @@ export default function EditHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Description
           </label>
           <textarea
             required
-            className="input w-full h-24 py-3"
+            className="input h-24 w-full py-3"
             value={formData.description}
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
@@ -152,9 +161,9 @@ export default function EditHostelPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Contact Number
             </label>
             <input
@@ -169,7 +178,7 @@ export default function EditHostelPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Pincode
             </label>
             <input
@@ -185,7 +194,7 @@ export default function EditHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Full Address
           </label>
           <input
@@ -201,7 +210,7 @@ export default function EditHostelPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               City
             </label>
             <input
@@ -216,7 +225,7 @@ export default function EditHostelPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               State
             </label>
             <input
@@ -232,7 +241,7 @@ export default function EditHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Amenities (Comma separated)
           </label>
           <input
@@ -246,11 +255,11 @@ export default function EditHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Hostel Rules
           </label>
           <textarea
-            className="input w-full h-24 py-3"
+            className="input h-24 w-full py-3"
             value={formData.rules}
             onChange={(e) =>
               setFormData({ ...formData, rules: e.target.value })
@@ -261,7 +270,7 @@ export default function EditHostelPage() {
         <button
           disabled={saving}
           type="submit"
-          className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-xl hover:bg-blue-700 transition-all shadow-lg"
+          className="w-full rounded-full bg-primary p-4 text-lg font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.01] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? 'Saving Changes...' : 'Save Changes'}
         </button>

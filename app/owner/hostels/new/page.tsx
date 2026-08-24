@@ -21,8 +21,7 @@ export default function AddHostelPage() {
     contact_number: '',
     email: '',
     rules: '',
-    amenities: '',
-    starting_price: ''
+    amenities: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,7 +46,6 @@ export default function AddHostelPage() {
         email: formData.email,
         rules: formData.rules,
         amenities: formData.amenities.split(',').map(s => s.trim()).filter(s => s !== ''),
-        starting_price: formData.starting_price ? parseFloat(formData.starting_price) : 0,
         rating: 0,
         total_reviews: 0,
         status: 'pending'
@@ -70,18 +68,18 @@ export default function AddHostelPage() {
   };
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
+      <h1 className="mb-8 text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">
         Add New Hostel
       </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl border-2 border-gray-100 shadow-xl space-y-6"
+        className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Hostel Name
             </label>
             <input
@@ -97,7 +95,7 @@ export default function AddHostelPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Contact Email
             </label>
             <input
@@ -114,12 +112,12 @@ export default function AddHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Description
           </label>
           <textarea
             required
-            className="input w-full h-24 py-3"
+            className="input h-24 w-full py-3"
             placeholder="Tell us about your hostel..."
             value={formData.description}
             onChange={(e) =>
@@ -128,42 +126,24 @@ export default function AddHostelPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Contact Number
-            </label>
-            <input
-              required
-              type="tel"
-              className="input w-full"
-              placeholder="+91 9876543210"
-              value={formData.contact_number}
-              onChange={(e) =>
-                setFormData({ ...formData, contact_number: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Starting Rent (per month)
-            </label>
-            <input
-              required
-              type="number"
-              className="input w-full"
-              placeholder="e.g. 5000"
-              value={formData.starting_price}
-              onChange={(e) =>
-                setFormData({ ...formData, starting_price: e.target.value })
-              }
-            />
-          </div>
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-foreground">
+            Contact Number
+          </label>
+          <input
+            required
+            type="tel"
+            className="input w-full"
+            placeholder="+91 9876543210"
+            value={formData.contact_number}
+            onChange={(e) =>
+              setFormData({ ...formData, contact_number: e.target.value })
+            }
+          />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Full Address
           </label>
           <input
@@ -178,9 +158,9 @@ export default function AddHostelPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               Area/Locality
             </label>
             <input
@@ -195,7 +175,7 @@ export default function AddHostelPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               City
             </label>
             <input
@@ -211,7 +191,7 @@ export default function AddHostelPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
               State
             </label>
             <input
@@ -228,7 +208,7 @@ export default function AddHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Pincode
           </label>
           <input
@@ -244,7 +224,7 @@ export default function AddHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Amenities (Comma separated)
           </label>
           <input
@@ -258,11 +238,11 @@ export default function AddHostelPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             Hostel Rules
           </label>
           <textarea
-            className="input w-full h-24 py-3"
+            className="input h-24 w-full py-3"
             placeholder="Entry timings, Guest policy, etc."
             onChange={(e) =>
               setFormData({ ...formData, rules: e.target.value })
@@ -273,7 +253,7 @@ export default function AddHostelPage() {
         <button
           disabled={loading}
           type="submit"
-          className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-xl hover:bg-blue-700 transition-all shadow-lg"
+          className="w-full rounded-full bg-primary p-4 text-lg font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.01] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? 'Creating...' : 'Create Hostel Listing'}
         </button>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
@@ -125,10 +125,12 @@ function AuthContent() {
           onClick: () => {
             setAuthMessage(null);
             setActiveTab('signup');
+            router.replace('/auth/login?tab=signup');
           },
         },
       });
-      router.replace(`/auth/login?tab=${activeTab}`);
+      // Removed: router.replace(`/auth/login?tab=${activeTab}`)
+      // Tab remains unchanged until user explicitly clicks "Create account"
       return;
     }
 
@@ -142,10 +144,12 @@ function AuthContent() {
           onClick: () => {
             setAuthMessage(null);
             setActiveTab('login');
+            router.replace('/auth/login?tab=login');
           },
         },
       });
-      router.replace(`/auth/login?tab=${activeTab}`);
+      // Removed: router.replace(`/auth/login?tab=${activeTab}`)
+      // Tab remains unchanged until user explicitly clicks "Sign in"
       return;
     }
 
@@ -157,7 +161,7 @@ function AuthContent() {
       });
       router.replace('/auth/login');
     }
-  }, [searchParams, router, activeTab]);
+  }, [searchParams, router]);  // Removed activeTab dependency
 
   const [loginFormData, setLoginFormData] = useState({ email: '', password: '' });
   // This draft deliberately exists only in React component memory. It is never
@@ -476,7 +480,7 @@ function AuthContent() {
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" required value={loginFormData.password} onChange={handleLoginChange} className="pl-10 pr-10 h-11" />
+                    <Input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required value={loginFormData.password} onChange={handleLoginChange} className="pl-10 pr-10 h-11" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>

@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth/context';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, User, Phone, Mail, MapPin, Building2, 
-  Calendar, AlertTriangle, FileText, QrCode, 
+  Calendar, AlertTriangle, FileText, 
   DollarSign, Activity, Settings, UserCheck, GraduationCap, X
 } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -33,7 +33,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
   // Modal states
   const [showAgreement, setShowAgreement] = useState(false);
-  const [showQrCode, setShowQrCode] = useState(false);
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [showComplaints, setShowComplaints] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -249,7 +248,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             </div>
             <p className="text-sm font-semibold text-muted-foreground flex items-center justify-center md:justify-start gap-1">
               <Building2 size={14} />
-              {allocation.hostels?.name} &bull; Room {allocation.rooms?.room_number} &bull; {allocation.booking_type === 'entire_room' ? 'Private' : 'Shared Bed'}
+              {allocation.hostels?.name} &bull; Room {allocation.rooms?.room_number} &bull; {allocation.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'}
             </p>
             <p className="text-xs text-muted-foreground">
               Checked in on {new Date(allocation.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
@@ -360,14 +359,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
               >
                 <FileText size={16} className="text-primary" /> View Agreement Contract
               </Button>
-              
-              <Button 
-                onClick={() => setShowQrCode(true)}
-                variant="outline" 
-                className="w-full justify-start rounded-xl font-semibold gap-2 py-5"
-              >
-                <QrCode size={16} className="text-primary" /> Show Payment QR Code
-              </Button>
 
               <Button 
                 onClick={() => setShowPaymentHistory(true)}
@@ -458,51 +449,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         </div>
       )}
 
-      {/* 2. QR Code Modal */}
-      {showQrCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-card border border-border rounded-3xl p-6 shadow-2xl text-center space-y-6">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h3 className="text-base font-bold text-foreground font-display flex items-center gap-1.5">
-                <QrCode size={16} className="text-primary" /> Digital Check-In QR
-              </h3>
-              <button onClick={() => setShowQrCode(false)} className="text-muted-foreground hover:text-foreground">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl inline-flex items-center justify-center border border-zinc-200 shadow-inner">
-              <svg className="h-44 w-44 text-zinc-900" viewBox="0 0 100 100">
-                <rect width="100" height="100" fill="none" />
-                <rect x="10" y="10" width="25" height="25" stroke="currentColor" strokeWidth="4" fill="none" />
-                <rect x="65" y="10" width="25" height="25" stroke="currentColor" strokeWidth="4" fill="none" />
-                <rect x="10" y="65" width="25" height="25" stroke="currentColor" strokeWidth="4" fill="none" />
-                <rect x="15" y="15" width="15" height="15" fill="currentColor" />
-                <rect x="70" y="15" width="15" height="15" fill="currentColor" />
-                <rect x="15" y="70" width="15" height="15" fill="currentColor" />
-                <rect x="45" y="10" width="10" height="10" fill="currentColor" />
-                <rect x="45" y="25" width="5" height="20" fill="currentColor" />
-                <rect x="10" y="45" width="15" height="5" fill="currentColor" />
-                <rect x="30" y="45" width="20" height="15" fill="currentColor" />
-                <rect x="55" y="65" width="30" height="10" fill="currentColor" />
-                <rect x="65" y="45" width="15" height="15" fill="currentColor" />
-                <rect x="85" y="80" width="10" height="15" fill="currentColor" />
-              </svg>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-foreground">{studentName}</p>
-              <p className="text-xs text-muted-foreground">Allocation ID: {allocation.id.substring(0, 8)}...</p>
-            </div>
-
-            <Button onClick={() => setShowQrCode(false)} className="w-full rounded-xl">
-              Close QR
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Payment History Modal */}
+      {/* 2. Payment History Modal */}
       {showPaymentHistory && (
         <PaymentHistoryModal 
           alloc={{
@@ -519,7 +466,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         />
       )}
 
-      {/* 4. Complaints Modal */}
+      {/* 3. Complaints Modal */}
       {showComplaints && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-2xl bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[85vh] flex flex-col">

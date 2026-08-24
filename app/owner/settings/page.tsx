@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { supabase } from '@/lib/supabase/client';
-import { User, Bell, Shield, CreditCard } from 'lucide-react';
+import { User, Bell, Shield, CreditCard, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function OwnerSettingsPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
 
   // Change Password Modal State
@@ -19,11 +19,51 @@ export default function OwnerSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verifyingPassword, setVerifyingPassword] = useState(false);
 
+  // Independent show/hide toggles per password field -- purely a UI
+  // addition, does not touch handleChangePassword's verify/update logic.
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     phone_number: profile?.phone_number || ''
   });
   const [loading, setLoading] = useState(false);
+
+  // Notification preferences, persisted via Supabase Auth user_metadata --
+  // the same mechanism already used by app/student/settings/page.tsx for its
+  // notification toggles. Default to true (matching the previous
+  // defaultChecked behavior) when the preference has never been saved.
+  const [notifyRoomRequests, setNotifyRoomRequests] = useState(true);
+  const [notifyComplaints, setNotifyComplaints] = useState(true);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  useEffect(() => {
+    if (user?.user_metadata) {
+      setNotifyRoomRequests(user.user_metadata.notify_room_requests !== false);
+      setNotifyComplaints(user.user_metadata.notify_complaints !== false);
+    }
+  }, [user]);
+
+  const savePreferences = async () => {
+    setSavingPrefs(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          notify_room_requests: notifyRoomRequests,
+          notify_complaints: notifyComplaints
+        }
+      });
+      if (error) throw error;
+      toast.success('Notification preferences saved!');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save preferences';
+      toast.error(message);
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!profile?.id) return;
@@ -93,20 +133,20 @@ export default function OwnerSettingsPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500">Manage your account and platform preferences</p>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground">Manage your account and platform preferences</p>
       </div>
 
       <div className="space-y-6">
         {/* Profile Settings */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-100">
-            <User className="text-blue-600" size={24} />
-            <h2 className="text-xl font-bold">Profile Information</h2>
+        <section className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-border">
+            <User className="text-primary" size={24} />
+            <h2 className="text-xl font-bold text-foreground">Profile Information</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Full Name</label>
               <input 
                 type="text" 
                 value={formData.full_name} 
@@ -115,11 +155,11 @@ export default function OwnerSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              <input type="email" defaultValue={profile?.email} className="input w-full bg-gray-50" disabled />
+              <label className="block text-sm font-medium text-foreground mb-2">Email Address</label>
+              <input type="email" defaultValue={profile?.email} className="input w-full bg-muted" disabled />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Phone Number</label>
               <input 
                 type="text" 
                 value={formData.phone_number} 
@@ -138,46 +178,65 @@ export default function OwnerSettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-100">
-            <Bell className="text-blue-600" size={24} />
-            <h2 className="text-xl font-bold">Notifications</h2>
+        <section className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-border">
+            <Bell className="text-primary" size={24} />
+            <h2 className="text-xl font-bold text-foreground">Notifications</h2>
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">New Booking Alerts</p>
-                <p className="text-sm text-gray-500">Get notified when a student books a room</p>
+                <p className="font-medium text-foreground">New Booking Alerts</p>
+                <p className="text-sm text-muted-foreground">Get notified when a student books a room</p>
               </div>
-              <input type="checkbox" defaultChecked className="toggle" />
+              <input
+                type="checkbox"
+                checked={notifyRoomRequests}
+                onChange={(e) => setNotifyRoomRequests(e.target.checked)}
+                className="h-5 w-10 appearance-none bg-muted rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-primary before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-5.5 border border-border"
+              />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Complaint Notifications</p>
-                <p className="text-sm text-gray-500">Get notified when a new complaint is filed</p>
+                <p className="font-medium text-foreground">Complaint Notifications</p>
+                <p className="text-sm text-muted-foreground">Get notified when a new complaint is filed</p>
               </div>
-              <input type="checkbox" defaultChecked className="toggle" />
+              <input
+                type="checkbox"
+                checked={notifyComplaints}
+                onChange={(e) => setNotifyComplaints(e.target.checked)}
+                className="h-5 w-10 appearance-none bg-muted rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-primary before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-5.5 border border-border"
+              />
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={savePreferences}
+                disabled={savingPrefs}
+                className="btn-primary"
+              >
+                {savingPrefs ? 'Saving...' : 'Save Preferences'}
+              </button>
             </div>
           </div>
         </section>
 
         {/* Payment Settings */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-100">
-            <CreditCard className="text-blue-600" size={24} />
-            <h2 className="text-xl font-bold">Payment Methods</h2>
+        <section className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-border">
+            <CreditCard className="text-primary" size={24} />
+            <h2 className="text-xl font-bold text-foreground">Payment Methods</h2>
           </div>
-          <p className="text-sm text-gray-500 mb-4">Configure UPI, Bank details and QR codes to receive fees and deposits from students.</p>
+          <p className="text-sm text-muted-foreground mb-4">Configure UPI, Bank details and QR codes to receive fees and deposits from students.</p>
           <Link href="/owner/settings/payment-methods" className="btn-secondary inline-block">
             Manage Payment Methods
           </Link>
         </section>
 
         {/* Security */}
-        <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-100">
-            <Shield className="text-blue-600" size={24} />
-            <h2 className="text-xl font-bold">Security</h2>
+        <section className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+          <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-border">
+            <Shield className="text-primary" size={24} />
+            <h2 className="text-xl font-bold text-foreground">Security</h2>
           </div>
           <button 
             onClick={() => setIsPasswordModalOpen(true)}
@@ -190,12 +249,12 @@ export default function OwnerSettingsPage() {
 
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-white border border-gray-100 rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between border-b pb-3 border-gray-100">
-              <h4 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                <Shield className="text-blue-600 h-5 w-5" /> Change Password
+          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-center justify-between border-b pb-3 border-border">
+              <h4 className="font-bold text-lg text-foreground flex items-center gap-2">
+                <Shield className="text-primary h-5 w-5" /> Change Password
               </h4>
-              <button onClick={() => setIsPasswordModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
+              <button onClick={() => setIsPasswordModalOpen(false)} className="text-muted-foreground hover:text-foreground text-xl font-bold">
                 &times;
               </button>
             </div>
@@ -203,54 +262,84 @@ export default function OwnerSettingsPage() {
             <form onSubmit={handleChangePassword} className="space-y-4 text-sm">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">Current Password</label>
+                  <label className="block text-sm font-medium text-foreground">Current Password</label>
                   <button
                     type="button"
                     onClick={() => {
                       setIsPasswordModalOpen(false);
                       router.push('/auth/forgot-password');
                     }}
-                    className="text-xs text-blue-600 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
+                    className="text-xs text-primary hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
                   >
                     Forgot your current password?
                   </button>
                 </div>
-                <input 
-                  type="password" 
-                  required 
-                  placeholder="Enter current password"
-                  value={oldPassword} 
-                  onChange={(e) => setOldPassword(e.target.value)} 
-                  className="input w-full"
-                />
+                <div className="relative">
+                  <input
+                    type={showOldPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Enter current password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="input w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showOldPassword ? 'Hide current password' : 'Show current password'}
+                  >
+                    {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">New Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  placeholder="Min. 8 characters"
-                  value={newPassword} 
-                  onChange={(e) => setNewPassword(e.target.value)} 
-                  className="input w-full"
-                />
+                <label className="block text-sm font-medium text-foreground">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Min. 8 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="input w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                  >
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  placeholder="Repeat new password"
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                  className="input w-full"
-                />
+                <label className="block text-sm font-medium text-foreground">Confirm New Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Repeat new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="input w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-3 border border-gray-100 space-y-1 text-xs text-gray-500">
-                <span className="font-bold text-gray-700 block uppercase text-[9px] tracking-wider font-display">Password Requirements</span>
+              <div className="rounded-xl bg-muted p-3 border border-border space-y-1 text-xs text-muted-foreground">
+                <span className="font-bold text-foreground block uppercase text-[9px] tracking-wider font-display">Password Requirements</span>
                 <p className="flex items-center gap-1.5">
                   • Minimum 8 characters
                 </p>

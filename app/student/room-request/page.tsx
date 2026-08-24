@@ -626,7 +626,7 @@ export default function RoomRequestPage() {
       if (bookingType === 'entire_room' && occupiedBeds > 0) {
         setShowOccupancyAlert(true);
 
-        return 'Entire room is unavailable because this room already has an occupant. Choose Shared Bed or another room.';
+        return 'Entire room is unavailable because this room already has an occupant. Choose Entire Shared Room or another room.';
       }
 
       if (occupiedBeds >= (selectedRoom?.capacity ?? 0)) {
@@ -856,8 +856,8 @@ export default function RoomRequestPage() {
                 Booking Type
               </span>
 
-              <span className="capitalize">
-                {pendingRequest.booking_type || 'shared'}
+              <span>
+                {pendingRequest.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'}
               </span>
             </p>
 
@@ -1755,7 +1755,7 @@ export default function RoomRequestPage() {
                         />
 
                         <span className="text-sm font-medium">
-                          Shared Bed
+                          Entire Shared Room
                         </span>
 
                       </label>
@@ -1799,7 +1799,7 @@ export default function RoomRequestPage() {
                         />
 
                         <span className="text-sm font-medium">
-                          Entire Room (Private)
+                          Entire Room
                         </span>
 
                       </label>
@@ -1811,7 +1811,7 @@ export default function RoomRequestPage() {
                       {bookingType ===
                       'entire_room'
                         ? 'Note: Booking the entire room means you will pay for all beds in this room.'
-                        : 'Note: Shared Bed means you will share this room with other residents.'}
+                        : 'Note: Entire Shared Room means you will share this room with other residents.'}
 
                     </span>
 
@@ -2058,7 +2058,7 @@ export default function RoomRequestPage() {
             </h3>
 
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Entire room is unavailable because this room already has an occupant. Choose Shared Bed or another room.
+              Entire room is unavailable because this room already has an occupant. Choose Entire Shared Room or another room.
             </p>
 
             <div className="flex justify-end">

@@ -217,7 +217,15 @@ interface AllocationCardProps {
 }
 
 function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
+  const { profile } = useAuth();
+  // room_requests.student_id and room_allocations.student_id are FKs to
+  // public.students.id -- this remains the correct identifier for those uses.
   const studentId = allocation.student_id;
+  // complaints.student_id is a FK to auth.users.id (confirmed via schema), a
+  // different identifier space than public.students.id. Use the signed-in
+  // user's id here, matching the pattern already used in
+  // app/owner/students/[id]/page.tsx (profiles.user_id).
+  const authUserId = profile?.user_id;
   const qc = useQueryClient();
   const [confirmingCheckout, setConfirmingCheckout] = useState(false);
 
@@ -266,10 +274,10 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
   });
 
   const { data: complaints } = useQuery({
-    queryKey: ["student-complaints", studentId],
-    enabled: !!studentId,
+    queryKey: ["student-complaints", authUserId],
+    enabled: !!authUserId,
     queryFn: async () => {
-      const { data } = await supabase.from("complaints").select("*").eq("student_id", studentId).order("created_at", { ascending: false });
+      const { data } = await supabase.from("complaints").select("*").eq("student_id", authUserId).order("created_at", { ascending: false });
       return data ?? [];
     },
   });
@@ -297,7 +305,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
         <StatCard label="Current Hostel" value={hostel?.name ?? "—"} hint={hostel?.city ?? ""} />
         <StatCard label="Current Room" value={`Room ${room?.room_number ?? "—"}`} hint={room?.room_type || room?.type || "double"} />
         <StatCard label="Monthly Rent" value={`₹${Number(room?.rent ?? 0).toLocaleString()}`} />
-        <StatCard label="Booking Type" value={approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'} />
+        <StatCard label="Booking Type" value={approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'} />
       </div>
 
       {/* Your Allocated Room Card */}
@@ -340,7 +348,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
                     <p className="font-bold text-foreground text-base mt-0.5">Room {room?.room_number}</p>
                   </div>
                   <span className="text-xs bg-primary/10 text-primary font-bold px-2 py-1 rounded-lg">
-                    {approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}
+                    {approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'}
                   </span>
                 </div>
                 <div className="border-t border-border/40 pt-2.5">
@@ -508,7 +516,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
         <section id="complaints" className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-semibold font-display"><MessageSquareWarning className="h-4 w-4 text-primary" /> Complaints</h2>
-            <NewComplaintDialog studentId={studentId} hostelId={allocation.hostel_id} onCreated={() => qc.invalidateQueries({ queryKey: ["student-complaints"] })} />
+            <NewComplaintDialog studentId={authUserId ?? ''} hostelId={allocation.hostel_id} onCreated={() => qc.invalidateQueries({ queryKey: ["student-complaints"] })} />
           </div>
           {complaints && complaints.length > 0 ? (
             <div className="space-y-2">

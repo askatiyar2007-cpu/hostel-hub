@@ -6,36 +6,33 @@ import { useAuth } from '@/lib/auth/context';
 import { Complaint } from '@/types/database';
 import { AlertCircle, Plus, MessageCircle, Clock } from 'lucide-react';
 
+const CATEGORY_LABEL: Record<string, string> = {
+  electrical: 'Electrical',
+  plumbing: 'Plumbing',
+  wifi: 'WiFi',
+  cleaning: 'Cleaning',
+  furniture: 'Furniture',
+  security: 'Security',
+  other: 'Other'
+};
+
 export default function StudentComplaintsPage() {
   const { profile } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // complaints.student_id is a foreign key to auth.users.id (confirmed via
+  // schema), not public.students.id. Use the signed-in user's id directly --
+  // this matches the identifier space the insert path in
+  // app/student/dashboard/page.tsx now uses for the same table.
   const fetchComplaints = useCallback(async () => {
     try {
-      if (!profile?.id) return;
-
-      const { data: studentRecord, error: fetchError } = await supabase
-        .from('students')
-        .select('id')
-        .eq('profile_id', profile.id)
-        .maybeSingle();
-
-      if (fetchError) {
-        console.error("Error fetching student record:", fetchError);
-        setLoading(false);
-        return;
-      }
-
-      if (!studentRecord) {
-        setLoading(false);
-        return;
-      }
+      if (!profile?.user_id) return;
 
       const { data, error } = await supabase
         .from('complaints')
         .select('*')
-        .eq('student_id', studentRecord.id)
+        .eq('student_id', profile.user_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -45,7 +42,7 @@ export default function StudentComplaintsPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.user_id]);
 
   useEffect(() => {
     fetchComplaints();
@@ -82,6 +79,9 @@ export default function StudentComplaintsPage() {
                     complaint.priority === 2 ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
                   }`}>
                     {complaint.priority === 1 ? 'High' : complaint.priority === 2 ? 'Medium' : 'Low'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-100 text-purple-600">
+                    {CATEGORY_LABEL[complaint.category] || complaint.category}
                   </span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600`}>
                     {complaint.status.replace('_', ' ')}
