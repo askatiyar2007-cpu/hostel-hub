@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -155,7 +155,7 @@ export default function SetupPasswordPage() {
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="At least 6 characters"
+                    placeholder="Enter your password"
                     required
                     value={formData.password}
                     onChange={handleChange}
@@ -181,7 +181,7 @@ export default function SetupPasswordPage() {
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm password"
+                    placeholder="Confirm your password"
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}

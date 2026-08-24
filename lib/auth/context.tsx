@@ -14,6 +14,7 @@ export interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   accountCompletionStep: AccountCompletionStep | null;
+  password_set: boolean | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshAuthState: () => Promise<void>;
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [accountCompletionStep, setAccountCompletionStep] = useState<AccountCompletionStep | null>(null);
+  const [passwordSet, setPasswordSet] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setProfile(null);
       setAccountCompletionStep(null);
+      setPasswordSet(null);
       return;
     }
 
@@ -69,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!profileData) {
       setAccountCompletionStep(null);
+      setPasswordSet(null);
       return;
     }
 
@@ -84,16 +88,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // actual missing step (role/password/student_onboarding) for incomplete ones
         const step = state.missing_step === 'complete' ? 'complete' : state.missing_step;
         setAccountCompletionStep(step as AccountCompletionStep);
+        // Extract password_set from the response - this is the authoritative flag
+        // that determines whether an account is a real HostelHub user or just an
+        // incomplete signup with temporary onboarding data
+        setPasswordSet(state.password_set ?? null);
       } else {
         // Fallback: if API fails, assume incomplete to be safe. This prevents
         // accidentally granting dashboard access due to API errors.
         console.error('Failed to fetch account state:', response.status);
         setAccountCompletionStep(null);
+        setPasswordSet(null);
       }
     } catch (error) {
       console.error('Unable to fetch account state:', error);
       // Same fallback: assume incomplete on error
       setAccountCompletionStep(null);
+      setPasswordSet(null);
     }
   };
 
@@ -154,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         profile,
         accountCompletionStep,
+        password_set: passwordSet,
         loading,
         signOut,
         refreshAuthState,

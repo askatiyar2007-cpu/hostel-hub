@@ -76,7 +76,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
-  const { profile, signOut, loading, accountCompletionStep } = useAuth();
+  const { profile, signOut, loading, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
 
   const role = profile?.role as UserRole || 'student';
@@ -90,20 +90,37 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  // An account with a role but an incomplete required setup step (e.g. an
-  // abandoned Google signup that selected a role but never set a password)
-  // must never render or stay on a dashboard route. Resume at the exact
-  // missing step instead. This is a read-only redirect; it creates nothing.
-  // Account completion check now uses server-derived state from AuthProvider,
-  // which calls /api/auth/account-state → get_account_state(). This is the
-  // single source of truth for account completion. Direct navigation to dashboard
-  // routes with an incomplete account will be caught here and redirected to the
-  // appropriate onboarding step. The OAuth callback handles intent-aware routing
-  // (signup vs login), while this guard handles direct navigation and ensures
-  // dashboard protection regardless of entry point.
+  // CRITICAL BUSINESS RULE ENFORCEMENT:
+  // password_set=false means NOT a HostelHub user, regardless of whether profile
+  // or role data exists. An incomplete signup (e.g., Google OAuth where user
+  // selected a role but never set a password) must NEVER access the dashboard.
+  // The saved role is only temporary onboarding progress and grants NO access.
+  //
+  // This guard enforces the fundamental state machine:
+  // password_set=false → incomplete signup → NOT a user → NO dashboard access
+  // password_set=true → completed password step → check remaining onboarding steps
+  //
+  // For abandoned signups (user closed tab at password page, later reopened site),
+  // this guard signs them out and redirects to /auth/login instead of restoring
+  // the incomplete onboarding session at /auth/setup-password. This prevents
+  // incomplete accounts from being treated as authenticated users.
   useEffect(() => {
     if (loading || !profile) return;
 
+    // Check password_set FIRST, before any other completion checks.
+    // If password_set is explicitly false, this is NOT a HostelHub user yet.
+    // Sign them out and redirect to login page (fresh visit behavior).
+    if (password_set === false) {
+      console.log('[DashboardLayout] Detected incomplete account (password_set=false), signing out');
+      void signOut().then(() => {
+        router.push('/auth/login');
+      });
+      return;
+    }
+
+    // Only check accountCompletionStep if password_set is true (or null due to API error).
+    // These checks handle legitimate onboarding-in-progress scenarios where the user
+    // is actively completing their account setup (not an abandoned signup).
     if (accountCompletionStep === 'role') {
       router.push('/auth/select-role');
       return;
@@ -112,7 +129,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
       router.push('/auth/setup-password');
     }
-  }, [loading, profile, accountCompletionStep, router]);
+  }, [loading, profile, accountCompletionStep, password_set, router, signOut]);
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   OAUTH_CALLBACK_TRANSACTION_COOKIE,
@@ -14,6 +14,7 @@ type AccountState = {
   role: string | null;
   missing_step: string;
   is_complete: boolean;
+  password_set: boolean;
 };
 
 const onboardingDestinationForStep: Record<string, string> = {
@@ -31,7 +32,8 @@ function readAccountState(value: unknown): AccountState | null {
   if ((typeof record.user_id !== 'string' && record.user_id !== null)
     || (typeof record.role !== 'string' && record.role !== null)
     || typeof record.missing_step !== 'string'
-    || typeof record.is_complete !== 'boolean') {
+    || typeof record.is_complete !== 'boolean'
+    || typeof record.password_set !== 'boolean') {
     return null;
   }
 
@@ -40,6 +42,7 @@ function readAccountState(value: unknown): AccountState | null {
     role: record.role,
     missing_step: record.missing_step,
     is_complete: record.is_complete,
+    password_set: record.password_set,
   };
 }
 
@@ -130,28 +133,40 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?reason=no-account');
     }
 
+    // CRITICAL BUSINESS RULE: An abandoned Google signup (password_set=false)
+    // that is retried via "Create Account" must NOT show "Account already exists"
+    // or silently resume at the password page. Instead, the stale onboarding
+    // progress must be cleared and the user must start fresh at role selection.
+    //
+    // This ensures that:
+    // 1. Role data from a previous abandoned signup doesn't lock the user into that role
+    // 2. The user can select a different role on retry
+    // 3. password_set=false accounts are never treated as "existing users"
+    //
+    // The reset_incomplete_google_signup() SQL function clears user_roles and
+    // students table rows for Google accounts with password_set=false, while
+    // preserving the profile and auth identity. This is safe because:
+    // - Only incomplete signups (password_set=false) are reset
+    // - Completed accounts (password_set=true) are protected by the function
+    // - The profile remains intact so email/name don't need to be re-entered
     if (
       intent === 'signup'
       && !accountState.is_complete
+      && accountState.password_set === false
       && (accountState.missing_step === 'password' || accountState.missing_step === 'student_onboarding')
       && accountState.user_id
     ) {
-      // An abandoned Google signup already chose a role but never finished
-      // password setup. A fresh "Continue with Google" SIGNUP attempt must
-      // restart the signup flow rather than silently resuming password
-      // setup, so only the role assignment (and any dependent student row)
-      // is reset here -- never the profile or the underlying auth identity
-      // -- before routing back to the start of the signup flow. A login
-      // attempt on this same incomplete state is unaffected and still
-      // resumes at password setup via the existing branch below.
+      console.log('[OAuth Callback] Detected incomplete signup retry (password_set=false), resetting role data for user:', accountState.user_id);
+      
       const { data: resetData, error: resetError } = await supabaseServer
         .rpc('reset_incomplete_google_signup', { p_user_id: accountState.user_id });
 
       if (resetError || !resetData?.success) {
-        console.error('OAuth callback could not reset abandoned Google signup.', resetError);
+        console.error('[OAuth Callback] Could not reset abandoned Google signup:', resetError, resetData);
         return genericLoginError(request);
       }
 
+      console.log('[OAuth Callback] Successfully reset incomplete signup, redirecting to role selection');
       return redirect(request, '/auth/select-role');
     }
 
