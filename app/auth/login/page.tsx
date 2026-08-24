@@ -231,6 +231,29 @@ function AuthContent() {
       body: JSON.stringify({ email: signupFormData.email }),
     });
 
+    // CRITICAL: Check for completed account (409 Conflict)
+    // password_set=true means this is an EXISTING HostelHub user, not an incomplete signup.
+    // Do NOT send OTP to completed users. Show "Account already exists" instead.
+    // This matches the Google OAuth "Create Account" behavior.
+    if (response.status === 409) {
+      const data = await response.json().catch(() => ({}));
+      setAuthMessage({
+        variant: 'error',
+        title: 'Account already exists',
+        description: data.message || 'An account with this email already exists. Please sign in instead.',
+        action: {
+          label: 'Switch to Sign In',
+          onClick: () => {
+            setAuthMessage(null);
+            // Switch to login tab programmatically
+            const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+            loginTab?.click();
+          },
+        },
+      });
+      return false;
+    }
+
     if (!response.ok) {
       toast.error('Unable to request a verification code. Please try again.');
       return false;
@@ -490,7 +513,7 @@ function AuthContent() {
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required value={loginFormData.password} onChange={handleLoginChange} className="pl-10 pr-10 h-11" />
+                    <Input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" required value={loginFormData.password} onChange={handleLoginChange} className="pl-10 pr-10 h-11" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>

@@ -115,6 +115,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return genericLoginError(request);
     }
 
+    // COMPLETED ACCOUNT trying to signup → reject with "account exists"
     if (intent === 'signup' && accountState.is_complete) {
       const { error: signOutError } = await sessionClient.auth.signOut();
       if (signOutError) {
@@ -124,6 +125,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?reason=signin');
     }
 
+    // LOGIN intent but no profile exists → show "no account" message
     if (intent === 'login' && accountState.missing_step === 'profile') {
       const { error: signOutError } = await sessionClient.auth.signOut();
       if (signOutError) {
@@ -133,15 +135,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?reason=no-account');
     }
 
-    // CRITICAL BUSINESS RULE: An abandoned Google signup (password_set=false)
-    // that is retried via "Create Account" must NOT show "Account already exists"
-    // or silently resume at the password page. Instead, the stale onboarding
-    // progress must be cleared and the user must start fresh at role selection.
+    // CRITICAL BUSINESS RULE: password_set=false means INCOMPLETE SIGNUP.
+    // An abandoned Google signup retried via "Create Account" must NOT:
+    // - Show "Account already exists"
+    // - Resume at the old missing_step (e.g., /auth/setup-password)
+    // - Use the previously saved role
+    // - Grant dashboard access
     //
-    // This ensures that:
-    // 1. Role data from a previous abandoned signup doesn't lock the user into that role
+    // Instead, the ENTIRE abandoned onboarding progress must be cleared and
+    // the user must start fresh at role selection. This ensures:
+    // 1. Role data from a previous abandoned signup doesn't lock the user
     // 2. The user can select a different role on retry
-    // 3. password_set=false accounts are never treated as "existing users"
+    // 3. password_set=false accounts are NEVER treated as "existing users"
+    // 4. A saved user_roles row does NOT grant active role access
+    //
+    // The condition is: intent=signup + password_set=false (regardless of missing_step).
+    // We check password_set BEFORE checking missing_step because password_set is
+    // the authoritative boundary between incomplete and complete accounts.
     //
     // The reset_incomplete_google_signup() SQL function clears user_roles and
     // students table rows for Google accounts with password_set=false, while
@@ -153,10 +163,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       intent === 'signup'
       && !accountState.is_complete
       && accountState.password_set === false
-      && (accountState.missing_step === 'password' || accountState.missing_step === 'student_onboarding')
       && accountState.user_id
     ) {
       console.log('[OAuth Callback] Detected incomplete signup retry (password_set=false), resetting role data for user:', accountState.user_id);
+      console.log('[OAuth Callback] Account state before reset:', JSON.stringify(accountState));
       
       const { data: resetData, error: resetError } = await supabaseServer
         .rpc('reset_incomplete_google_signup', { p_user_id: accountState.user_id });
@@ -167,14 +177,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
 
       console.log('[OAuth Callback] Successfully reset incomplete signup, redirecting to role selection');
+      // Always redirect to /auth/select-role after reset, regardless of previous missing_step
       return redirect(request, '/auth/select-role');
     }
 
+    // COMPLETED ACCOUNT (password_set=true) → go to dashboard
     if (accountState.is_complete) {
       const destination = accountState.role ? dashboardPathForRole(accountState.role) : undefined;
       return destination ? redirect(request, destination) : genericLoginError(request);
     }
 
+    // ACTIVE ONBOARDING (first-time signup or legitimate mid-onboarding state)
+    // This handles:
+    // - Brand new Google signup (missing_step='profile')
+    // - User who just selected role, moving to password page (missing_step='password')
+    // - User who set password, moving to student onboarding (missing_step='student_onboarding')
+    //
+    // NOTE: This fallback should NEVER be reached by an abandoned signup with
+    // password_set=false + intent=signup because that should be caught by the
+    // reset block above. If this fallback routes to /auth/setup-password for
+    // an abandoned signup, the reset conditions are too narrow.
     const onboardingDestination = onboardingDestinationForStep[accountState.missing_step];
     return onboardingDestination ? redirect(request, onboardingDestination) : genericLoginError(request);
   } catch (error) {
