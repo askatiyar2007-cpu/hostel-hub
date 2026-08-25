@@ -187,12 +187,39 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .rpc('reset_incomplete_google_signup', { p_user_id: accountState.user_id });
 
       if (resetError || !resetData?.success) {
-        console.error('[OAuth Callback] Could not reset abandoned Google signup:', resetError, resetData);
-        console.error('[OAuth Callback] Reset rejection details - this may indicate:');
-        console.error('  - Missing provider field in raw_app_meta_data');
-        console.error('  - Missing providers array in raw_app_meta_data');
-        console.error('  - Provider value is not "google"');
-        console.error('  - password_set is true (function safety check)');
+        console.error('[OAuth Callback] Reset failed:', {
+          error: resetError,
+          result: resetData
+        });
+        
+        // Log the specific rejection reason for diagnosis
+        if (resetData?.reason) {
+          console.error('[OAuth Callback] Reset rejection reason:', resetData.reason);
+          
+          // Provide context for each rejection type
+          switch (resetData.reason) {
+            case 'null_user_id':
+              console.error('[OAuth Callback] User ID was null');
+              break;
+            case 'user_not_found':
+              console.error('[OAuth Callback] User does not exist in auth.users');
+              break;
+            case 'not_google_provider':
+              console.error('[OAuth Callback] Account is not authenticated via Google OAuth');
+              break;
+            case 'profile_not_found':
+              console.error('[OAuth Callback] Profile does not exist in public.profiles');
+              break;
+            case 'password_already_set':
+              console.error('[OAuth Callback] Account has password_set=true (safety protection - this is a completed account)');
+              break;
+            default:
+              console.error('[OAuth Callback] Unknown rejection reason');
+          }
+        } else {
+          console.error('[OAuth Callback] No diagnostic reason provided by reset function');
+        }
+        
         console.error('[OAuth Callback] Cannot proceed with incomplete signup retry - stale onboarding data still exists');
         
         // CRITICAL: Do NOT redirect to role selection with stale data.
@@ -206,7 +233,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         return redirect(request, '/auth/login?error=signup-retry-failed');
       }
 
-      console.log('[OAuth Callback] Successfully reset incomplete signup, redirecting to role selection');
+      console.log('[OAuth Callback] Successfully reset incomplete signup:', resetData);
+      console.log('[OAuth Callback] Redirecting to role selection');
       // Always redirect to /auth/select-role after reset, regardless of previous missing_step
       return redirect(request, '/auth/select-role');
     }
