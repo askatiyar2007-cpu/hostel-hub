@@ -1,0 +1,124 @@
+# Implementation Plan
+
+- [ ] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - Missing Profile Recovery Failure
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bug exists
+  - **Scoped PBT Approach**: Scope the property to the concrete failing case `60d90a38-7bfd-42f7-a482-9f25dcab12b0`
+  - Test implementation: Query user `60d90a38-7bfd-42f7-a482-9f25dcab12b0` and verify:
+    - User exists in `auth.users` with Google provider
+    - User has `password_set=FALSE`
+    - User does NOT exist in `public.profiles`
+    - Call `reset_incomplete_google_signup('60d90a38-7bfd-42f7-a482-9f25dcab12b0')`
+    - Assert function returns `{success: false, reason: 'profile_not_found'}`
+  - The test assertions should match the Expected Behavior Properties from design:
+    - After fix: profile should be created with `role='student'`, `password_set=FALSE`
+    - After fix: reset should return `{success: true, next: 'role'}`
+    - After fix: user should be able to complete onboarding
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bug exists)
+  - Document counterexamples found:
+    - User `60d90a38-7bfd-42f7-a482-9f25dcab12b0` has auth but no profile
+    - Reset function returns `profile_not_found` instead of recovering
+    - Onboarding APIs fail due to missing profile
+    - Trigger `on_auth_user_created` missing from production
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: Bug Condition section, Examples 1 and 2_
+
+- [ ] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Existing Safety Checks Unchanged
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs (cases where isBugCondition returns false)
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - **Test 2.1**: Completed Account Protection
+      - Find Google OAuth user with `password_set=TRUE`
+      - Call `reset_incomplete_google_signup(user_id)`
+      - Assert returns `{success: false, reason: 'password_already_set'}`
+      - Assert NO profile created
+    - **Test 2.2**: Non-Google Provider Rejection
+      - Find email/password user (non-Google provider)
+      - Call `reset_incomplete_google_signup(user_id)`
+      - Assert returns `{success: false, reason: 'not_google_provider'}`
+      - Assert NO profile created
+    - **Test 2.3**: Null User ID Rejection
+      - Call `reset_incomplete_google_signup(NULL)`
+      - Assert returns `{success: false, reason: 'null_user_id'}`
+    - **Test 2.4**: Non-Existent User Rejection
+      - Generate random UUID that doesn't exist in auth.users
+      - Call `reset_incomplete_google_signup(random_uuid)`
+      - Assert returns `{success: false, reason: 'user_not_found'}`
+    - **Test 2.5**: Normal Profile Handling
+      - Find Google OAuth user with existing profile and `password_set=FALSE`
+      - Call `reset_incomplete_google_signup(user_id)`
+      - Assert proceeds normally (success or appropriate reason)
+      - Assert NO duplicate profile created
+  - Property-based testing generates many test cases for stronger guarantees
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: Preservation Requirements section, Requirements 3.1, 3.2, 3.3, 3.4_
+
+- [ ] 3. Fix for Google OAuth users with missing profiles
+
+  - [ ] 3.1 Create first migration: Re-register missing trigger
+    - Create file: `supabase/migrations/20260830000000_register_oauth_profile_trigger.sql`
+    - Add idempotent trigger registration using `DROP TRIGGER IF EXISTS`
+    - Reference existing `provision_authorized_new_user()` function
+    - Add migration comment documenting this is a production hotfix
+    - Use exact SQL from design document
+    - _Bug_Condition: isBugCondition(input) where userExistsInAuthUsers AND isGoogleProvider AND NOT profileExistsInPublicProfiles AND passwordNotSet_
+    - _Expected_Behavior: Property 3 - Trigger automatically creates profile+roles for new Google OAuth signups_
+    - _Preservation: All existing signup flows remain unchanged (Requirement 3.5)_
+    - _Requirements: 2.2, 3.5_
+
+  - [ ] 3.2 Create second migration: Enhance reset function with defensive profile creation
+    - Create file: `supabase/migrations/20260831000000_fix_reset_profile_recovery.sql`
+    - Replace `profile_not_found` return with profile creation logic
+    - Extract `full_name` from `raw_user_meta_data` using same logic as `provision_authorized_new_user()`
+    - Insert minimal profile with fields: `user_id`, `full_name`, `email`, `role='student'`, `password_set=FALSE`
+    - Insert `public.user_roles` record to match normal signup flow
+    - Preserve transaction safety within existing advisory lock
+    - Maintain all five validation checks in original order
+    - Update function comment to document defensive profile creation
+    - Use exact SQL logic from design document
+    - _Bug_Condition: isBugCondition(input) where userExistsInAuthUsers AND isGoogleProvider AND NOT profileExistsInPublicProfiles AND passwordNotSet_
+    - _Expected_Behavior: Property 1 - Creates minimal profile from auth.users metadata and proceeds with reset_
+    - _Preservation: All five safety checks preserved (null_user_id, user_not_found, not_google_provider, password_already_set, profile validation)_
+    - _Requirements: 2.1, 2.3, 2.4, 3.1, 3.2, 3.3, 3.4_
+
+  - [ ] 3.3 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Profile Created and Recovery Enabled
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Run bug condition exploration test from step 1
+    - Verify for user `60d90a38-7bfd-42f7-a482-9f25dcab12b0`:
+      - Profile now exists in `public.profiles` with correct fields
+      - User role exists in `public.user_roles`
+      - Reset function returns `{success: true, next: 'role'}`
+      - User can complete onboarding through `/auth/select-role`
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
+    - _Requirements: Expected Behavior Properties from design - Property 1_
+
+  - [ ] 3.4 Verify preservation tests still pass
+    - **Property 2: Preservation** - All Safety Checks Intact
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - Verify all five test cases still produce identical results:
+      - Completed accounts still rejected with `password_already_set`
+      - Non-Google providers still rejected with `not_google_provider`
+      - Null user IDs still rejected with `null_user_id`
+      - Non-existent users still rejected with `user_not_found`
+      - Normal profiles still handled correctly (no duplicates)
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix (no regressions)
+    - _Requirements: Preservation Requirements from design - Property 2_
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Run complete test suite (exploration + preservation)
+  - Verify user `60d90a38-7bfd-42f7-a482-9f25dcab12b0` can now complete onboarding
+  - Verify trigger is registered in production (query `pg_trigger`)
+  - Verify all rejection conditions still work correctly
+  - Ensure all tests pass, ask the user if questions arise
