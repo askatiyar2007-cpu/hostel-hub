@@ -168,12 +168,42 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       console.log('[OAuth Callback] Detected incomplete signup retry (password_set=false), resetting role data for user:', accountState.user_id);
       console.log('[OAuth Callback] Account state before reset:', JSON.stringify(accountState));
       
+      // DIAGNOSTIC LOGGING: Fetch complete auth.users record to diagnose reset rejection
+      const { data: adminUserData, error: adminUserError } = await supabaseServer.auth.admin.getUserById(accountState.user_id);
+      if (adminUserError) {
+        console.error('[OAuth Callback] Could not fetch admin user data for diagnostics:', adminUserError);
+      } else if (adminUserData?.user) {
+        const rawMetadata = adminUserData.user.app_metadata;
+        console.log('[OAuth Callback] Provider metadata diagnostics:');
+        console.log('  - Full raw_app_meta_data:', JSON.stringify(rawMetadata, null, 2));
+        console.log('  - provider field:', rawMetadata?.provider);
+        console.log('  - providers array:', rawMetadata?.providers);
+        console.log('  - user.app_metadata.provider type:', typeof rawMetadata?.provider);
+        console.log('  - user.app_metadata.providers type:', typeof rawMetadata?.providers);
+        console.log('  - Is providers an array?', Array.isArray(rawMetadata?.providers));
+      }
+      
       const { data: resetData, error: resetError } = await supabaseServer
         .rpc('reset_incomplete_google_signup', { p_user_id: accountState.user_id });
 
       if (resetError || !resetData?.success) {
         console.error('[OAuth Callback] Could not reset abandoned Google signup:', resetError, resetData);
-        return genericLoginError(request);
+        console.error('[OAuth Callback] Reset rejection details - this may indicate:');
+        console.error('  - Missing provider field in raw_app_meta_data');
+        console.error('  - Missing providers array in raw_app_meta_data');
+        console.error('  - Provider value is not "google"');
+        console.error('  - password_set is true (function safety check)');
+        console.error('[OAuth Callback] Cannot proceed with incomplete signup retry - stale onboarding data still exists');
+        
+        // CRITICAL: Do NOT redirect to role selection with stale data.
+        // Clear the session and send user back to login with error message.
+        const { error: signOutError } = await sessionClient.auth.signOut();
+        if (signOutError) {
+          console.error('[OAuth Callback] Could not clear session after reset failure:', signOutError);
+        }
+        
+        // Return to login with specific error indicating retry is needed
+        return redirect(request, '/auth/login?error=signup-retry-failed');
       }
 
       console.log('[OAuth Callback] Successfully reset incomplete signup, redirecting to role selection');

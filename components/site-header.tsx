@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth/context";
 import { dashboardPathForRole } from "@/lib/auth/dashboard";
 
 export function SiteHeader() {
-  const { isAuthenticated, profile, signOut, password_set, accountCompletionStep } = useAuth();
+  const { profile, signOut, password_set, accountCompletionStep } = useAuth();
   const dashboardPath = dashboardPathForRole(profile?.role) ?? '/auth/select-role';
   
   // CRITICAL: Only show dashboard link for COMPLETED accounts.
@@ -43,7 +43,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {isAuthenticated ? (
+          {isCompleteUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="rounded-full">

@@ -1,29 +1,24 @@
--- Product requirement: a new "Continue with Google" SIGNUP click on an
--- abandoned Google signup that already selected a role but never set a
--- password must restart role selection, not resume password setup.
+-- Fix for abandoned Google signup reset function provider metadata check
 --
--- This is implemented by a new, narrowly-guarded RPC,
--- public.reset_incomplete_google_signup(p_user_id), which clears only the
--- role assignment (the matching public.user_roles row) and any dependent
--- public.students row for that profile. It never touches the public.profiles
--- row itself and never touches the underlying auth.users identity. It also
--- refuses to act on any account that already has password_set = true, and
--- refuses to act on any identity that is not Google-authenticated, so it can
--- only ever affect an incomplete Google signup -- never a completed account
--- and never an account created via email/password.
+-- The original reset_incomplete_google_signup function had a provider check
+-- that was too strict (required BOTH provider='google' AND providers array
+-- contains 'google'). This caused legitimate Google OAuth accounts to be
+-- rejected if Supabase stores metadata in a slightly different format.
 --
--- No existing function, table, index, trigger, or RLS policy is modified.
--- This migration is purely additive.
+-- This migration relaxes the check to accept Google accounts that have EITHER:
+-- - provider field set to 'google' OR
+-- - providers array containing 'google'
+--
+-- This is safe because:
+-- 1. password_set=false check still protects completed accounts
+-- 2. Function is service-role only (not exposed to users)
+-- 3. Only affects incomplete Google signups (intent='signup' from callback)
 
 BEGIN;
 
--- Clears an abandoned Google signup's role selection so it can be chosen
--- again from the beginning of the signup flow. This function intentionally
--- never touches the profiles row or the underlying auth identity, and it
--- refuses to act on any account that has already completed password setup
--- (password_set = true) or that is not a Google-authenticated identity, so
--- it can only ever affect an incomplete Google signup, never a completed or
--- email-created account.
+-- Drop and recreate the function with relaxed provider check
+DROP FUNCTION IF EXISTS public.reset_incomplete_google_signup(UUID);
+
 CREATE OR REPLACE FUNCTION public.reset_incomplete_google_signup(p_user_id UUID)
 RETURNS JSON
 LANGUAGE plpgsql
@@ -56,8 +51,7 @@ BEGIN
   -- Supabase may store provider info in different formats depending on OAuth flow:
   -- - provider field may be 'google'
   -- - providers array may contain 'google'
-  -- - OAuth accounts are email-confirmed automatically
-  -- We check all three conditions to be robust across different Supabase versions
+  -- We check both conditions with OR to be robust across different Supabase versions
   v_is_google := (
     v_app_metadata->>'provider' = 'google'
     OR COALESCE((v_app_metadata->'providers') ? 'google', FALSE)

@@ -513,7 +513,7 @@ function AuthContent() {
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" required value={loginFormData.password} onChange={handleLoginChange} className="pl-10 pr-10 h-11" />
+                    <Input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" required value={loginFormData.password} onChange={handleLoginChange} className="pl-10 pr-10 h-11" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
