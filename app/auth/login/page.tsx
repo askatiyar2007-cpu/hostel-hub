@@ -136,6 +136,7 @@ function AuthContent() {
     if (existingAccount === 'google') {
       setAccountExistsDialog({ open: true, type: 'google' });
       // Clear the URL parameter to prevent showing the dialog again on refresh
+      // Keep the user on the signup tab
       router.replace('/auth/login?tab=signup');
       return;
     }
