@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OtpInput } from '@/components/otp-input';
 import { AuthMessage } from '@/components/auth-message';
+import { AccountAlreadyExistsDialog } from '@/components/account-already-exists-dialog';
 
 type SignupStage = 'request-code' | 'verify-code';
 type CompletionNext = 'profile' | 'role' | 'password' | 'student_onboarding' | 'complete';
@@ -56,6 +57,7 @@ function AuthContent() {
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpAttempt, setOtpAttempt] = useState(0);
   const [authMessage, setAuthMessage] = useState<{ variant: 'error' | 'success'; title: string; description: string; action?: { label: string; onClick: () => void } } | null>(null);
+  const [accountExistsDialog, setAccountExistsDialog] = useState<{ open: boolean; type: 'email' | 'google' }>({ open: false, type: 'email' });
   const verifyInFlightRef = useRef(false);
   const googleRedirectInFlightRef = useRef(false);
 
@@ -86,6 +88,11 @@ function AuthContent() {
     const tab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
     setActiveTab(tab);
   }, [searchParams]);
+
+  const handleAccountExistsSignIn = () => {
+    setActiveTab('login');
+    router.replace('/auth/login?tab=login');
+  };
 
   const handleTabChange = (value: string) => {
     setAuthMessage(null);
@@ -124,6 +131,14 @@ function AuthContent() {
   useEffect(() => {
     const error = searchParams.get('error');
     const reason = searchParams.get('reason');
+    const existingAccount = searchParams.get('existing_account');
+
+    if (existingAccount === 'google') {
+      setAccountExistsDialog({ open: true, type: 'google' });
+      // Clear the URL parameter to prevent showing the dialog again on refresh
+      router.replace('/auth/login?tab=signup');
+      return;
+    }
 
     if (reason === 'no-account') {
       setAuthMessage({
@@ -145,21 +160,9 @@ function AuthContent() {
     }
 
     if (reason === 'signin') {
-      setAuthMessage({
-        variant: 'error',
-        title: 'Account already exists',
-        description: 'An account with this Google email already exists. Please sign in instead.',
-        action: {
-          label: 'Sign in',
-          onClick: () => {
-            setAuthMessage(null);
-            setActiveTab('login');
-            router.replace('/auth/login?tab=login');
-          },
-        },
-      });
-      // Removed: router.replace(`/auth/login?tab=${activeTab}`)
-      // Tab remains unchanged until user explicitly clicks "Sign in"
+      setAccountExistsDialog({ open: true, type: 'google' });
+      // Clear the URL parameter to prevent showing the dialog again on refresh
+      router.replace('/auth/login?tab=signup');
       return;
     }
 
@@ -236,21 +239,7 @@ function AuthContent() {
     // Do NOT send OTP to completed users. Show "Account already exists" instead.
     // This matches the Google OAuth "Create Account" behavior.
     if (response.status === 409) {
-      const data = await response.json().catch(() => ({}));
-      setAuthMessage({
-        variant: 'error',
-        title: 'Account already exists',
-        description: data.message || 'An account with this email already exists. Please sign in instead.',
-        action: {
-          label: 'Switch to Sign In',
-          onClick: () => {
-            setAuthMessage(null);
-            // Switch to login tab programmatically
-            const loginTab = document.querySelector('[value="login"]') as HTMLElement;
-            loginTab?.click();
-          },
-        },
-      });
+      setAccountExistsDialog({ open: true, type: 'email' });
       return false;
     }
 
@@ -644,6 +633,13 @@ function AuthContent() {
             </TabsContent>
           </Tabs>
         </div>
+
+        <AccountAlreadyExistsDialog
+          open={accountExistsDialog.open}
+          onOpenChange={(open) => setAccountExistsDialog({ ...accountExistsDialog, open })}
+          type={accountExistsDialog.type}
+          onSignIn={handleAccountExistsSignIn}
+        />
       </div>
     </div>
   );

@@ -115,14 +115,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return genericLoginError(request);
     }
 
-    // COMPLETED ACCOUNT trying to signup → reject with "account exists"
+    // COMPLETED ACCOUNT trying to signup → redirect to login with existing account indicator
     if (intent === 'signup' && accountState.is_complete) {
       const { error: signOutError } = await sessionClient.auth.signOut();
       if (signOutError) {
         console.error('OAuth callback could not clear rejected signup session.', signOutError);
       }
 
-      return redirect(request, '/auth/login?reason=signin');
+      return redirect(request, '/auth/login?existing_account=google');
     }
 
     // LOGIN intent but no profile exists → show "no account" message
