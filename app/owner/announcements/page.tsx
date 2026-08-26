@@ -33,7 +33,7 @@ interface NoticeWithHostel {
 }
 
 export default function OwnerAnnouncementsPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [announcements, setAnnouncements] = useState<NoticeWithHostel[]>([]);
   const [hostels, setHostels] = useState<{ id: string; name: string }[]>([]);
   const [selectedHostelFilter, setSelectedHostelFilter] = useState<string>('all');
@@ -57,7 +57,7 @@ export default function OwnerAnnouncementsPage() {
   const [submitLoading, setSubmitLoading] = useState(false);
 
   const fetchAnnouncements = useCallback(async () => {
-    if (!profile?.user_id) return;
+    if (!user?.id) return;
     try {
       const { data, error } = await supabase
         .from('notices')
@@ -69,7 +69,7 @@ export default function OwnerAnnouncementsPage() {
             owner_id
           )
         `)
-        .eq('hostels.owner_id', profile.user_id)
+        .eq('hostels.owner_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -80,15 +80,15 @@ export default function OwnerAnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.user_id]);
+  }, [user?.id]);
 
   const fetchHostels = useCallback(async () => {
-    if (!profile?.user_id) return;
+    if (!user?.id) return;
     try {
       const { data, error } = await supabase
         .from('hostels')
         .select('id, name')
-        .eq('owner_id', profile.user_id)
+        .eq('owner_id', user.id)
         .order('name');
 
       if (error) throw error;
@@ -100,7 +100,7 @@ export default function OwnerAnnouncementsPage() {
     } catch (error) {
       console.error('Error fetching hostels:', error);
     }
-  }, [profile?.user_id]);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchHostels();
