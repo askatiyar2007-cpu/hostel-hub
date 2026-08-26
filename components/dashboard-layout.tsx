@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -39,6 +39,7 @@ const ownerNavItems: NavItem[] = [
     { name: 'Rooms', href: '/owner/rooms', icon: Home },
     { name: 'Room Requests', href: '/owner/requests', icon: FileText },
     { name: 'Students', href: '/owner/students', icon: Users },
+    { name: 'Announcements', href: '/owner/announcements', icon: Bell },
     { name: 'Payments', href: '/owner/payments', icon: CreditCard },
     { name: 'Complaints', href: '/owner/complaints', icon: MessageSquare },
     { name: 'Settings', href: '/owner/settings', icon: Settings },
