@@ -20,7 +20,14 @@ import {
   Menu,
   X,
   ShieldCheck,
-  BarChart3
+  BarChart3,
+  Zap,
+  Gauge,
+  Clipboard,
+  Receipt,
+  Coins,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -31,6 +38,11 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ElementType;
+  children?: {
+    name: string;
+    href: string;
+    icon: React.ElementType;
+  }[];
 }
 
 const ownerNavItems: NavItem[] = [
@@ -39,6 +51,17 @@ const ownerNavItems: NavItem[] = [
     { name: 'Rooms', href: '/owner/rooms', icon: Home },
     { name: 'Room Requests', href: '/owner/requests', icon: FileText },
     { name: 'Students', href: '/owner/students', icon: Users },
+    { 
+      name: 'Electricity', 
+      href: '/owner/electricity/billing', 
+      icon: Zap,
+      children: [
+        { name: 'Billing Overview', href: '/owner/electricity/billing', icon: Receipt },
+        { name: 'Meter Management', href: '/owner/electricity/meters', icon: Gauge },
+        { name: 'Record Readings', href: '/owner/electricity/readings/record', icon: Clipboard },
+        { name: 'Rate Configuration', href: '/owner/electricity/rates', icon: Coins }
+      ]
+    },
     { name: 'Announcements', href: '/owner/announcements', icon: Bell },
     { name: 'Payments', href: '/owner/payments', icon: CreditCard },
     { name: 'Complaints', href: '/owner/complaints', icon: MessageSquare },
@@ -51,6 +74,7 @@ const roleNavItems: Record<UserRole, NavItem[]> = {
   student: [
     { name: 'Dashboard', href: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Bills', href: '/student/bills', icon: CreditCard },
+    { name: 'Electricity', href: '/student/electricity', icon: Zap },
     { name: 'Complaints', href: '/student/complaints', icon: MessageSquare },
     { name: 'Documents', href: '/student/documents', icon: FileText },
     { name: 'Announcements', href: '/student/announcements', icon: Bell },
@@ -76,6 +100,7 @@ const roleNavItems: Record<UserRole, NavItem[]> = {
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isElectricityOpen, setIsElectricityOpen] = useState(false);
   const pathname = usePathname();
   const { profile, signOut, loading, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
@@ -89,6 +114,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Close mobile sidebar on route change
   useEffect(() => {
     setIsMobileOpen(false);
+  }, [pathname]);
+
+  // Expand electricity sub-menu if on electricity routes
+  useEffect(() => {
+    if (pathname?.startsWith('/owner/electricity')) {
+      setIsElectricityOpen(true);
+    }
   }, [pathname]);
 
   // CRITICAL BUSINESS RULE ENFORCEMENT:
@@ -161,7 +193,77 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1 overflow-y-auto py-6">
             <nav className="space-y-1 px-3">
               {navItems.map((item) => {
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+                const hasChildren = 'children' in item && item.children && item.children.length > 0;
+                const isChildActive = hasChildren && item.children?.some(child => pathname === child.href || pathname?.startsWith(child.href + '/'));
+                const isActive = (!hasChildren && (pathname === item.href || pathname?.startsWith(item.href + '/'))) || isChildActive;
+                
+                if (hasChildren) {
+                  const isOpen = item.name === 'Electricity' ? isElectricityOpen : false;
+                  
+                  return (
+                    <div key={item.name} className="space-y-1">
+                      {isCollapsed ? (
+                        <Link
+                          href={item.href}
+                          title={item.name}
+                          className={cn(
+                            "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          <item.icon className="h-5 w-5 shrink-0 mx-auto" />
+                        </Link>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setIsElectricityOpen(!isElectricityOpen)}
+                            className={cn(
+                              "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                              isActive
+                                ? "bg-muted text-foreground font-semibold"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            )}
+                          >
+                            <div className="flex items-center">
+                              <item.icon className="h-5 w-5 shrink-0 mr-3 text-muted-foreground group-hover:text-foreground" />
+                              <span>{item.name}</span>
+                            </div>
+                            {isOpen ? (
+                              <ChevronUp size={16} className="text-muted-foreground" />
+                            ) : (
+                              <ChevronDown size={16} className="text-muted-foreground" />
+                            )}
+                          </button>
+                          {isOpen && (
+                            <div className="pl-8 space-y-1 mt-1 transition-all">
+                              {item.children?.map((child) => {
+                                const isChildItemActive = pathname === child.href || pathname?.startsWith(child.href + '/');
+                                return (
+                                  <Link
+                                    key={child.name}
+                                    href={child.href}
+                                    className={cn(
+                                      "group flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                                      isChildItemActive
+                                        ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    )}
+                                  >
+                                    <child.icon className="mr-2.5 h-4 w-4 shrink-0" />
+                                    <span>{child.name}</span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.name}
@@ -235,7 +337,60 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1 overflow-y-auto py-6">
             <nav className="space-y-1 px-3">
               {navItems.map((item) => {
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+                const hasChildren = 'children' in item && item.children && item.children.length > 0;
+                const isChildActive = hasChildren && item.children?.some(child => pathname === child.href || pathname?.startsWith(child.href + '/'));
+                const isActive = (!hasChildren && (pathname === item.href || pathname?.startsWith(item.href + '/'))) || isChildActive;
+
+                if (hasChildren) {
+                  const isOpen = item.name === 'Electricity' ? isElectricityOpen : false;
+                  
+                  return (
+                    <div key={item.name} className="space-y-1">
+                      <button
+                        onClick={() => setIsElectricityOpen(!isElectricityOpen)}
+                        className={cn(
+                          "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-muted text-foreground font-semibold"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <div className="flex items-center">
+                          <item.icon className="mr-3 h-5 w-5 shrink-0" />
+                          <span>{item.name}</span>
+                        </div>
+                        {isOpen ? (
+                          <ChevronUp size={16} className="text-muted-foreground" />
+                        ) : (
+                          <ChevronDown size={16} className="text-muted-foreground" />
+                        )}
+                      </button>
+                      {isOpen && (
+                        <div className="pl-8 space-y-1 mt-1">
+                          {item.children?.map((child) => {
+                            const isChildItemActive = pathname === child.href || pathname?.startsWith(child.href + '/');
+                            return (
+                              <Link
+                                key={child.name}
+                                href={child.href}
+                                className={cn(
+                                  "group flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                                  isChildItemActive
+                                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                <child.icon className="mr-2.5 h-4 w-4 shrink-0" />
+                                <span>{child.name}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.name}
