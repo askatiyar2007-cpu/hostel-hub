@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
-import { Plus, Edit2, Trash2, Megaphone, Calendar, Building2, Bell, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Megaphone, Calendar, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ interface NoticeWithHostel {
 }
 
 export default function OwnerAnnouncementsPage() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<NoticeWithHostel[]>([]);
   const [hostels, setHostels] = useState<{ id: string; name: string }[]>([]);
   const [selectedHostelFilter, setSelectedHostelFilter] = useState<string>('all');
@@ -166,6 +166,7 @@ export default function OwnerAnnouncementsPage() {
       setIsCreateOpen(false);
       fetchAnnouncements();
     } catch (error: any) {
+      console.error('Create announcement error:', error);
       toast.error(error.message || 'Failed to create announcement');
     } finally {
       setSubmitLoading(false);

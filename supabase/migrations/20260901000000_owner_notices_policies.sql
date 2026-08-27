@@ -8,6 +8,9 @@
 -- NOT modified, dropped, or replaced by this migration.
 -- ===============================================================
 
+-- Ensure RLS is enabled on notices table
+ALTER TABLE public.notices ENABLE ROW LEVEL SECURITY;
+
 -- 1) NOTICES: INSERT policy (owner inserts notice for hostels they own)
 DROP POLICY IF EXISTS "Owners can insert notices for their hostels" ON public.notices;
 
