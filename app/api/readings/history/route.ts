@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Check ownership for owners
-    if (profile.role === 'hostel_owner') {
+    if (profile.role === 'hostel_owner' || profile.role === 'owner') {
       const { data: hostel } = await supabaseServer
         .from('hostels')
         .select('owner_id')

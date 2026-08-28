@@ -74,7 +74,7 @@ export async function POST(
       );
     }
 
-    if (profile.role !== 'owner') {
+    if (profile.role !== 'owner' && profile.role !== 'hostel_owner') {
       console.log('[Deactivate Meter API] Authorization failed - not an owner. Actual role:', profile.role);
       return NextResponse.json(
         { error: 'Forbidden: Only hostel owners can deactivate meters' },

@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (profile.role !== 'owner') {
+    if (profile.role !== 'owner' && profile.role !== 'hostel_owner') {
       console.log('[Billing Overview API] Authorization failed - not an owner:', profile.role);
       return NextResponse.json(
         { error: 'Forbidden: Only hostel owners can view billing overview' },

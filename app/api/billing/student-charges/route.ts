@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (profile.role !== 'student' && profile.role !== 'owner') {
+    if (profile.role !== 'student' && profile.role !== 'owner' && profile.role !== 'hostel_owner') {
       console.log('[Student Charges API] Authorization failed - invalid role:', profile.role);
       return NextResponse.json(
         { error: 'Forbidden: Only students and owners can view charges' },
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 5. If owner, verify they own the hostel that the student belongs to (REQ-19.1)
-    if (profile.role === 'owner') {
+    if (profile.role === 'owner' || profile.role === 'hostel_owner') {
       // Check if the student has any charges in hostels owned by this owner
       const { data: ownershipCheck, error: ownershipError } = await supabaseServer
         .from('student_electricity_charges')
