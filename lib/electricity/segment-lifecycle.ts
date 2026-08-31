@@ -46,10 +46,8 @@ export async function getActiveOccupants(
     .select(`
       id,
       student_id,
-      profiles:student_id (
-        full_name,
-        email
-      )
+      student_name,
+      student_email
     `)
     .eq('room_id', roomId)
     .eq('status', 'active')
@@ -69,8 +67,8 @@ export async function getActiveOccupants(
   return data.map(alloc => ({
     allocationId: alloc.id,
     studentId: alloc.student_id,
-    studentName: (alloc.profiles as any)?.full_name || 'Unknown',
-    studentEmail: (alloc.profiles as any)?.email || null
+    studentName: alloc.student_name || 'Unknown',
+    studentEmail: alloc.student_email || null
   }));
 }
 

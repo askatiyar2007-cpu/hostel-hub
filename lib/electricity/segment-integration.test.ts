@@ -54,7 +54,8 @@ describe('Segment Lifecycle Integration Tests', () => {
       {
         id: 'alloc-2',
         student_id: 'student-b',
-        profiles: { full_name: 'Bob', email: 'bob@test.com' }
+        student_name: 'Bob',
+        student_email: 'bob@test.com'
       }
     ];
 
@@ -243,12 +244,14 @@ describe('Segment Lifecycle Integration Tests', () => {
       {
         id: 'alloc-1',
         student_id: 'student-a',
-        profiles: { full_name: 'Alice', email: 'alice@test.com' }
+        student_name: 'Alice',
+        student_email: 'alice@test.com'
       },
       {
         id: 'alloc-2',
         student_id: 'student-b',
-        profiles: { full_name: 'Bob', email: 'bob@test.com' }
+        student_name: 'Bob',
+        student_email: 'bob@test.com'
       }
     ];
 
