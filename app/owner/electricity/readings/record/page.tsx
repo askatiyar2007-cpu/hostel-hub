@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -38,10 +38,20 @@ interface MeterInfo {
     reason: string;
   } | null;
 }
+
+interface Meter {
+  id: string;
+  meter_number: string;
+  room_number: string;
+}
+
 function ReadingEntryContent() {
   const searchParams = useSearchParams();
-  const meterId = searchParams.get('meter_id');
+  const meterIdFromUrl = searchParams.get('meter_id');
   
+  // Meter selection state
+  const [meters, setMeters] = useState<Meter[]>([]);
+  const [selectedMeterId, setSelectedMeterId] = useState<string>('');
   const [meterInfo, setMeterInfo] = useState<MeterInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -56,16 +66,41 @@ function ReadingEntryContent() {
   const [highConsumptionWarning, setHighConsumptionWarning] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
-  // Fetch meter information
+  // Load meters first
   useEffect(() => {
-    if (!meterId) {
-      toast.error('Meter ID is required');
-      return;
-    }
+    const loadMeters = async () => {
+      try {
+        const response = await fetch('/api/meters');
+        if (!response.ok) throw new Error('Failed to fetch meters');
+        const data = await response.json();
+        setMeters(data.meters || []);
+        
+        // Auto-select meter: use URL param, or if exactly 1 meter, select it
+        if (meterIdFromUrl) {
+          setSelectedMeterId(meterIdFromUrl);
+        } else if (data.meters?.length === 1) {
+          setSelectedMeterId(data.meters[0].id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error: any) {
+        console.error('Error fetching meters:', error);
+        toast.error('Failed to load meters');
+        setLoading(false);
+      }
+    };
+    
+    loadMeters();
+  }, [meterIdFromUrl]);
+
+  // Fetch selected meter information
+  useEffect(() => {
+    if (!selectedMeterId) return;
     
     const fetchMeterInfo = async () => {
+      setLoading(true);
       try {
-        const response = await fetch(`/api/meters/${meterId}`);
+        const response = await fetch(`/api/meters/${selectedMeterId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch meter information');
@@ -82,7 +117,7 @@ function ReadingEntryContent() {
     };
     
     fetchMeterInfo();
-  }, [meterId]);
+  }, [selectedMeterId]);
 
   // Validate reading value
   useEffect(() => {
@@ -165,7 +200,7 @@ function ReadingEntryContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          meter_id: meterId,
+          meter_id: selectedMeterId,
           reading_value: parseFloat(readingValue),
           reason,
           notes: notes || undefined
@@ -199,21 +234,51 @@ function ReadingEntryContent() {
     );
   }
 
-  if (!meterInfo) {
+  // Show meter selector if no meter selected yet
+  if (!selectedMeterId) {
     return (
       <div className="container mx-auto p-6">
         <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-gray-500">Meter not found</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => window.location.href = '/owner/electricity/meters'}
-            >
-              Back to Meters
-            </Button>
+          <CardHeader>
+            <CardTitle>Select Meter</CardTitle>
+            <CardDescription>Choose a meter to record a reading</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {meters.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No electricity meters configured yet</p>
+                <Button onClick={() => window.location.href = '/owner/electricity/meters'}>
+                  Configure Meter
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Select Meter</Label>
+                <Select value={selectedMeterId} onValueChange={setSelectedMeterId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a meter..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {meters.map((meter) => (
+                      <SelectItem key={meter.id} value={meter.id}>
+                        {meter.meter_number} - Room {meter.room_number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Show loading after meter selected
+  if (!meterInfo) {
+    return (
+      <div className="container mx-auto p-6">
+        <p className="text-center text-gray-500">Loading meter information...</p>
       </div>
     );
   }
