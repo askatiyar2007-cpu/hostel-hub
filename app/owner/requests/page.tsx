@@ -371,7 +371,7 @@ export default function OwnerRequestsPage() {
       console.log(`[${timestamp}] [approveMutation] Calling RPC: approve_room_request with id:`, req.id);
       
       const { data, error } = await supabase.rpc('approve_room_request', {
-        req_id: req.id
+        p_request_id: req.id
       });
       
       console.log(`[${timestamp}] [approveMutation] RPC Response data:`, data);

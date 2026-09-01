@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
@@ -12,21 +12,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 
 interface BillingSummary {
-  total_consumption: number;
+  total_consumption_all: number;
+  total_consumption_occupied: number;
+  total_consumption_empty: number;
   total_revenue_paise: number;
-  occupied_rooms: number;
-  empty_rooms: number;
-  total_segments: number;
+  total_revenue_rupees: number;
 }
 
 interface RoomBilling {
   room_id: string;
   room_number: string;
-  segment_count: number;
+  segments_count: number;
   total_consumption: number;
   total_revenue_paise: number;
-  occupied_segment_count: number;
-  empty_segment_count: number;
+  total_revenue_rupees: number;
+  empty_room_consumption: number;
 }
 
 interface Hostel {
@@ -168,14 +168,14 @@ export default function BillingOverviewPage() {
 
   // Filter rooms by type
   const filteredRooms = roomBilling.filter(room => {
-    if (roomTypeFilter === 'occupied') return room.occupied_segment_count > 0;
-    if (roomTypeFilter === 'empty') return room.empty_segment_count > 0;
+    if (roomTypeFilter === 'occupied') return room.empty_room_consumption === 0 && room.segments_count > 0;
+    if (roomTypeFilter === 'empty') return room.empty_room_consumption > 0;
     return true;
   });
 
   // Format currency
   const formatCurrency = (paise: number) => {
-    return `₹${(paise / 100).toFixed(2)}`;
+    return `â‚¹${(paise / 100).toFixed(2)}`;
   };
 
   return (
@@ -284,7 +284,7 @@ export default function BillingOverviewPage() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-blue-600">
-                {summary.total_consumption.toFixed(2)} kWh
+                {summary.total_consumption_all.toFixed(2)} kWh
               </p>
             </CardContent>
           </Card>
@@ -294,7 +294,7 @@ export default function BillingOverviewPage() {
               <CardDescription>Occupied Rooms</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{summary.occupied_rooms}</p>
+              <p className="text-2xl font-bold">{roomBilling.length}</p>
             </CardContent>
           </Card>
           
@@ -303,7 +303,7 @@ export default function BillingOverviewPage() {
               <CardDescription>Empty Rooms</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-gray-500">{summary.empty_rooms}</p>
+              <p className="text-2xl font-bold text-gray-500">{roomBilling.filter(r => r.empty_room_consumption > 0).length}</p>
             </CardContent>
           </Card>
         </div>
@@ -317,7 +317,7 @@ export default function BillingOverviewPage() {
             Room-wise Billing
           </CardTitle>
           <CardDescription>
-            {filteredRooms.length} rooms • {selectedMonth}
+            {filteredRooms.length} rooms â€¢ {selectedMonth}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -348,15 +348,15 @@ export default function BillingOverviewPage() {
                     <TableCell className="font-medium">
                       Room {room.room_number}
                     </TableCell>
-                    <TableCell>{room.segment_count}</TableCell>
+                    <TableCell>{room.segments_count}</TableCell>
                     <TableCell>{room.total_consumption.toFixed(2)} kWh</TableCell>
                     <TableCell className="font-semibold">
                       {formatCurrency(room.total_revenue_paise)}
                     </TableCell>
                     <TableCell>
-                      {room.empty_segment_count > 0 && room.occupied_segment_count > 0 ? (
+                      {room.empty_room_consumption > 0 && room.total_consumption > room.empty_room_consumption ? (
                         <Badge variant="outline">Mixed</Badge>
-                      ) : room.empty_segment_count > 0 ? (
+                      ) : room.empty_room_consumption > 0 ? (
                         <Badge variant="outline" className="bg-gray-100">Empty</Badge>
                       ) : (
                         <Badge className="bg-green-100 text-green-800">Occupied</Badge>
