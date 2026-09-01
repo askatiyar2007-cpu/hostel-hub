@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+﻿import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -128,10 +128,7 @@ export async function GET(request: NextRequest) {
           reading_timestamp,
           reason,
           notes,
-          recorded_by,
-          profiles:recorded_by (
-            full_name
-          )
+          recorded_by
         `)
         .eq('meter_id', meterId)
         .order('reading_timestamp', { ascending: false });
@@ -161,6 +158,17 @@ export async function GET(request: NextRequest) {
         });
       }
       
+      // Fetch recorder profiles in batch
+      const recorderIds = [...new Set(rawReadings.map(r => r.recorded_by))];
+      const { data: recorderProfiles } = await supabaseServer
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', recorderIds);
+      
+      const recorderMap = new Map(
+        (recorderProfiles || []).map(p => [p.user_id, p.full_name || 'Unknown'])
+      );
+      
       // Calculate consumption manually (since readings are DESC, we need to reverse for calculation)
       const sortedReadings = [...rawReadings].reverse();
       const readingsWithConsumption = sortedReadings.map((reading, index) => {
@@ -169,9 +177,7 @@ export async function GET(request: NextRequest) {
           ? reading.reading_value - previousReading.reading_value 
           : null;
           
-        const profiles = reading.profiles;
-        const profileObj = (Array.isArray(profiles) ? profiles[0] : profiles) as { full_name: string | null } | null;
-        const recordedByName = profileObj?.full_name || 'Unknown';
+        const recordedByName = recorderMap.get(reading.recorded_by) || 'Unknown';
         
         return {
           id: reading.id,
