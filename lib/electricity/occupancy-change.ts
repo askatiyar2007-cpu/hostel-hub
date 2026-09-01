@@ -106,7 +106,7 @@ export async function processOccupancyChangeEvent(eventId: string): Promise<void
  * @param readingValue - Meter reading value
  * @param recordedBy - UUID of user recording the reading
  * @param notes - Optional notes
- * @returns Object with readingId and segmentsAffected
+ * @returns Object with readingId (string | null) and segmentsAffected
  */
 export async function handleOccupancyChange(
   allocationId: string,
@@ -114,7 +114,7 @@ export async function handleOccupancyChange(
   readingValue: number,
   recordedBy: string,
   notes?: string
-): Promise<{ readingId: string; segmentsAffected: string[]; eventId?: string }> {
+): Promise<{ readingId: string | null; segmentsAffected: string[]; eventId?: string }> {
   
   // Step 1: Fetch allocation details
   const { data: allocation, error: allocError } = await supabaseServer
@@ -127,7 +127,7 @@ export async function handleOccupancyChange(
     throw new Error(`Allocation not found: ${allocError?.message || 'Unknown error'}`);
   }
   
-  // Step 2: Get meter for room
+  // Step 2: Get meter for room (optional for electricity allocation)
   const { data: meter, error: meterError } = await supabaseServer
     .from('electricity_meters')
     .select('id')
@@ -139,11 +139,38 @@ export async function handleOccupancyChange(
     throw new Error(`Failed to fetch meter: ${meterError.message}`);
   }
   
+  // If no active meter exists, skip electricity operations entirely
   if (!meter) {
-    throw new Error(
-      'No active meter for room - cannot process billable occupancy change. ' +
-      'Please configure an active electricity meter for this room first.'
-    );
+    console.log(`No active meter for room ${allocation.room_id} - skipping electricity allocation`);
+    
+    // Still clean up any existing occupancy_change_event if it exists
+    const { data: event } = await supabaseServer
+      .from('occupancy_change_events')
+      .select('id')
+      .eq('allocation_id', allocationId)
+      .eq('status', 'pending_reading')
+      .maybeSingle();
+      
+    if (event) {
+      const { error: updateError } = await supabaseServer
+        .from('occupancy_change_events')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          required_reading_id: null // Allow completion without reading
+        })
+        .eq('id', event.id);
+      
+      if (updateError) {
+        console.warn(`Failed to mark event as completed: ${updateError.message}`);
+      }
+    }
+    
+    return {
+      readingId: null, // null indicates no reading was recorded
+      segmentsAffected: [],
+      eventId: event?.id
+    };
   }
   
   // Step 3: Record meter reading with occupancy_change reason
@@ -169,7 +196,7 @@ export async function handleOccupancyChange(
       .from('occupancy_change_events')
       .update({
         status: 'completed',
-        required_reading_id: readingId,
+        required_reading_id: readingId || null, // Allow null if no reading was recorded
         completed_at: new Date().toISOString()
       })
       .eq('id', event.id);
