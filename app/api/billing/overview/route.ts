@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient, supabaseServer } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 // Query parameter validation schema (Design Section 6.4.2)
 const BillingOverviewQuerySchema = z.object({
   hostel_id: z.string().uuid('Invalid hostel ID format'),
-  month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format')
+  billing_month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format')
 });
 
 interface BillingOverviewRoom {
@@ -32,7 +32,7 @@ interface BillingOverviewResponse {
 }
 
 /**
- * GET /api/billing/overview?hostel_id={hostelId}&month={YYYY-MM}
+ * GET /api/billing/overview?hostel_id={hostelId}&billing_month={YYYY-MM}
  * 
  * Retrieves billing overview for a hostel, aggregated by room.
  * Separates occupied and empty room consumption.
@@ -44,7 +44,7 @@ interface BillingOverviewResponse {
  * 
  * Design: Section 6.4.2
  * 
- * @param req - Request with query params hostel_id and month (YYYY-MM)
+ * @param req - Request with query params hostel_id and billing_month (YYYY-MM)
  * @returns Billing overview with room-level aggregations and summary totals
  */
 export async function GET(req: NextRequest) {
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
     // 3. Parse and validate query parameters
     const searchParams = req.nextUrl.searchParams;
     const hostelId = searchParams.get('hostel_id');
-    const month = searchParams.get('month');
+    const billing_month = searchParams.get('billing_month');
 
     if (!hostelId) {
       return NextResponse.json(
@@ -101,16 +101,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (!month) {
+    if (!billing_month) {
       return NextResponse.json(
-        { error: 'Missing required query parameter: month' },
+        { error: 'Missing required query parameter: billing_month' },
         { status: 400 }
       );
     }
 
     const validated = BillingOverviewQuerySchema.parse({
       hostel_id: hostelId,
-      month: month
+      billing_month: billing_month
     });
 
     // 4. Verify hostel ownership (REQ-19.1)
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
         )
       `)
       .eq('hostel_id', validated.hostel_id)
-      .eq('billing_segments.billing_month', validated.month)
+      .eq('billing_segments.billing_month', validated.billing_month)
       .order('room_number', { ascending: true });
 
     if (roomError) {
@@ -209,14 +209,14 @@ export async function GET(req: NextRequest) {
 
     const response: BillingOverviewResponse = {
       hostel_id: validated.hostel_id,
-      billing_month: validated.month,
+      billing_month: validated.billing_month,
       rooms,
       summary
     };
 
     console.log('[Billing Overview API] Success:', {
       hostel_id: validated.hostel_id,
-      billing_month: validated.month,
+      billing_month: validated.billing_month,
       rooms_count: rooms.length,
       total_revenue_rupees: summary.total_revenue_rupees
     });
