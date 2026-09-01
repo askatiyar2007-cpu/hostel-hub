@@ -66,11 +66,25 @@ function ReadingEntryContent() {
   const [highConsumptionWarning, setHighConsumptionWarning] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
-  // Load meters first
+  // Load meters first - fetch hostel then meters
   useEffect(() => {
     const loadMeters = async () => {
       try {
-        const response = await fetch('/api/meters');
+        // First get owner's hostels
+        const hostelsResponse = await fetch('/api/hostels/owner');
+        if (!hostelsResponse.ok) throw new Error('Failed to fetch hostels');
+        const hostelsData = await hostelsResponse.json();
+        
+        if (!hostelsData.hostels || hostelsData.hostels.length === 0) {
+          setLoading(false);
+          return;
+        }
+        
+        // Use first hostel
+        const hostelId = hostelsData.hostels[0].id;
+        
+        // Fetch meters for that hostel
+        const response = await fetch(`/api/meters?hostel_id=${hostelId}`);
         if (!response.ok) throw new Error('Failed to fetch meters');
         const data = await response.json();
         setMeters(data.meters || []);

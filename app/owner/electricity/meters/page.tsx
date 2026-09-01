@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
@@ -114,7 +114,7 @@ export default function MeterManagementPage() {
 
   // Fetch meters with enriched data
   const fetchMeters = useCallback(async () => {
-    if (!user?.id || selectedHostel === 'all') {
+    if (!user?.id || !selectedHostel || selectedHostel === 'all') {
       setMeters([]);
       setLoading(false);
       return;
