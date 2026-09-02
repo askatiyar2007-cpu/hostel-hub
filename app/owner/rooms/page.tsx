@@ -105,6 +105,13 @@ export default function OwnerRoomsPage() {
             ))}
           </select>
           <Link 
+            href={selectedHostel !== 'all' ? `/owner/rooms/bulk?hostelId=${selectedHostel}` : "/owner/rooms/bulk"}
+            className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-6 py-2.5 font-semibold text-primary hover:bg-primary/20 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Bulk Create</span>
+          </Link>
+          <Link 
             href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"} 
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
           >
