@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, Users, Zap } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface BillingSegment {
@@ -91,11 +91,10 @@ export default function RoomBillingDetailsPage() {
     return `₹${(paise / 100).toFixed(2)}`;
   };
 
-  const formatDateTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('en-IN', {
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -140,7 +139,6 @@ export default function RoomBillingDetailsPage() {
     }
     acc[charge.student_id].total_charge += charge.charge_amount_paise;
     
-    // Calculate consumption from charge amount and segment rate
     const segment = details.segments.find(s => s.id === charge.segment_id);
     if (segment && segment.rate_per_unit > 0) {
       const consumption = charge.charge_amount_paise / 100 / segment.rate_per_unit;
@@ -155,10 +153,12 @@ export default function RoomBillingDetailsPage() {
     return acc;
   }, {} as Record<string, { student_name: string; total_charge: number; total_consumption: number; segments: Array<{ segment_id: string; charge: number; consumption: number }> }>);
 
+  const isOpenSegment = (segment: BillingSegment) => !segment.end_date;
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+    <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6 max-w-4xl">
+      {/* Compact Header */}
+      <div className="flex items-center gap-3">
         <Button 
           variant="outline" 
           size="icon"
@@ -166,228 +166,179 @@ export default function RoomBillingDetailsPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FileText className="h-8 w-8 text-blue-600" />
-            Room {details.room_number} Billing Details
+        <div className="flex-1">
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <FileText className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
+            Room {details.room_number}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm text-gray-600">
             {new Date(details.billing_month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
           </p>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Consumption</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-blue-600">
-              {details.total_consumption.toFixed(2)} kWh
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Electricity Cost</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">
-              {formatCurrency(details.total_cost_paise)}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Segments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{details.segments.length}</p>
-          </CardContent>
-        </Card>
+      {/* Compact Summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs text-blue-700 font-medium">Consumption</p>
+          <p className="text-lg md:text-xl font-bold text-blue-900">
+            {details.total_consumption.toFixed(2)} kWh
+          </p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-xs text-green-700 font-medium">Total Cost</p>
+          <p className="text-lg md:text-xl font-bold text-green-900">
+            {formatCurrency(details.total_cost_paise)}
+          </p>
+        </div>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <p className="text-xs text-gray-700 font-medium">Segments</p>
+          <p className="text-lg md:text-xl font-bold text-gray-900">
+            {details.segments.length}
+          </p>
+        </div>
       </div>
 
-      {/* Student Billing Summary */}
+      {/* Student Electricity Charges - Primary Section */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+        <CardContent className="p-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
+            <Users className="h-5 w-5 text-blue-600" />
             Student Electricity Charges
-          </CardTitle>
-          <CardDescription>
-            Electricity charges per student for this billing period
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Object.entries(chargesByStudent).map(([studentId, data]) => (
-              <div key={studentId} className="flex items-center justify-between p-4 bg-muted/20 rounded-lg border">
-                <div>
-                  <p className="font-semibold">{data.student_name}</p>
-                  <p className="text-sm text-gray-500">
-                    {data.total_consumption.toFixed(2)} kWh
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {data.segments.length} segment{data.segments.length !== 1 ? 's' : ''}
-                  </p>
+          </h2>
+          {Object.keys(chargesByStudent).length === 0 ? (
+            <p className="text-center text-gray-500 py-4">No student charges found</p>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(chargesByStudent).map(([studentId, data]) => (
+                <div key={studentId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                  <div>
+                    <p className="font-semibold text-sm">{data.student_name}</p>
+                    <p className="text-xs text-gray-500">
+                      {data.total_consumption.toFixed(2)} kWh • {data.segments.length} segment{data.segments.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">
+                      {formatCurrency(data.total_charge)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500 mb-1">Electricity Due</p>
-                  <p className="text-xl font-bold text-green-600">
-                    {formatCurrency(data.total_charge)}
-                  </p>
-                  <Badge variant="outline" className="mt-1">Due</Badge>
-                </div>
-              </div>
-            ))}
-            
-            {Object.keys(chargesByStudent).length === 0 && (
-              <p className="text-center text-gray-500 py-4">
-                No student charges found for this period
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Segment Breakdown */}
+      {/* Compact Billing Timeline */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Segment Breakdown
-          </CardTitle>
-          <CardDescription>
-            Detailed breakdown of billing segments and consumption
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
+            <Clock className="h-5 w-5 text-blue-600" />
+            Billing Timeline
+          </h2>
           {details.segments.length === 0 ? (
-            <p className="text-center text-gray-500 py-4">
-              No billing segments found for this period
-            </p>
+            <p className="text-center text-gray-500 py-4">No billing segments found</p>
           ) : (
-            <div className="space-y-6">
-              {details.segments.map((segment, index) => (
-                <div key={segment.id} className="border rounded-lg p-4 space-y-4">
-                  {/* Segment Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-blue-100 text-blue-800">
-                        Segment {index + 1}
-                      </Badge>
-                      <Badge variant={segment.segment_type === 'occupied' ? 'default' : 'secondary'}>
-                        {segment.segment_type === 'occupied' ? 'Occupied' : 'Empty'}
-                      </Badge>
+            <div className="space-y-3">
+              {details.segments.map((segment, index) => {
+                const isOpen = isOpenSegment(segment);
+                return (
+                  <div 
+                    key={segment.id} 
+                    className={`border rounded-lg p-3 ${isOpen ? 'border-yellow-400 bg-yellow-50' : ''}`}
+                  >
+                    {/* Timeline Header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                        <Badge variant={segment.segment_type === 'occupied' ? 'default' : 'secondary'} className="text-xs">
+                          {segment.segment_type === 'occupied' ? 'Occupied' : 'Empty'}
+                        </Badge>
+                        {isOpen && (
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Open
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        ₹{segment.rate_per_unit.toFixed(2)}/kWh
+                      </span>
                     </div>
-                    {segment.end_date && (
-                      <Badge className="bg-green-100 text-green-800">
-                        Closed
-                      </Badge>
+
+                    {/* Time Range */}
+                    <div className="text-sm mb-2">
+                      <span className="font-medium">{formatDate(segment.start_date)}</span>
+                      <span className="text-gray-400 mx-1">→</span>
+                      <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
+                        {isOpen ? 'Waiting for closing reading' : formatDate(segment.end_date!)}
+                      </span>
+                    </div>
+
+                    {/* Readings */}
+                    <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                      <div>
+                        <span className="text-gray-500">Start:</span>{' '}
+                        <span className="font-medium">
+                          {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">End:</span>{' '}
+                        <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
+                          {segment.end_reading_value !== null ? `${segment.end_reading_value} kWh` : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Consumption & Cost */}
+                    {segment.consumption_units !== null && segment.total_cost_paise !== null && (
+                      <div className="flex items-center justify-between text-sm bg-white/50 rounded p-2 mb-2">
+                        <span className="text-blue-600 font-medium">
+                          {segment.consumption_units.toFixed(2)} kWh
+                        </span>
+                        <span className="text-green-600 font-bold">
+                          {formatCurrency(segment.total_cost_paise)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Occupants */}
+                    {segment.occupants.length > 0 && (
+                      <div className="text-xs">
+                        <span className="text-gray-500">Occupants:</span>{' '}
+                        <span className="font-medium">
+                          {segment.occupants.map(o => o.student_name).join(', ')}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Per-Student Split for Occupied Segments */}
+                    {segment.segment_type === 'occupied' && segment.consumption_units !== null && (
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <div className="space-y-1">
+                          {segment.occupants.map(occupant => {
+                            const charge = details.student_charges.find(
+                              c => c.student_id === occupant.student_id && c.segment_id === segment.id
+                            );
+                            const consumption = charge ? charge.charge_amount_paise / 100 / segment.rate_per_unit : 0;
+                            return charge ? (
+                              <div key={occupant.student_id} className="flex justify-between text-xs">
+                                <span className="text-gray-600">{occupant.student_name}</span>
+                                <div className="text-right">
+                                  <span className="text-gray-500 mr-1">{consumption.toFixed(2)} kWh</span>
+                                  <span className="font-medium">{formatCurrency(charge.charge_amount_paise)}</span>
+                                </div>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
-
-                  {/* Segment Dates */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Start Date</p>
-                      <p className="font-semibold">{formatDateTime(segment.start_date)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">End Date</p>
-                      <p className="font-semibold">
-                        {segment.end_date ? formatDateTime(segment.end_date) : 'Open'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Reading Values */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Start Reading</p>
-                      <p className="font-semibold">
-                        {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">End Reading</p>
-                      <p className="font-semibold">
-                        {segment.end_reading_value !== null ? `${segment.end_reading_value} kWh` : 'Pending'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Consumption and Cost */}
-                  {segment.consumption_units !== null && segment.total_cost_paise !== null && (
-                    <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-3 rounded">
-                      <div>
-                        <p className="text-gray-500">Consumption</p>
-                        <p className="font-semibold text-blue-600">
-                          {segment.consumption_units.toFixed(2)} kWh
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Cost</p>
-                        <p className="font-semibold text-green-600">
-                          {formatCurrency(segment.total_cost_paise)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Rate */}
-                  <div className="text-sm">
-                    <p className="text-gray-500">Electricity Rate</p>
-                    <p className="font-semibold">
-                      ₹{segment.rate_per_unit.toFixed(4)} / kWh
-                    </p>
-                  </div>
-
-                  {/* Occupants */}
-                  {segment.occupants.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-2">Occupants ({segment.occupant_count})</p>
-                      <div className="flex flex-wrap gap-2">
-                        {segment.occupants.map(occupant => (
-                          <Badge key={occupant.student_id} variant="outline">
-                            {occupant.student_name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Segment Charges */}
-                  {segment.segment_type === 'occupied' && segment.consumption_units !== null && (
-                    <div className="border-t pt-3">
-                      <p className="text-sm text-gray-500 mb-2">Charges for this segment</p>
-                      <div className="space-y-2">
-                        {segment.occupants.map(occupant => {
-                          const charge = details.student_charges.find(
-                            c => c.student_id === occupant.student_id && c.segment_id === segment.id
-                          );
-                          const consumption = charge ? charge.charge_amount_paise / 100 / segment.rate_per_unit : 0;
-                          return charge ? (
-                            <div key={occupant.student_id} className="flex justify-between text-sm">
-                              <span>{occupant.student_name}</span>
-                              <div className="text-right">
-                                <span className="text-gray-500 mr-2">{consumption.toFixed(2)} kWh</span>
-                                <span className="font-semibold">
-                                  {formatCurrency(charge.charge_amount_paise)}
-                                </span>
-                              </div>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

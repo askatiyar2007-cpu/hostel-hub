@@ -159,25 +159,22 @@ export async function GET(req: NextRequest) {
       // Continue without charges if error
     }
 
-    // Resolve student names using the safe lookup pattern
+    // Resolve student names using segment_occupants data (already has student_name)
     let studentCharges: StudentCharge[] = [];
     if (charges && charges.length > 0) {
-      const studentIds = [...new Set(charges.map((c: any) => c.student_id))];
-      const { data: profiles, error: profilesError } = await supabaseServer
-        .from('profiles')
-        .select('user_id, full_name')
-        .in('user_id', studentIds);
-      
-      const profileMap = new Map();
-      if (!profilesError && profiles) {
-        profiles.forEach((p: any) => {
-          profileMap.set(p.user_id, p.full_name || 'Unknown');
+      // Build student name map from segment occupants
+      const studentNameMap = new Map<string, string>();
+      segmentsWithReadings.forEach(segment => {
+        segment.occupants.forEach((occupant: any) => {
+          if (occupant.student_name && !studentNameMap.has(occupant.student_id)) {
+            studentNameMap.set(occupant.student_id, occupant.student_name);
+          }
         });
-      }
+      });
       
       studentCharges = charges.map((charge: any) => ({
         student_id: charge.student_id,
-        student_name: profileMap.get(charge.student_id) || 'Unknown',
+        student_name: studentNameMap.get(charge.student_id) || 'Unknown',
         charge_amount_paise: charge.charge_amount_paise,
         segment_id: charge.segment_id
       }));
