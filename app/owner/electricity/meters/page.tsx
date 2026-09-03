@@ -1,8 +1,9 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
-import { Plus, Zap, Filter, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Zap, Filter, AlertCircle, CheckCircle, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -237,10 +238,18 @@ export default function MeterManagementPage() {
           </p>
         </div>
         
-        <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Meter
-        </Button>
+        <div className="flex items-center gap-3">
+          <Link href={selectedHostel && selectedHostel !== 'all' ? `/owner/electricity/meters/bulk?hostelId=${selectedHostel}` : '/owner/electricity/meters/bulk'}>
+            <Button variant="outline" className="gap-2">
+              <Layers className="h-4 w-4" />
+              Bulk Create Meters
+            </Button>
+          </Link>
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Meter
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -319,8 +328,22 @@ export default function MeterManagementPage() {
             <p className="text-gray-400 text-sm mt-2">
               {selectedHostel === 'all' 
                 ? 'Select a hostel to view meters' 
-                : 'Click "Add Meter" to create your first meter'}
+                : 'Click "Add Meter" or "Bulk Create Meters" to configure electricity meters'}
             </p>
+            {selectedHostel !== 'all' && (
+              <div className="flex justify-center gap-3 mt-4">
+                <Link href={`/owner/electricity/meters/bulk?hostelId=${selectedHostel}`}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Layers className="h-4 w-4" />
+                    Bulk Create Meters
+                  </Button>
+                </Link>
+                <Button size="sm" onClick={() => setIsCreateOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Meter
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
