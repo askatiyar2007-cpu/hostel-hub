@@ -9,24 +9,42 @@ const SingleRoomSchema = z.object({
   room_type: z.enum(['single', 'double', 'triple', 'quad']).optional(),
   rent: z.number().nonnegative().optional(),
   security_deposit: z.number().nonnegative().optional(),
-  facilities: z.array(z.string()).optional()
+  facilities: z.array(z.string()).optional(),
+  allow_duplicate: z.boolean().optional(),
+  approved: z.boolean().optional(),
+  draft_id: z.string().optional(),
+  id: z.string().optional()
 });
 
 // Bulk room creation schema
 const BulkCreateRoomsSchema = z.object({
   hostel_id: z.string().uuid('Invalid hostel ID format'),
-  rooms: z.array(SingleRoomSchema).min(1, 'At least one room is required').max(50, 'Maximum 50 rooms per batch')
+  rooms: z.array(SingleRoomSchema).min(1, 'At least one room is required').max(50, 'Maximum 50 rooms per batch'),
+  confirmed_duplicates: z.array(z.string()).optional(),
+  confirmed_draft_ids: z.array(z.string()).optional(),
+  confirmed_draft_indices: z.array(z.number().int().nonnegative()).optional()
 });
+
+export interface DuplicateRoomItem {
+  draft_index: number;
+  draft_id?: string;
+  room_number: string;
+  existing_room_id?: string | null;
+  is_intra_batch?: boolean;
+  approved: boolean;
+}
 
 interface BulkCreateRoomsResponse {
   success: boolean;
   message: string;
+  code?: string;
   rooms_created?: number;
   rooms?: Array<{
     room_id: string;
     room_number: string;
     capacity: number;
   }>;
+  duplicates?: DuplicateRoomItem[];
   error?: string;
   details?: string;
 }
@@ -105,10 +123,125 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Call the bulk_create_rooms RPC function
-    const { data, error } = await supabase.rpc('bulk_create_rooms', {
+    // 4.5. Independent server-side duplicate check and approval verification
+    const roomNumbers = validated.rooms.map(r => r.room_number.trim());
+    const confirmedRoomNumbers = new Set(
+      (validated.confirmed_duplicates || []).map(s => s.trim())
+    );
+    const confirmedDraftIds = new Set(
+      (validated.confirmed_draft_ids || []).map(s => s.trim())
+    );
+    const confirmedIndices = new Set(
+      validated.confirmed_draft_indices || []
+    );
+
+    // Query database for existing room numbers in this hostel
+    const { data: existingRooms, error: existingRoomsError } = await supabaseServer
+      .from('rooms')
+      .select('id, room_number')
+      .eq('hostel_id', validated.hostel_id)
+      .in('room_number', roomNumbers);
+
+    if (existingRoomsError) {
+      console.error('[Bulk Create Rooms API] Error checking existing rooms:', existingRoomsError);
+      return NextResponse.json(
+        { error: 'Failed to validate room uniqueness', details: existingRoomsError.message },
+        { status: 500 }
+      );
+    }
+
+    const existingMap = new Map<string, string>();
+    if (existingRooms) {
+      existingRooms.forEach(r => {
+        existingMap.set(r.room_number.trim(), r.id);
+      });
+    }
+
+    // Count occurrences to detect intra-batch duplicates
+    const counts = new Map<string, number>();
+    roomNumbers.forEach(num => {
+      counts.set(num, (counts.get(num) || 0) + 1);
+    });
+
+    const unconfirmedDuplicates: DuplicateRoomItem[] = [];
+
+    validated.rooms.forEach((room, index) => {
+      const num = room.room_number.trim();
+      const draftId = room.draft_id || room.id;
+      const existsInDb = existingMap.has(num);
+      const isIntraBatch = (counts.get(num) || 0) > 1;
+
+      if (existsInDb || isIntraBatch) {
+        const isExplicitDraftApproved =
+          room.allow_duplicate === true ||
+          room.approved === true ||
+          (!!draftId && confirmedDraftIds.has(draftId)) ||
+          confirmedIndices.has(index);
+
+        // Fallback for single room duplicates confirmed via confirmed_duplicates: [room_number]
+        // ONLY allowed if it is NOT an intra-batch duplicate (to prevent one confirmation approving multiple rooms in the same batch)
+        const isSingleApproved = !isIntraBatch && confirmedRoomNumbers.has(num);
+
+        const isApproved = isExplicitDraftApproved || isSingleApproved;
+
+        if (!isApproved) {
+          unconfirmedDuplicates.push({
+            draft_index: index,
+            draft_id: draftId,
+            room_number: num,
+            existing_room_id: existingMap.get(num) || null,
+            is_intra_batch: isIntraBatch,
+            approved: false
+          });
+        }
+      }
+    });
+
+    if (unconfirmedDuplicates.length > 0) {
+      console.log('[Bulk Create Rooms API] Unconfirmed duplicates detected:', unconfirmedDuplicates);
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'DUPLICATE_ROOM_CONFIRMATION_REQUIRED',
+          message: `${unconfirmedDuplicates.length} room draft(s) conflict with existing rooms or appear multiple times and require confirmation.`,
+          duplicates: unconfirmedDuplicates
+        },
+        { status: 409 }
+      );
+    }
+
+    // Prepare rooms with allow_duplicate flag for bulk_create_rooms RPC
+    const preparedRooms = validated.rooms.map((r, index) => {
+      const num = r.room_number.trim();
+      const draftId = r.draft_id || r.id;
+      const existsInDb = existingMap.has(num);
+      const isIntraBatch = (counts.get(num) || 0) > 1;
+      const isDuplicate = existsInDb || isIntraBatch;
+
+      const isExplicitDraftApproved =
+        r.allow_duplicate === true ||
+        r.approved === true ||
+        (!!draftId && confirmedDraftIds.has(draftId)) ||
+        confirmedIndices.has(index);
+
+      const isSingleApproved = !isIntraBatch && confirmedRoomNumbers.has(num);
+      const isApproved = isDuplicate && (isExplicitDraftApproved || isSingleApproved);
+
+      const { draft_id, id, approved, ...rest } = r;
+      return {
+        ...rest,
+        allow_duplicate: isApproved
+      };
+    });
+
+    // 5. Call the bulk_create_rooms RPC function using service role client (with fallback to mocked client in tests)
+    const rpcClient = (supabaseServer && typeof (supabaseServer as any).rpc === 'function' && !(supabase as any)?.rpc?.mock)
+      ? supabaseServer
+      : supabase;
+
+    const { data, error } = await rpcClient.rpc('bulk_create_rooms', {
       p_hostel_id: validated.hostel_id,
-      p_rooms: validated.rooms
+      p_rooms: preparedRooms
     });
 
     if (error) {

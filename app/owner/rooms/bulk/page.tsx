@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   X,
   DoorOpen,
-  Check
+  Check,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -34,12 +35,29 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 };
 
 interface RoomRow {
+  draft_id: string;
   room_number: string;
   floor: number;
   room_type: 'single' | 'double' | 'triple' | 'quad';
   rent: number;
   security_deposit: number;
   facilities: string[];
+}
+
+interface DuplicateWarningItem {
+  draft_index: number;
+  draft_id?: string;
+  room_number: string;
+  existing_room_id?: string | null;
+  is_intra_batch?: boolean;
+  approved?: boolean;
+}
+
+function generateDraftId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `draft-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 function BulkRoomForm() {
@@ -77,20 +95,31 @@ function BulkRoomForm() {
   const [editFormData, setEditFormData] = useState<RoomRow | null>(null);
   const [errors, setErrors] = useState<Record<number, string>>({});
 
+  // Duplicate room numbers confirmation state (tracked per draft ID)
+  const [approvedDraftIds, setApprovedDraftIds] = useState<Set<string>>(new Set());
+  const [duplicateWarnings, setDuplicateWarnings] = useState<DuplicateWarningItem[] | null>(null);
+
   useEffect(() => {
     async function fetchHostels() {
       if (!profile?.user_id) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('hostels')
         .select('id, name')
         .eq('owner_id', profile.user_id);
 
+      if (error) {
+        console.error('Failed to fetch owner hostels:', error);
+        return;
+      }
+
       setHostels(data || []);
       if (data && data.length > 0) {
-        const initialHostelId = defaultHostelId && data.some(h => h.id === defaultHostelId)
-          ? defaultHostelId
-          : data[0].id;
-        setHostelId(initialHostelId);
+        setHostelId(prev => {
+          if (prev && data.some(h => h.id === prev)) return prev;
+          return defaultHostelId && data.some(h => h.id === defaultHostelId)
+            ? defaultHostelId
+            : data[0].id;
+        });
       }
     }
     fetchHostels();
@@ -125,6 +154,7 @@ function BulkRoomForm() {
     const generatedRooms: RoomRow[] = [];
     for (let i = start; i <= end; i++) {
       generatedRooms.push({
+        draft_id: generateDraftId(),
         room_number: i.toString(),
         floor: commonDetails.floor,
         room_type: commonDetails.room_type,
@@ -136,6 +166,8 @@ function BulkRoomForm() {
 
     setRooms(generatedRooms);
     setErrors({});
+    setApprovedDraftIds(new Set());
+    setDuplicateWarnings(null);
     toast.success(`Generated ${count} draft rooms (${start} - ${end})`);
   };
 
@@ -168,7 +200,7 @@ function BulkRoomForm() {
   // Step 3 Action: Add an individual room manually
   const handleAddIndividualRoom = () => {
     const nextRoomNumber = rooms.length > 0
-      ? (Math.max(...rooms.map(r => parseInt(r.room_number) || 0)) + 1).toString()
+      ? (Math.max(...rooms.map(r => parseInt(r.room_number, 10) || 0)) + 1).toString()
       : '101';
 
     const parsedFacilities = commonDetails.facilities
@@ -179,6 +211,7 @@ function BulkRoomForm() {
     setRooms([
       ...rooms,
       {
+        draft_id: generateDraftId(),
         room_number: nextRoomNumber,
         floor: commonDetails.floor,
         room_type: commonDetails.room_type,
@@ -191,12 +224,21 @@ function BulkRoomForm() {
 
   // Step 3 Action: Remove an individual room
   const handleRemoveRoom = (index: number) => {
+    const removed = rooms[index];
+    if (removed?.draft_id) {
+      setApprovedDraftIds(prev => {
+        const next = new Set(prev);
+        next.delete(removed.draft_id);
+        return next;
+      });
+    }
     setRooms(rooms.filter((_, i) => i !== index));
     setErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[index];
       return newErrors;
     });
+    setDuplicateWarnings(null);
   };
 
   // Open Edit Modal for a specific room
@@ -214,10 +256,24 @@ function BulkRoomForm() {
       return;
     }
 
+    const currentRoom = rooms[editingRoomIndex];
+    const oldNum = currentRoom?.room_number?.trim();
+    const newNum = editFormData.room_number.trim();
+
+    // If room number changed, remove old duplicate approval for that specific draft
+    if (currentRoom?.draft_id && oldNum !== newNum) {
+      setApprovedDraftIds(prev => {
+        const next = new Set(prev);
+        next.delete(currentRoom.draft_id);
+        return next;
+      });
+    }
+
     const updatedRooms = [...rooms];
     updatedRooms[editingRoomIndex] = {
       ...editFormData,
-      room_number: editFormData.room_number.trim()
+      draft_id: currentRoom?.draft_id || generateDraftId(),
+      room_number: newNum
     };
     setRooms(updatedRooms);
 
@@ -232,11 +288,12 @@ function BulkRoomForm() {
 
     setEditingRoomIndex(null);
     setEditFormData(null);
-    toast.success(`Room ${editFormData.room_number} updated`);
+    setDuplicateWarnings(null);
+    toast.success(`Room ${newNum} updated`);
   };
 
-  // Validate entire batch before submitting
-  const validateBatch = async (): Promise<boolean> => {
+  // Validate basic required fields before submitting
+  const validateBatch = (): boolean => {
     if (!hostelId) {
       toast.error('Please select a hostel');
       return false;
@@ -255,20 +312,11 @@ function BulkRoomForm() {
     const newErrors: Record<number, string> = {};
     let hasErrors = false;
 
-    // Check empty room numbers and intra-batch duplicates
+    // Check empty room numbers
     rooms.forEach((room, index) => {
-      const num = room.room_number.trim();
+      const num = room.room_number?.trim();
       if (!num) {
         newErrors[index] = 'Room number is required';
-        hasErrors = true;
-        return;
-      }
-
-      const duplicateIndex = rooms.findIndex(
-        (r, i) => i !== index && r.room_number.trim() === num
-      );
-      if (duplicateIndex !== -1) {
-        newErrors[index] = `Duplicate room number (Row ${duplicateIndex + 1})`;
         hasErrors = true;
       }
     });
@@ -279,68 +327,140 @@ function BulkRoomForm() {
       return false;
     }
 
-    // Check database for existing room numbers in this hostel
-    try {
-      const roomNumbers = rooms.map(r => r.room_number.trim());
-      const { data: existingRooms, error: checkError } = await supabase
-        .from('rooms')
-        .select('room_number')
-        .eq('hostel_id', hostelId)
-        .in('room_number', roomNumbers);
-
-      if (checkError) throw checkError;
-
-      if (existingRooms && existingRooms.length > 0) {
-        const existingNumbers = new Set(existingRooms.map(r => r.room_number));
-        rooms.forEach((room, index) => {
-          if (existingNumbers.has(room.room_number.trim())) {
-            newErrors[index] = 'Room number already exists in this hostel';
-            hasErrors = true;
-          }
-        });
-
-        setErrors(newErrors);
-        toast.error('Some room numbers already exist in this hostel');
-        return false;
-      }
-    } catch (error: any) {
-      console.error('Validation error:', error);
-      toast.error(error.message || 'Failed to validate room numbers against database');
-      return false;
-    }
-
+    setErrors({});
     return true;
   };
 
-  // Step 4 Action: Submit to RPC
-  const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const isValid = await validateBatch();
-    if (!isValid) return;
-
+  // Submit batch to POST /api/rooms/bulk-create
+  const submitBatch = async (explicitApproved?: Set<string>) => {
+    const activeApproved = explicitApproved || approvedDraftIds;
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.rpc('bulk_create_rooms', {
-        p_hostel_id: hostelId,
-        p_rooms: rooms
+      console.log('[Bulk Create] Submitting batch to /api/rooms/bulk-create:', {
+        hostel_id: hostelId,
+        rooms_count: rooms.length,
+        approved_draft_ids: Array.from(activeApproved)
       });
 
-      if (error) throw error;
+      const res = await fetch('/api/rooms/bulk-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          hostel_id: hostelId,
+          rooms: rooms.map(r => {
+            const isApproved = activeApproved.has(r.draft_id);
+            return {
+              ...r,
+              allow_duplicate: isApproved,
+              approved: isApproved
+            };
+          }),
+          confirmed_draft_ids: Array.from(activeApproved)
+        })
+      });
 
-      if (!data || data.success === false) {
-        throw new Error(data?.message || 'Failed to create rooms');
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error('[Bulk Create] Non-JSON response from server:', parseErr);
       }
 
-      toast.success(`${data.rooms_created || rooms.length} rooms created successfully!`);
+      // Check if duplicate confirmation is required
+      if (data?.code === 'DUPLICATE_ROOM_CONFIRMATION_REQUIRED' && Array.isArray(data?.duplicates)) {
+        console.log('[Bulk Create] Duplicate room confirmation required:', data.duplicates);
+        setDuplicateWarnings(data.duplicates);
+        return;
+      }
+
+      if (!res.ok || data?.success === false) {
+        const errorMsg =
+          data?.error ||
+          (Array.isArray(data?.details)
+            ? data.details
+                .map((d: any) => (typeof d === 'string' ? d : d.message || JSON.stringify(d)))
+                .join(', ')
+            : data?.details) ||
+          data?.message ||
+          `Failed to create rooms (Server returned status ${res.status})`;
+        throw new Error(errorMsg);
+      }
+
+      toast.success(`${data?.rooms_created || rooms.length} rooms created successfully!`);
       router.push('/owner/rooms');
     } catch (err: unknown) {
+      console.error('[Bulk Create] Submission error:', err);
       const message = err instanceof Error ? err.message : 'An unknown error occurred';
       toast.error(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Step 4 Action: Submit to POST /api/rooms/bulk-create
+  const handleFinalSubmit = async (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    const isValid = validateBatch();
+    if (!isValid) return;
+
+    await submitBatch();
+  };
+
+  // Duplicate Warning Actions
+  const handleChangeDuplicateRoomNumber = (item: DuplicateWarningItem) => {
+    setDuplicateWarnings(null);
+    let targetIndex = -1;
+    if (item.draft_id) {
+      targetIndex = rooms.findIndex(r => r.draft_id === item.draft_id);
+    }
+    if (targetIndex === -1 && typeof item.draft_index === 'number' && rooms[item.draft_index]) {
+      targetIndex = item.draft_index;
+    }
+    if (targetIndex === -1) {
+      targetIndex = rooms.findIndex(r => r.room_number.trim() === item.room_number.trim());
+    }
+    if (targetIndex !== -1) {
+      handleOpenEditModal(targetIndex);
+    }
+  };
+
+  const handleKeepDraftAnyway = async (item: DuplicateWarningItem) => {
+    const draftId = item.draft_id || rooms[item.draft_index]?.draft_id;
+    if (!draftId) return;
+
+    const nextApproved = new Set(approvedDraftIds);
+    nextApproved.add(draftId);
+    setApprovedDraftIds(nextApproved);
+
+    // If all duplicates in duplicateWarnings are confirmed, close warning and submit
+    const remaining = (duplicateWarnings || []).filter(d => {
+      const dId = d.draft_id || rooms[d.draft_index]?.draft_id;
+      return dId && !nextApproved.has(dId);
+    });
+
+    if (remaining.length === 0) {
+      setDuplicateWarnings(null);
+      await submitBatch(nextApproved);
+    }
+  };
+
+  const handleKeepAllAnyway = async () => {
+    const nextApproved = new Set(approvedDraftIds);
+    (duplicateWarnings || []).forEach(d => {
+      const dId = d.draft_id || rooms[d.draft_index]?.draft_id;
+      if (dId) {
+        nextApproved.add(dId);
+      }
+    });
+    setApprovedDraftIds(nextApproved);
+    setDuplicateWarnings(null);
+    await submitBatch(nextApproved);
   };
 
   const totalCapacity = rooms.reduce(
@@ -939,6 +1059,161 @@ function BulkRoomForm() {
               >
                 Save Changes
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* DUPLICATE ROOM NUMBERS CONFIRMATION MODAL                                */}
+      {/* ========================================================================= */}
+      {duplicateWarnings && duplicateWarnings.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <AlertTriangle size={22} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-foreground">
+                  Duplicate Room Numbers Detected
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Some rooms in your batch have room numbers that already exist in this hostel or appear multiple times in this batch.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDuplicateWarnings(null)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* List of Duplicates */}
+            <div className="max-h-[360px] overflow-y-auto space-y-3 pr-1 my-4">
+              {duplicateWarnings.map((item, idx) => {
+                const draftId = item.draft_id || rooms[item.draft_index]?.draft_id;
+                const isApproved = draftId ? approvedDraftIds.has(draftId) : false;
+                const draftNumber = typeof item.draft_index === 'number' ? item.draft_index + 1 : idx + 1;
+
+                return (
+                  <div
+                    key={draftId || `dup-${idx}`}
+                    className={`rounded-xl border p-4 transition-colors ${
+                      isApproved
+                        ? 'border-emerald-500/30 bg-emerald-500/5'
+                        : 'border-amber-500/30 bg-amber-500/5'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                            Draft Room #{draftNumber}
+                          </span>
+                          <span className="font-bold text-foreground">
+                            Room {item.room_number}
+                          </span>
+                          {isApproved && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                              <Check size={12} /> Approved
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.existing_room_id && item.is_intra_batch
+                            ? `Room ${item.room_number} already exists in this hostel and appears multiple times in this batch.`
+                            : item.existing_room_id
+                            ? `Room ${item.room_number} already exists in this hostel.`
+                            : `Room ${item.room_number} appears multiple times in this batch.`}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleChangeDuplicateRoomNumber(item)}
+                          className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                        >
+                          Change Room Number
+                        </button>
+                        {!isApproved ? (
+                          <button
+                            type="button"
+                            onClick={() => handleKeepDraftAnyway(item)}
+                            className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                          >
+                            Keep {item.room_number} Anyway
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (draftId) {
+                                setApprovedDraftIds(prev => {
+                                  const next = new Set(prev);
+                                  next.delete(draftId);
+                                  return next;
+                                });
+                              }
+                            }}
+                            className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            Undo
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="mt-5 pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setDuplicateWarnings(null)}
+                className="w-full sm:w-auto rounded-xl border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                Back to Review
+              </button>
+
+              <div className="w-full sm:w-auto flex items-center gap-2">
+                {duplicateWarnings.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleKeepAllAnyway}
+                    className="w-full sm:w-auto rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    Keep All Anyway
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const allApproved = duplicateWarnings.every(d => {
+                      const dId = d.draft_id || rooms[d.draft_index]?.draft_id;
+                      return dId && approvedDraftIds.has(dId);
+                    });
+                    if (allApproved) {
+                      setDuplicateWarnings(null);
+                      await submitBatch(approvedDraftIds);
+                    } else {
+                      toast.error('Please resolve or confirm all duplicate rooms before proceeding');
+                    }
+                  }}
+                  disabled={!duplicateWarnings.every(d => {
+                    const dId = d.draft_id || rooms[d.draft_index]?.draft_id;
+                    return dId && approvedDraftIds.has(dId);
+                  })}
+                  className="w-full sm:w-auto rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Confirm & Create
+                </button>
+              </div>
             </div>
           </div>
         </div>

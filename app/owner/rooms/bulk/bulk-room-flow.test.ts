@@ -273,7 +273,7 @@ describe('Bulk Room Creation Functional & UX Flow Verification', () => {
     expect(body.rooms).toHaveLength(5);
     expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
       p_hostel_id: mockHostelId,
-      p_rooms: payload.rooms
+      p_rooms: payload.rooms.map(r => ({ ...r, allow_duplicate: false }))
     });
   });
 
@@ -345,5 +345,845 @@ describe('Bulk Room Creation Functional & UX Flow Verification', () => {
     const body = await response.json();
     expect(body.error).toBe('Invalid request data');
     expect(JSON.stringify(body.details)).toContain('At least one room is required');
+  });
+
+  // --- TEST 21: Rejects unauthenticated caller ---
+  it('Security: rejects unauthenticated requests with 401', async () => {
+    (createClient as any).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+          error: new Error('No session')
+        })
+      }
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ room_number: '101' }]
+      })
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body.error).toBe('Unauthorized');
+  });
+
+  // --- TEST 22: Rejects non-owner role ---
+  it('Security: rejects non-owner role with 403', async () => {
+    (createClient as any).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: mockUserId } },
+          error: null
+        })
+      }
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: 'prof-1', user_id: mockUserId, role: 'student' },
+            error: null
+          })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn() };
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ room_number: '101' }]
+      })
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error).toContain('Only hostel owners can create rooms');
+  });
+
+  // --- TEST 23: Rejects unauthorized hostel targeting ---
+  it('Security: rejects creating rooms for another owner\'s hostel with 403', async () => {
+    mockOwnerAuth();
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: 'prof-1', user_id: mockUserId, role: 'owner' },
+            error: null
+          })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: mockHostelId, owner_id: 'some-other-owner-id', name: 'Other Hostel' },
+            error: null
+          })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ room_number: '101' }]
+      })
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error).toContain('You do not own this hostel');
+  });
+
+  // --- TEST 24: Error visibility - RPC error returns 500 with details ---
+  it('Error handling: bubbles database RPC error message to response', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'Database connection failed' }
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: mockUserId } },
+          error: null
+        })
+      },
+      rpc: mockRpc
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ room_number: '101' }]
+      })
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.error).toBe('Failed to create rooms');
+    expect(body.details).toBe('Database connection failed');
+  });
+
+  // --- TEST 25: Error visibility - RPC business failure returns 400 with message ---
+  it('Error handling: bubbles RPC business rule failure (e.g. duplicate room number)', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: false,
+        message: 'Room number 101 already exists in this hostel',
+        detail: 'Unique constraint violated'
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: mockUserId } },
+          error: null
+        })
+      },
+      rpc: mockRpc
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ room_number: '101' }]
+      })
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBe('Room number 101 already exists in this hostel');
+    expect(body.details).toBe('Unique constraint violated');
+  });
+
+  // =========================================================================
+  // TARGETED DUPLICATE-ROOM TESTS (CASES A THROUGH H)
+  // =========================================================================
+
+  // Case A: Existing 101, create 102 -> creates normally without warning
+  it('Case A: Existing 101 in DB, create 102 creates normally without warning', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Created 1 rooms successfully',
+        rooms_created: 1,
+        rooms: [{ room_id: 'room-102', room_number: '102', capacity: 2 }]
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    // DB has room 101, so query for 102 returns empty
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockImplementation((_col: string, vals: string[]) => {
+            const existing = vals.includes('101') ? [{ id: 'room-101', room_number: '101' }] : [];
+            return Promise.resolve({ data: existing, error: null });
+          })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ draft_id: 'draft-1', room_number: '102', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }]
+      })
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(201);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    expect(body.rooms_created).toBe(1);
+    expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
+      p_hostel_id: mockHostelId,
+      p_rooms: [
+        expect.objectContaining({
+          room_number: '102',
+          allow_duplicate: false
+        })
+      ]
+    });
+  });
+
+  // Case B: Existing 101, create 101 -> warning -> Change -> change to 101A -> create succeeds with 101A
+  it('Case B: Existing 101, create 101 -> warning -> change to 101A -> succeeds', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Created 1 rooms successfully',
+        rooms_created: 1,
+        rooms: [{ room_id: 'room-101A', room_number: '101A', capacity: 2 }]
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockImplementation((_col: string, vals: string[]) => {
+            const existing = vals.includes('101') ? [{ id: 'room-101', room_number: '101' }] : [];
+            return Promise.resolve({ data: existing, error: null });
+          })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    // Step 1: Submit draft with room 101 without approval -> 409
+    const req1 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ draft_id: 'draft-1', room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }]
+      })
+    });
+
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(409);
+    const body1 = await res1.json();
+    expect(body1.code).toBe('DUPLICATE_ROOM_CONFIRMATION_REQUIRED');
+    expect(body1.duplicates).toHaveLength(1);
+    expect(body1.duplicates[0].room_number).toBe('101');
+    expect(body1.duplicates[0].existing_room_id).toBe('room-101');
+    expect(mockRpc).not.toHaveBeenCalled();
+
+    // Step 2: Owner changes room 101 to 101A and resubmits
+    const req2 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ draft_id: 'draft-1', room_number: '101A', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }]
+      })
+    });
+
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(201);
+    const body2 = await res2.json();
+    expect(body2.success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
+      p_hostel_id: mockHostelId,
+      p_rooms: [
+        expect.objectContaining({
+          room_number: '101A',
+          allow_duplicate: false
+        })
+      ]
+    });
+  });
+
+  // Case C: Existing 101, create 101 -> warning -> Keep Anyway -> creates duplicate 101
+  it('Case C: Existing 101, create 101 -> warning -> Keep Anyway -> creates duplicate 101', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Created 1 rooms successfully',
+        rooms_created: 1,
+        rooms: [{ room_id: 'room-101-dup', room_number: '101', capacity: 2 }]
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [{ id: 'room-101', room_number: '101' }], error: null })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    // Step 1: Initial submission fails with 409
+    const req1 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ draft_id: 'draft-1', room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }]
+      })
+    });
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(409);
+
+    // Step 2: Keep Anyway approves draft-1
+    const req2 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ draft_id: 'draft-1', room_number: '101', allow_duplicate: true, floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }],
+        confirmed_draft_ids: ['draft-1']
+      })
+    });
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(201);
+    const body2 = await res2.json();
+    expect(body2.success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
+      p_hostel_id: mockHostelId,
+      p_rooms: [
+        expect.objectContaining({
+          room_number: '101',
+          allow_duplicate: true
+        })
+      ]
+    });
+  });
+
+  // Case D: Existing 101 and 103, batch 101/102/103 -> both duplicates shown -> Keep both -> all 3 created
+  it('Case D: Existing 101 and 103, batch 101/102/103 -> both duplicates shown -> Keep both -> all 3 created', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Created 3 rooms successfully',
+        rooms_created: 3,
+        rooms: [
+          { room_id: 'r-101', room_number: '101', capacity: 2 },
+          { room_id: 'r-102', room_number: '102', capacity: 2 },
+          { room_id: 'r-103', room_number: '103', capacity: 2 }
+        ]
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({
+            data: [
+              { id: 'room-101', room_number: '101' },
+              { id: 'room-103', room_number: '103' }
+            ],
+            error: null
+          })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const batchRooms = [
+      { draft_id: 'd-101', room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+      { draft_id: 'd-102', room_number: '102', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+      { draft_id: 'd-103', room_number: '103', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }
+    ];
+
+    const req1 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hostel_id: mockHostelId, rooms: batchRooms })
+    });
+
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(409);
+    const body1 = await res1.json();
+    expect(body1.duplicates).toHaveLength(2);
+    expect(body1.duplicates.map((d: any) => d.room_number)).toEqual(['101', '103']);
+
+    // Step 2: Keep both 101 and 103 -> submits with both approved
+    const req2 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: batchRooms.map(r => ({
+          ...r,
+          allow_duplicate: r.room_number === '101' || r.room_number === '103'
+        })),
+        confirmed_draft_ids: ['d-101', 'd-103']
+      })
+    });
+
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(201);
+    const body2 = await res2.json();
+    expect(body2.success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
+      p_hostel_id: mockHostelId,
+      p_rooms: [
+        expect.objectContaining({ room_number: '101', allow_duplicate: true }),
+        expect.objectContaining({ room_number: '102', allow_duplicate: false }),
+        expect.objectContaining({ room_number: '103', allow_duplicate: true })
+      ]
+    });
+  });
+
+  // Case E: Batch 101/101/102 with no existing 101 -> intra-batch duplicate warning -> independently resolve both
+  it('Case E: Batch 101/101/102 with no existing 101 -> intra-batch duplicate warning -> independently resolve both', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Created 3 rooms successfully',
+        rooms_created: 3,
+        rooms: [
+          { room_id: 'r-101-a', room_number: '101', capacity: 2 },
+          { room_id: 'r-101-b', room_number: '101', capacity: 2 },
+          { room_id: 'r-102', room_number: '102', capacity: 2 }
+        ]
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [], error: null })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const batchRooms = [
+      { draft_id: 'd-1', room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+      { draft_id: 'd-2', room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+      { draft_id: 'd-3', room_number: '102', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }
+    ];
+
+    // Step 1: Initial unapproved batch
+    const req1 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hostel_id: mockHostelId, rooms: batchRooms })
+    });
+
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(409);
+    const body1 = await res1.json();
+    expect(body1.duplicates).toHaveLength(2);
+    expect(body1.duplicates[0].draft_id).toBe('d-1');
+    expect(body1.duplicates[0].is_intra_batch).toBe(true);
+    expect(body1.duplicates[1].draft_id).toBe('d-2');
+    expect(body1.duplicates[1].is_intra_batch).toBe(true);
+
+    // Step 2: Approving ONLY d-1 does not approve d-2!
+    const req2 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [
+          { ...batchRooms[0], allow_duplicate: true },
+          { ...batchRooms[1], allow_duplicate: false },
+          { ...batchRooms[2], allow_duplicate: false }
+        ],
+        confirmed_draft_ids: ['d-1']
+      })
+    });
+
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(409);
+    const body2 = await res2.json();
+    expect(body2.duplicates).toHaveLength(1);
+    expect(body2.duplicates[0].draft_id).toBe('d-2');
+
+    // Step 3: Owner independently approves BOTH d-1 and d-2
+    const req3 = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [
+          { ...batchRooms[0], allow_duplicate: true },
+          { ...batchRooms[1], allow_duplicate: true },
+          { ...batchRooms[2], allow_duplicate: false }
+        ],
+        confirmed_draft_ids: ['d-1', 'd-2']
+      })
+    });
+
+    const res3 = await POST(req3);
+    expect(res3.status).toBe(201);
+    const body3 = await res3.json();
+    expect(body3.success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
+      p_hostel_id: mockHostelId,
+      p_rooms: [
+        expect.objectContaining({ room_number: '101', allow_duplicate: true }),
+        expect.objectContaining({ room_number: '101', allow_duplicate: true }),
+        expect.objectContaining({ room_number: '102', allow_duplicate: false })
+      ]
+    });
+  });
+
+  // Case F: Batch 101/101/102 -> change only first 101 to 101A, keep second 101 -> creates 101A, 101, 102
+  it('Case F: Batch 101/101/102 -> change only first 101 to 101A, keep second 101 -> creates 101A, 101, 102', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Created 3 rooms successfully',
+        rooms_created: 3,
+        rooms: [
+          { room_id: 'r-101A', room_number: '101A', capacity: 2 },
+          { room_id: 'r-101', room_number: '101', capacity: 2 },
+          { room_id: 'r-102', room_number: '102', capacity: 2 }
+        ]
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [], error: null })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [
+          { draft_id: 'd-1', room_number: '101A', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+          { draft_id: 'd-2', room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+          { draft_id: 'd-3', room_number: '102', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }
+        ]
+      })
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith('bulk_create_rooms', {
+      p_hostel_id: mockHostelId,
+      p_rooms: [
+        expect.objectContaining({ room_number: '101A', allow_duplicate: false }),
+        expect.objectContaining({ room_number: '101', allow_duplicate: false }),
+        expect.objectContaining({ room_number: '102', allow_duplicate: false })
+      ]
+    });
+  });
+
+  // Case G: Duplicate submitted without explicit approval returns 409 and creates no rooms
+  it('Case G: Duplicate submitted without explicit approval returns 409 and creates no rooms', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn();
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [{ id: 'existing-101', room_number: '101' }], error: null })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [{ draft_id: 'd-1', room_number: '101' }]
+      })
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe('DUPLICATE_ROOM_CONFIRMATION_REQUIRED');
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  // Case H: Failure halfway through creation rolls back entire batch
+  it('Case H: Failure halfway through creation rolls back entire batch', async () => {
+    mockOwnerAuth();
+
+    const mockRpc = vi.fn().mockResolvedValue({
+      data: {
+        success: false,
+        message: 'Bed creation failed on room 102',
+        detail: 'Unique constraint on bed number violated'
+      },
+      error: null
+    });
+
+    (createClient as any).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: mockUserId } }, error: null }) },
+      rpc: mockRpc
+    });
+
+    (supabaseServer.from as any).mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'prof-1', user_id: mockUserId, role: 'owner' }, error: null })
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: mockHostelId, owner_id: mockUserId, name: 'Sunrise' }, error: null })
+        };
+      }
+      if (table === 'rooms') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [], error: null })
+        };
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis() };
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/rooms/bulk-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hostel_id: mockHostelId,
+        rooms: [
+          { room_number: '101', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] },
+          { room_number: '102', floor: 1, room_type: 'double', rent: 5000, security_deposit: 2000, facilities: [] }
+        ]
+      })
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe('Bed creation failed on room 102');
+    expect(body.details).toBe('Unique constraint on bed number violated');
   });
 });
