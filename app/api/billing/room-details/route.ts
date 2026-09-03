@@ -11,7 +11,9 @@ interface BillingSegment {
   id: string;
   start_date: string;
   end_date: string | null;
-  start_reading_value: number;
+  start_reading_id: string | null;
+  end_reading_id: string | null;
+  start_reading_value: number | null;
   end_reading_value: number | null;
   consumption_units: number | null;
   rate_per_unit: number;
@@ -89,7 +91,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch billing segments with occupants
+    // Fetch billing segments with occupants and both readings using explicit foreign keys
     const { data: segments, error: segmentsError } = await supabaseServer
       .from('billing_segments')
       .select(`
@@ -102,7 +104,11 @@ export async function GET(req: NextRequest) {
         occupant_count,
         segment_type,
         start_reading_id,
-        meter_readings!inner(
+        end_reading_id,
+        start_reading:meter_readings!billing_segments_start_reading_id_fkey(
+          reading_value
+        ),
+        end_reading:meter_readings!billing_segments_end_reading_id_fkey(
           reading_value
         ),
         segment_occupants (
@@ -120,36 +126,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch billing segments' }, { status: 500 });
     }
 
-    // Get end reading values for closed segments
-    const segmentsWithReadings = await Promise.all(
-      (segments || []).map(async (segment: any) => {
-        let endReadingValue = null;
-        
-        if (segment.end_reading_id) {
-          const { data: endReading } = await supabaseServer
-            .from('meter_readings')
-            .select('reading_value')
-            .eq('id', segment.end_reading_id)
-            .single();
-          
-          endReadingValue = endReading?.reading_value || null;
-        }
-
-        return {
-          id: segment.id,
-          start_date: segment.start_date,
-          end_date: segment.end_date,
-          start_reading_value: segment.meter_readings.reading_value,
-          end_reading_value: endReadingValue,
-          consumption_units: segment.consumption_units,
-          rate_per_unit: segment.rate_per_unit,
-          total_cost_paise: segment.total_cost_paise,
-          occupant_count: segment.occupant_count,
-          segment_type: segment.segment_type,
-          occupants: segment.segment_occupants || []
-        };
-      })
-    );
+    // Transform segments to clean structure
+    const segmentsWithReadings = (segments || []).map((segment: any) => ({
+      id: segment.id,
+      start_date: segment.start_date,
+      end_date: segment.end_date,
+      start_reading_id: segment.start_reading_id,
+      end_reading_id: segment.end_reading_id,
+      start_reading_value: segment.start_reading?.reading_value || null,
+      end_reading_value: segment.end_reading?.reading_value || null,
+      consumption_units: segment.consumption_units,
+      rate_per_unit: segment.rate_per_unit,
+      total_cost_paise: segment.total_cost_paise,
+      occupant_count: segment.occupant_count,
+      segment_type: segment.segment_type,
+      occupants: segment.segment_occupants || []
+    }));
 
     // Fetch student charges for this room and month
     const { data: charges, error: chargesError } = await supabaseServer

@@ -11,7 +11,9 @@ interface BillingSegment {
   id: string;
   start_date: string;
   end_date: string | null;
-  start_reading_value: number;
+  start_reading_id: string | null;
+  end_reading_id: string | null;
+  start_reading_value: number | null;
   end_reading_value: number | null;
   consumption_units: number | null;
   rate_per_unit: number;
@@ -307,7 +309,9 @@ export default function RoomBillingDetailsPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Start Reading</p>
-                      <p className="font-semibold">{segment.start_reading_value} kWh</p>
+                      <p className="font-semibold">
+                        {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-500">End Reading</p>
