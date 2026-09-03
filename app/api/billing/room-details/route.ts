@@ -13,6 +13,7 @@ interface BillingSegment {
   end_date: string | null;
   start_reading_id: string | null;
   end_reading_id: string | null;
+  meter_id: string | null;
   start_reading_value: number | null;
   end_reading_value: number | null;
   consumption_units: number | null;
@@ -39,6 +40,7 @@ interface RoomBillingDetails {
   room_id: string;
   room_number: string;
   billing_month: string;
+  meter_id: string | null;
   segments: (BillingSegment & { occupants: SegmentOccupant[] })[];
   student_charges: StudentCharge[];
   total_consumption: number;
@@ -105,6 +107,7 @@ export async function GET(req: NextRequest) {
         segment_type,
         start_reading_id,
         end_reading_id,
+        meter_id,
         start_reading:meter_readings!billing_segments_start_reading_id_fkey(
           reading_value
         ),
@@ -133,6 +136,7 @@ export async function GET(req: NextRequest) {
       end_date: segment.end_date,
       start_reading_id: segment.start_reading_id,
       end_reading_id: segment.end_reading_id,
+      meter_id: segment.meter_id,
       start_reading_value: segment.start_reading?.reading_value || null,
       end_reading_value: segment.end_reading?.reading_value || null,
       consumption_units: segment.consumption_units,
@@ -195,6 +199,7 @@ export async function GET(req: NextRequest) {
       room_id: validated.room_id,
       room_number: room.room_number,
       billing_month: validated.billing_month,
+      meter_id: segmentsWithReadings[0]?.meter_id || null,
       segments: segmentsWithReadings,
       student_charges: studentCharges,
       total_consumption: totalConsumption,

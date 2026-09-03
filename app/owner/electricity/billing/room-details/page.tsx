@@ -13,6 +13,7 @@ interface BillingSegment {
   end_date: string | null;
   start_reading_id: string | null;
   end_reading_id: string | null;
+  meter_id: string | null;
   start_reading_value: number | null;
   end_reading_value: number | null;
   consumption_units: number | null;
@@ -39,6 +40,7 @@ interface RoomBillingDetails {
   room_id: string;
   room_number: string;
   billing_month: string;
+  meter_id: string | null;
   segments: (BillingSegment & { occupants: SegmentOccupant[] })[];
   student_charges: StudentCharge[];
   total_consumption: number;
@@ -258,7 +260,7 @@ export default function RoomBillingDetailsPage() {
                         {isOpen && (
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
-                            Open
+                            OPEN — READING REQUIRED
                           </Badge>
                         )}
                       </div>
@@ -272,24 +274,19 @@ export default function RoomBillingDetailsPage() {
                       <span className="font-medium">{formatDate(segment.start_date)}</span>
                       <span className="text-gray-400 mx-1">→</span>
                       <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
-                        {isOpen ? 'Waiting for closing reading' : formatDate(segment.end_date!)}
+                        {isOpen ? 'Pending' : formatDate(segment.end_date!)}
                       </span>
                     </div>
 
                     {/* Readings */}
-                    <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                      <div>
-                        <span className="text-gray-500">Start:</span>{' '}
-                        <span className="font-medium">
-                          {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">End:</span>{' '}
-                        <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
-                          {segment.end_reading_value !== null ? `${segment.end_reading_value} kWh` : 'Pending'}
-                        </span>
-                      </div>
+                    <div className="text-sm mb-2">
+                      <span className="font-medium">
+                        {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
+                      </span>
+                      <span className="text-gray-400 mx-1">→</span>
+                      <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
+                        {segment.end_reading_value !== null ? `${segment.end_reading_value} kWh` : 'Pending'}
+                      </span>
                     </div>
 
                     {/* Consumption & Cost */}
@@ -306,34 +303,43 @@ export default function RoomBillingDetailsPage() {
 
                     {/* Occupants */}
                     {segment.occupants.length > 0 && (
-                      <div className="text-xs">
+                      <div className="text-xs mb-2">
                         <span className="text-gray-500">Occupants:</span>{' '}
                         <span className="font-medium">
-                          {segment.occupants.map(o => o.student_name).join(', ')}
+                          {segment.occupants.map(o => o.student_name).join(' + ')}
                         </span>
                       </div>
                     )}
 
-                    {/* Per-Student Split for Occupied Segments */}
+                    {/* Per-Student Split for Occupied Segments - Compact */}
                     {segment.segment_type === 'occupied' && segment.consumption_units !== null && (
-                      <div className="mt-2 pt-2 border-t border-gray-200">
-                        <div className="space-y-1">
-                          {segment.occupants.map(occupant => {
-                            const charge = details.student_charges.find(
-                              c => c.student_id === occupant.student_id && c.segment_id === segment.id
-                            );
-                            const consumption = charge ? charge.charge_amount_paise / 100 / segment.rate_per_unit : 0;
-                            return charge ? (
-                              <div key={occupant.student_id} className="flex justify-between text-xs">
-                                <span className="text-gray-600">{occupant.student_name}</span>
-                                <div className="text-right">
-                                  <span className="text-gray-500 mr-1">{consumption.toFixed(2)} kWh</span>
-                                  <span className="font-medium">{formatCurrency(charge.charge_amount_paise)}</span>
-                                </div>
-                              </div>
-                            ) : null;
-                          })}
-                        </div>
+                      <div className="text-xs">
+                        <span className="text-gray-500">Split:</span>{' '}
+                        {segment.occupants.map(occupant => {
+                          const charge = details.student_charges.find(
+                            c => c.student_id === occupant.student_id && c.segment_id === segment.id
+                          );
+                          return charge ? (
+                            <span key={occupant.student_id} className="font-medium">
+                              {occupant.student_name} {formatCurrency(charge.charge_amount_paise)}
+                              {segment.occupants.indexOf(occupant) < segment.occupants.length - 1 && ' · '}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+
+                    {/* Record Reading Action for Open Segments */}
+                    {isOpen && details.meter_id && (
+                      <div className="mt-3 pt-2 border-t border-yellow-200">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-xs h-7"
+                          onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${details.meter_id}&reason=month_end`}
+                        >
+                          Record Closing Reading
+                        </Button>
                       </div>
                     )}
                   </div>
