@@ -1038,7 +1038,7 @@ function PendingRequestCard({ req, onApprove, onReject, onViewDetails }: { req: 
           <div className="space-y-3">
             <CardInfoRow icon={<Building2 size={14} />} label="Hostel" value={req.hostels?.name} />
             <CardInfoRow icon={<Home size={14} />} label="Room / Type" value={`Room ${room?.room_number} (${req.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})`} />
-            <CardInfoRow icon={<Mail size={14} />} label="Rent Details" value={`â‚¹${Number(room?.rent).toLocaleString()}/month`} />
+            <CardInfoRow icon={<Mail size={14} />} label="Rent Details" value={`₹${Number(room?.rent).toLocaleString()}/month`} />
           </div>
           <div className="flex items-center justify-center">
             <RoomCapacityIndicator room={room} />
@@ -1142,7 +1142,7 @@ function ApprovedAllocationCard({
           <div className="space-y-3">
             <CardInfoRow icon={<Building2 size={14} />} label="Hostel" value={alloc.hostels?.name} />
             <CardInfoRow icon={<Home size={14} />} label="Room Allocated" value={`Room ${room?.room_number} (${alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})`} />
-            <CardInfoRow icon={<Mail size={14} />} label="Monthly Rent" value={`â‚¹${Number(rent).toLocaleString()}`} />
+            <CardInfoRow icon={<Mail size={14} />} label="Monthly Rent" value={`₹${Number(rent).toLocaleString()}`} />
           </div>
           <div className="flex items-center justify-center">
             <RoomCapacityIndicator room={room} />
@@ -1191,7 +1191,7 @@ function ApprovedAllocationCard({
             </div>
             <div className="flex justify-between text-xs pt-1 border-t mt-1">
               <span className="text-muted-foreground font-semibold">Deposit Amount:</span>
-              <span className="text-foreground font-bold">â‚¹{Number(alloc.rooms?.security_deposit || rent * 2).toLocaleString()}</span>
+              <span className="text-foreground font-bold">₹{Number(alloc.rooms?.security_deposit || rent * 2).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -1252,7 +1252,7 @@ function ApprovedAllocationCard({
                       </span>
                       <span className="text-[10px] text-muted-foreground">Due: {new Date(fee.due_date).toLocaleDateString()}</span>
                     </div>
-                    <span className="font-bold text-xs text-foreground">â‚¹{fee.amount_due || fee.amount || 0}</span>
+                    <span className="font-bold text-xs text-foreground">₹{fee.amount_due || fee.amount || 0}</span>
                   </div>
                   
                   <div className="flex items-center justify-between pt-1 border-t border-dashed">
@@ -1492,7 +1492,7 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               <span className="text-muted-foreground font-semibold">Hostel:</span> <span className="font-semibold text-foreground text-right">{item.hostels?.name}</span>
               <span className="text-muted-foreground font-semibold">Room:</span> <span className="font-semibold text-foreground text-right">Room {item.rooms?.room_number} ({item.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})</span>
-              <span className="text-muted-foreground font-semibold">Rent:</span> <span className="font-bold text-primary text-right">â‚¹{Number(item.rooms?.rent).toLocaleString()}/mo</span>
+              <span className="text-muted-foreground font-semibold">Rent:</span> <span className="font-bold text-primary text-right">₹{Number(item.rooms?.rent).toLocaleString()}/mo</span>
             </div>
           </div>
         </div>
@@ -1586,7 +1586,7 @@ function AgreementModal({ alloc, onClose }: { alloc: any; onClose: () => void })
           </p>
 
           <p>
-            <strong>3. RENT & SECURITY:</strong> Tenant agrees to pay the monthly rental sum of <strong>â‚¹{Number(alloc.rooms?.rent).toLocaleString()}</strong>. A security deposit equaling one month rent is due prior to final occupancy.
+            <strong>3. RENT & SECURITY:</strong> Tenant agrees to pay the monthly rental sum of <strong>₹{Number(alloc.rooms?.rent).toLocaleString()}</strong>. A security deposit equaling one month rent is due prior to final occupancy.
           </p>
 
           <p>

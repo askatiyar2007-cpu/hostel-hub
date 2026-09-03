@@ -175,7 +175,7 @@ export default function BillingOverviewPage() {
 
   // Format currency
   const formatCurrency = (paise: number) => {
-    return `â‚¹${(paise / 100).toFixed(2)}`;
+    return `₹${(paise / 100).toFixed(2)}`;
   };
 
   return (
