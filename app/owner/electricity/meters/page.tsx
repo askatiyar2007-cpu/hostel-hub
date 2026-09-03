@@ -464,8 +464,59 @@ interface MeterCardProps {
 }
 
 function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
-  const getStatusColor = (status: string) => {
+  const getMeterStatusColor = (status: string) => {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+  };
+  
+  const getReadingStatus = () => {
+    if (meter.pending_reading) {
+      return {
+        text: 'Reading Required',
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        icon: <AlertCircle className="h-4 w-4" />
+      };
+    }
+    if (!meter.last_reading) {
+      return {
+        text: 'No Reading',
+        color: 'bg-gray-100 text-gray-800 border-gray-300',
+        icon: null
+      };
+    }
+    return {
+      text: 'Up to Date',
+      color: 'bg-green-100 text-green-800 border-green-300',
+      icon: <CheckCircle className="h-4 w-4" />
+    };
+  };
+
+  const getBillingStatus = () => {
+    if (meter.open_segment_id) {
+      return {
+        text: 'Billing Active',
+        color: 'bg-blue-100 text-blue-800 border-blue-300',
+        icon: <CheckCircle className="h-4 w-4" />
+      };
+    }
+    if (!meter.last_reading) {
+      return {
+        text: 'Not Started',
+        color: 'bg-gray-100 text-gray-800 border-gray-300',
+        icon: null
+      };
+    }
+    if (meter.pending_reading) {
+      return {
+        text: 'Billing Pending',
+        color: 'bg-orange-100 text-orange-800 border-orange-300',
+        icon: <AlertCircle className="h-4 w-4" />
+      };
+    }
+    return {
+      text: 'Not Started',
+      color: 'bg-gray-100 text-gray-800 border-gray-300',
+      icon: null
+    };
   };
   
   const formatDate = (dateStr: string) => {
@@ -478,6 +529,9 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
     });
   };
 
+  const readingStatus = getReadingStatus();
+  const billingStatus = getBillingStatus();
+
   return (
     <Card className={meter.pending_reading ? 'border-yellow-500 border-2' : ''}>
       <CardHeader>
@@ -488,13 +542,39 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
               {meter.meter_number}
             </CardDescription>
           </div>
-          <Badge className={getStatusColor(meter.status)}>
-            {meter.status}
+          <Badge className={getMeterStatusColor(meter.status)}>
+            {meter.status === 'active' ? 'Active' : 'Inactive'}
           </Badge>
         </div>
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Meter Status */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-500">Meter Status</span>
+          <Badge className={getMeterStatusColor(meter.status)} variant="outline">
+            {meter.status === 'active' ? 'Active' : 'Inactive'}
+          </Badge>
+        </div>
+
+        {/* Reading Status */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-500">Reading Status</span>
+          <Badge className={`${readingStatus.color} border`} variant="outline">
+            {readingStatus.icon}
+            <span className="ml-1">{readingStatus.text}</span>
+          </Badge>
+        </div>
+
+        {/* Billing Status */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-500">Billing Status</span>
+          <Badge className={`${billingStatus.color} border`} variant="outline">
+            {billingStatus.icon}
+            <span className="ml-1">{billingStatus.text}</span>
+          </Badge>
+        </div>
+
         {/* Last Reading */}
         {meter.last_reading ? (
           <div className="space-y-1">
@@ -511,23 +591,18 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
           </div>
         )}
         
-        {/* Pending Reading Indicator */}
+        {/* Reading Required Message */}
         {meter.pending_reading && (
-          <div className="flex items-center gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <span className="text-xs text-yellow-800 font-medium">
-              Reading Required
-            </span>
-          </div>
-        )}
-        
-        {/* Open Segment Indicator */}
-        {meter.open_segment_id && (
-          <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded">
-            <CheckCircle className="h-4 w-4 text-blue-600" />
-            <span className="text-xs text-blue-800 font-medium">
-              Active Billing Segment
-            </span>
+          <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs text-yellow-800 font-medium">
+                Reading Required
+              </p>
+              <p className="text-xs text-yellow-700 mt-1">
+                New student allocation detected. Record a New Allocation reading to start the new billing segment.
+              </p>
+            </div>
           </div>
         )}
         
@@ -544,7 +619,7 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
           <Button 
             size="sm" 
             className="flex-1"
-            onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}`}
+            onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}${meter.pending_reading ? '&reason=occupancy_change' : ''}`}
           >
             Record Reading
           </Button>

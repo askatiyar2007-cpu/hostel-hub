@@ -324,7 +324,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                 {depositStatus === 'paid' ? (
                   <Badge className="bg-green-50 text-green-700 hover:bg-green-50 border-none font-bold">✓ Paid</Badge>
                 ) : (
-                  <Badge className="bg-orange-50 text-orange-700 hover:bg-orange-50 border-none font-bold">📋 Pending</Badge>
+                  <Badge className="bg-orange-50 text-orange-700 hover:bg-orange-50 border-none font-bold">Pending</Badge>
                 )}
               </div>
               <div className="flex justify-between border-b pb-2">

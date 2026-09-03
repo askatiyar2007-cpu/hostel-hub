@@ -1176,10 +1176,10 @@ function ApprovedAllocationCard({
             <div className="flex justify-between items-center text-xs">
               <span className="text-muted-foreground font-semibold">Security Deposit:</span>
               {alloc.deposit_status === 'paid' ? (
-                <span className="text-green-600 font-bold flex items-center gap-0.5">âœ“ Paid</span>
+                <span className="text-green-600 font-bold flex items-center gap-0.5">✓ Paid</span>
               ) : (
                 <div className="flex items-center gap-1">
-                  <span className="text-orange-500 font-bold">ðŸ“‹ Pending</span>
+                  <span className="text-orange-500 font-bold">Pending</span>
                   <button 
                     onClick={onMarkDepositPaid}
                     className="bg-primary hover:bg-primary/95 text-white font-bold px-2 py-0.5 rounded text-[10px] transition-colors"

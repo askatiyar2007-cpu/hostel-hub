@@ -208,9 +208,26 @@ export async function recordMeterReading(
   const isOccupied = await isRoomOccupied(meter.room_id, readingDate);
   const hasOpenSegment = await hasOpenSegmentForBillingMonth(meter.room_id, billingMonth);
   
-  if (isOccupied && !hasOpenSegment) {
+  // For 'initial' reason, always create opening segment if room is occupied
+  // For other reasons, only create if room is occupied and no segment exists
+  if (reason === 'initial' && isOccupied && !hasOpenSegment) {
+    // Initial reading for occupied room - create opening segment
+    const { createBillingSegment } = await import('./segment-lifecycle');
+    
+    const openingSegmentId = await createBillingSegment(
+      meter.hostel_id,
+      meter.room_id,
+      meterId,
+      reading.id,
+      readingDate,
+      true // update occupants for opening segment
+    );
+    
+    segmentsAffected.push(openingSegmentId);
+    console.log(`Initial reading created opening segment ${openingSegmentId} for occupied room ${meter.room_id} in billing month ${billingMonth}`);
+  } else if (isOccupied && !hasOpenSegment && reason !== 'manual_check') {
     // Room is occupied but has no opening segment for this billing period
-    // Create opening segment automatically
+    // Create opening segment automatically for other valid reasons
     const { createBillingSegment } = await import('./segment-lifecycle');
     
     const openingSegmentId = await createBillingSegment(

@@ -86,8 +86,24 @@ export default function ReadingHistoryPage() {
                     <TableCell>{new Date(reading.reading_timestamp).toLocaleString('en-IN')}</TableCell>
                     <TableCell className="font-medium">{reading.reading_value} kWh</TableCell>
                     <TableCell>
-                      <Badge variant={reading.reason === 'occupancy_change' ? 'default' : 'outline'}>
-                        {reading.reason.replace('_', ' ')}
+                      <Badge 
+                        variant={
+                          reading.reason === 'occupancy_change' ? 'default' : 
+                          reading.reason === 'month_end' ? 'secondary' : 
+                          reading.reason === 'initial' ? 'outline' : 'outline'
+                        }
+                        className={
+                          reading.reason === 'occupancy_change' ? 'bg-blue-100 text-blue-800' :
+                          reading.reason === 'month_end' ? 'bg-purple-100 text-purple-800' :
+                          reading.reason === 'initial' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }
+                      >
+                        {reading.reason === 'manual_check' ? 'Manual Check' : 
+                         reading.reason === 'initial' ? 'Initial Reading' :
+                         reading.reason === 'occupancy_change' ? 'New Allocation' :
+                         reading.reason === 'month_end' ? 'Month End' :
+                         reading.reason.replace('_', ' ')}
                       </Badge>
                     </TableCell>
                     <TableCell>{reading.recorded_by_name}</TableCell>

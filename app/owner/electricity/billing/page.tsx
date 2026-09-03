@@ -317,7 +317,7 @@ export default function BillingOverviewPage() {
             Room-wise Billing
           </CardTitle>
           <CardDescription>
-            {filteredRooms.length} rooms â€¢ {selectedMonth}
+            {filteredRooms.length} rooms • {selectedMonth}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -48,6 +48,7 @@ interface Meter {
 function ReadingEntryContent() {
   const searchParams = useSearchParams();
   const meterIdFromUrl = searchParams.get('meter_id');
+  const reasonFromUrl = searchParams.get('reason');
   
   // Meter selection state
   const [meters, setMeters] = useState<Meter[]>([]);
@@ -58,7 +59,11 @@ function ReadingEntryContent() {
   
   // Form states
   const [readingValue, setReadingValue] = useState('');
-  const [reason, setReason] = useState<'manual_check' | 'occupancy_change' | 'month_end'>('manual_check');
+  const [reason, setReason] = useState<'initial' | 'occupancy_change' | 'month_end'>(
+    (reasonFromUrl === 'initial' || reasonFromUrl === 'occupancy_change' || reasonFromUrl === 'month_end') 
+      ? reasonFromUrl as 'initial' | 'occupancy_change' | 'month_end' 
+      : 'initial'
+  );
   const [notes, setNotes] = useState('');
   
   // Validation states
@@ -387,13 +392,13 @@ function ReadingEntryContent() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="manual_check">Manual Check</SelectItem>
-                    <SelectItem value="occupancy_change">Occupancy Change</SelectItem>
+                    <SelectItem value="initial">Initial Reading</SelectItem>
+                    <SelectItem value="occupancy_change">New Allocation</SelectItem>
                     <SelectItem value="month_end">Month End</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500">
-                  {reason === 'manual_check' && 'Regular meter check (does not close billing segments)'}
+                  {reason === 'initial' && 'First reading for occupied room (establishes opening billing segment)'}
                   {reason === 'occupancy_change' && 'Student joining/leaving (closes and creates segments)'}
                   {reason === 'month_end' && 'End of month reading (closes and creates segments)'}
                 </p>
@@ -458,7 +463,7 @@ function ReadingEntryContent() {
           )}
 
           {/* Segment Impact Info */}
-          {reason !== 'manual_check' && (
+          {reason !== 'initial' && (
             <Card className="border-blue-500 border-2">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-blue-700">
