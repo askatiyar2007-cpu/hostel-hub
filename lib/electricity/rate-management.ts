@@ -4,7 +4,7 @@
  * Based on design.md Section 3.1 and 6.5
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, supabaseServer } from '@/lib/supabase/server';
 
 /**
  * Get the applicable rate for a hostel at a specific timestamp
@@ -98,7 +98,7 @@ export async function updateElectricityRate(
     .is('end_date', null);
     
   if (countError) {
-    console.warn('Failed to count open segments:', countError);
+    console.warn('Failed to count open segments:', countError.message || countError);
   }
   
   return {
@@ -129,7 +129,7 @@ export async function getRateHistory(
 }>> {
   const supabase = await createClient();
   
-  // Query with profile join for creator name
+  // Query rate history without profile join (created_by references auth.users, not profiles)
   const { data, error } = await supabase
     .from('electricity_rate_history')
     .select(`
@@ -138,9 +138,7 @@ export async function getRateHistory(
       effective_from,
       created_at,
       notes,
-      profiles:created_by (
-        full_name
-      )
+      created_by
     `)
     .eq('hostel_id', hostelId)
     .order('effective_from', { ascending: false });
@@ -153,6 +151,22 @@ export async function getRateHistory(
     return [];
   }
   
+  // Collect unique created_by UUIDs
+  const createdByUuids = [...new Set(data.map(rate => rate.created_by))];
+  
+  // Fetch profile names for these UUIDs using existing pattern
+  let profileMap = new Map<string, string>();
+  if (createdByUuids.length > 0) {
+    const { data: profiles, error: profilesError } = await supabaseServer
+      .from('profiles')
+      .select('user_id, full_name')
+      .in('user_id', createdByUuids);
+      
+    if (!profilesError && profiles) {
+      profileMap = new Map(profiles.map(p => [p.user_id, p.full_name || 'Unknown']));
+    }
+  }
+  
   // The most recent effective_from is the current rate
   const mostRecentEffectiveFrom = data[0].effective_from;
   
@@ -162,7 +176,7 @@ export async function getRateHistory(
     rate_per_unit: rate.rate_per_unit,
     effective_from: rate.effective_from,
     created_at: rate.created_at,
-    created_by_name: (rate.profiles as any)?.full_name || 'Unknown',
+    created_by_name: profileMap.get(rate.created_by) || 'Unknown',
     notes: rate.notes,
     is_current: rate.effective_from === mostRecentEffectiveFrom
   }));
