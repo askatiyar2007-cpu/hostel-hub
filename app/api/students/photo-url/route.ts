@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     const { data: roomRequest, error: requestError } = await supabase
       .from('room_requests')
       .select(`
+        id,
         photo_path,
         hostel_id,
         hostels!inner (
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (requestError) {
-      console.error('Error fetching room request:', requestError);
+      console.error('[Photo URL API] Error fetching room request:', requestError);
       return NextResponse.json(
         { error: 'Failed to fetch room request' },
         { status: 500 }
@@ -74,18 +75,52 @@ export async function GET(request: NextRequest) {
     }
 
     if (!roomRequest) {
+      console.log('[Photo URL API] No approved room request found for student_id:', studentId);
       return NextResponse.json(
         { error: 'No approved room request found for this student' },
         { status: 404 }
       );
     }
 
+    console.log('[Photo URL API] Room request found:', {
+      room_request_id: roomRequest.id,
+      student_id: studentId
+    });
+
     if (!roomRequest.photo_path) {
+      console.log('[Photo URL API] No photo_path found for student_id:', studentId);
       return NextResponse.json(
         { error: 'No photo uploaded for this student' },
         { status: 404 }
       );
     }
+
+    // Diagnostic logging
+    const photoPath = roomRequest.photo_path;
+    console.log('[Photo URL API] Diagnostics:', {
+      student_id: studentId,
+      photo_path: photoPath,
+      photo_path_length: photoPath.length,
+      photo_path_trimmed: photoPath.trim(),
+      has_leading_slash: photoPath.startsWith('/'),
+      has_trailing_slash: photoPath.endsWith('/'),
+      contains_bucket_name: photoPath.includes('student-room-requests'),
+      bucket_name: 'student-room-requests'
+    });
+
+    // Try to list objects in the student's directory to verify what exists
+    const studentFolder = photoPath.split('/')[0]; // Get the student ID folder
+    console.log('[Photo URL API] Listing objects in folder:', studentFolder);
+    const { data: listData, error: listError } = await supabase.storage
+      .from('student-room-requests')
+      .list(studentFolder, { limit: 10, sortBy: { column: 'name', order: 'asc' } });
+
+    console.log('[Photo URL API] Storage list result:', {
+      folder: studentFolder,
+      found_objects: listData?.length || 0,
+      object_names: listData?.map(obj => obj.name) || [],
+      list_error: listError ? listError.message : null
+    });
 
     // Verify owner authorization
     const hostel = roomRequest.hostels as any;
@@ -106,12 +141,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate signed URL (valid for 1 hour)
+    console.log('[Photo URL API] Attempting to create signed URL for path:', photoPath);
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('student-room-requests')
-      .createSignedUrl(roomRequest.photo_path, 3600); // 1 hour expiry
+      .createSignedUrl(photoPath, 3600); // 1 hour expiry
 
     if (signedUrlError) {
-      console.error('Error generating signed URL:', signedUrlError);
+      console.error('[Photo URL API] Error generating signed URL:', {
+        error: signedUrlError,
+        path_used: photoPath,
+        bucket: 'student-room-requests',
+        error_name: signedUrlError.name,
+        error_message: signedUrlError.message,
+        error_status: signedUrlError.statusCode
+      });
       return NextResponse.json(
         { error: 'Failed to generate photo URL' },
         { status: 500 }
