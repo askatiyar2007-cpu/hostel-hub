@@ -1,14 +1,38 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { supabase } from '@/lib/supabase/client';
 import { Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function StudentElectricityPage() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [charges, setCharges] = useState([]);
   const [month, setMonth] = useState('');
   const [loading, setLoading] = useState(true);
+  const [studentId, setStudentId] = useState<string | null>(null);
+  
+  const fetchStudentId = useCallback(async () => {
+    if (!profile?.id) return;
+    
+    try {
+      const { data: studentRecord } = await supabase
+        .from('students')
+        .select('id')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+      
+      if (studentRecord) {
+        setStudentId(studentRecord.id);
+      }
+    } catch (error) {
+      console.error('Error fetching student record:', error);
+    }
+  }, [profile?.id]);
+  
+  useEffect(() => {
+    fetchStudentId();
+  }, [fetchStudentId]);
   
   useEffect(() => {
     const months = [];
@@ -19,13 +43,15 @@ export default function StudentElectricityPage() {
     }
     setMonth(months[0]);
     
-    if (user && months[0]) {
-      fetch(`/api/billing/student-charges?student_id=${user.id}&billing_month=${months[0]}`)
+    if (studentId && months[0]) {
+      fetch(`/api/billing/student-charges?student_id=${studentId}&billing_month=${months[0]}`)
         .then(r => r.json())
         .then(d => { setCharges(d.charges || []); setLoading(false); })
         .catch(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [studentId]);
   
   const total = charges.reduce((sum, c: any) => sum + (c.charge_amount_paise || 0), 0);
   
