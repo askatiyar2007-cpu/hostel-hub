@@ -36,6 +36,8 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [showComplaints, setShowComplaints] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [passportPhotoUrl, setPassportPhotoUrl] = useState<string | null>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   const fetchAllData = useCallback(async () => {
     if (!user?.id || !allocationId) return;
@@ -79,6 +81,19 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         .limit(1)
         .maybeSingle();
       setLatestRequest(reqData);
+
+      // 4. Fetch passport photo URL if room request has photo_path
+      if (reqData?.photo_path) {
+        try {
+          const response = await fetch(`/api/students/photo-url?student_id=${allocData.student_id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setPassportPhotoUrl(data.signedUrl);
+          }
+        } catch (error) {
+          console.error('Failed to fetch passport photo:', error);
+        }
+      }
 
       // 4. Fetch Student Fees
       const { data: feesData } = await supabase
@@ -227,7 +242,14 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       {/* 1. Profile Header Row */}
       <div className="bg-card border border-border p-6 rounded-3xl shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex flex-col md:flex-row items-center gap-5">
-          {profile?.avatar_url ? (
+          {passportPhotoUrl ? (
+            <img 
+              src={passportPhotoUrl} 
+              alt="Student passport photo"
+              className="h-20 w-20 rounded-full object-cover border-2 border-primary shadow-sm cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              onClick={() => setPreviewPhoto(passportPhotoUrl)}
+            />
+          ) : profile?.avatar_url ? (
             <img 
               src={profile.avatar_url} 
               alt={studentName} 
@@ -520,6 +542,29 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             <Button onClick={() => setShowComplaints(false)} className="w-full rounded-xl">
               Close Complaints
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Preview Modal */}
+      {previewPhoto && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewPhoto(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img 
+              src={previewPhoto} 
+              alt="Student passport photo preview"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setPreviewPhoto(null)}
+              className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} className="text-gray-900" />
+            </button>
           </div>
         </div>
       )}

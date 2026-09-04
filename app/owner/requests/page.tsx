@@ -26,7 +26,8 @@ import {
   Check,
   X,
   DollarSign,
-  Trash2
+  Trash2,
+  X as CloseIcon
 } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,8 @@ export default function OwnerRequestsPage() {
   const [hostelFilter, setHostelFilter] = useState('all');
   const [roomFilter, setRoomFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'alpha'>('newest');
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const timestamp = new Date().toISOString();
@@ -139,6 +142,35 @@ export default function OwnerRequestsPage() {
         };
       });
 
+      // Fetch photo URLs for students with room requests
+      if (mergedRequests && mergedRequests.length > 0) {
+        const photoUrlPromises = mergedRequests.map(async (req) => {
+          const studentId = req.student_id;
+          if (!studentId) return null;
+
+          try {
+            const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
+            if (response.ok) {
+              const data = await response.json();
+              return { studentId, url: data.signedUrl };
+            }
+            return null;
+          } catch (error) {
+            console.error(`Failed to fetch photo for student ${studentId}:`, error);
+            return null;
+          }
+        });
+
+        const photoResults = await Promise.all(photoUrlPromises);
+        const urlMap: Record<string, string> = {};
+        photoResults.forEach(result => {
+          if (result) {
+            urlMap[result.studentId] = result.url;
+          }
+        });
+        setPhotoUrls(urlMap);
+      }
+
       return mergedRequests;
     },
   });
@@ -222,6 +254,32 @@ export default function OwnerRequestsPage() {
         requestsByStudentId = new Map(
           (requestsData ?? []).map((r: any) => [r.student_id, r])
         );
+      }
+
+      // Fetch photo URLs for students with room requests
+      if (studentIds.length > 0) {
+        const photoUrlPromises = studentIds.map(async (studentId) => {
+          try {
+            const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
+            if (response.ok) {
+              const data = await response.json();
+              return { studentId, url: data.signedUrl };
+            }
+            return null;
+          } catch (error) {
+            console.error(`Failed to fetch photo for student ${studentId}:`, error);
+            return null;
+          }
+        });
+
+        const photoResults = await Promise.all(photoUrlPromises);
+        const urlMap: Record<string, string> = {};
+        photoResults.forEach(result => {
+          if (result) {
+            urlMap[result.studentId] = result.url;
+          }
+        });
+        setPhotoUrls(urlMap);
       }
 
       // Fetch students and profiles sequentially to prevent RLS-related recursion / nested traversal issues
@@ -769,17 +827,23 @@ export default function OwnerRequestsPage() {
             <EmptyState message="No pending room requests found." />
           ) : (
             <div className="flex flex-col gap-6">
-              {visiblePending.map((req: any) => (
-                <PendingRequestCard 
-                  key={req.id} 
-                  req={req} 
-                  onApprove={() => setSelectedConfirmAction({ type: 'approve', id: req.id, req })}
-                  onReject={() => setSelectedConfirmAction({ type: 'reject', id: req.id })}
-                  onViewDetails={() => {
-                    setSelectedDetailsItem(req);
-                  }}
-                />
-              ))}
+              {visiblePending.map((req: any) => {
+                const studentId = req.student_id;
+                const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+                return (
+                  <PendingRequestCard 
+                    key={req.id} 
+                    req={req} 
+                    passportPhotoUrl={passportPhotoUrl}
+                    onPreviewPhoto={setPreviewPhoto}
+                    onApprove={() => setSelectedConfirmAction({ type: 'approve', id: req.id, req })}
+                    onReject={() => setSelectedConfirmAction({ type: 'reject', id: req.id })}
+                    onViewDetails={() => {
+                      setSelectedDetailsItem(req);
+                    }}
+                  />
+                );
+              })}
             </div>
           )
         )}
@@ -789,22 +853,28 @@ export default function OwnerRequestsPage() {
             <EmptyState message="No active approved allocations found." />
           ) : (
             <div className="flex flex-col gap-6">
-              {visibleApproved.map((alloc: any) => (
-                <ApprovedAllocationCard 
-                  key={alloc.id} 
-                  alloc={alloc} 
-                  onCheckout={() => setSelectedConfirmAction({ type: 'checkout', id: alloc.id })}
-                  onViewAgreement={() => setAgreementModalData(alloc)}
-                  onViewDetails={() => {
-                    setSelectedDetailsItem(alloc);
-                  }}
-                  onMarkDepositPaid={() => setSelectedDepositAlloc(alloc)}
-                  onMarkFeePaid={(feeId) => {
-                    markPaidMutation.mutate(feeId);
-                  }}
-                  onViewHistory={() => setSelectedHistoryAlloc(alloc)}
-                />
-              ))}
+              {visibleApproved.map((alloc: any) => {
+                const studentId = alloc.student_id;
+                const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+                return (
+                  <ApprovedAllocationCard 
+                    key={alloc.id} 
+                    alloc={alloc} 
+                    passportPhotoUrl={passportPhotoUrl}
+                    onPreviewPhoto={setPreviewPhoto}
+                    onCheckout={() => setSelectedConfirmAction({ type: 'checkout', id: alloc.id })}
+                    onViewAgreement={() => setAgreementModalData(alloc)}
+                    onViewDetails={() => {
+                      setSelectedDetailsItem(alloc);
+                    }}
+                    onMarkDepositPaid={() => setSelectedDepositAlloc(alloc)}
+                    onMarkFeePaid={(feeId) => {
+                      markPaidMutation.mutate(feeId);
+                    }}
+                    onViewHistory={() => setSelectedHistoryAlloc(alloc)}
+                  />
+                );
+              })}
             </div>
           )
         )}
@@ -901,6 +971,29 @@ export default function OwnerRequestsPage() {
           onClose={() => setSelectedHistoryAlloc(null)}
         />
       )}
+
+      {/* 10. Photo Preview Modal */}
+      {previewPhoto && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewPhoto(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img 
+              src={previewPhoto} 
+              alt="Student passport photo preview"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setPreviewPhoto(null)}
+              className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <CloseIcon size={20} className="text-gray-900" />
+            </button>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }
@@ -990,7 +1083,7 @@ function CardInfoRow({ icon, label, value }: { icon: React.ReactNode; label: str
 
 // ---------------- Card Implementations ----------------
 
-function PendingRequestCard({ req, onApprove, onReject, onViewDetails }: { req: any; onApprove: () => void; onReject: () => void; onViewDetails: () => void }) {
+function PendingRequestCard({ req, onApprove, onReject, onViewDetails, passportPhotoUrl, onPreviewPhoto }: { req: any; onApprove: () => void; onReject: () => void; onViewDetails: () => void; passportPhotoUrl?: string; onPreviewPhoto?: (url: string) => void }) {
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
   const studentName = student?.full_name || req.student_name || '-';
   const studentEmail = student?.email || req.student_email || '-';
@@ -1006,9 +1099,18 @@ function PendingRequestCard({ req, onApprove, onReject, onViewDetails }: { req: 
       {/* Header Row */}
       <div className="flex items-center justify-between border-b pb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold text-lg font-display">
-            {studentName.charAt(0)}
-          </div>
+          {passportPhotoUrl ? (
+            <img 
+              src={passportPhotoUrl} 
+              alt="Student passport photo"
+              className="h-12 w-12 rounded-xl object-cover border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+            />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold text-lg font-display">
+              {studentName.charAt(0)}
+            </div>
+          )}
           <div>
             <h3 className="font-bold text-lg text-foreground font-display leading-tight">{studentName}</h3>
             <span className="text-xs text-muted-foreground mt-1 block">
@@ -1086,7 +1188,9 @@ function ApprovedAllocationCard({
   onViewDetails,
   onMarkDepositPaid,
   onMarkFeePaid,
-  onViewHistory
+  onViewHistory,
+  passportPhotoUrl,
+  onPreviewPhoto
 }: { 
   alloc: any; 
   onCheckout: () => void; 
@@ -1095,6 +1199,8 @@ function ApprovedAllocationCard({
   onMarkDepositPaid: () => void;
   onMarkFeePaid: (feeId: string) => void;
   onViewHistory: () => void;
+  passportPhotoUrl?: string;
+  onPreviewPhoto?: (url: string) => void;
 }) {
   const student = Array.isArray(alloc.students) ? alloc.students[0]?.profiles : alloc.students?.profiles;
   const studentName = student?.full_name || alloc.student_name || '-';
@@ -1115,9 +1221,18 @@ function ApprovedAllocationCard({
       {/* Header Row */}
       <div className="flex items-center justify-between border-b border-green-100 dark:border-green-900/30 pb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-lg font-display">
-            {studentName.charAt(0)}
-          </div>
+          {passportPhotoUrl ? (
+            <img 
+              src={passportPhotoUrl} 
+              alt="Student passport photo"
+              className="h-12 w-12 rounded-xl object-cover border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+            />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-lg font-display">
+              {studentName.charAt(0)}
+            </div>
+          )}
           <div>
             <h3 className="font-bold text-lg text-foreground font-display leading-tight">{studentName}</h3>
             <span className="text-xs text-muted-foreground mt-1 block">
