@@ -40,6 +40,12 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = await createClient();
+
+    // Log Supabase project reference (safe to log hostname fragment)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'unknown';
+    const projectRef = supabaseUrl.includes('supabase.co') ? supabaseUrl.split('//')[1].split('.')[0] : 'unknown';
+    console.log('[Photo URL API] Supabase project:', projectRef);
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -95,6 +101,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Verify owner authorization BEFORE storage operations
+    const hostel = roomRequest.hostels as any;
+    if (hostel.owner_id !== user.id) {
+      // Check if user is super admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile || profile.role !== 'super_admin') {
+        console.log('[Photo URL API] Authorization failed for user:', user.id);
+        return NextResponse.json(
+          { error: 'Forbidden: You do not have permission to access this photo' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Diagnostic logging
     const photoPath = roomRequest.photo_path;
     console.log('[Photo URL API] Diagnostics:', {
@@ -122,22 +147,36 @@ export async function GET(request: NextRequest) {
       list_error: listError ? listError.message : null
     });
 
-    // Verify owner authorization
-    const hostel = roomRequest.hostels as any;
-    if (hostel.owner_id !== user.id) {
-      // Check if user is super admin
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+    // Try to get public URL to verify path format
+    console.log('[Photo URL API] Attempting to get public URL for path:', photoPath);
+    const { data: publicUrlData } = await supabase.storage
+      .from('student-room-requests')
+      .getPublicUrl(photoPath);
 
-      if (!profile || profile.role !== 'super_admin') {
-        return NextResponse.json(
-          { error: 'Forbidden: You do not have permission to access this photo' },
-          { status: 403 }
-        );
-      }
+    console.log('[Photo URL API] Public URL check result:', {
+      path: photoPath,
+      has_public_url: !!publicUrlData.publicUrl
+    });
+
+    // Try to download the file to verify it exists and is accessible
+    console.log('[Photo URL API] Attempting to download file to verify existence:', photoPath);
+    const { data: downloadData, error: downloadError } = await supabase.storage
+      .from('student-room-requests')
+      .download(photoPath);
+
+    console.log('[Photo URL API] Download check result:', {
+      path: photoPath,
+      download_error: downloadError ? downloadError.message : null,
+      download_error_status: downloadError ? (downloadError as any).statusCode : null,
+      file_size: downloadData ? downloadData.size : null,
+      file_type: downloadData ? downloadData.type : null
+    });
+
+    // If download succeeded but createSignedUrl fails, that's a specific issue
+    if (!downloadError && downloadData) {
+      console.log('[Photo URL API] Download succeeded - object exists at path:', photoPath);
+    } else {
+      console.log('[Photo URL API] Download failed - object may not exist at path:', photoPath);
     }
 
     // Generate signed URL (valid for 1 hour)
