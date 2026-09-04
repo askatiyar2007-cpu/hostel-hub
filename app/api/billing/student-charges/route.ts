@@ -107,10 +107,11 @@ export async function GET(req: NextRequest) {
     // 4. Authorization check: Students can only view their own charges (REQ-19.3)
     if (profile.role === 'student') {
       // Resolve the authenticated user's students.id
+      // students.profile_id references profiles.id, not auth.users.id
       const { data: studentRecord, error: studentError } = await supabaseServer
         .from('students')
         .select('id')
-        .eq('profile_id', user.id)
+        .eq('profile_id', profile.id)
         .maybeSingle();
 
       if (studentError) {
@@ -169,10 +170,11 @@ export async function GET(req: NextRequest) {
     }
 
     // 6. Get student name for response
+    // validated.student_id is students.id, so we need to join through students table
     const { data: studentProfile, error: studentError } = await supabaseServer
-      .from('profiles')
-      .select('full_name')
-      .eq('user_id', validated.student_id)
+      .from('students')
+      .select('profiles!inner(full_name)')
+      .eq('id', validated.student_id)
       .single();
 
     if (studentError) {
@@ -182,6 +184,9 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Extract full_name from the nested profiles object
+    const studentName = (studentProfile as any)?.profiles?.full_name || 'Unknown';
 
     // 7. Query student charges with segment details (Design Section 6.4.1)
     const { data: chargesData, error: chargesError } = await supabaseServer
@@ -272,7 +277,7 @@ export async function GET(req: NextRequest) {
 
     const response: StudentChargesResponse = {
       student_id: validated.student_id,
-      student_name: studentProfile?.full_name || 'Unknown',
+      student_name: studentName,
       billing_month: validated.billing_month || currentMonth,
       charges,
       total_paise: totalPaise,
