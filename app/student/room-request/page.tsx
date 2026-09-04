@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   Building2, Search, BedDouble, CheckCircle2, ShieldCheck, Clock,
-  User, MapPin, Shield
+  User, MapPin, Shield, Upload, X
 } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -38,6 +38,7 @@ export default function RoomRequestPage() {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [otpEmail, setOtpEmail] = useState<string | null>(null);
 
   const [details, setDetails] = useState({
     // Student Personal Info
@@ -60,6 +61,11 @@ export default function RoomRequestPage() {
 
   const [bookingType, setBookingType] = useState<'shared' | 'entire_room'>('shared');
   const [showOccupancyAlert, setShowOccupancyAlert] = useState(false);
+
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
 
   // ------------------------------------------------------------
   // STUDENT RECORD
@@ -365,9 +371,29 @@ export default function RoomRequestPage() {
       return;
     }
 
+    if (!photoFile && !photoPath) {
+      toast.error('Please upload your passport-size photo');
+      return;
+    }
+
     setOtpLoading(true);
 
     try {
+      // Upload photo before sending OTP
+      const studentId = studentRecord?.id;
+      if (!studentId) {
+        toast.error('Student record not found');
+        return;
+      }
+
+      const uploadedPath = await uploadPhoto(studentId);
+      if (!uploadedPath) {
+        toast.error('Failed to upload photo');
+        return;
+      }
+
+      setPhotoPath(uploadedPath);
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -390,6 +416,7 @@ export default function RoomRequestPage() {
             roomId: selectedRoom.id,
             bookingType,
             details,
+            photoPath: uploadedPath,
           }),
         }
       );
@@ -398,6 +425,7 @@ export default function RoomRequestPage() {
 
       if (data.success) {
         setOtpSent(true);
+        setOtpEmail(details.parent_email);
 
         toast.success(data.message, {
           duration: 8000,
@@ -421,6 +449,9 @@ export default function RoomRequestPage() {
     selectedRoom,
     bookingType,
     details,
+    photoFile,
+    photoPath,
+    studentRecord,
   ]);
 
   // ------------------------------------------------------------
@@ -460,6 +491,7 @@ export default function RoomRequestPage() {
             roomId: selectedRoom?.id,
             bookingType,
             details,
+            photoPath,
           }),
         }
       );
@@ -546,6 +578,70 @@ export default function RoomRequestPage() {
   };
 
   // ------------------------------------------------------------
+  // PHOTO UPLOAD HANDLING
+  // ------------------------------------------------------------
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a JPG, PNG, or WebP image.');
+      return;
+    }
+
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast.error('Photo must be 5 MB or smaller.');
+      return;
+    }
+
+    setPhotoFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePhotoRemove = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setPhotoPath(null);
+  };
+
+  const uploadPhoto = async (studentId: string): Promise<string | null> => {
+    if (!photoFile) return null;
+
+    try {
+      const fileExt = photoFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${studentId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('student-room-requests')
+        .upload(filePath, photoFile);
+
+      if (uploadError) {
+        console.error('Photo upload error:', uploadError);
+        toast.error('Failed to upload photo. Please try again.');
+        return null;
+      }
+
+      return filePath;
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      toast.error('Failed to upload photo. Please try again.');
+      return null;
+    }
+  };
+
+  // ------------------------------------------------------------
   // FORM VALIDATION
   // ------------------------------------------------------------
 
@@ -572,6 +668,10 @@ export default function RoomRequestPage() {
 
       if (!phoneRegex.test(details.student_phone)) {
         return 'Student phone number must be exactly 10 digits';
+      }
+
+      if (!photoFile && !photoPath) {
+        return 'Please upload your passport-size photo';
       }
     }
 
@@ -1448,6 +1548,63 @@ export default function RoomRequestPage() {
 
                 </div>
 
+                {/* Passport-Size Photo Upload */}
+                <div>
+
+                  <Label
+                    htmlFor="photo"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Passport-Size Photo *
+                  </Label>
+
+                  <div className="mt-2">
+                    {!photoPreview ? (
+                      <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
+                        <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Upload your passport-size photo
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          JPG, PNG, or WebP (max 5 MB)
+                        </p>
+                        <input
+                          id="photo"
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          onChange={handlePhotoSelect}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="photo"
+                          className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/95 cursor-pointer"
+                        >
+                          Select Photo
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-xl border border-border overflow-hidden">
+                        <img
+                          src={photoPreview}
+                          alt="Photo preview"
+                          className="w-full h-48 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={handlePhotoRemove}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 text-center">
+                          {photoFile?.name}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
               </div>
             )}
 
@@ -1522,7 +1679,7 @@ export default function RoomRequestPage() {
                       htmlFor="parent_email"
                       className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
                     >
-                      Parent Email * (for OTP verification)
+                      Parent Email * (OTP will be sent here)
                     </Label>
 
                     <Input
@@ -1929,9 +2086,11 @@ export default function RoomRequestPage() {
           <div className="mb-5 flex items-center gap-3">
 
             <button
-              onClick={() =>
-                setStep('details')
-              }
+              onClick={() => {
+                setStep('details');
+                setOtpSent(false);
+                setOtpEmail(null);
+              }}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               &larr; Back
@@ -1954,7 +2113,9 @@ export default function RoomRequestPage() {
             <p className="text-center text-sm text-muted-foreground">
 
               {otpSent
-                ? 'Verification code sent to your registered email. Check your email for the code.'
+                ? otpEmail
+                  ? `Verification code sent to ${otpEmail.substring(0, 3)}***@${otpEmail.split('@')[1]}. Check your email for the code.`
+                  : 'Verification code sent. Check your email for the code.'
                 : 'Sending verification code...'}
 
             </p>

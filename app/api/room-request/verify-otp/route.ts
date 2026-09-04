@@ -5,8 +5,8 @@ export async function POST(req: NextRequest) {
   try {
     console.log('[ROOM VERIFY OTP] Request received');
     
-    const { otp, hostelId, roomId, bookingType, details } = await req.json();
-    console.log('[ROOM VERIFY OTP] Request body validated:', { hostelId, roomId, bookingType });
+    const { otp, hostelId, roomId, bookingType, details, photoPath } = await req.json();
+    console.log('[ROOM VERIFY OTP] Request body validated:', { hostelId, roomId, bookingType, hasPhoto: !!photoPath });
 
     // Use SSR client for authentication check only
     const authClient = createClient();
@@ -61,22 +61,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const studentEmail = profile.email;
+    // Use the same email from room-request details for OTP verification
+    const otpEmail = details?.parent_email?.trim();
 
-    if (!studentEmail) {
-      console.error('[ROOM VERIFY OTP] Student email missing from profile');
+    if (!otpEmail) {
+      console.error('[ROOM VERIFY OTP] Parent email missing from room-request details');
       return NextResponse.json(
-        { error: 'Student email not found' },
+        { error: 'Parent email is required for OTP verification' },
         { status: 400 }
       );
     }
 
-    console.log('[ROOM VERIFY OTP] Student data validated:', { email: studentEmail });
+    // Validate photo path is provided
+    if (!photoPath) {
+      console.error('[ROOM VERIFY OTP] Photo path missing from request');
+      return NextResponse.json(
+        { error: 'Passport-size photo is required' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[ROOM VERIFY OTP] OTP email validated:', { email: otpEmail, photoPath });
 
     // Verify OTP using service role client
     console.log('[ROOM VERIFY OTP] Calling verify_otp RPC');
     const { data, error } = await supabase.rpc('verify_otp', {
-      p_email: studentEmail,
+      p_email: otpEmail,
       p_otp: otp,
       p_purpose: 'room_request_verification'
     });
@@ -194,6 +204,7 @@ export async function POST(req: NextRequest) {
       emergency_contact: `${details.emergency_name} - ${details.emergency_phone}`,
       emergency_contact_name: details.emergency_name,
       emergency_contact_phone: details.emergency_phone,
+      photo_path: photoPath,
       created_at: new Date().toISOString()
     });
 

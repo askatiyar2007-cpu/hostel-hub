@@ -6,8 +6,8 @@ export async function POST(req: NextRequest) {
   try {
     console.log('[ROOM OTP] Request received');
     
-    const { hostelId, roomId, bookingType } = await req.json();
-    console.log('[ROOM OTP] Request body validated:', { hostelId, roomId, bookingType });
+    const { hostelId, roomId, bookingType, details, photoPath } = await req.json();
+    console.log('[ROOM OTP] Request body validated:', { hostelId, roomId, bookingType, hasPhoto: !!photoPath });
 
     // Use SSR client for authentication check only
     const authClient = createClient();
@@ -62,23 +62,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const studentEmail = profile.email;
+    // Use the email entered in the room-request form for OTP
+    const otpEmail = details?.parent_email?.trim();
     const studentName = profile.full_name;
 
-    if (!studentEmail) {
-      console.error('[ROOM OTP] Student email missing from profile');
+    if (!otpEmail) {
+      console.error('[ROOM OTP] Parent email missing from room-request details');
       return NextResponse.json(
-        { error: 'Student email not found' },
+        { error: 'Parent email is required for OTP verification' },
         { status: 400 }
       );
     }
 
-    console.log('[ROOM OTP] Student data validated:', { email: studentEmail, name: studentName });
+    // Validate photo path is provided
+    if (!photoPath) {
+      console.error('[ROOM OTP] Photo path missing from request');
+      return NextResponse.json(
+        { error: 'Passport-size photo is required' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[ROOM OTP] OTP email validated:', { email: otpEmail, name: studentName, photoPath });
 
     // Call RPC to request OTP using service role client
     console.log('[ROOM OTP] Calling request_otp RPC');
     const { data, error } = await supabase.rpc('request_otp', {
-      p_email: studentEmail,
+      p_email: otpEmail,
       p_purpose: 'room_request_verification',
       p_user_id: user.id
     });
@@ -104,7 +114,7 @@ export async function POST(req: NextRequest) {
     if (data?.otp) {
       console.log('[ROOM OTP] Sending Brevo email');
       const emailResult = await sendRoomRequestOtpEmail({
-        email: studentEmail,
+        email: otpEmail,
         studentName: studentName || 'Student',
         otp: data.otp
       });
@@ -122,8 +132,8 @@ export async function POST(req: NextRequest) {
     console.log('[ROOM OTP] Request completed successfully');
     return NextResponse.json({
       success: true,
-      message: 'Verification code sent to your registered email',
-      studentEmail: studentEmail // Return for UI display (can be masked)
+      message: 'Verification code sent to your parent email',
+      otpEmail: otpEmail // Return for UI display (can be masked)
     });
 
   } catch (error: any) {
