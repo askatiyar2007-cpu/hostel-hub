@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, supabaseServer } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 const PhotoUrlSchema = z.object({
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     // Try to list objects in the student's directory to verify what exists
     const studentFolder = photoPath.split('/')[0]; // Get the student ID folder
     console.log('[Photo URL API] Listing objects in folder:', studentFolder);
-    const { data: listData, error: listError } = await supabase.storage
+    const { data: listData, error: listError } = await supabaseServer.storage
       .from('student-room-requests')
       .list(studentFolder, { limit: 10, sortBy: { column: 'name', order: 'asc' } });
 
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
 
     // Try to get public URL to verify path format
     console.log('[Photo URL API] Attempting to get public URL for path:', photoPath);
-    const { data: publicUrlData } = await supabase.storage
+    const { data: publicUrlData } = await supabaseServer.storage
       .from('student-room-requests')
       .getPublicUrl(photoPath);
 
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
 
     // Try to download the file to verify it exists and is accessible
     console.log('[Photo URL API] Attempting to download file to verify existence:', photoPath);
-    const { data: downloadData, error: downloadError } = await supabase.storage
+    const { data: downloadData, error: downloadError } = await supabaseServer.storage
       .from('student-room-requests')
       .download(photoPath);
 
@@ -179,9 +179,9 @@ export async function GET(request: NextRequest) {
       console.log('[Photo URL API] Download failed - object may not exist at path:', photoPath);
     }
 
-    // Generate signed URL (valid for 1 hour)
+    // Generate signed URL (valid for 1 hour) using service role client
     console.log('[Photo URL API] Attempting to create signed URL for path:', photoPath);
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+    const { data: signedUrlData, error: signedUrlError } = await supabaseServer.storage
       .from('student-room-requests')
       .createSignedUrl(photoPath, 3600); // 1 hour expiry
 
