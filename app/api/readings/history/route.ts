@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
         .select('id')
         .eq('student_id', user.id)
         .eq('room_id', meter.room_id)
-        .eq('status', 'active')
+        .eq('active', true)
         .single();
         
       if (!allocation) {

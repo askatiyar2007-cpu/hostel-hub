@@ -68,7 +68,7 @@ export default function StudentSettingsPage() {
         .from('room_allocations')
         .select('*, rooms(*), hostels(*)')
         .eq('student_id', studentId!)
-        .eq('status', 'active')
+        .eq('active', true)
         .maybeSingle();
       if (error) throw error;
       return data;

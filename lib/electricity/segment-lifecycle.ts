@@ -50,7 +50,7 @@ export async function getActiveOccupants(
       student_email
     `)
     .eq('room_id', roomId)
-    .eq('status', 'active')
+    .eq('active', true)
     .lte('start_date', timestampStr)
     .or(`end_date.is.null,end_date.gte.${timestampStr}`)
     .order('student_id'); // Deterministic ordering for remainder allocation

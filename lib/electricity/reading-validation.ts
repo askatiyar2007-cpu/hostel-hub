@@ -101,7 +101,7 @@ async function isRoomOccupied(
     .from('room_allocations')
     .select('id')
     .eq('room_id', roomId)
-    .eq('status', 'active')
+    .eq('active', true)
     .lte('start_date', timestampStr)
     .or(`end_date.is.null,end_date.gte.${timestampStr}`)
     .limit(1)
