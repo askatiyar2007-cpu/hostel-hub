@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
-import { Search, MoreVertical, Plus, Users, Building2, AlertTriangle } from 'lucide-react';
+import { Search, MoreVertical, Plus, Users, Building2, AlertTriangle, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -36,6 +36,8 @@ export default function OwnerStudentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHostel, setSelectedHostel] = useState<string>('all');
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
   const fetchStudents = useCallback(async () => {
     if (!user?.id) return;
@@ -90,6 +92,36 @@ export default function OwnerStudentsPage() {
 
       if (fetchError) throw fetchError;
       setAssignments(data || []);
+
+      // Fetch photo URLs for students with room requests
+      if (data && data.length > 0) {
+        const photoUrlPromises = data.map(async (assignment) => {
+          const studentInfo = Array.isArray(assignment.students) ? assignment.students[0] : assignment.students;
+          const studentId = studentInfo?.id;
+          if (!studentId) return null;
+
+          try {
+            const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
+            if (response.ok) {
+              const data = await response.json();
+              return { studentId, url: data.signedUrl };
+            }
+            return null;
+          } catch (error) {
+            console.error(`Failed to fetch photo for student ${studentId}:`, error);
+            return null;
+          }
+        });
+
+        const photoResults = await Promise.all(photoUrlPromises);
+        const urlMap: Record<string, string> = {};
+        photoResults.forEach(result => {
+          if (result) {
+            urlMap[result.studentId] = result.url;
+          }
+        });
+        setPhotoUrls(urlMap);
+      }
     } catch (err: any) {
       console.error('Error fetching students:', err);
       setError(err.message || 'Failed to load resident students.');
@@ -242,6 +274,8 @@ export default function OwnerStudentsPage() {
                 const roomNum = item.rooms?.room_number || '-';
                 const bookingType = BOOKING_TYPE_LABEL[item.booking_type] || BOOKING_TYPE_LABEL.shared_bed;
                 const rent = item.rooms?.rent || 0;
+                const studentId = studentInfo?.id;
+                const passportPhotoUrl = studentId ? photoUrls[studentId] : null;
 
                 return (
                   <tr 
@@ -251,7 +285,17 @@ export default function OwnerStudentsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        {profile?.avatar_url ? (
+                        {passportPhotoUrl ? (
+                          <img 
+                            src={passportPhotoUrl} 
+                            alt="Student passport photo"
+                            className="h-10 w-10 rounded-full object-cover border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewPhoto(passportPhotoUrl);
+                            }}
+                          />
+                        ) : profile?.avatar_url ? (
                           <img 
                             src={profile.avatar_url} 
                             alt={studentName} 
@@ -323,6 +367,29 @@ export default function OwnerStudentsPage() {
           </table>
         </div>
       </div>
+
+      {/* Photo Preview Modal */}
+      {previewPhoto && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewPhoto(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img 
+              src={previewPhoto} 
+              alt="Student passport photo preview"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setPreviewPhoto(null)}
+              className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} className="text-gray-900" />
+            </button>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }
