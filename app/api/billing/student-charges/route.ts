@@ -105,12 +105,35 @@ export async function GET(req: NextRequest) {
     });
 
     // 4. Authorization check: Students can only view their own charges (REQ-19.3)
-    if (profile.role === 'student' && validated.student_id !== user.id) {
-      console.log('[Student Charges API] Authorization failed - student viewing other student charges');
-      return NextResponse.json(
-        { error: 'Forbidden: You can only view your own charges' },
-        { status: 403 }
-      );
+    if (profile.role === 'student') {
+      // Resolve the authenticated user's students.id
+      const { data: studentRecord, error: studentError } = await supabaseServer
+        .from('students')
+        .select('id')
+        .eq('profile_id', user.id)
+        .maybeSingle();
+
+      if (studentError) {
+        return NextResponse.json(
+          { error: 'Failed to verify student record' },
+          { status: 403 }
+        );
+      }
+
+      if (!studentRecord) {
+        return NextResponse.json(
+          { error: 'Student record not found' },
+          { status: 403 }
+        );
+      }
+
+      // Authorize: students.id must match the requested student_id
+      if (validated.student_id !== studentRecord.id) {
+        return NextResponse.json(
+          { error: 'Forbidden: You can only view your own charges' },
+          { status: 403 }
+        );
+      }
     }
 
     // 5. If owner, verify they own the hostel that the student belongs to (REQ-19.1)

@@ -15,12 +15,24 @@ export default function StudentAnnouncementsPage() {
     try {
       if (!profile?.id) return;
 
+      // Get the student's ID from students table
+      const { data: studentRecord } = await supabase
+        .from('students')
+        .select('id')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+
+      if (!studentRecord) {
+        setLoading(false);
+        return;
+      }
+
       // Get the student's hostel_id from room_allocations
-      // room_allocations.student_id references auth.users.id (which is profile.user_id)
+      // room_allocations.student_id references students(id)
       const { data: assignment } = await supabase
         .from('room_allocations')
         .select('hostel_id')
-        .eq('student_id', profile.user_id)
+        .eq('student_id', studentRecord.id)
         .eq('active', true)
         .maybeSingle();
 
@@ -39,7 +51,7 @@ export default function StudentAnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id, profile?.user_id]);
+  }, [profile?.id]);
 
   useEffect(() => {
     fetchAnnouncements();
