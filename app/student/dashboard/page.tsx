@@ -2,7 +2,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Megaphone, Receipt, MessageSquareWarning, Plus, Building2 } from "lucide-react";
@@ -17,53 +17,10 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
 
-// Error Boundary Component
-interface ErrorBoundaryProps {
-  children?: ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class DashboardErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  };
-
-  public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("[DashboardErrorBoundary] Uncaught error:", error, errorInfo);
-  }
-
-  public render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-6 rounded-2xl border border-red-200 bg-red-50 text-red-900 m-4">
-          <h2 className="text-lg font-bold mb-2">Something went wrong.</h2>
-          <p className="text-sm mb-4">{this.state.error?.message || "An unexpected error occurred in the dashboard."}</p>
-          <Button onClick={() => this.setState({ hasError: false, error: null })}>
-            Try again
-          </Button>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
 // Student Dashboard Container
 export default function StudentDashboardPage() {
   return (
-    <DashboardErrorBoundary>
-      <StudentDashboard />
-    </DashboardErrorBoundary>
+    <StudentDashboard />
   );
 }
 
@@ -74,7 +31,6 @@ function StudentDashboard() {
     queryKey: ["student-record", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
-      console.log('[Dashboard] Fetching student record for profile_id:', profile?.id);
       const { data: existing, error } = await supabase
         .from('students')
         .select('id')
@@ -89,19 +45,9 @@ function StudentDashboard() {
     }
   });
 
-  // 1. Ensure studentRecord is loaded and logged
-  useEffect(() => {
-    console.log('[Dashboard] studentRecord:', studentRecord);
-    console.log('[Dashboard] studentRecord?.id:', studentRecord?.id);
-  }, [studentRecord]);
-
-  // 2. Simplify the allocation query with direct fetch and subsequent room/hostel fetch
+  // Simplify the allocation query with direct fetch and subsequent room/hostel fetch
   const fetchAllocation = async () => {
-    console.log('[Dashboard] Starting allocation query...');
-    console.log('[Dashboard] Using student_id:', studentRecord?.id);
-    
     if (!studentRecord?.id) {
-      console.log('[Dashboard] ERROR: studentRecord?.id is undefined!');
       return null;
     }
 
@@ -111,9 +57,6 @@ function StudentDashboard() {
       .eq('student_id', studentRecord.id)
       .eq('active', true)
       .maybeSingle();
-
-    console.log('[ALLOCATION] Raw query result:', data);
-    console.log('[ALLOCATION] Error:', error);
 
     if (error) {
       console.error('[Dashboard] Error fetching allocation:', error);
@@ -148,14 +91,6 @@ function StudentDashboard() {
     }
   });
 
-  // 3. In render, log what's happening
-  useEffect(() => {
-    console.log('[Dashboard] allocation:', allocation);
-    console.log('[Dashboard] roomData:', roomData);
-    console.log('[Dashboard] isAllocLoading:', isAllocLoading);
-    console.log('[Dashboard] isRoomLoading:', isRoomLoading);
-  }, [allocation, roomData, isAllocLoading, isRoomLoading]);
-
   // 4. Update conditional rendering
   // Make sure auth and studentRecord load first
   if (isAuthLoading || isStudentLoading) {
@@ -172,7 +107,6 @@ function StudentDashboard() {
   const isLoading = isAllocLoading || (!!allocation && isRoomLoading);
 
   if (isLoading) {
-    console.log('[Dashboard] Allocation or room details are loading...');
     return (
       <DashboardShell title="Loading..." badge="Student">
         <div className="flex h-64 items-center justify-center">
@@ -182,9 +116,7 @@ function StudentDashboard() {
     );
   }
 
-  console.log('[Dashboard] Checking allocation...');
   if (!allocation) {
-    console.log('[Dashboard] No allocation found, showing request room option');
     return (
       <DashboardShell title="Hi there 👋" subtitle="Welcome to your dashboard." badge="Student">
         <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center shadow-sm">
@@ -199,7 +131,6 @@ function StudentDashboard() {
     );
   }
 
-  console.log('[Dashboard] Allocation found! Rendering card:', allocation);
   return (
     <AllocationCard
       allocation={allocation}

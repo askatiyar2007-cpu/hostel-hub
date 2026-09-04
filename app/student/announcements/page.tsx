@@ -75,11 +75,14 @@ export default function StudentAnnouncementsPage() {
 
       <div className="space-y-6">
         {loading ? (
-          <p>Loading announcements...</p>
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
         ) : announcements.length === 0 ? (
           <div className="card text-center py-12">
             <Megaphone size={48} className="mx-auto text-muted-foreground mb-4" />
             <p className="text-lg font-medium">No announcements yet</p>
+            <p className="text-sm text-muted-foreground mt-2">Check back later for updates from your hostel.</p>
           </div>
         ) : (
           announcements.map((item) => (
