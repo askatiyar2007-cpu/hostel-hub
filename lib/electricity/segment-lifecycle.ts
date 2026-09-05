@@ -330,7 +330,7 @@ export async function closeOpenSegment(
   // Step 1: Find open segment for room
   const { data: openSegment, error: fetchError } = await supabaseServer
     .from('billing_segments')
-    .select('id, start_reading_id, rate_per_unit, occupant_count, segment_type')
+    .select('id, start_reading_id, rate_per_unit, occupant_count, segment_type, start_date')
     .eq('room_id', roomId)
     .is('end_date', null)
     .maybeSingle();
@@ -360,12 +360,40 @@ export async function closeOpenSegment(
   const totalCostRupees = consumptionUnits * openSegment.rate_per_unit;
   const totalCostPaise = Math.round(totalCostRupees * 100);  // Convert to paise
   
-  // Step 4: Close segment
+  // Step 4: Validate and adjust end_date to satisfy ck_segment_dates constraint
+  // Constraint: end_date IS NULL OR end_date > start_date (strictly greater)
+  const startDate = new Date(openSegment.start_date);
+  
+  if (endTimestamp < startDate) {
+    // This should never happen due to database trigger validate_meter_reading_value()
+    // which prevents reading_timestamp < previous reading_timestamp
+    // However, if it does occur, it indicates a data integrity issue
+    throw new Error(
+      `Invalid segment closure: end_timestamp (${endTimestamp.toISOString()}) ` +
+      `is before segment start_date (${startDate.toISOString()}). ` +
+      `This indicates a data consistency error that must be investigated.`
+    );
+  }
+  
+  let finalEndDate = endTimestamp;
+  if (endTimestamp.getTime() === startDate.getTime()) {
+    // Same-millisecond timestamps can occur with rapid concurrent operations
+    // Adjust by 1ms to satisfy strict inequality constraint
+    finalEndDate = new Date(startDate.getTime() + 1);
+    console.log(
+      `Segment closure with same-millisecond timestamps: ` +
+      `adjusted end_date from ${endTimestamp.toISOString()} to ${finalEndDate.toISOString()} ` +
+      `to satisfy ck_segment_dates constraint (end_date > start_date)`
+    );
+  }
+  // If endTimestamp > startDate, use it unchanged
+  
+  // Step 5: Close segment
   const { error: updateError } = await supabaseServer
     .from('billing_segments')
     .update({
       end_reading_id: endReadingId,
-      end_date: endTimestamp.toISOString(),
+      end_date: finalEndDate.toISOString(),
       consumption_units: consumptionUnits,
       total_cost_paise: totalCostPaise,
       closed_at: new Date().toISOString()
@@ -376,7 +404,7 @@ export async function closeOpenSegment(
     throw new Error(`Failed to close segment: ${updateError.message}`);
   }
   
-  // Step 5: Calculate student charges (only if occupied)
+  // Step 6: Calculate student charges (only if occupied)
   if (openSegment.segment_type === 'occupied' && openSegment.occupant_count > 0) {
     await calculateStudentCharges(openSegment.id, totalCostPaise, openSegment.occupant_count);
   }
