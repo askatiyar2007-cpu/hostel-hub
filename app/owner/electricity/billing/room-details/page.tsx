@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, Users, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Users, Clock, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,7 @@ export default function RoomBillingDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<RoomBillingDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedSegments, setExpandedSegments] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!roomId || !month) {
@@ -157,6 +158,35 @@ export default function RoomBillingDetailsPage() {
 
   const isOpenSegment = (segment: BillingSegment) => !segment.end_date;
 
+  const toggleSegment = (segmentId: string) => {
+    setExpandedSegments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(segmentId)) {
+        newSet.delete(segmentId);
+      } else {
+        newSet.add(segmentId);
+      }
+      return newSet;
+    });
+  };
+
+  // Order segments: open segment first, then closed segments in reverse chronological order
+  const orderedSegments = [...details.segments].sort((a, b) => {
+    const aIsOpen = isOpenSegment(a);
+    const bIsOpen = isOpenSegment(b);
+    
+    // Open segments always first
+    if (aIsOpen && !bIsOpen) return -1;
+    if (!aIsOpen && bIsOpen) return 1;
+    
+    // For closed segments, reverse chronological order (newest first)
+    if (!aIsOpen && !bIsOpen) {
+      return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
+    }
+    
+    return 0;
+  });
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6 max-w-4xl">
       {/* Compact Header */}
@@ -232,114 +262,211 @@ export default function RoomBillingDetailsPage() {
         </CardContent>
       </Card>
 
-      {/* Compact Billing Timeline */}
+      {/* Billing Timeline */}
       <Card>
         <CardContent className="p-4">
           <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
             <Clock className="h-5 w-5 text-blue-600" />
             Billing Timeline
           </h2>
-          {details.segments.length === 0 ? (
+          {orderedSegments.length === 0 ? (
             <p className="text-center text-gray-500 py-4">No billing segments found</p>
           ) : (
             <div className="space-y-3">
-              {details.segments.map((segment, index) => {
+              {orderedSegments.map((segment, index) => {
                 const isOpen = isOpenSegment(segment);
+                const isExpanded = expandedSegments.has(segment.id);
+                
                 return (
                   <div 
                     key={segment.id} 
-                    className={`border rounded-lg p-3 ${isOpen ? 'border-yellow-400 bg-yellow-50' : ''}`}
+                    className={`border rounded-lg ${isOpen ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'}`}
                   >
-                    {/* Timeline Header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
-                        <Badge variant={segment.segment_type === 'occupied' ? 'default' : 'secondary'} className="text-xs">
-                          {segment.segment_type === 'occupied' ? 'Occupied' : 'Empty'}
-                        </Badge>
-                        {isOpen && (
-                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            OPEN — READING REQUIRED
+                    {/* Compact Header - Always Visible */}
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                          <Badge variant={segment.segment_type === 'occupied' ? 'default' : 'secondary'} className="text-xs">
+                            {segment.segment_type === 'occupied' ? 'Occupied' : 'Empty'}
                           </Badge>
+                          {isOpen && (
+                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              OPEN — READING REQUIRED
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">
+                            ₹{segment.rate_per_unit.toFixed(2)}/kWh
+                          </span>
+                          {!isOpen && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => toggleSegment(segment.id)}
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Compact Summary - Always Visible */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-500">Date Range</p>
+                          <p className="font-medium text-xs truncate">
+                            {formatDate(segment.start_date)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Consumption</p>
+                          <p className="font-medium text-xs">
+                            {segment.consumption_units !== null 
+                              ? `${segment.consumption_units.toFixed(2)} kWh` 
+                              : 'Pending'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Total Cost</p>
+                          <p className="font-medium text-xs text-green-600">
+                            {segment.total_cost_paise !== null 
+                              ? formatCurrency(segment.total_cost_paise) 
+                              : 'Pending'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Occupants</p>
+                          <p className="font-medium text-xs truncate">
+                            {segment.occupants.length > 0 
+                              ? segment.occupants.map(o => o.student_name).join(', ') 
+                              : 'None'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Details - For Historical Segments Only */}
+                    {!isOpen && isExpanded && (
+                      <div className="border-t border-gray-200 p-3 bg-gray-50 space-y-2">
+                        {/* Time Range */}
+                        <div className="text-sm">
+                          <span className="text-gray-500">Start:</span>{' '}
+                          <span className="font-medium">{formatDate(segment.start_date)}</span>
+                          <span className="text-gray-400 mx-1">→</span>
+                          <span className="text-gray-500">End:</span>{' '}
+                          <span className="font-medium">{formatDate(segment.end_date!)}</span>
+                        </div>
+
+                        {/* Readings */}
+                        <div className="text-sm">
+                          <span className="text-gray-500">Meter:</span>{' '}
+                          <span className="font-medium">
+                            {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
+                          </span>
+                          <span className="text-gray-400 mx-1">→</span>
+                          <span className="font-medium">
+                            {segment.end_reading_value !== null ? `${segment.end_reading_value} kWh` : 'Pending'}
+                          </span>
+                        </div>
+
+                        {/* Rate */}
+                        <div className="text-sm">
+                          <span className="text-gray-500">Rate:</span>{' '}
+                          <span className="font-medium">₹{segment.rate_per_unit.toFixed(2)}/kWh</span>
+                        </div>
+
+                        {/* Occupants List */}
+                        {segment.occupants.length > 0 && (
+                          <div className="text-sm">
+                            <span className="text-gray-500">Occupants:</span>{' '}
+                            <span className="font-medium">
+                              {segment.occupants.map(o => o.student_name).join(', ')}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Per-Student Split for Occupied Segments */}
+                        {segment.segment_type === 'occupied' && segment.consumption_units !== null && (
+                          <div className="text-sm">
+                            <span className="text-gray-500">Cost Split:</span>
+                            <div className="mt-1 space-y-1">
+                              {segment.occupants.map(occupant => {
+                                const charge = details.student_charges.find(
+                                  c => c.student_id === occupant.student_id && c.segment_id === segment.id
+                                );
+                                return charge ? (
+                                  <div key={occupant.student_id} className="flex justify-between text-xs bg-white rounded p-2">
+                                    <span className="font-medium">{occupant.student_name}</span>
+                                    <span className="text-green-600 font-medium">
+                                      {formatCurrency(charge.charge_amount_paise)}
+                                    </span>
+                                  </div>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500">
-                        ₹{segment.rate_per_unit.toFixed(2)}/kWh
-                      </span>
-                    </div>
-
-                    {/* Time Range */}
-                    <div className="text-sm mb-2">
-                      <span className="font-medium">{formatDate(segment.start_date)}</span>
-                      <span className="text-gray-400 mx-1">→</span>
-                      <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
-                        {isOpen ? 'Pending' : formatDate(segment.end_date!)}
-                      </span>
-                    </div>
-
-                    {/* Readings */}
-                    <div className="text-sm mb-2">
-                      <span className="font-medium">
-                        {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
-                      </span>
-                      <span className="text-gray-400 mx-1">→</span>
-                      <span className={isOpen ? 'text-yellow-700 font-medium' : ''}>
-                        {segment.end_reading_value !== null ? `${segment.end_reading_value} kWh` : 'Pending'}
-                      </span>
-                    </div>
-
-                    {/* Consumption & Cost */}
-                    {segment.consumption_units !== null && segment.total_cost_paise !== null && (
-                      <div className="flex items-center justify-between text-sm bg-white/50 rounded p-2 mb-2">
-                        <span className="text-blue-600 font-medium">
-                          {segment.consumption_units.toFixed(2)} kWh
-                        </span>
-                        <span className="text-green-600 font-bold">
-                          {formatCurrency(segment.total_cost_paise)}
-                        </span>
-                      </div>
                     )}
 
-                    {/* Occupants */}
-                    {segment.occupants.length > 0 && (
-                      <div className="text-xs mb-2">
-                        <span className="text-gray-500">Occupants:</span>{' '}
-                        <span className="font-medium">
-                          {segment.occupants.map(o => o.student_name).join(' + ')}
-                        </span>
-                      </div>
-                    )}
+                    {/* Open Segment - Full Details Always Visible */}
+                    {isOpen && (
+                      <div className="border-t border-yellow-200 p-3 space-y-2">
+                        {/* Time Range */}
+                        <div className="text-sm">
+                          <span className="text-gray-500">Start:</span>{' '}
+                          <span className="font-medium">{formatDate(segment.start_date)}</span>
+                          <span className="text-gray-400 mx-1">→</span>
+                          <span className="text-yellow-700 font-medium">Pending</span>
+                        </div>
 
-                    {/* Per-Student Split for Occupied Segments - Compact */}
-                    {segment.segment_type === 'occupied' && segment.consumption_units !== null && (
-                      <div className="text-xs">
-                        <span className="text-gray-500">Split:</span>{' '}
-                        {segment.occupants.map(occupant => {
-                          const charge = details.student_charges.find(
-                            c => c.student_id === occupant.student_id && c.segment_id === segment.id
-                          );
-                          return charge ? (
-                            <span key={occupant.student_id} className="font-medium">
-                              {occupant.student_name} {formatCurrency(charge.charge_amount_paise)}
-                              {segment.occupants.indexOf(occupant) < segment.occupants.length - 1 && ' · '}
+                        {/* Readings */}
+                        <div className="text-sm">
+                          <span className="text-gray-500">Meter:</span>{' '}
+                          <span className="font-medium">
+                            {segment.start_reading_value !== null ? `${segment.start_reading_value} kWh` : 'Pending'}
+                          </span>
+                          <span className="text-gray-400 mx-1">→</span>
+                          <span className="text-yellow-700 font-medium">Pending</span>
+                        </div>
+
+                        {/* Rate */}
+                        <div className="text-sm">
+                          <span className="text-gray-500">Rate:</span>{' '}
+                          <span className="font-medium">₹{segment.rate_per_unit.toFixed(2)}/kWh</span>
+                        </div>
+
+                        {/* Occupants List */}
+                        {segment.occupants.length > 0 && (
+                          <div className="text-sm">
+                            <span className="text-gray-500">Current Occupants:</span>{' '}
+                            <span className="font-medium">
+                              {segment.occupants.map(o => o.student_name).join(', ')}
                             </span>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
+                          </div>
+                        )}
 
-                    {/* Record Reading Action for Open Segments */}
-                    {isOpen && details.meter_id && (
-                      <div className="mt-3 pt-2 border-t border-yellow-200">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-xs h-7"
-                          onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${details.meter_id}&reason=month_end`}
-                        >
-                          Record Closing Reading
-                        </Button>
+                        {/* Record Reading Action */}
+                        {details.meter_id && (
+                          <div className="pt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs h-7"
+                              onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${details.meter_id}&reason=month_end`}
+                            >
+                              Record Closing Reading
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
