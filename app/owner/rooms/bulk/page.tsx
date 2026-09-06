@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Building2,
@@ -18,6 +18,10 @@ import {
   Check,
   AlertTriangle
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import Stepper from '../../../components/Stepper';
 import Link from 'next/link';
 
 const CAPACITY_BY_ROOM_TYPE: Record<string, number> = {
@@ -91,6 +95,7 @@ function BulkRoomForm() {
 
   // Step 3: Draft rooms list state
   const [rooms, setRooms] = useState<RoomRow[]>([]);
+  const [commonDetailsApplied, setCommonDetailsApplied] = useState(false);
   const [editingRoomIndex, setEditingRoomIndex] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<RoomRow | null>(null);
   const [errors, setErrors] = useState<Record<number, string>>({});
@@ -165,6 +170,7 @@ function BulkRoomForm() {
     }
 
     setRooms(generatedRooms);
+    setCommonDetailsApplied(false);
     setErrors({});
     setApprovedDraftIds(new Set());
     setDuplicateWarnings(null);
@@ -194,6 +200,7 @@ function BulkRoomForm() {
       }))
     );
 
+    setCommonDetailsApplied(true);
     toast.success(`Applied common details to all ${rooms.length} rooms!`);
   };
 
@@ -469,331 +476,339 @@ function BulkRoomForm() {
   );
   const totalRent = rooms.reduce((acc, r) => acc + (Number(r.rent) || 0), 0);
 
+  const currentStep = rooms.length === 0 ? 1 : !commonDetailsApplied ? 2 : Object.keys(errors).length === 0 ? 4 : 3;
+
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
+    <div className="p-6 md:p-8 lg:p-10 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/owner/rooms"
-            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <ArrowLeft size={24} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">
-              Bulk Create Rooms
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Generate room numbers, apply common defaults, and review before creating
-            </p>
-          </div>
+      <div className="mb-8">
+        <div className="mb-6 p-4 rounded-xl bg-white border border-teal-200 shadow-xs">
+          <Stepper 
+            steps={[
+              { label: 'Generate Rooms' },
+              { label: 'Common Details' },
+              { label: 'Customize' },
+              { label: 'Final Submission' }
+            ]} 
+            currentStep={currentStep} 
+          />
         </div>
-        <Link
-          href="/owner/rooms/new"
-          className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
-        >
-          <Plus size={16} />
-          <span>Single Room</span>
-        </Link>
+
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <Link href="/owner/rooms" className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
+              <ArrowLeft size={20} />
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">Bulk Create Rooms</h1>
+          </div>
+          <Link
+            href="/owner/rooms/new"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <Plus size={16} />
+            <span>Single Room</span>
+          </Link>
+        </div>
+        <p className="text-gray-600 ml-10">Create multiple rooms for a hostel in one step.</p>
       </div>
 
-      <div className="space-y-8">
-        {/* ========================================================================= */}
-        {/* STEP 1: SELECT HOSTEL & GENERATE ROOM NUMBERS                             */}
-        {/* ========================================================================= */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                1
-              </span>
-              <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">
-                Select Hostel & Generate Rooms
-              </h2>
+      <div className="space-y-6">
+        {/* Step 1: Select Hostel & Generate Room Numbers */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
+                  1
+                </span>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Select Hostel & Generate Rooms
+                </h2>
+              </div>
+              {rooms.length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                  <Check size={14} />
+                  {rooms.length} draft {rooms.length === 1 ? 'room' : 'rooms'}
+                </span>
+              )}
             </div>
-            {rooms.length > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                <Check size={14} />
-                {rooms.length} draft {rooms.length === 1 ? 'room' : 'rooms'} active
-              </span>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-            {/* Hostel Selector */}
-            <div className="md:col-span-5">
-              <label className="mb-2 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Target Hostel *
-              </label>
-              <div className="relative">
-                <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Hostel Selector */}
+              <div className="md:col-span-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Target Hostel
+                </label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <select
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    value={hostelId}
+                    onChange={e => setHostelId(e.target.value)}
+                    disabled={loading}
+                  >
+                    {hostels.length === 0 && <option value="">No hostels found</option>}
+                    {hostels.map(h => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Start Room */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Room #
+                </label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="101"
+                  value={startRoom}
+                  onChange={e => setStartRoom(e.target.value.replace(/^0+/, ''))}
+                  disabled={loading}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              {/* End Room */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  End Room #
+                </label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="105"
+                  value={endRoom}
+                  onChange={e => setEndRoom(e.target.value.replace(/^0+/, ''))}
+                  disabled={loading}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              {/* Generate Button */}
+              <div className="md:col-span-3 flex items-end">
+                <Button
+                  type="button"
+                  onClick={handleGenerateRooms}
+                  disabled={loading || !startRoom || !endRoom}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  <Sparkles size={16} className="mr-2" />
+                  Generate Rooms
+                </Button>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-gray-500">
+              Example: Enter 101 to 105 to generate 5 draft rooms. This will not create database records yet.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Step 2: Common Details */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
+                  2
+                </span>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Common Details
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Set default values once and apply them to all generated rooms
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={handleApplyCommonDetails}
+                disabled={loading || rooms.length === 0}
+                variant="outline"
+                className="border-teal-200 text-teal-600 hover:bg-teal-50"
+              >
+                <CheckCircle2 size={16} className="mr-2" />
+                Apply to All ({rooms.length})
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Type
+                </label>
                 <select
-                  required
-                  className="input h-11 w-full pl-10 text-sm font-medium"
-                  value={hostelId}
-                  onChange={e => setHostelId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  value={commonDetails.room_type}
+                  onChange={e =>
+                    setCommonDetails({
+                      ...commonDetails,
+                      room_type: e.target.value as any
+                    })
+                  }
                   disabled={loading}
                 >
-                  {hostels.length === 0 && <option value="">No hostels found</option>}
-                  {hostels.map(h => (
-                    <option key={h.id} value={h.id}>
-                      {h.name}
-                    </option>
-                  ))}
+                  <option value="single">{ROOM_TYPE_LABELS.single}</option>
+                  <option value="double">{ROOM_TYPE_LABELS.double}</option>
+                  <option value="triple">{ROOM_TYPE_LABELS.triple}</option>
+                  <option value="quad">{ROOM_TYPE_LABELS.quad}</option>
                 </select>
               </div>
-            </div>
 
-            {/* Start Room */}
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Start Room #
-              </label>
-              <input
-                type="number"
-                className="input h-11 w-full text-sm font-medium"
-                placeholder="101"
-                value={startRoom}
-                onChange={e => setStartRoom(e.target.value)}
-                disabled={loading}
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Floor
+                </label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="1"
+                  value={commonDetails.floor === 0 ? '' : String(commonDetails.floor)}
+                  onChange={e => {
+                    const clean = e.target.value.replace(/^0+/, '').replace(/\D/g, '');
+                    setCommonDetails({
+                      ...commonDetails,
+                      floor: clean === '' ? 0 : parseInt(clean, 10)
+                    });
+                  }}
+                  disabled={loading}
+                  className="bg-white border-gray-200"
+                />
+              </div>
 
-            {/* End Room */}
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                End Room #
-              </label>
-              <input
-                type="number"
-                className="input h-11 w-full text-sm font-medium"
-                placeholder="105"
-                value={endRoom}
-                onChange={e => setEndRoom(e.target.value)}
-                disabled={loading}
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Monthly Rent (₹)
+                </label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="5000"
+                  value={commonDetails.rent === 0 ? '' : String(commonDetails.rent)}
+                  onChange={e => {
+                    const clean = e.target.value.replace(/^0+/, '').replace(/\D/g, '');
+                    setCommonDetails({
+                      ...commonDetails,
+                      rent: clean === '' ? 0 : parseFloat(clean)
+                    });
+                  }}
+                  disabled={loading}
+                  className="bg-white border-gray-200"
+                />
+              </div>
 
-            {/* Generate Button */}
-            <div className="flex items-end md:col-span-3">
-              <button
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Security Deposit (₹)
+                </label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="5000"
+                  value={commonDetails.security_deposit === 0 ? '' : String(commonDetails.security_deposit)}
+                  onChange={e => {
+                    const clean = e.target.value.replace(/^0+/, '').replace(/\D/g, '');
+                    setCommonDetails({
+                      ...commonDetails,
+                      security_deposit: clean === '' ? 0 : parseFloat(clean)
+                    });
+                  }}
+                  disabled={loading}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              <div className="md:col-span-2 lg:col-span-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Facilities (comma separated)
+                </label>
+                <Input
+                  placeholder="AC, Attached Washroom, Balcony, WiFi"
+                  value={commonDetails.facilities}
+                  onChange={e =>
+                    setCommonDetails({
+                      ...commonDetails,
+                      facilities: e.target.value
+                    })
+                  }
+                  disabled={loading}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Step 3: Review & Customize Rooms */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
+                  3
+                </span>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Review & Customize Rooms ({rooms.length})
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Modify individual rooms as needed before final creation
+                  </p>
+                </div>
+              </div>
+              <Button
                 type="button"
-                onClick={handleGenerateRooms}
-                disabled={loading || !startRoom || !endRoom}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleAddIndividualRoom}
+                disabled={loading}
+                variant="outline"
+                className="border-teal-200 text-teal-600 hover:bg-teal-50"
               >
-                <Sparkles size={16} />
-                <span>Generate Rooms</span>
-              </button>
+                <Plus size={15} className="mr-2" />
+                Add Custom Room
+              </Button>
             </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Example: Enter 101 to 105 to quickly generate 5 draft rooms. This will not create database records yet.
-          </p>
-        </div>
 
-        {/* ========================================================================= */}
-        {/* STEP 2: COMMON DETAILS                                                    */}
-        {/* ========================================================================= */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                2
-              </span>
-              <div>
-                <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">
-                  Common Details
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Set default values once and apply them to all generated rooms
+            {/* Quick Metrics Bar */}
+            {rooms.length > 0 && (
+              <div className="mb-6 flex flex-wrap items-center gap-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Total Rooms</span>
+                  <p className="text-base font-bold text-gray-900">{rooms.length}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Total Beds</span>
+                  <p className="text-base font-bold text-gray-900">{totalCapacity} beds</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Total Monthly Rent</span>
+                  <p className="text-base font-bold text-gray-900">₹{totalRent.toLocaleString()}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">Hostel</span>
+                  <p className="text-base font-bold truncate text-gray-900">
+                    {hostels.find(h => h.id === hostelId)?.name || 'None selected'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Rooms Table / Empty state */}
+            {rooms.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 py-12 text-center text-gray-500">
+                <DoorOpen className="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                <p className="text-sm font-medium">No draft rooms generated yet.</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Use Step 1 above to generate room numbers or click "Add Custom Room".
                 </p>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleApplyCommonDetails}
-              disabled={loading || rooms.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <CheckCircle2 size={16} />
-              <span>Apply to All Rooms ({rooms.length})</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Room Type */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Room Type
-              </label>
-              <select
-                className="input h-10 w-full text-sm font-medium"
-                value={commonDetails.room_type}
-                onChange={e =>
-                  setCommonDetails({
-                    ...commonDetails,
-                    room_type: e.target.value as any
-                  })
-                }
-                disabled={loading}
-              >
-                <option value="single">{ROOM_TYPE_LABELS.single}</option>
-                <option value="double">{ROOM_TYPE_LABELS.double}</option>
-                <option value="triple">{ROOM_TYPE_LABELS.triple}</option>
-                <option value="quad">{ROOM_TYPE_LABELS.quad}</option>
-              </select>
-            </div>
-
-            {/* Floor */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Floor
-              </label>
-              <input
-                type="number"
-                className="input h-10 w-full text-sm font-medium"
-                placeholder="1"
-                value={commonDetails.floor}
-                onChange={e =>
-                  setCommonDetails({
-                    ...commonDetails,
-                    floor: parseInt(e.target.value, 10) || 0
-                  })
-                }
-                disabled={loading}
-              />
-            </div>
-
-            {/* Monthly Rent */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Monthly Rent (₹)
-              </label>
-              <input
-                type="number"
-                className="input h-10 w-full text-sm font-medium"
-                placeholder="5000"
-                value={commonDetails.rent}
-                onChange={e =>
-                  setCommonDetails({
-                    ...commonDetails,
-                    rent: parseFloat(e.target.value) || 0
-                  })
-                }
-                disabled={loading}
-              />
-            </div>
-
-            {/* Security Deposit */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Security Deposit (₹)
-              </label>
-              <input
-                type="number"
-                className="input h-10 w-full text-sm font-medium"
-                placeholder="5000"
-                value={commonDetails.security_deposit}
-                onChange={e =>
-                  setCommonDetails({
-                    ...commonDetails,
-                    security_deposit: parseFloat(e.target.value) || 0
-                  })
-                }
-                disabled={loading}
-              />
-            </div>
-
-            {/* Facilities */}
-            <div className="sm:col-span-2 lg:col-span-4">
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Facilities (Comma separated)
-              </label>
-              <input
-                type="text"
-                className="input h-10 w-full text-sm font-medium"
-                placeholder="AC, Attached Washroom, Balcony, WiFi"
-                value={commonDetails.facilities}
-                onChange={e =>
-                  setCommonDetails({
-                    ...commonDetails,
-                    facilities: e.target.value
-                  })
-                }
-                disabled={loading}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* STEP 3: REVIEW ALL ROOMS & CUSTOMIZE                                      */}
-        {/* ========================================================================= */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                3
-              </span>
-              <div>
-                <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">
-                  Review & Customize Rooms ({rooms.length})
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Modify individual rooms as needed before final creation
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleAddIndividualRoom}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3.5 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
-            >
-              <Plus size={15} />
-              <span>Add Custom Room</span>
-            </button>
-          </div>
-
-          {/* Quick Metrics Bar */}
-          {rooms.length > 0 && (
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 rounded-xl border border-border/60 bg-muted/20 p-3">
-              <div>
-                <span className="text-[11px] font-semibold text-muted-foreground uppercase">Total Rooms</span>
-                <p className="text-base font-bold text-foreground">{rooms.length}</p>
-              </div>
-              <div>
-                <span className="text-[11px] font-semibold text-muted-foreground uppercase">Total Beds</span>
-                <p className="text-base font-bold text-foreground">{totalCapacity} beds</p>
-              </div>
-              <div>
-                <span className="text-[11px] font-semibold text-muted-foreground uppercase">Total Monthly Rent</span>
-                <p className="text-base font-bold text-foreground">₹{totalRent.toLocaleString()}</p>
-              </div>
-              <div>
-                <span className="text-[11px] font-semibold text-muted-foreground uppercase">Hostel</span>
-                <p className="text-base font-bold truncate text-foreground">
-                  {hostels.find(h => h.id === hostelId)?.name || 'None selected'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Rooms Table / Empty state */}
-          {rooms.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border py-12 text-center text-muted-foreground">
-              <DoorOpen className="mx-auto mb-2 h-8 w-8 text-muted-foreground/60" />
-              <p className="text-sm font-medium">No draft rooms generated yet.</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Use Step 1 above to generate room numbers or click "Add Custom Room".
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-border">
+            ) : (
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-border bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <thead className="border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Room #</th>
                     <th className="py-3 px-4">Floor</th>
@@ -804,38 +819,38 @@ function BulkRoomForm() {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-gray-200">
                   {rooms.map((room, index) => {
                     const hasError = !!errors[index];
                     return (
                       <tr
                         key={index}
-                        className={`transition-colors hover:bg-muted/30 ${
-                          hasError ? 'bg-destructive/10' : ''
+                        className={`transition-colors hover:bg-gray-50 ${
+                          hasError ? 'bg-red-50' : ''
                         }`}
                       >
-                        <td className="py-3 px-4 font-semibold text-foreground">
+                        <td className="py-3 px-4 font-semibold text-gray-900">
                           <div className="flex items-center gap-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-teal-100 text-xs font-bold text-teal-700">
                               {room.room_number || '?'}
                             </span>
                             <span>Room {room.room_number}</span>
                           </div>
                           {hasError && (
-                            <p className="text-[11px] font-medium text-destructive mt-0.5">
+                            <p className="text-[11px] font-medium text-red-600 mt-0.5">
                               {errors[index]}
                             </p>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground">
+                        <td className="py-3 px-4 text-gray-600">
                           {room.floor === 0 ? 'Ground (0)' : `Floor ${room.floor}`}
                         </td>
-                        <td className="py-3 px-4 text-foreground capitalize">
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        <td className="py-3 px-4 text-gray-900 capitalize">
+                          <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-700">
                             {room.room_type} ({CAPACITY_BY_ROOM_TYPE[room.room_type] || 1} bed)
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-medium text-foreground">
+                        <td className="py-3 px-4 font-medium text-gray-900">
                           ₹{Number(room.rent).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 font-medium text-foreground">
@@ -853,7 +868,7 @@ function BulkRoomForm() {
                               onClick={() => handleOpenEditModal(index)}
                               disabled={loading}
                               title="Edit Room Details"
-                              className="rounded-lg p-1.5 text-primary hover:bg-primary/10 transition-colors"
+                              className="rounded-lg p-1.5 text-teal-600 hover:bg-teal-50 transition-colors"
                             >
                               <Edit2 size={16} />
                             </button>
@@ -862,7 +877,7 @@ function BulkRoomForm() {
                               onClick={() => handleRemoveRoom(index)}
                               disabled={loading}
                               title="Remove Room"
-                              className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10 transition-colors"
+                              className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -875,47 +890,48 @@ function BulkRoomForm() {
               </table>
             </div>
           )}
-        </div>
+        </CardContent>
+        </Card>
 
-        {/* ========================================================================= */}
-        {/* STEP 4: FINAL SUBMISSION                                                  */}
-        {/* ========================================================================= */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-primary/20 bg-primary/5 p-6">
-          <div>
-            <h3 className="text-base font-bold text-foreground">
-              Ready to create {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}?
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              All rooms and corresponding beds will be created atomically in a single transaction.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleFinalSubmit}
-            disabled={loading || rooms.length === 0 || !hostelId}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.01] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <span>Creating {rooms.length} Rooms...</span>
-            ) : (
-              <span>Create {rooms.length} Rooms</span>
-            )}
-          </button>
-        </div>
+        {/* Step 4: Final Submission */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">
+                  Ready to create {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}?
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  All rooms and corresponding beds will be created atomically in a single transaction.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={handleFinalSubmit}
+                disabled={loading || rooms.length === 0 || !hostelId}
+                className="bg-teal-600 hover:bg-teal-700 text-white min-w-[160px]"
+              >
+                {loading ? (
+                  <span>Creating {rooms.length} Rooms...</span>
+                ) : (
+                  <span>Create {rooms.length} Rooms</span>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* ========================================================================= */}
-      {/* INDIVIDUAL ROOM EDIT MODAL                                                */}
-      {/* ========================================================================= */}
+      {/* Individual Room Edit Modal */}
       {editingRoomIndex !== null && editFormData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
                   <Edit2 size={18} />
                 </div>
-                <h3 className="text-lg font-bold text-foreground">
+                <h3 className="text-lg font-semibold text-gray-900">
                   Edit Room {editFormData.room_number}
                 </h3>
               </div>
@@ -925,7 +941,7 @@ function BulkRoomForm() {
                   setEditingRoomIndex(null);
                   setEditFormData(null);
                 }}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <X size={18} />
               </button>
@@ -934,25 +950,23 @@ function BulkRoomForm() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                    Room Number *
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Room Number
                   </label>
-                  <input
-                    type="text"
-                    className="input h-10 w-full text-sm font-medium"
+                  <Input
                     value={editFormData.room_number}
                     onChange={e =>
                       setEditFormData({ ...editFormData, room_number: e.target.value })
                     }
+                    className="bg-white border-gray-200"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Floor
                   </label>
-                  <input
+                  <Input
                     type="number"
-                    className="input h-10 w-full text-sm font-medium"
                     value={editFormData.floor}
                     onChange={e =>
                       setEditFormData({
@@ -960,16 +974,17 @@ function BulkRoomForm() {
                         floor: parseInt(e.target.value, 10) || 0
                       })
                     }
+                    className="bg-white border-gray-200"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Room Type
                 </label>
                 <select
-                  className="input h-10 w-full text-sm font-medium"
+                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   value={editFormData.room_type}
                   onChange={e =>
                     setEditFormData({
@@ -987,12 +1002,11 @@ function BulkRoomForm() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Monthly Rent (₹)
                   </label>
-                  <input
+                  <Input
                     type="number"
-                    className="input h-10 w-full text-sm font-medium"
                     value={editFormData.rent}
                     onChange={e =>
                       setEditFormData({
@@ -1000,15 +1014,15 @@ function BulkRoomForm() {
                         rent: parseFloat(e.target.value) || 0
                       })
                     }
+                    className="bg-white border-gray-200"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Security Deposit (₹)
                   </label>
-                  <input
+                  <Input
                     type="number"
-                    className="input h-10 w-full text-sm font-medium"
                     value={editFormData.security_deposit}
                     onChange={e =>
                       setEditFormData({
@@ -1016,17 +1030,16 @@ function BulkRoomForm() {
                         security_deposit: parseFloat(e.target.value) || 0
                       })
                     }
+                    className="bg-white border-gray-200"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Facilities (Comma separated)
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Facilities (comma separated)
                 </label>
-                <input
-                  type="text"
-                  className="input h-10 w-full text-sm font-medium"
+                <Input
                   value={editFormData.facilities.join(', ')}
                   onChange={e =>
                     setEditFormData({
@@ -1037,61 +1050,60 @@ function BulkRoomForm() {
                         .filter(s => s !== '')
                     })
                   }
+                  className="bg-white border-gray-200"
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
+            <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => {
                   setEditingRoomIndex(null);
                   setEditFormData(null);
                 }}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="border-gray-300"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleSaveRoomEdit}
-                className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="bg-teal-600 hover:bg-teal-700 text-white"
               >
                 Save Changes
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* DUPLICATE ROOM NUMBERS CONFIRMATION MODAL                                */}
-      {/* ========================================================================= */}
+      {/* Duplicate Room Numbers Confirmation Modal */}
       {duplicateWarnings && duplicateWarnings.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                 <AlertTriangle size={22} />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-foreground">
+                <h3 className="text-lg font-semibold text-gray-900">
                   Duplicate Room Numbers Detected
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Some rooms in your batch have room numbers that already exist in this hostel or appear multiple times in this batch.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setDuplicateWarnings(null)}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* List of Duplicates */}
             <div className="max-h-[360px] overflow-y-auto space-y-3 pr-1 my-4">
               {duplicateWarnings.map((item, idx) => {
                 const draftId = item.draft_id || rooms[item.draft_index]?.draft_id;
@@ -1101,28 +1113,28 @@ function BulkRoomForm() {
                 return (
                   <div
                     key={draftId || `dup-${idx}`}
-                    className={`rounded-xl border p-4 transition-colors ${
+                    className={`rounded-lg border p-4 transition-colors ${
                       isApproved
-                        ? 'border-emerald-500/30 bg-emerald-500/5'
-                        : 'border-amber-500/30 bg-amber-500/5'
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-amber-200 bg-amber-50'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                          <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
                             Draft Room #{draftNumber}
                           </span>
-                          <span className="font-bold text-foreground">
+                          <span className="font-bold text-gray-900">
                             Room {item.room_number}
                           </span>
                           {isApproved && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
                               <Check size={12} /> Approved
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-gray-600 mt-1">
                           {item.existing_room_id && item.is_intra_batch
                             ? `Room ${item.room_number} already exists in this hostel and appears multiple times in this batch.`
                             : item.existing_room_id
@@ -1132,23 +1144,24 @@ function BulkRoomForm() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => handleChangeDuplicateRoomNumber(item)}
-                          className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                          variant="outline"
+                          className="border-gray-300 text-xs"
                         >
-                          Change Room Number
-                        </button>
+                          Change Number
+                        </Button>
                         {!isApproved ? (
-                          <button
+                          <Button
                             type="button"
                             onClick={() => handleKeepDraftAnyway(item)}
-                            className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                            className="bg-teal-600 hover:bg-teal-700 text-white text-xs"
                           >
-                            Keep {item.room_number} Anyway
-                          </button>
+                            Keep Anyway
+                          </Button>
                         ) : (
-                          <button
+                          <Button
                             type="button"
                             onClick={() => {
                               if (draftId) {
@@ -1159,10 +1172,11 @@ function BulkRoomForm() {
                                 });
                               }
                             }}
-                            className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            variant="outline"
+                            className="border-gray-300 text-xs"
                           >
                             Undo
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -1171,27 +1185,28 @@ function BulkRoomForm() {
               })}
             </div>
 
-            {/* Modal Footer */}
-            <div className="mt-5 pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-              <button
+            <div className="mt-5 pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <Button
                 type="button"
                 onClick={() => setDuplicateWarnings(null)}
-                className="w-full sm:w-auto rounded-xl border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                variant="outline"
+                className="border-gray-300"
               >
                 Back to Review
-              </button>
+              </Button>
 
-              <div className="w-full sm:w-auto flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 {duplicateWarnings.length > 1 && (
-                  <button
+                  <Button
                     type="button"
                     onClick={handleKeepAllAnyway}
-                    className="w-full sm:w-auto rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                    variant="outline"
+                    className="border-gray-300"
                   >
                     Keep All Anyway
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   type="button"
                   onClick={async () => {
                     const allApproved = duplicateWarnings.every(d => {
@@ -1209,10 +1224,10 @@ function BulkRoomForm() {
                     const dId = d.draft_id || rooms[d.draft_index]?.draft_id;
                     return dId && approvedDraftIds.has(dId);
                   })}
-                  className="w-full sm:w-auto rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
                 >
                   Confirm & Create
-                </button>
+                </Button>
               </div>
             </div>
           </div>

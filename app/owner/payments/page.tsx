@@ -695,7 +695,7 @@ export default function OwnerPaymentsDashboard() {
                                 ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300 animate-pulse'
                                 : fee.status === 'overdue'
                                 ? 'bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300'
-                                : 'bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-300'
+                                : 'bg-teal-50 text-teal-700 dark:bg-teal-950/20 dark:text-teal-300'
                             }`}>
                               {fee.status === 'pending_verification' ? 'Verify Proof' : fee.status.replace('_', ' ')}
                             </span>

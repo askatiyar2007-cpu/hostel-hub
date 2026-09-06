@@ -13,10 +13,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth/context";
 import { dashboardPathForRole } from "@/lib/auth/dashboard";
+import { usePathname } from 'next/navigation';
 
 export function SiteHeader() {
   const { profile, signOut, password_set, accountCompletionStep } = useAuth();
   const dashboardPath = dashboardPathForRole(profile?.role) ?? '/auth/select-role';
+  const pathname = usePathname();
+  
+  // Don't render public header on Owner routes
+  if (pathname?.startsWith('/owner')) {
+    return null;
+  }
   
   // CRITICAL: Only show dashboard link for COMPLETED accounts.
   // password_set=false means NOT a HostelHub user, so no dashboard link should be shown.

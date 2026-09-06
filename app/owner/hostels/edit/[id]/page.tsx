@@ -3,9 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function EditHostelPage() {
   const router = useRouter();
@@ -103,177 +106,195 @@ export default function EditHostelPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <div className="mb-8 flex items-center space-x-4">
-        <Link href="/owner/hostels" className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-          <ArrowLeft size={24} />
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">Edit Hostel</h1>
+    <div className="p-6 md:p-8 lg:p-10 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-2">
+          <Link href="/owner/hostels" className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
+            <ArrowLeft size={20} />
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Edit Hostel</h1>
+        </div>
+        <p className="text-gray-600 ml-10">Update hostel details and configuration.</p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm"
-      >
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Hostel Name
-            </label>
-            <input
-              required
-              type="text"
-              className="input w-full"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 1. Property Details */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Property Details</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hostel Name
+              </label>
+              <Input
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="bg-white border-gray-200"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Contact Email
-            </label>
-            <input
-              required
-              type="email"
-              className="input w-full"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </div>
+        {/* 2. Location */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Address
+                </label>
+                <Input
+                  required
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
+                </label>
+                <Input
+                  required
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State
+                </label>
+                <Input
+                  required
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pincode
+                </label>
+                <Input
+                  required
+                  value={formData.pincode}
+                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Description */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Description</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                About the Property
+              </label>
+              <textarea
+                required
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent min-h-[120px]"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4. Amenities */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Amenities</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Available Amenities (comma separated)
+              </label>
+              <Input
+                placeholder="AC, WiFi, Attached Washroom, Mess, Laundry"
+                value={formData.amenities}
+                onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
+                className="bg-white border-gray-200"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 5. Rules */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Rules</h2>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hostel Rules & Regulations
+              </label>
+              <textarea
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent min-h-[100px]"
+                value={formData.rules}
+                onChange={(e) => setFormData({ ...formData, rules: e.target.value })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 6. Contact Information */}
+        <Card className="border-teal-200 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Email
+                </label>
+                <Input
+                  required
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Number
+                </label>
+                <Input
+                  required
+                  type="tel"
+                  value={formData.contact_number}
+                  onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
+                  className="bg-white border-gray-200"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3">
+          <Link href="/owner/hostels">
+            <Button type="button" variant="outline" className="border-gray-300">
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            type="submit"
+            disabled={saving}
+            className="bg-teal-600 hover:bg-teal-700 text-white min-w-[140px]"
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Description
-          </label>
-          <textarea
-            required
-            className="input h-24 w-full py-3"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Contact Number
-            </label>
-            <input
-              required
-              type="tel"
-              className="input w-full"
-              value={formData.contact_number}
-              onChange={(e) =>
-                setFormData({ ...formData, contact_number: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Pincode
-            </label>
-            <input
-              required
-              type="text"
-              className="input w-full"
-              value={formData.pincode}
-              onChange={(e) =>
-                setFormData({ ...formData, pincode: e.target.value })
-              }
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Full Address
-          </label>
-          <input
-            required
-            type="text"
-            className="input w-full"
-            value={formData.address}
-            onChange={(e) =>
-              setFormData({ ...formData, address: e.target.value })
-            }
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              City
-            </label>
-            <input
-              required
-              type="text"
-              className="input w-full"
-              value={formData.city}
-              onChange={(e) =>
-                setFormData({ ...formData, city: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              State
-            </label>
-            <input
-              required
-              type="text"
-              className="input w-full"
-              value={formData.state}
-              onChange={(e) =>
-                setFormData({ ...formData, state: e.target.value })
-              }
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Amenities (Comma separated)
-          </label>
-          <input
-            type="text"
-            className="input w-full"
-            value={formData.amenities}
-            onChange={(e) =>
-              setFormData({ ...formData, amenities: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Hostel Rules
-          </label>
-          <textarea
-            className="input h-24 w-full py-3"
-            value={formData.rules}
-            onChange={(e) =>
-              setFormData({ ...formData, rules: e.target.value })
-            }
-          />
-        </div>
-
-        <button
-          disabled={saving}
-          type="submit"
-          className="w-full rounded-full bg-primary p-4 text-lg font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.01] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ? 'Saving Changes...' : 'Save Changes'}
-        </button>
       </form>
     </div>
   );

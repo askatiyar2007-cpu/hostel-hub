@@ -5,13 +5,13 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
-import { ArrowLeft, MapPin, Bed, DollarSign, Users } from 'lucide-react';
+import { ArrowLeft, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
-export default function EditRoomPage() {
+export default function ViewRoomPage() {
   const { profile } = useAuth();
   const router = useRouter();
   const { id } = useParams();
@@ -148,7 +148,6 @@ export default function EditRoomPage() {
   }
 
   const occupiedCount = allocations.length;
-  const availableBeds = roomData?.capacity ? roomData.capacity - occupiedCount : 0;
 
   return (
     <div className="p-6 md:p-8 lg:p-10 max-w-5xl mx-auto">
@@ -159,9 +158,14 @@ export default function EditRoomPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Room {roomData?.room_number}</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-bold text-gray-900">Room {roomData?.room_number}</h1>
+              <span className="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm font-medium">
+                {occupiedCount} / {roomData?.capacity || 1} occupied
+              </span>
+            </div>
             <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-              <MapPin size={16} />
+              <MapPin size={16} className="text-teal-600" />
               <span>{hostels.find(h => h.id === formData.hostel_id)?.name}</span>
             </div>
           </div>
@@ -183,41 +187,11 @@ export default function EditRoomPage() {
         </div>
       </div>
 
-      {/* Room Overview Bar */}
-      <div className="flex flex-wrap items-center gap-6 mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-2">
-          <Bed size={18} className="text-gray-500" />
-          <span className="text-sm text-gray-600">Type:</span>
-          <span className="font-semibold text-gray-900 capitalize">{formData.room_type}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Floor:</span>
-          <span className="font-semibold text-gray-900">{formData.floor}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Users size={18} className="text-gray-500" />
-          <span className="text-sm text-gray-600">Occupancy:</span>
-          <span className="font-semibold text-gray-900">{occupiedCount}/{roomData?.capacity} occupied</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <DollarSign size={18} className="text-gray-500" />
-          <span className="text-sm text-gray-600">Rent:</span>
-          <span className="font-semibold text-gray-900">₹{Number(formData.rent).toLocaleString()}</span>
-        </div>
-        <div className="flex-1" />
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase ${
-          formData.status === 'available' ? 'bg-green-100 text-green-700' : 
-          formData.status === 'occupied' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-        }`}>
-          {formData.status}
-        </span>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Residents */}
-          <Card className="border-gray-200">
+          <Card className="border-teal-200 shadow-sm">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Residents ({allocations.length})</h2>
               {allocations.length === 0 ? (
@@ -225,7 +199,7 @@ export default function EditRoomPage() {
               ) : (
                 <div className="space-y-3">
                   {allocations.map((allocation, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                       <div>
                         <p className="font-medium text-gray-900">{allocation.student_name}</p>
                         <p className="text-xs text-gray-500">Since {new Date(allocation.start_date).toLocaleDateString()}</p>
@@ -238,7 +212,7 @@ export default function EditRoomPage() {
           </Card>
 
           {/* Edit Form */}
-          <Card className="border-gray-200">
+          <Card className="border-teal-200 shadow-sm">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Edit Room Details</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -373,29 +347,8 @@ export default function EditRoomPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Occupancy Summary */}
-          <Card className="border-gray-200">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Occupancy</h2>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Occupied Beds</span>
-                  <span className="font-semibold text-gray-900">{occupiedCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Available Beds</span>
-                  <span className="font-semibold text-gray-900">{availableBeds}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Capacity</span>
-                  <span className="font-semibold text-gray-900">{roomData?.capacity}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Financial */}
-          <Card className="border-gray-200">
+          <Card className="border-teal-200 shadow-sm">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Financial</h2>
               <div className="space-y-3">
@@ -412,12 +365,12 @@ export default function EditRoomPage() {
           </Card>
 
           {/* Facilities */}
-          <Card className="border-gray-200">
+          <Card className="border-teal-200 shadow-sm">
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Facilities</h2>
               <div className="flex flex-wrap gap-2">
                 {formData.facilities ? formData.facilities.split(',').map((f, i) => (
-                  <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm">
+                  <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-full bg-teal-50 text-teal-800 text-sm border border-teal-100">
                     {f.trim()}
                   </span>
                 )) : (

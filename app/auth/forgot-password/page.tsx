@@ -228,12 +228,12 @@ export default function ForgotPasswordPage() {
   const headerInfo = getHeaderInfo();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-amber-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-2">
           {emailSent && !otpVerified && (
-            <div className="mx-auto w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-2">
-              <Mail className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+            <div className="mx-auto w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mb-2">
+              <Mail className="w-8 h-8 text-teal-600 dark:text-teal-400" />
             </div>
           )}
           <CardTitle className="text-2xl font-bold text-center">{headerInfo.title}</CardTitle>
@@ -315,7 +315,7 @@ export default function ForgotPasswordPage() {
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-orange-600 hover:bg-orange-700"
+                className="w-full bg-teal-600 hover:bg-teal-700"
                 disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
               >
                 {loading ? 'Resetting...' : 'Reset Password'}
@@ -360,7 +360,7 @@ export default function ForgotPasswordPage() {
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-orange-600 hover:bg-orange-700"
+                className="w-full bg-teal-600 hover:bg-teal-700"
                 disabled={loading || otp.length !== 6}
               >
                 {loading ? 'Verifying...' : 'Verify Code'}
@@ -399,7 +399,7 @@ export default function ForgotPasswordPage() {
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-orange-600 hover:bg-orange-700"
+                className="w-full bg-teal-600 hover:bg-teal-700"
                 disabled={loading}
               >
                 {loading ? 'Sending...' : 'Send Verification Code'}

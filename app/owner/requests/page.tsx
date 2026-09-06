@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +11,6 @@ import {
   User, 
   Phone, 
   Mail, 
-  Home, 
   AlertTriangle, 
   Inbox, 
   Building2, 
@@ -21,12 +20,11 @@ import {
   FileText, 
   LogOut, 
   Eye, 
-  RotateCcw,
-  BookOpen,
-  Check,
-  X,
-  DollarSign,
-  Trash2,
+  RotateCcw, 
+  Check, 
+  X, 
+  DollarSign, 
+  Trash2, 
   X as CloseIcon
 } from 'lucide-react';
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -648,7 +646,7 @@ export default function OwnerRequestsPage() {
       <DashboardShell title="Room Requests & Allocations" subtitle="Processing database updates..." badge="Owner">
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
             <p className="text-sm font-semibold text-muted-foreground">
               {approveMutation.isPending 
                 ? "Approving request and generating fees..." 
@@ -689,11 +687,13 @@ export default function OwnerRequestsPage() {
 
   return (
     <DashboardShell 
-      title="Room Requests & Allocations" 
-      subtitle={`Manage room request approvals, boarding occupancy, and checkout routines.`} 
+      title="Room Requests" 
+      subtitle="Review and manage student room requests, approve allocations, and track resident onboarding." 
       badge="Owner"
+      className="p-4 sm:p-6 lg:px-6 lg:py-8"
     >
-      {/* 1. Tab Navigation */}
+      <div className="w-full max-w-[1150px] mx-auto">
+        {/* 1. Tab Navigation */}
       <div className="flex border-b border-zinc-200 dark:border-zinc-800 gap-2 pb-px justify-between items-center flex-wrap">
         <div className="flex gap-2 overflow-x-auto">
           <TabButton 
@@ -735,7 +735,7 @@ export default function OwnerRequestsPage() {
       </div>
 
       {/* 2. Search & Filter Bar */}
-      <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center justify-between bg-card border border-border p-4 rounded-2xl shadow-sm">
+      <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center justify-between bg-card border border-teal-200/80 p-4 rounded-2xl shadow-xs">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
@@ -743,7 +743,7 @@ export default function OwnerRequestsPage() {
             placeholder="Search by student, email, phone or parent..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 border-border/80 focus-visible:ring-orange-500"
+            className="pl-10 h-11 border-border/80 focus-visible:ring-teal-500"
           />
           {searchQuery && (
             <button 
@@ -767,7 +767,7 @@ export default function OwnerRequestsPage() {
               setHostelFilter(e.target.value);
               setRoomFilter('all');
             }}
-            className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
+            className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
           >
             <option value="all">All Hostels</option>
             {uniqueHostels.map((hostel: any) => (
@@ -779,7 +779,7 @@ export default function OwnerRequestsPage() {
           <select 
             value={roomFilter}
             onChange={(e) => setRoomFilter(e.target.value)}
-            className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-orange-500 focus:outline-none"
+            className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
           >
             <option value="all">All Rooms</option>
             {uniqueRooms.map((room: any) => (
@@ -813,7 +813,7 @@ export default function OwnerRequestsPage() {
               setRoomFilter('all');
               setSortBy('newest');
             }}
-            className="text-orange-500 hover:underline"
+            className="text-teal-600 hover:underline"
           >
             Reset Filters
           </button>
@@ -826,24 +826,26 @@ export default function OwnerRequestsPage() {
           visiblePending.length === 0 ? (
             <EmptyState message="No pending room requests found." />
           ) : (
-            <div className="flex flex-col gap-6">
-              {visiblePending.map((req: any) => {
-                const studentId = req.student_id;
-                const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
-                return (
-                  <PendingRequestCard 
-                    key={req.id} 
-                    req={req} 
-                    passportPhotoUrl={passportPhotoUrl}
-                    onPreviewPhoto={setPreviewPhoto}
-                    onApprove={() => setSelectedConfirmAction({ type: 'approve', id: req.id, req })}
-                    onReject={() => setSelectedConfirmAction({ type: 'reject', id: req.id })}
-                    onViewDetails={() => {
-                      setSelectedDetailsItem(req);
-                    }}
-                  />
-                );
-              })}
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3">
+                {visiblePending.map((req: any) => {
+                  const studentId = req.student_id;
+                  const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+                  return (
+                    <PendingRequestCard 
+                      key={req.id} 
+                      req={req} 
+                      passportPhotoUrl={passportPhotoUrl}
+                      onPreviewPhoto={setPreviewPhoto}
+                      onApprove={() => setSelectedConfirmAction({ type: 'approve', id: req.id, req })}
+                      onReject={() => setSelectedConfirmAction({ type: 'reject', id: req.id })}
+                      onViewDetails={() => {
+                        setSelectedDetailsItem(req);
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )
         )}
@@ -852,29 +854,32 @@ export default function OwnerRequestsPage() {
           visibleApproved.length === 0 ? (
             <EmptyState message="No active approved allocations found." />
           ) : (
-            <div className="flex flex-col gap-6">
-              {visibleApproved.map((alloc: any) => {
-                const studentId = alloc.student_id;
-                const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
-                return (
-                  <ApprovedAllocationCard 
-                    key={alloc.id} 
-                    alloc={alloc} 
-                    passportPhotoUrl={passportPhotoUrl}
-                    onPreviewPhoto={setPreviewPhoto}
-                    onCheckout={() => setSelectedConfirmAction({ type: 'checkout', id: alloc.id })}
-                    onViewAgreement={() => setAgreementModalData(alloc)}
-                    onViewDetails={() => {
-                      setSelectedDetailsItem(alloc);
-                    }}
-                    onMarkDepositPaid={() => setSelectedDepositAlloc(alloc)}
-                    onMarkFeePaid={(feeId) => {
-                      markPaidMutation.mutate(feeId);
-                    }}
-                    onViewHistory={() => setSelectedHistoryAlloc(alloc)}
-                  />
-                );
-              })}
+            <div className="space-y-3">
+
+              <div className="flex flex-col gap-4">
+                {visibleApproved.map((alloc: any) => {
+                  const studentId = alloc.student_id;
+                  const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+                  return (
+                    <ApprovedAllocationCard 
+                      key={alloc.id} 
+                      alloc={alloc} 
+                      passportPhotoUrl={passportPhotoUrl}
+                      onPreviewPhoto={setPreviewPhoto}
+                      onCheckout={() => setSelectedConfirmAction({ type: 'checkout', id: alloc.id })}
+                      onViewAgreement={() => setAgreementModalData(alloc)}
+                      onViewDetails={() => {
+                        setSelectedDetailsItem(alloc);
+                      }}
+                      onMarkDepositPaid={() => setSelectedDepositAlloc(alloc)}
+                      onMarkFeePaid={(feeId) => {
+                        markPaidMutation.mutate(feeId);
+                      }}
+                      onViewHistory={() => setSelectedHistoryAlloc(alloc)}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )
         )}
@@ -883,21 +888,31 @@ export default function OwnerRequestsPage() {
           visibleRejected.length === 0 ? (
             <EmptyState message="No rejected requests found." />
           ) : (
-            <div className="flex flex-col gap-6">
-              {visibleRejected.map((req: any) => (
-                <RejectedRequestCard 
-                  key={req.id} 
-                  req={req} 
-                  onRereview={() => setSelectedConfirmAction({ type: 'rereview', id: req.id })}
-                  onDelete={() => setSelectedConfirmAction({ type: 'delete', id: req.id })}
-                  onViewDetails={() => {
-                    setSelectedDetailsItem(req);
-                  }}
-                />
-              ))}
+            <div className="space-y-3">
+              <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/30 rounded-xl border border-border/40">
+                <div className="col-span-3">Student</div>
+                <div className="col-span-2">Hostel / Room</div>
+                <div className="col-span-3">Submission Info</div>
+                <div className="col-span-1 text-center">Status</div>
+                <div className="col-span-3 text-right">Actions</div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {visibleRejected.map((req: any) => (
+                  <RejectedRequestCard 
+                    key={req.id} 
+                    req={req} 
+                    onRereview={() => setSelectedConfirmAction({ type: 'rereview', id: req.id })}
+                    onDelete={() => setSelectedConfirmAction({ type: 'delete', id: req.id })}
+                    onViewDetails={() => {
+                      setSelectedDetailsItem(req);
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )
         )}
+      </div>
       </div>
 
       {/* 4. Details Modal */}
@@ -1006,14 +1021,14 @@ function TabButton({ active, onClick, label, count }: { active: boolean; onClick
       onClick={onClick}
       className={`flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-sm transition-all whitespace-nowrap ${
         active 
-          ? 'border-orange-500 text-orange-600 dark:text-orange-400 bg-orange-500/5' 
+          ? 'border-teal-600 text-teal-700 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-950/20' 
           : 'border-transparent text-muted-foreground hover:text-foreground hover:border-zinc-300'
       }`}
     >
       {label}
       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
         active 
-          ? 'bg-orange-500 text-white' 
+          ? 'bg-teal-600 text-white' 
           : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
       }`}>
         {count}
@@ -1032,62 +1047,28 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function RoomCapacityIndicator({ room }: { room: any }) {
-  if (!room) return null;
-  const capacity = room.capacity || 1;
-  const occupancy = room.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
-  const percentage = Math.min(100, Math.round((occupancy / capacity) * 100));
-  
-  let badgeColor = 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300';
-  let badgeText = 'AVL';
-  
-  if (occupancy >= capacity) {
-    badgeColor = 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
-    badgeText = 'FULL';
-  } else if (percentage >= 75) {
-    badgeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300';
-    badgeText = 'LOW';
-  }
-  
-  return (
-    <div className="space-y-1.5 w-full">
-      <div className="flex items-center justify-between text-xs font-semibold">
-        <span className="text-muted-foreground">Capacity ({occupancy}/{capacity} occupied):</span>
-        <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider ${badgeColor}`}>
-          {badgeText}
-        </span>
-      </div>
-      <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-        <div 
-          className={`h-full rounded-full transition-all duration-500 ${
-            occupancy >= capacity ? 'bg-red-500' : percentage >= 75 ? 'bg-yellow-500' : 'bg-green-500'
-          }`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function CardInfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-2 text-sm">
-      <span className="mt-0.5 text-muted-foreground/80 shrink-0">{icon}</span>
-      <div className="min-w-0 flex-1">
-        <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider block">{label}</span>
-        <p className="text-foreground font-medium leading-tight truncate">{value || '-'}</p>
-      </div>
-    </div>
-  );
-}
-
 // ---------------- Card Implementations ----------------
 
-function PendingRequestCard({ req, onApprove, onReject, onViewDetails, passportPhotoUrl, onPreviewPhoto }: { req: any; onApprove: () => void; onReject: () => void; onViewDetails: () => void; passportPhotoUrl?: string; onPreviewPhoto?: (url: string) => void }) {
+function PendingRequestCard({ 
+  req, 
+  onApprove, 
+  onReject, 
+  onViewDetails, 
+  passportPhotoUrl, 
+  onPreviewPhoto 
+}: { 
+  req: any; 
+  onApprove: () => void; 
+  onReject: () => void; 
+  onViewDetails: () => void; 
+  passportPhotoUrl?: string; 
+  onPreviewPhoto?: (url: string) => void 
+}) {
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
-  const studentName = student?.full_name || req.student_name || '-';
+  const studentName = student?.full_name || req.student_name || 'Unnamed Student';
   const studentEmail = student?.email || req.student_email || '-';
   const studentPhone = student?.phone_number || req.student_phone || '-';
+  const emergencyContact = req.emergency_contact || (req.emergency_contact_name && req.emergency_contact_phone ? `${req.emergency_contact_name} - ${req.emergency_contact_phone}` : req.emergency_contact_name || 'N/A');
   
   const room = req.rooms;
   const capacity = room?.capacity ?? 0;
@@ -1095,86 +1076,126 @@ function PendingRequestCard({ req, onApprove, onReject, onViewDetails, passportP
   const freeSlots = capacity - occupancy;
 
   return (
-    <div className="max-w-[750px] w-full mx-auto bg-card border border-border hover:border-orange-500/20 hover:shadow-lg transition-all duration-300 rounded-2xl p-6 space-y-6">
-      {/* Header Row */}
-      <div className="flex items-center justify-between border-b pb-4 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
+    <div className="w-full bg-white border border-teal-200/80 hover:border-teal-300 shadow-xs hover:shadow-sm rounded-2xl p-5 lg:p-5 transition-all">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        {/* 1. Student (Passport Photo, Name, Contact) */}
+        <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
           {passportPhotoUrl ? (
-            <img 
-              src={passportPhotoUrl} 
-              alt="Student passport photo"
-              className="h-12 w-12 rounded-xl object-cover border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-              onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
-            />
+            <div className="relative group shrink-0">
+              <img 
+                src={passportPhotoUrl} 
+                alt="Student passport photo"
+                className="h-12 w-12 rounded-xl object-cover border border-teal-200 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all"
+                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+              />
+              <div 
+                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
+              >
+                <Eye size={14} />
+              </div>
+            </div>
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold text-lg font-display">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold text-base border border-teal-100">
               {studentName.charAt(0)}
             </div>
           )}
-          <div>
-            <h3 className="font-bold text-lg text-foreground font-display leading-tight">{studentName}</h3>
-            <span className="text-xs text-muted-foreground mt-1 block">
-              Requested on {new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>{studentName}</h3>
+            <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-gray-400" />
+              <span className="truncate">{studentEmail}</span>
+            </div>
+            {studentPhone !== '-' && (
+              <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5">
+                <Phone size={12} className="shrink-0 text-gray-400" />
+                <span>{studentPhone}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. Hostel & Room */}
+        <div className="lg:col-span-2 min-w-0">
+          <div className="flex items-center gap-1.5 font-medium text-gray-900">
+            <Building2 size={14} className="text-teal-600 shrink-0" />
+            <span className="truncate">{req.hostels?.name || 'Hostel Property'}</span>
+          </div>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-xs font-semibold">
+              Room {room?.room_number || '-'}
+            </span>
+            <span className="text-xs text-gray-500">
+              {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
             </span>
           </div>
+          {room?.rent && (
+            <div className="text-xs text-gray-600 font-medium mt-1">
+              ₹{Number(room.rent).toLocaleString()}/month
+            </div>
+          )}
         </div>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300 ring-1 ring-amber-600/10">
-          <Clock size={12} className="animate-pulse" /> Pending
-        </span>
-      </div>
 
-      {/* Grid: Student Info */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-orange-500 font-display">Student Contact</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-muted/20 p-4 rounded-2xl border border-border/50">
-          <CardInfoRow icon={<Mail size={14} />} label="Email" value={studentEmail} />
-          <CardInfoRow icon={<Phone size={14} />} label="Phone" value={studentPhone} />
-          <CardInfoRow icon={<BookOpen size={14} />} label="Emerg. Contact" value={req.emergency_contact || (req.emergency_contact_name && req.emergency_contact_phone ? `${req.emergency_contact_name} - ${req.emergency_contact_phone}` : req.emergency_contact_name || 'N/A')} />
-        </div>
-      </div>
-
-      {/* Requested Room Details */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-orange-500 font-display">Requested Accommodation</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-2xl border border-border/50">
-          <div className="space-y-3">
-            <CardInfoRow icon={<Building2 size={14} />} label="Hostel" value={req.hostels?.name} />
-            <CardInfoRow icon={<Home size={14} />} label="Room / Type" value={`Room ${room?.room_number} (${req.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})`} />
-            <CardInfoRow icon={<Mail size={14} />} label="Rent Details" value={`₹${Number(room?.rent).toLocaleString()}/month`} />
+        {/* 3. Request Info */}
+        <div className="lg:col-span-3 min-w-0 text-xs text-gray-600 space-y-1">
+          <div className="flex items-center gap-1.5 text-gray-500">
+            <Clock size={12} className="text-gray-400 shrink-0" />
+            <span>{new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
           </div>
-          <div className="flex items-center justify-center">
-            <RoomCapacityIndicator room={room} />
+          <div>
+            <span className="text-gray-500">Occupancy: </span>
+            <span className="font-semibold text-gray-800">{occupancy}/{capacity}</span>
+            <span className={`ml-1 font-medium ${freeSlots > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              ({freeSlots > 0 ? `${freeSlots} free` : 'Full'})
+            </span>
           </div>
+          {emergencyContact !== 'N/A' && (
+            <div className="text-[11px] text-gray-500 truncate" title={emergencyContact}>
+              Emg: {emergencyContact}
+            </div>
+          )}
+        </div>
+
+        {/* 4. Status */}
+        <div className="lg:col-span-1 flex lg:justify-center">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+            <Clock size={12} /> Pending
+          </span>
+        </div>
+
+        {/* 5. Actions */}
+        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 flex-wrap">
+          <Button 
+            onClick={onApprove} 
+            disabled={freeSlots <= 0}
+            size="sm"
+            className="h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+          >
+            <CheckCircle2 size={14} /> Approve
+          </Button>
+          <Button 
+            onClick={onReject} 
+            variant="outline" 
+            size="sm"
+            className="h-9 px-3 rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-xs font-medium flex items-center gap-1 transition-colors"
+          >
+            <XCircle size={14} /> Reject
+          </Button>
+          <Button 
+            onClick={onViewDetails} 
+            variant="ghost" 
+            size="sm"
+            className="h-9 px-2.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-xs font-medium flex items-center gap-1 transition-colors"
+          >
+            <Eye size={14} /> Details
+          </Button>
         </div>
       </div>
 
-      {/* Action Buttons Row */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button 
-          onClick={onApprove} 
-          disabled={freeSlots <= 0}
-          className="flex-1 h-11 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-green-500/10"
-        >
-          <CheckCircle2 size={16} /> Approve Allocation
-        </Button>
-        <Button 
-          onClick={onReject} 
-          variant="outline" 
-          className="flex-1 h-11 rounded-xl border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 font-semibold flex items-center justify-center gap-1.5"
-        >
-          <XCircle size={16} /> Reject Request
-        </Button>
-        <Button 
-          onClick={onViewDetails} 
-          variant="ghost" 
-          className="h-11 px-4 rounded-xl text-muted-foreground hover:text-foreground font-semibold flex items-center justify-center gap-1"
-        >
-          <Eye size={16} /> Details
-        </Button>
-      </div>
       {freeSlots <= 0 && (
-        <div className="p-3 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300 rounded-xl flex items-center gap-2 text-xs font-semibold border border-red-100 dark:border-red-900/50">
-          <AlertTriangle size={14} /> Approval is blocked because the requested room is currently full.
+        <div className="mt-3 p-2.5 bg-red-50 text-red-700 rounded-lg flex items-center gap-2 text-xs font-medium border border-red-100">
+          <AlertTriangle size={14} className="shrink-0" />
+          Approval is blocked because the requested room is currently full.
         </div>
       )}
     </div>
@@ -1203,7 +1224,7 @@ function ApprovedAllocationCard({
   onPreviewPhoto?: (url: string) => void;
 }) {
   const student = Array.isArray(alloc.students) ? alloc.students[0]?.profiles : alloc.students?.profiles;
-  const studentName = student?.full_name || alloc.student_name || '-';
+  const studentName = student?.full_name || alloc.student_name || 'Resident Student';
   const studentEmail = student?.email || alloc.student_email || '-';
   const studentPhone = student?.phone_number || alloc.student_phone || '-';
 
@@ -1217,174 +1238,218 @@ function ApprovedAllocationCard({
   const rent = room?.rent ?? 0;
 
   return (
-    <div className="max-w-[750px] w-full mx-auto bg-green-50/10 dark:bg-green-950/5 border border-green-200 dark:border-green-900/50 hover:shadow-lg transition-all duration-300 rounded-2xl p-6 space-y-6">
-      {/* Header Row */}
-      <div className="flex items-center justify-between border-b border-green-100 dark:border-green-900/30 pb-4 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
+    <div className="w-full bg-white border border-teal-200/80 hover:border-teal-300 shadow-xs hover:shadow-sm rounded-2xl p-5 lg:p-6 transition-all space-y-4">
+      {/* Main Row: Student -> Hostel/Room -> Timeline/Rent -> Status -> Primary Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        {/* 1. Resident Student */}
+        <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
           {passportPhotoUrl ? (
-            <img 
-              src={passportPhotoUrl} 
-              alt="Student passport photo"
-              className="h-12 w-12 rounded-xl object-cover border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-              onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
-            />
+            <div className="relative group shrink-0">
+              <img 
+                src={passportPhotoUrl} 
+                alt="Student passport photo"
+                className="h-12 w-12 rounded-xl object-cover border border-teal-200 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all"
+                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+              />
+              <div 
+                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
+              >
+                <Eye size={14} />
+              </div>
+            </div>
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-lg font-display">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold text-base border border-teal-100">
               {studentName.charAt(0)}
             </div>
           )}
-          <div>
-            <h3 className="font-bold text-lg text-foreground font-display leading-tight">{studentName}</h3>
-            <span className="text-xs text-muted-foreground mt-1 block">
-              Allocation Active &bull; Joined {new Date(alloc.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>{studentName}</h3>
+            <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-gray-400" />
+              <span className="truncate">{studentEmail}</span>
+            </div>
+            {studentPhone !== '-' && (
+              <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5">
+                <Phone size={12} className="shrink-0 text-gray-400" />
+                <span>{studentPhone}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. Hostel & Room */}
+        <div className="lg:col-span-2 min-w-0">
+          <div className="flex items-center gap-1.5 font-medium text-gray-900">
+            <Building2 size={14} className="text-teal-600 shrink-0" />
+            <span className="truncate">{alloc.hostels?.name || 'Hostel Property'}</span>
+          </div>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-xs font-semibold">
+              Room {room?.room_number || '-'}
+            </span>
+            <span className="text-xs text-gray-500">
+              {alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
             </span>
           </div>
+          <div className="text-xs text-gray-600 font-medium mt-1">
+            ₹{Number(rent).toLocaleString()}/month
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400">
+
+        {/* 3. Allocation Timeline */}
+        <div className="lg:col-span-2 min-w-0 text-xs text-gray-600 space-y-1">
+          <div className="flex items-center gap-1.5 text-gray-500">
+            <Clock size={12} className="text-gray-400 shrink-0" />
+            <span>Joined {new Date(alloc.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+          </div>
+          {emergencyContact !== 'N/A' && (
+            <div className="text-[11px] text-gray-500 truncate" title={emergencyContact}>
+              Emg: {emergencyContact}
+            </div>
+          )}
+        </div>
+
+        {/* 4. Status */}
+        <div className="lg:col-span-1 flex lg:justify-center">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
             <Check size={12} /> Approved
           </span>
-          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
-            {alloc.fees_count || alloc.student_fees?.length || 0} FEES
-          </span>
+        </div>
+
+        {/* 5. Primary Actions */}
+        <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-1.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 flex-wrap">
+          <Button 
+            onClick={onViewAgreement}
+            variant="outline" 
+            size="sm"
+            className="h-8 px-2.5 rounded-lg border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+          >
+            <FileText size={13} /> Agreement
+          </Button>
+          <Button 
+            onClick={onViewDetails}
+            variant="outline" 
+            size="sm"
+            className="h-8 px-2.5 rounded-lg border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+          >
+            <User size={13} /> Profile
+          </Button>
+          <Button 
+            onClick={onViewHistory}
+            variant="outline" 
+            size="sm"
+            className="h-8 px-2.5 rounded-lg border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+          >
+            <DollarSign size={13} /> History
+          </Button>
+          <Button 
+            onClick={onCheckout}
+            variant="outline" 
+            size="sm"
+            className="h-8 px-2.5 rounded-lg border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-1"
+          >
+            <LogOut size={13} /> Checkout
+          </Button>
         </div>
       </div>
 
-      {/* Allocation Details */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 font-display">Allocation Details</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-green-50/20 dark:bg-green-950/10 p-4 rounded-2xl border border-green-100/50 dark:border-green-900/20">
-          <div className="space-y-3">
-            <CardInfoRow icon={<Building2 size={14} />} label="Hostel" value={alloc.hostels?.name} />
-            <CardInfoRow icon={<Home size={14} />} label="Room Allocated" value={`Room ${room?.room_number} (${alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})`} />
-            <CardInfoRow icon={<Mail size={14} />} label="Monthly Rent" value={`₹${Number(rent).toLocaleString()}`} />
+      {/* Sub-panel: Security Deposit & Monthly Fees Schedule */}
+      <div className="pt-3 border-t border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-slate-50/60 p-3.5 rounded-xl border border-gray-100">
+        {/* Deposit Box */}
+        <div className="md:col-span-4 flex items-center justify-between gap-3 p-2.5 bg-white rounded-lg border border-gray-200/70">
+          <div>
+            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Security Deposit</div>
+            <div className="text-xs font-bold text-gray-900 mt-0.5">
+              ₹{Number(alloc.rooms?.security_deposit || rent * 2).toLocaleString()}
+            </div>
           </div>
-          <div className="flex items-center justify-center">
-            <RoomCapacityIndicator room={room} />
-          </div>
-        </div>
-      </div>
-
-      {/* Student Contact Info & Security Deposit */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 font-display">Student Contact</h4>
-          <div className="bg-card border border-border p-4 rounded-xl space-y-2.5">
-            <div className="flex items-center gap-2 text-xs">
-              <Mail size={12} className="text-muted-foreground" />
-              <span className="text-foreground font-semibold truncate">{studentEmail}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <Phone size={12} className="text-muted-foreground" />
-              <span className="text-foreground font-semibold">{studentPhone}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs pt-1.5 border-t border-dashed">
-              <BookOpen size={12} className="text-muted-foreground" />
-              <span className="text-foreground font-semibold truncate">Emergency: {emergencyContact}</span>
-            </div>
+          <div>
+            {alloc.deposit_status === 'paid' ? (
+              <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs font-semibold">
+                ✓ Paid
+              </span>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px] font-semibold">
+                  Pending
+                </span>
+                <button 
+                  onClick={onMarkDepositPaid}
+                  className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 py-0.5 rounded text-xs transition-colors"
+                >
+                  Mark Paid
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 font-display">Security Deposit & Payment</h4>
-          <div className="bg-card border border-border p-4 rounded-xl space-y-1">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-muted-foreground font-semibold">Security Deposit:</span>
-              {alloc.deposit_status === 'paid' ? (
-                <span className="text-green-600 font-bold flex items-center gap-0.5">✓ Paid</span>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <span className="text-orange-500 font-bold">Pending</span>
-                  <button 
-                    onClick={onMarkDepositPaid}
-                    className="bg-primary hover:bg-primary/95 text-white font-bold px-2 py-0.5 rounded text-[10px] transition-colors"
-                  >
-                    Mark Paid
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="flex justify-between text-xs pt-1 border-t mt-1">
-              <span className="text-muted-foreground font-semibold">Deposit Amount:</span>
-              <span className="text-foreground font-bold">₹{Number(alloc.rooms?.security_deposit || rent * 2).toLocaleString()}</span>
-            </div>
+        {/* Fees Schedule Box */}
+        <div className="md:col-span-8 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-gray-700 uppercase tracking-wider text-[11px]">Monthly Fees</span>
+            <span className="text-[11px] text-gray-500 font-medium">
+              {alloc.student_fees?.length || 0} scheduled
+            </span>
           </div>
-        </div>
-      </div>
 
-      {/* Monthly Fees Section - Displaying exactly 2 months */}
-      <div className="space-y-2 pt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 font-display flex justify-between items-center">
-          <span>Monthly Fees Schedule</span>
-          <span className="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-            {alloc.student_fees?.length || 0} Scheduled
-          </span>
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
-          {(() => {
-            // Sort student fees chronologically
-            const sortedFees = [...(alloc.student_fees || [])].sort(
-              (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-            );
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {(() => {
+              const sortedFees = [...(alloc.student_fees || [])].sort(
+                (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+              );
 
-            // Find the earliest unpaid fee
-            const earliestUnpaidIndex = sortedFees.findIndex(f => f.status !== 'paid');
+              const earliestUnpaidIndex = sortedFees.findIndex(f => f.status !== 'paid');
+              let displayFees: any[] = [];
+              let isMonth1List: boolean[] = [];
 
-            let displayFees: any[] = [];
-            let isMonth1List: boolean[] = [];
-
-            if (earliestUnpaidIndex !== -1) {
-              // Month 1: Earliest unpaid
-              displayFees.push(sortedFees[earliestUnpaidIndex]);
-              isMonth1List.push(true);
-              
-              // Month 2: Next upcoming month
-              if (earliestUnpaidIndex + 1 < sortedFees.length) {
-                displayFees.push(sortedFees[earliestUnpaidIndex + 1]);
-                isMonth1List.push(false);
+              if (earliestUnpaidIndex !== -1) {
+                displayFees.push(sortedFees[earliestUnpaidIndex]);
+                isMonth1List.push(true);
+                if (earliestUnpaidIndex + 1 < sortedFees.length) {
+                  displayFees.push(sortedFees[earliestUnpaidIndex + 1]);
+                  isMonth1List.push(false);
+                }
+              } else if (sortedFees.length > 0) {
+                const lastTwo = sortedFees.slice(-2);
+                displayFees = lastTwo;
+                isMonth1List = lastTwo.map(() => false);
               }
-            } else if (sortedFees.length > 0) {
-              // If all are paid, show the last two paid fees as previews
-              const lastTwo = sortedFees.slice(-2);
-              displayFees = lastTwo;
-              isMonth1List = lastTwo.map(() => false);
-            }
 
-            if (displayFees.length === 0) {
-              return <p className="text-xs text-muted-foreground italic col-span-2">No fees scheduled yet.</p>;
-            }
+              if (displayFees.length === 0) {
+                return <p className="text-xs text-gray-500 italic col-span-2">No fees scheduled yet.</p>;
+              }
 
-            return displayFees.map((fee: any, idx: number) => {
-              const isMonth1 = isMonth1List[idx];
-              const hasProof = fee.status === 'pending_verification';
-              const displayPeriod = fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-              return (
-                <div key={fee.id} className="p-3 border rounded-xl bg-card flex flex-col justify-between gap-2 shadow-sm border-border/60">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-bold text-xs text-foreground block">
-                        {displayPeriod} {isMonth1 ? '(Current Due)' : '(Upcoming)'}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">Due: {new Date(fee.due_date).toLocaleDateString()}</span>
+              return displayFees.map((fee: any, idx: number) => {
+                const isMonth1 = isMonth1List[idx];
+                const hasProof = fee.status === 'pending_verification';
+                const displayPeriod = fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                return (
+                  <div key={fee.id} className="p-2.5 border rounded-lg bg-white flex items-center justify-between gap-2 border-gray-200/70">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-xs text-gray-900 truncate">
+                        {displayPeriod} {isMonth1 ? '(Current)' : ''}
+                      </div>
+                      <div className="text-[11px] text-gray-500">
+                        ₹{fee.amount_due || fee.amount || 0} &bull; Due: {new Date(fee.due_date).toLocaleDateString()}
+                      </div>
                     </div>
-                    <span className="font-bold text-xs text-foreground">₹{fee.amount_due || fee.amount || 0}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-1 border-t border-dashed">
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                      fee.status === 'paid' 
-                        ? 'bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-300' 
-                        : fee.status === 'pending_verification' 
-                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300' 
-                        : 'bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300'
-                    }`}>
-                      {fee.status.replace('_', ' ')}
-                    </span>
-                    <div className="flex items-center gap-1.5">
+                    
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${
+                        fee.status === 'paid' 
+                          ? 'bg-green-100 text-green-800' 
+                          : fee.status === 'pending_verification' 
+                          ? 'bg-amber-100 text-amber-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {fee.status.replace('_', ' ')}
+                      </span>
                       {isMonth1 && fee.status !== 'paid' && (
                         <button 
                           onClick={() => onMarkFeePaid(fee.id)}
-                          className="bg-primary hover:bg-primary/95 text-white font-bold px-2 py-0.5 rounded text-[10px] transition-colors"
+                          className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 py-0.5 rounded text-xs transition-colors"
                         >
                           Mark Paid
                         </button>
@@ -1397,132 +1462,108 @@ function ApprovedAllocationCard({
                             const payMethod = pendingPayment?.payment_method || 'N/A';
                             toast.info(`Payment Details - Method: ${payMethod}, Ref: ${refNo}`);
                           }}
-                          className="border text-foreground hover:bg-muted font-bold px-2 py-0.5 rounded text-[10px] transition-colors"
+                          className="border border-gray-200 text-gray-700 hover:bg-gray-100 font-medium px-2 py-0.5 rounded text-xs transition-colors"
                         >
                           Details
                         </button>
                       )}
                     </div>
                   </div>
-                </div>
-              );
-            });
-          })()}
+                );
+              });
+            })()}
+          </div>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-green-100 dark:border-green-900/30">
-        <Button 
-          onClick={onViewAgreement}
-          variant="outline" 
-          size="sm"
-          className="rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 text-xs font-semibold gap-1.5"
-        >
-          <FileText size={14} /> Agreement
-        </Button>
-        <Button 
-          onClick={onViewDetails}
-          variant="outline" 
-          size="sm"
-          className="rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 text-xs font-semibold gap-1.5"
-        >
-          <User size={14} /> Student Profile
-        </Button>
-        <Button 
-          onClick={onViewHistory}
-          variant="outline" 
-          size="sm"
-          className="rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 text-xs font-semibold gap-1.5"
-        >
-          <DollarSign size={14} /> Payment History
-        </Button>
-        <div className="flex-1" />
-        <Button 
-          onClick={onCheckout}
-          variant="outline" 
-          size="sm"
-          className="rounded-xl border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-bold gap-1 shadow-sm"
-        >
-          <LogOut size={14} /> Check Out
-        </Button>
       </div>
     </div>
   );
 }
 
-function RejectedRequestCard({ req, onRereview, onDelete, onViewDetails }: { req: any; onRereview: () => void; onDelete: () => void; onViewDetails: () => void }) {
+function RejectedRequestCard({ 
+  req, 
+  onRereview, 
+  onDelete, 
+  onViewDetails 
+}: { 
+  req: any; 
+  onRereview: () => void; 
+  onDelete: () => void; 
+  onViewDetails: () => void; 
+}) {
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
-  const studentName = student?.full_name || req.student_name || '-';
+  const studentName = student?.full_name || req.student_name || 'Applicant';
   const studentEmail = student?.email || req.student_email || '-';
-  
   const room = req.rooms;
 
   return (
-    <div className="max-w-[750px] w-full mx-auto bg-zinc-50/50 dark:bg-zinc-900/10 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 space-y-6">
-      {/* Header Row */}
-      <div className="flex items-center justify-between border-b pb-4 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-bold text-lg font-display">
+    <div className="w-full bg-white border border-gray-200 hover:border-gray-300 shadow-xs rounded-2xl p-5 transition-all">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        {/* 1. Student */}
+        <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 font-bold text-base">
             {studentName.charAt(0)}
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-foreground font-display leading-tight">{studentName}</h3>
-            <span className="text-xs text-muted-foreground mt-1 block">
-              Rejected Request &bull; Submitted {new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-            </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>{studentName}</h3>
+            <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-gray-400" />
+              <span className="truncate">{studentEmail}</span>
+            </div>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300">
-          <XCircle size={12} /> Rejected
-        </span>
-      </div>
 
-      {/* Details Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/10 p-4 rounded-xl border border-border/50 text-xs">
-        <div className="space-y-2">
-          <div>
-            <span className="text-muted-foreground font-semibold">Email Contact:</span>
-            <span className="text-foreground ml-1.5 font-bold truncate">{studentEmail}</span>
+        {/* 2. Hostel & Room */}
+        <div className="lg:col-span-2 min-w-0">
+          <div className="flex items-center gap-1.5 font-medium text-gray-900">
+            <Building2 size={14} className="text-gray-500 shrink-0" />
+            <span className="truncate">{req.hostels?.name || 'Hostel'}</span>
           </div>
-          <div>
-            <span className="text-muted-foreground font-semibold">Hostel / Room:</span>
-            <span className="text-foreground ml-1.5 font-bold">{req.hostels?.name} &bull; Room {room?.room_number}</span>
+          <div className="text-xs text-gray-500 mt-1">
+            Room {room?.room_number || '-'} &bull; {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
           </div>
         </div>
-        <div className="space-y-2 border-t sm:border-t-0 sm:border-l border-border/60 pt-2 sm:pt-0 sm:pl-4">
-          <div className="text-red-600 dark:text-red-400 font-semibold flex items-start gap-1">
-            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-            <span>Reason: Capacity parameters exceeded or client request conflict.</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Action Buttons Row */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <Button 
-          onClick={onViewDetails} 
-          variant="outline" 
-          size="sm"
-          className="rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 text-xs font-semibold gap-1"
-        >
-          <Eye size={14} /> View Details
-        </Button>
-        <Button 
-          onClick={onDelete}
-          variant="outline"
-          size="sm"
-          className="rounded-xl border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-bold gap-1"
-        >
-          <Trash2 size={14} /> Delete
-        </Button>
-        <Button 
-          onClick={onRereview} 
-          size="sm"
-          className="rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold gap-1 shadow-sm"
-        >
-          <RotateCcw size={14} /> Re-review
-        </Button>
+        {/* 3. Submission Info */}
+        <div className="lg:col-span-3 min-w-0 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <Clock size={12} className="text-gray-400 shrink-0" />
+            <span>Submitted {new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+          </div>
+        </div>
+
+        {/* 4. Status */}
+        <div className="lg:col-span-1 flex lg:justify-center">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+            <XCircle size={12} /> Rejected
+          </span>
+        </div>
+
+        {/* 5. Actions */}
+        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 flex-wrap">
+          <Button 
+            onClick={onViewDetails} 
+            variant="ghost" 
+            size="sm"
+            className="h-8 px-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 text-xs font-medium flex items-center gap-1"
+          >
+            <Eye size={13} /> Details
+          </Button>
+          <Button 
+            onClick={onRereview} 
+            size="sm"
+            className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium flex items-center gap-1 transition-colors"
+          >
+            <RotateCcw size={13} /> Re-review
+          </Button>
+          <Button 
+            onClick={onDelete}
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 rounded-lg border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-medium flex items-center gap-1 transition-colors"
+          >
+            <Trash2 size={13} /> Delete
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -1570,7 +1611,7 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h3 className="text-lg font-bold text-foreground font-display flex items-center gap-2">
-            <User className="text-orange-500" /> Student Details
+            <User className="text-teal-600" /> Student Details
           </h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={20} />
@@ -1581,7 +1622,7 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
         <div className="p-6 space-y-5 overflow-y-auto flex-1 text-sm">
           {/* Card Layout */}
           <div className="border border-border rounded-2xl p-5 space-y-3 bg-muted/20">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-orange-500 font-display border-b pb-1.5">Personal Information</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 font-display border-b pb-1.5">Personal Information</h4>
             {renderDetailRow("Full Name", studentName, <User size={14} />)}
             {renderDetailRow("Email", studentEmail, <Mail size={14} />)}
             {renderDetailRow("Phone", studentPhone, <Phone size={14} />)}
@@ -1594,7 +1635,7 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
           </div>
 
           <div className="border border-border rounded-2xl p-5 space-y-3 bg-muted/20">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-orange-500 font-display border-b pb-1.5">Guardian & Emergency</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 font-display border-b pb-1.5">Guardian & Emergency</h4>
             {renderDetailRow("Guardian Name", parentName)}
             {renderDetailRow("Guardian Phone", parentPhone)}
             {renderDetailRow("Guardian Email", parentEmail)}
@@ -1603,11 +1644,11 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
 
           {/* Room & Booking Configuration */}
           <div className="border border-border rounded-2xl p-5 bg-muted/20 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-orange-500 font-display border-b pb-1.5">Accommodation Details</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 font-display border-b pb-1.5">Accommodation Details</h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               <span className="text-muted-foreground font-semibold">Hostel:</span> <span className="font-semibold text-foreground text-right">{item.hostels?.name}</span>
               <span className="text-muted-foreground font-semibold">Room:</span> <span className="font-semibold text-foreground text-right">Room {item.rooms?.room_number} ({item.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})</span>
-              <span className="text-muted-foreground font-semibold">Rent:</span> <span className="font-bold text-primary text-right">₹{Number(item.rooms?.rent).toLocaleString()}/mo</span>
+              <span className="text-muted-foreground font-semibold">Rent:</span> <span className="font-bold text-teal-700 text-right">₹{Number(item.rooms?.rent).toLocaleString()}/mo</span>
             </div>
           </div>
         </div>
@@ -1623,19 +1664,29 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
   );
 }
 
-function ConfirmationModal({ action, onConfirm, onClose, loading }: { action: 'approve' | 'reject' | 'checkout' | 'rereview' | 'delete'; onConfirm: () => void; onClose: () => void; loading: boolean }) {
+function ConfirmationModal({ 
+  action, 
+  onConfirm, 
+  onClose, 
+  loading 
+}: { 
+  action: 'approve' | 'reject' | 'checkout' | 'rereview' | 'delete'; 
+  onConfirm: () => void; 
+  onClose: () => void; 
+  loading?: boolean;
+}) {
   const titles = {
-    approve: 'Approve Request & Allocate Room?',
+    approve: 'Approve Room Request?',
     reject: 'Reject Room Request?',
-    checkout: 'Checkout Student?',
-    rereview: 'Move back to pending review?',
+    checkout: 'Check Out Student Resident?',
+    rereview: 'Move back to Pending?',
     delete: 'Delete Rejected Request?'
   };
 
   const descriptions = {
-    approve: 'This will issue a room allocation, block the room space/beds, and send a notification update to the student.',
-    reject: 'This will reject the student request. You can re-review this decision later if required.',
-    checkout: 'This action marks the student allocation as inactive, frees the bed, and archives their check-in details. This is irreversible.',
+    approve: 'This will accept the student, create an active allocation record, and generate their security deposit and first 2 months fees.',
+    reject: 'This will mark the student request as rejected. The student will be notified and this room bed will remain free.',
+    checkout: 'This will deactivate the student allocation record, free up the room capacity, and mark the resident status as checked out.',
     rereview: 'This moves the rejected record back into the pending queue for re-evaluation.',
     delete: 'This will permanently delete this rejected request from the database. This cannot be undone.'
   };
@@ -1644,7 +1695,7 @@ function ConfirmationModal({ action, onConfirm, onClose, loading }: { action: 'a
     approve: 'bg-green-600 hover:bg-green-700 text-white',
     reject: 'bg-red-600 hover:bg-red-700 text-white',
     checkout: 'bg-red-600 hover:bg-red-700 text-white',
-    rereview: 'bg-orange-600 hover:bg-orange-700 text-white',
+    rereview: 'bg-teal-600 hover:bg-teal-700 text-white',
     delete: 'bg-red-600 hover:bg-red-700 text-white'
   };
 
@@ -1677,7 +1728,7 @@ function AgreementModal({ alloc, onClose }: { alloc: any; onClose: () => void })
       <div className="w-full max-w-xl bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between border-b pb-4">
           <h3 className="text-base font-bold text-foreground font-display flex items-center gap-1.5">
-            <FileText size={16} className="text-orange-500" /> Rental Accommodation Agreement
+            <FileText size={16} className="text-teal-600" /> Rental Accommodation Agreement
           </h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={18} />

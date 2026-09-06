@@ -18,12 +18,12 @@ export function DashboardShell({
   className?: string;
 }) {
   return (
-    <div className={cn("p-4 sm:p-6 lg:p-8", className)}>
-      <div className="mx-auto max-w-7xl">
+    <div className={cn("p-4 sm:p-6 lg:p-8 min-w-0 max-w-full overflow-x-hidden", className)}>
+      <div className="mx-auto max-w-7xl min-w-0">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
             {badge ? (
-              <span className="mb-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <span className="mb-2 inline-block rounded-full bg-teal-50 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800">
                 {badge}
               </span>
             ) : null}

@@ -4,20 +4,12 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import toast from 'react-hot-toast';
-import { ArrowLeft, Building2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Building2 } from 'lucide-react';
 import Link from 'next/link';
-
-// Room type labels already describe an occupant count ("Single Sharing" = 1,
-// "Double Sharing" = 2, "Triple Sharing" = 3, "Four Sharing" = 4). Capacity is
-// derived from this existing naming convention rather than manually entered,
-// so bed generation on submit still receives a correct, non-empty value.
-const CAPACITY_BY_ROOM_TYPE: Record<string, number> = {
-  single: 1,
-  double: 2,
-  triple: 3,
-  quad: 4
-};
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 
 function AddRoomForm() {
   const { profile } = useAuth();
@@ -32,6 +24,7 @@ function AddRoomForm() {
     room_number: '',
     floor: 0,
     room_type: 'double',
+    capacity: 2,
     rent: 0,
     security_deposit: 0,
     facilities: ''
@@ -62,11 +55,16 @@ function AddRoomForm() {
       toast.error('Please select a hostel');
       return;
     }
+
+    const capacityNum = Number(formData.capacity);
+    if (!capacityNum || capacityNum < 1) {
+      toast.error('Please enter a valid capacity of at least 1');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const capacity = CAPACITY_BY_ROOM_TYPE[formData.room_type] ?? 1;
-
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
         .insert({
@@ -74,7 +72,7 @@ function AddRoomForm() {
           room_number: formData.room_number,
           floor: Number(formData.floor),
           room_type: formData.room_type,
-          capacity,
+          capacity: capacityNum,
           rent: Number(formData.rent),
           security_deposit: Number(formData.security_deposit),
           facilities: formData.facilities.split(',').map(s => s.trim()).filter(s => s !== ''),
@@ -85,9 +83,9 @@ function AddRoomForm() {
 
       if (roomError) throw roomError;
 
-      // Create beds based on the derived capacity
+      // Create beds based on the confirmed capacity
       const beds = [];
-      for (let i = 1; i <= capacity; i++) {
+      for (let i = 1; i <= capacityNum; i++) {
         beds.push({
           room_id: roomData.id,
           bed_number: i,
@@ -108,151 +106,173 @@ function AddRoomForm() {
     }
   };
 
-  const derivedCapacity = CAPACITY_BY_ROOM_TYPE[formData.room_type] ?? 1;
-
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <div className="mb-8 flex items-center space-x-4">
-        <Link href="/owner/rooms" className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-          <ArrowLeft size={24} />
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">Add New Room</h1>
+    <div className="p-6 md:p-8 lg:p-10 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold font-display text-foreground mb-2">Create Room</h1>
+        <p className="text-sm text-muted-foreground">Add a room and generate bed records for one of your hostels.</p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 rounded-2xl border border-border bg-card p-8 shadow-sm"
-      >
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">1</span>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Select Hostel</h3>
-          </div>
-          <div className="relative">
-            <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <select
-              required
-              className="input h-12 w-full pl-10 text-base font-medium"
-              value={formData.hostel_id}
-              onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
-            >
-              {hostels.length === 0 && <option value="">No hostels found</option>}
-              {hostels.map(h => (
-                <option key={h.id} value={h.id}>{h.name}</option>
-              ))}
-            </select>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Card 1: Hostel Selection */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            <span className="w-6 h-6 bg-teal-50 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100">1</span>
+            Hostel Selection
+          </h3>
+          <div>
+            <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+              Select Hostel *
+            </label>
+            <div className="relative">
+              <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-teal-600" />
+              <select
+                required
+                className="w-full h-12 pl-11 pr-4 bg-background border border-border rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm font-medium text-foreground transition-all"
+                value={formData.hostel_id}
+                onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
+              >
+                {hostels.length === 0 && <option value="">No hostels found</option>}
+                {hostels.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Room Number
-            </label>
-            <input
-              required
-              type="text"
-              className="input w-full"
-              placeholder="e.g. 101"
-              value={formData.room_number}
-              onChange={(e) =>
-                setFormData({ ...formData, room_number: e.target.value })
-              }
-            />
-          </div>
+        {/* Card 2: Room Details & Capacity */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            <span className="w-6 h-6 bg-teal-50 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100">2</span>
+            Room Configuration & Capacity
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Room Number *
+              </label>
+              <Input
+                required
+                placeholder="e.g. 101"
+                value={formData.room_number}
+                onChange={(e) => setFormData({ ...formData, room_number: e.target.value })}
+                className="h-11 bg-background border-border text-foreground"
+              />
+            </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Floor
-            </label>
-            <input
-              required
-              type="number"
-              className="input w-full"
-              placeholder="0 for ground"
-              value={formData.floor}
-              onChange={(e) =>
-                setFormData({ ...formData, floor: Number(e.target.value) })
-              }
-            />
+            <div>
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Floor *
+              </label>
+              <Input
+                required
+                type="number"
+                placeholder="0 for ground"
+                value={formData.floor}
+                onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
+                className="h-11 bg-background border-border text-foreground"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Room Type *
+              </label>
+              <select
+                className="w-full h-11 px-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm font-medium text-foreground transition-all"
+                value={formData.room_type}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  const suggested = newType === 'single' ? 1 : newType === 'double' ? 2 : newType === 'triple' ? 3 : newType === 'quad' ? 4 : formData.capacity;
+                  setFormData(prev => ({ ...prev, room_type: newType, capacity: suggested }));
+                }}
+              >
+                <option value="single">Single Sharing</option>
+                <option value="double">Double Sharing</option>
+                <option value="triple">Triple Sharing</option>
+                <option value="quad">Four Sharing</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Capacity (Total Beds) *
+              </label>
+              <Input
+                required
+                type="number"
+                min="1"
+                placeholder="e.g. 2"
+                value={formData.capacity}
+                onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
+                className="h-11 bg-background border-border text-foreground"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Will create {formData.capacity || 0} bed{(formData.capacity || 0) === 1 ? '' : 's'} in this room
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Monthly Rent (₹) *
+              </label>
+              <Input
+                required
+                type="number"
+                min="0"
+                placeholder="5000"
+                value={formData.rent}
+                onChange={(e) => setFormData({ ...formData, rent: Number(e.target.value) })}
+                className="h-11 bg-background border-border text-foreground"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Security Deposit (₹) *
+              </label>
+              <Input
+                required
+                type="number"
+                min="0"
+                placeholder="5000"
+                value={formData.security_deposit}
+                onChange={(e) => setFormData({ ...formData, security_deposit: Number(e.target.value) })}
+                className="h-11 bg-background border-border text-foreground"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold text-foreground/80 block mb-1.5">
+                Facilities (comma separated)
+              </label>
+              <Input
+                placeholder="AC, Attached Washroom, Balcony"
+                value={formData.facilities}
+                onChange={(e) => setFormData({ ...formData, facilities: e.target.value })}
+                className="h-11 bg-background border-border text-foreground"
+              />
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Room Type
-          </label>
-          <select
-            className="input w-full"
-            value={formData.room_type}
-            onChange={(e) => setFormData({ ...formData, room_type: e.target.value })}
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Link href="/owner/rooms">
+            <Button type="button" variant="outline" className="border-border">
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            type="submit"
+            disabled={loading || hostels.length === 0}
+            className="bg-teal-600 hover:bg-teal-700 text-white min-w-[140px]"
           >
-            <option value="single">Single Sharing</option>
-            <option value="double">Double Sharing</option>
-            <option value="triple">Triple Sharing</option>
-            <option value="quad">Four Sharing</option>
-          </select>
-          <p className="mt-2 text-xs text-muted-foreground">
-            This room will be created with {derivedCapacity} bed{derivedCapacity === 1 ? '' : 's'}, based on the selected room type.
-          </p>
+            {loading ? 'Creating...' : 'Create Room'}
+          </Button>
         </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Monthly Rent (₹)
-            </label>
-            <input
-              required
-              type="number"
-              className="input w-full"
-              placeholder="5000"
-              value={formData.rent}
-              onChange={(e) =>
-                setFormData({ ...formData, rent: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Security Deposit (₹)
-            </label>
-            <input
-              required
-              type="number"
-              className="input w-full"
-              placeholder="5000"
-              value={formData.security_deposit}
-              onChange={(e) =>
-                setFormData({ ...formData, security_deposit: Number(e.target.value) })
-              }
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Facilities (Comma separated)
-          </label>
-          <input
-            type="text"
-            className="input w-full"
-            placeholder="AC, Attached Washroom, Balcony"
-            value={formData.facilities}
-            onChange={(e) =>
-              setFormData({ ...formData, facilities: e.target.value })
-            }
-          />
-        </div>
-
-        <button
-          disabled={loading || hostels.length === 0}
-          type="submit"
-          className="w-full rounded-full bg-primary p-4 text-lg font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.01] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? 'Creating...' : 'Create Room'}
-        </button>
       </form>
     </div>
   );

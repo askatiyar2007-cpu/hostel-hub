@@ -2,27 +2,66 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { Plus, MapPin, Trash2, Edit } from 'lucide-react';
+import { Plus, MapPin, Trash2, Search, MoreVertical, Building2, X, Users, DoorOpen } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/context';
 import { Hostel } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function HostelsListPage() {
   const { profile } = useAuth();
   const [hostels, setHostels] = useState<Hostel[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [allocations, setAllocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchHostels = useCallback(async () => {
     if (!profile?.user_id) return;
 
-    const { data } = await supabase
-      .from('hostels')
-      .select('*')
-      .eq('owner_id', profile.user_id);
+    setLoading(true);
+    try {
+      const { data: hostelsData } = await supabase
+        .from('hostels')
+        .select('*')
+        .eq('owner_id', profile.user_id)
+        .order('created_at', { ascending: false });
 
-    setHostels((data as Hostel[]) || []);
-    setLoading(false);
+      setHostels((hostelsData as Hostel[]) || []);
+
+      if (hostelsData && hostelsData.length > 0) {
+        const hostelIds = hostelsData.map(h => h.id);
+        const { data: roomsData } = await supabase
+          .from('rooms')
+          .select('*')
+          .in('hostel_id', hostelIds);
+        
+        setRooms(roomsData || []);
+
+        const { data: allocationsData } = await supabase
+          .from('room_allocations')
+          .select('hostel_id, room_id, student_id, student_name, start_date')
+          .in('hostel_id', hostelIds)
+          .eq('active', true);
+        
+        setAllocations(allocationsData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching hostels:', error);
+      toast.error('Failed to load hostels');
+    } finally {
+      setLoading(false);
+    }
   }, [profile?.user_id]);
 
   useEffect(() => {
@@ -47,133 +86,232 @@ export default function HostelsListPage() {
     }
   };
 
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">
-            Your Hostels
-          </h1>
+  // Calculate per-hostel counts
+  const hostelsWithCounts = hostels.map(hostel => {
+    const hostelRooms = rooms.filter(r => r.hostel_id === hostel.id);
+    const hostelAllocations = allocations.filter(a => a.hostel_id === hostel.id);
 
-          <p className="mt-1 text-muted-foreground">
-            Manage and monitor all your properties.
+    return {
+      ...hostel,
+      totalRooms: hostelRooms.length,
+      totalResidents: hostelAllocations.length,
+    };
+  });
+
+  // Filter hostels
+  const filteredHostels = hostelsWithCounts.filter(hostel => {
+    const matchesSearch = searchQuery === '' || 
+      hostel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      hostel.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      hostel.address.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesSearch;
+  });
+
+  const clearFilters = () => {
+    setSearchQuery('');
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Pending</span>;
+      case 'approved':
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Approved</span>;
+      case 'suspended':
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Suspended</span>;
+      default:
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 capitalize">{status || 'Unknown'}</span>;
+    }
+  };
+
+  return (
+    <div className="p-6 md:p-8 lg:p-10 max-w-[1800px] mx-auto">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Hostels
+          </h1>
+          <p className="mt-2 text-base text-gray-600">
+            Manage your hostel properties, location details, and operations.
           </p>
         </div>
-
         <Link
           href="/owner/hostels/new"
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
+          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 font-medium transition-colors shadow-sm"
         >
           <Plus size={20} />
-          <span>Add New Hostel</span>
+          <span>Add Hostel</span>
         </Link>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-border bg-card py-20">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-sm font-medium text-muted-foreground">Loading your hostels...</p>
+      {/* Search Toolbar */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search properties by name, location, address..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-9 h-10 bg-white border-gray-200"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
         </div>
-      ) : hostels.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-border bg-muted/40 py-20 text-center">
-          <p className="text-lg text-muted-foreground">
-            You haven&apos;t added any hostels yet.
-          </p>
+      </div>
 
-          <Link
-            href="/owner/hostels/new"
-            className="mt-2 inline-block font-semibold text-primary hover:underline"
-          >
-            Add your first hostel &rarr;
-          </Link>
+      {/* Loading State */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="border-teal-200/60 shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="h-44 bg-gray-100 animate-pulse" />
+                <div className="p-5 space-y-3">
+                  <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4" />
+                  <div className="h-4 bg-gray-100 rounded animate-pulse w-1/2" />
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                    <div className="h-8 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-8 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
+      ) : filteredHostels.length === 0 ? (
+        <EmptyState hasFilters={!!searchQuery} onClearFilters={clearFilters} />
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {hostels.map((hostel) => (
-            <div
-              key={hostel.id}
-              className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md"
-            >
-              <div className="relative flex h-40 items-center justify-center border-b border-border bg-primary/5">
-                <div className="text-primary/30 transition-transform group-hover:scale-110">
-                  <svg
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
-                    <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-                    <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
-                    <path d="M10 6h4" />
-                    <path d="M10 10h4" />
-                  </svg>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredHostels.map((hostel) => (
+            <Card key={hostel.id} className="border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-card text-foreground">
+              <CardContent className="p-0">
+                {/* Property Image/Placeholder */}
+                <div className="h-44 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+                  {hostel.cover_image_url ? (
+                    <img
+                      src={hostel.cover_image_url}
+                      alt={hostel.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Building2 className="h-16 w-16 text-slate-300" />
+                    </div>
+                  )}
+                  <div className="absolute top-3 right-3 shadow-sm">
+                    {getStatusBadge(hostel.status)}
+                  </div>
                 </div>
 
-                <div className="absolute top-4 right-4 flex space-x-2">
-                  <Link
-                    href={`/owner/hostels/edit/${hostel.id}`}
-                    className="rounded-lg bg-card/90 p-2 text-primary shadow-sm transition-all hover:bg-card"
-                  >
-                    <Edit size={16} />
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(hostel.id)}
-                    className="rounded-lg bg-card/90 p-2 text-destructive shadow-sm transition-all hover:bg-card"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                {/* Property Details */}
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">{hostel.name}</h3>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-4">
+                    <MapPin className="h-4 w-4 shrink-0 text-teal-600" />
+                    <span className="truncate">{hostel.city}{hostel.state ? `, ${hostel.state}` : ''}</span>
+                  </div>
+
+                  {/* Property Quick Metrics */}
+                  <div className="grid grid-cols-2 gap-3 mb-5 p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-md bg-white border border-slate-200 text-teal-700 shadow-2xs">
+                        <DoorOpen size={16} />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-gray-900 leading-none">{hostel.totalRooms}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Rooms</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-md bg-white border border-slate-200 text-teal-700 shadow-2xs">
+                        <Users size={16} />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-gray-900 leading-none">{hostel.totalResidents}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Residents</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <Link href={`/owner/hostels/${hostel.id}`} className="flex-1">
+                      <Button size="sm" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium">
+                        View Hostel
+                      </Button>
+                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-9 w-9 border-gray-200 text-gray-600 hover:bg-gray-50">
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/owner/hostels/edit/${hostel.id}`}>
+                            Edit Hostel
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(hostel.id)}
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                        >
+                          <Trash2 size={16} className="mr-2" />
+                          Delete Hostel
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-4 p-6">
-                <h3 className="text-xl font-semibold font-display text-foreground">
-                  {hostel.name}
-                </h3>
-
-                <div className="space-y-2">
-                  <p className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <MapPin size={16} className="text-muted-foreground" />
-                    <span>
-                      {hostel.city}, {hostel.address}
-                    </span>
-                  </p>
-                </div>
-
-                {(hostel.rating > 0 || hostel.total_reviews > 0) && (
-                  <p className="text-xs font-medium text-muted-foreground">
-                    &#9733; {hostel.rating.toFixed(1)} &middot; {hostel.total_reviews} review{hostel.total_reviews === 1 ? '' : 's'}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap gap-2">
-                  {hostel.amenities?.slice(0, 3).map((a: string) => (
-                    <span
-                      key={a}
-                      className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
-                    >
-                      {a}
-                    </span>
-                  ))}
-                </div>
-
-                <Link
-                  href={`/owner/hostels/${hostel.id}`}
-                  className="block rounded-xl bg-foreground py-3 text-center font-semibold text-background transition-colors hover:bg-foreground/90"
-                >
-                  Manage Hostel
-                </Link>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+function EmptyState({ hasFilters, onClearFilters }: { hasFilters: boolean; onClearFilters: () => void }) {
+  if (hasFilters) {
+    return (
+      <Card className="border-gray-200">
+        <CardContent className="p-12 text-center">
+          <Building2 className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No hostels match your filters</h3>
+          <p className="text-sm text-gray-600 mb-6">Try adjusting your search or filter criteria.</p>
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear Filters
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-gray-200">
+      <CardContent className="p-12 text-center">
+        <Building2 className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No hostels yet</h3>
+        <p className="text-sm text-gray-600 mb-6">Add your first hostel to start managing properties, rooms, and residents.</p>
+        <Link href="/owner/hostels/new">
+          <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Plus size={20} className="mr-2" />
+            Add Hostel
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
   );
 }

@@ -8,21 +8,12 @@ import {
   Building2, 
   Users, 
   CreditCard, 
-  Activity
+  ArrowRight,
+  MapPin,
+  Bed,
+  Clock,
+  CheckCircle
 } from "lucide-react";
-import { DashboardShell, StatCard, AnalyticsCard } from "@/components/dashboard-shell";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,8 +21,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
+import { StatCard } from "@/components/owner/stat-card";
+import { StatusBadge } from "@/components/owner/status-badge";
+import { colors } from "@/lib/design-tokens";
+import Link from "next/link";
 
 export default function OwnerDashboard() {
   const { user } = useAuth();
@@ -63,7 +59,7 @@ export default function OwnerDashboard() {
       const ids = hostels!.map((h) => h.id);
       const { data } = await supabase
         .from("room_allocations")
-        .select("room_id")
+        .select("room_id, hostel_id, student_id, student_name, start_date")
         .in("hostel_id", ids)
         .eq("active", true);
       return data ?? [];
@@ -80,185 +76,362 @@ export default function OwnerDashboard() {
     },
   });
 
-  // Calculate real occupancy from active allocations
-  const occupiedBeds = allocations?.length ?? 0;
+  const { data: roomRequests } = useQuery({
+    queryKey: ["owner-room-requests", user?.id],
+    enabled: !!hostels?.length,
+    queryFn: async () => {
+      const ids = hostels!.map((h) => h.id);
+      const { data } = await supabase
+        .from("room_requests")
+        .select(`
+          *,
+          profiles!inner (
+            full_name,
+            email
+          )
+        `)
+        .in("hostel_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data ?? [];
+    },
+  });
+
+  // Calculate real metrics
+  const totalHostels = hostels?.length ?? 0;
+  const totalRooms = rooms?.length ?? 0;
+  const totalStudents = allocations?.length ?? 0;
   const totalBeds = rooms?.reduce((s, r) => s + (r.capacity ?? 0), 0) ?? 0;
-  const pending = bills?.filter((b) => b.status === "pending").reduce((s, b) => s + Number(b.amount), 0) ?? 0;
-  const collected = bills?.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.amount), 0) ?? 0;
+  const availableBeds = totalBeds - totalStudents;
+  const pendingDues = bills?.filter((b) => b.status === "pending").reduce((s, b) => s + Number(b.amount), 0) ?? 0;
+  const unpaidBillsCount = bills?.filter((b) => b.status === "pending").length ?? 0;
+  const monthlyRevenue = bills?.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.amount), 0) ?? 0;
+  const overallOccupancy = totalBeds > 0 ? Math.round((totalStudents / totalBeds) * 100) : 0;
 
-  // Mock data for analytics
-  const revenueData = [
-    { name: 'Jan', amount: 45000 },
-    { name: 'Feb', amount: 52000 },
-    { name: 'Mar', amount: 48000 },
-    { name: 'Apr', amount: 61000 },
-    { name: 'May', amount: 55000 },
-    { name: 'Jun', amount: collected > 0 ? collected : 65000 },
-  ];
+  // Calculate occupancy per hostel
+  const hostelOccupancy = hostels?.map(hostel => {
+    const hostelRooms = rooms?.filter(r => r.hostel_id === hostel.id) ?? [];
+    const hostelAllocations = allocations?.filter(a => a.hostel_id === hostel.id) ?? [];
+    const hostelTotalBeds = hostelRooms.reduce((s, r) => s + (r.capacity ?? 0), 0);
+    const hostelOccupiedBeds = hostelAllocations.length;
+    const hostelOccupancy = hostelTotalBeds > 0 ? Math.round((hostelOccupiedBeds / hostelTotalBeds) * 100) : 0;
+    
+    return {
+      ...hostel,
+      totalRooms: hostelRooms.length,
+      totalBeds: hostelTotalBeds,
+      occupiedBeds: hostelOccupiedBeds,
+      occupancy: hostelOccupancy,
+    };
+  }) ?? [];
 
-  const occupancyData = [
-    { name: 'Occupied', value: occupiedBeds || 1 },
-    { name: 'Vacant', value: (totalBeds - occupiedBeds) || 1 },
-  ];
-
-  const COLORS = ['#f97316', '#e2e8f0'];
+  // Limit dashboard to 4 hostels max for better composition
+  const displayHostels = hostelOccupancy.slice(0, 4);
 
   return (
-    <DashboardShell title="Welcome back" subtitle="Here's how your hostels are doing today." badge="Owner">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          label="Total Hostels" 
-          value={hostels?.length ?? 0} 
-          hint="Listed properties" 
-          icon={Building2}
-          trend={{ value: "+2", label: "this month", positive: true }}
-        />
-        <StatCard 
-          label="Total Residents" 
-          value={occupiedBeds} 
-          hint={`${totalBeds - occupiedBeds} beds available`} 
-          icon={Users}
-          trend={{ value: "+12%", label: "growth", positive: true }}
-        />
-        <StatCard 
-          label="Revenue" 
-          value={`₹${collected.toLocaleString()}`} 
-          hint="Collected this month" 
-          icon={CreditCard}
-          trend={{ value: "+8%", label: "vs last month", positive: true }}
-        />
-        <StatCard 
-          label="Pending dues" 
-          value={`₹${pending.toLocaleString()}`} 
-          hint="Awaiting payment" 
-          icon={Activity}
-          trend={{ value: "-5%", label: "improvement", positive: true }}
-        />
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <AnalyticsCard 
-          title="Revenue Overview" 
-          description="Monthly collection trends for all hostels."
-          className="lg:col-span-2"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
-              <Tooltip 
-                cursor={{ fill: '#f8fafc' }}
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-              />
-              <Bar dataKey="amount" fill="#f97316" radius={[4, 4, 0, 0]} barSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
-        </AnalyticsCard>
-
-        <AnalyticsCard 
-          title="Occupancy" 
-          description="Current bed availability."
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={occupancyData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {occupancyData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-4 flex justify-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-[#f97316]" />
-              <span className="text-xs text-muted-foreground">Occupied</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-[#e2e8f0]" />
-              <span className="text-xs text-muted-foreground">Vacant</span>
-            </div>
-          </div>
-        </AnalyticsCard>
-      </div>
-
-      <section className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold font-display">Your hostels</h2>
-          <NewHostelDialog onCreated={() => qc.invalidateQueries({ queryKey: ["owner-hostels"] })} />
+    <div className="p-6 md:p-8 lg:p-10 max-w-[1800px] mx-auto">
+      {/* Welcome + Add Hostel */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Welcome back, {user?.user_metadata?.full_name || 'Owner'}
+          </h1>
+          <p className="mt-2 text-base text-gray-600">
+            Here's what's happening across your hostels today.
+          </p>
         </div>
-        {hostels && hostels.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {hostels.map((h) => (
-              <div key={h.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold font-display">{h.name}</h3>
-                    <p className="text-xs text-muted-foreground">{h.city}</p>
-                  </div>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                    h.status === "approved" ? "bg-green-100 text-green-700" :
-                    h.status === "pending" ? "bg-amber-100 text-amber-700" :
-                    "bg-red-100 text-red-700"
-                  }`}>{h.status}</span>
-                </div>
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{h.description || "No description yet."}</p>
-                <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>From ₹{Number(h.starting_price ?? 0).toLocaleString()}</span>
-                  <AddRoomDialog hostelId={h.id} onCreated={() => qc.invalidateQueries({ queryKey: ["owner-rooms"] })} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState />
-        )}
-      </section>
+        <NewHostelDialog onCreated={() => qc.invalidateQueries({ queryKey: ["owner-hostels"] })} />
+      </div>
 
-      <section className="mt-10">
-        <h2 className="mb-4 text-xl font-semibold font-display">Recent bills</h2>
-        {bills && bills.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
-                <tr><th className="px-4 py-3 text-left">Type</th><th className="px-4 py-3 text-left">Amount</th><th className="px-4 py-3 text-left">Due</th><th className="px-4 py-3 text-left">Status</th></tr>
-              </thead>
-              <tbody>
-                {bills.slice(0, 8).map((b) => (
-                  <tr key={b.id} className="border-t border-border">
-                    <td className="px-4 py-3 capitalize">{b.bill_type}</td>
-                    <td className="px-4 py-3">₹{Number(b.amount).toLocaleString()}</td>
-                    <td className="px-4 py-3">{new Date(b.due_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 capitalize">{b.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <StatCard
+          title="Total Hostels"
+          value={totalHostels}
+          subtitle="Active properties"
+          icon={<Building2 className="h-6 w-6" />}
+        />
+        <StatCard
+          title="Total Rooms"
+          value={totalRooms}
+          subtitle={`${availableBeds} beds available`}
+          icon={<Bed className="h-6 w-6" />}
+        />
+        <StatCard
+          title="Total Students"
+          value={totalStudents}
+          subtitle={`${overallOccupancy}% occupancy`}
+          icon={<Users className="h-6 w-6" />}
+        />
+        <StatCard
+          title="Monthly Revenue"
+          value={`₹${monthlyRevenue.toLocaleString()}`}
+          subtitle="This month"
+          icon={<CreditCard className="h-6 w-6" />}
+        />
+      </div>
+
+      {/* Main Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Your Hostels - Takes 2 columns */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Your Hostels</h2>
+            {hostelOccupancy.length > 4 && (
+              <Link href="/owner/hostels">
+                <Button variant="outline" size="sm" className="text-teal-600 border-teal-600 hover:bg-teal-50">
+                  View all {totalHostels} hostels
+                </Button>
+              </Link>
+            )}
           </div>
+          
+          {displayHostels.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
+              {displayHostels.map((hostel) => (
+                <Card key={hostel.id} className="border-gray-200 hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">{hostel.name}</h3>
+                        <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
+                          <MapPin className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{hostel.city}</span>
+                        </div>
+                      </div>
+                      <StatusBadge status={hostel.status} />
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+                      <div>
+                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Rooms</p>
+                        <p className="text-xl font-semibold text-gray-900">{hostel.totalRooms}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Residents</p>
+                        <p className="text-xl font-semibold text-gray-900">{hostel.occupiedBeds}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Occupancy</p>
+                        <p className="text-xl font-semibold text-gray-900">{hostel.occupancy}%</p>
+                      </div>
+                    </div>
+
+                    {/* Occupancy Progress Bar */}
+                    <div className="mb-4">
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full transition-all duration-500 rounded-full"
+                          style={{ 
+                            width: `${hostel.occupancy}%`,
+                            backgroundColor: colors.primary.teal[500]
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <p className="text-sm text-gray-600">
+                        {hostel.occupiedBeds}/{hostel.totalBeds} beds occupied
+                      </p>
+                      <Link href={`/owner/hostels/${hostel.id}`}>
+                        <Button variant="ghost" size="sm" className="h-9 text-teal-600 hover:text-teal-700 font-medium">
+                          View hostel <ArrowRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <EmptyState type="hostels" />
+          )}
+        </div>
+
+        {/* Right Column - Occupancy Overview & Needs Attention */}
+        <div className="space-y-6">
+          {/* Occupancy Overview */}
+          <Card className="border-gray-200">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Occupancy Overview</h3>
+              
+              <div className="text-center mb-6">
+                <p className="text-5xl font-bold text-gray-900 mb-2">{overallOccupancy}%</p>
+                <p className="text-sm text-gray-600">
+                  {totalStudents} occupied · {availableBeds} available
+                </p>
+              </div>
+
+              <div className="h-3 bg-gray-100 rounded-full overflow-hidden mb-4">
+                <div 
+                  className="h-full transition-all duration-500 rounded-full"
+                  style={{ 
+                    width: `${overallOccupancy}%`,
+                    backgroundColor: colors.primary.teal[500]
+                  }}
+                />
+              </div>
+
+              <p className="text-xs text-gray-500 text-center">Across your hostels</p>
+
+              {/* Hostel Breakdown */}
+              {hostelOccupancy.length > 1 && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">By Hostel</p>
+                  <div className="space-y-3">
+                    {hostelOccupancy.slice(0, 5).map((hostel) => (
+                      <div key={hostel.id} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700 truncate pr-2">{hostel.name}</span>
+                        <span className="text-sm font-medium text-gray-900 whitespace-nowrap">{hostel.occupancy}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Needs Attention */}
+          {(unpaidBillsCount > 0 || (roomRequests && roomRequests.length > 0)) && (
+            <Card className="border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Needs Attention</h3>
+                
+                <div className="space-y-3">
+                  {roomRequests && roomRequests.length > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+                          <Users className="h-4 w-4 text-teal-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Room requests</p>
+                          <p className="text-xs text-gray-600">{roomRequests.length} pending</p>
+                        </div>
+                      </div>
+                      <Link href="/owner/room-requests">
+                        <Button variant="ghost" size="sm" className="h-8 text-teal-600">
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+
+                  {unpaidBillsCount > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+                          <CreditCard className="h-4 w-4 text-teal-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Unpaid dues</p>
+                          <p className="text-xs text-gray-600">₹{pendingDues.toLocaleString()} outstanding</p>
+                        </div>
+                      </div>
+                      <Link href="/owner/payments">
+                        <Button variant="ghost" size="sm" className="h-8 text-teal-600">
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Everything Up to Date */}
+          {unpaidBillsCount === 0 && (!roomRequests || roomRequests.length === 0) && totalHostels > 0 && (
+            <Card className="border-gray-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Everything is up to date</p>
+                    <p className="text-sm text-gray-600">No immediate action required</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Room Requests */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Recent Room Requests</h2>
+          <Link href="/owner/room-requests">
+            <Button variant="ghost" size="sm" className="text-teal-600">
+              View all
+            </Button>
+          </Link>
+        </div>
+
+        {roomRequests && roomRequests.length > 0 ? (
+          <Card className="border-gray-200">
+            <CardContent className="p-0">
+              <div className="divide-y divide-gray-100">
+                {roomRequests.map((request: any) => (
+                  <div key={request.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center">
+                            <Users className="h-4 w-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{request.profiles?.full_name}</p>
+                            <p className="text-sm text-gray-600">
+                              Requested {request.room_type} room
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right ml-4">
+                        <StatusBadge status={request.status} />
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(request.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ) : (
-          <p className="text-sm text-muted-foreground">No bills yet.</p>
+          <EmptyState type="requests" />
         )}
       </section>
-    </DashboardShell>
+    </div>
   );
 }
 
-function EmptyState() {
+function EmptyState({ type }: { type: 'hostels' | 'requests' }) {
+  if (type === 'hostels') {
+    return (
+      <Card className="border-dashed border-gray-300 bg-gray-50">
+        <CardContent className="p-12 text-center">
+          <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No hostels yet</h3>
+          <p className="text-sm text-gray-600">Add your first hostel to start managing rooms and students.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-10 text-center">
-      <Building2 className="mx-auto h-10 w-10 text-muted-foreground/60" />
-      <h3 className="mt-3 font-semibold">No hostels yet</h3>
-      <p className="text-sm text-muted-foreground">Add your first hostel to start managing rooms, bills and residents.</p>
-    </div>
+    <Card className="border-dashed border-gray-300 bg-gray-50">
+      <CardContent className="p-12 text-center">
+        <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent requests</h3>
+        <p className="text-sm text-gray-600">Room requests will appear here when students apply.</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -292,8 +465,8 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-full shadow-md">
-          <Plus className="mr-1 h-4 w-4" /> New hostel
+        <Button className="bg-teal-600 hover:bg-teal-700 text-white font-medium">
+          <Plus className="mr-2 h-4 w-4" /> Add Hostel
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -301,63 +474,34 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
           <DialogTitle>Add a new hostel</DialogTitle>
           <DialogDescription>Enter the details for the new hostel you want to add.</DialogDescription>
         </DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
-          <div><Label>Name</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>City</Label><Input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-            <div><Label>Area</Label><Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} /></div>
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
+          <div>
+            <Label>Name</Label>
+            <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-          <div><Label>Starting price (₹/month)</Label><Input type="number" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} /></div>
-          <DialogFooter><Button type="submit" disabled={mutation.isPending}>Create hostel</Button></DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AddRoomDialog({ hostelId, onCreated }: { hostelId: string; onCreated: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ room_number: "", room_type: "single", capacity: "1", rent: "" });
-  const mutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("rooms").insert({
-        hostel_id: hostelId,
-        room_number: form.room_number,
-        room_type: form.room_type as "single" | "double" | "triple" | "quad",
-        capacity: Number(form.capacity),
-        rent: Number(form.rent),
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Room added"); setOpen(false); onCreated(); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" className="h-7 text-xs"><Plus className="mr-1 h-3 w-3" /> Room</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add room</DialogTitle>
-          <DialogDescription>Enter the details for the new room you want to add to this hostel.</DialogDescription>
-        </DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Room number</Label><Input required value={form.room_number} onChange={(e) => setForm({ ...form, room_number: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Type</Label>
-              <select className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={form.room_type} onChange={(e) => setForm({ ...form, room_type: e.target.value })}>
-                <option value="single">Single</option><option value="double">Double</option>
-                <option value="triple">Triple</option><option value="quad">Quad</option>
-              </select>
+              <Label>City</Label>
+              <Input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
             </div>
-            <div><Label>Capacity</Label><Input type="number" min={1} required value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} /></div>
-            <div><Label>Rent (₹)</Label><Input type="number" required value={form.rent} onChange={(e) => setForm({ ...form, rent: e.target.value })} /></div>
+            <div>
+              <Label>Area</Label>
+              <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+            </div>
           </div>
-          <DialogFooter><Button type="submit" disabled={mutation.isPending}>Add room</Button></DialogFooter>
+          <div>
+            <Label>Description</Label>
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div>
+            <Label>Starting price (₹/month)</Label>
+            <Input type="number" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={mutation.isPending} className="bg-teal-600 hover:bg-teal-700">
+              Create hostel
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

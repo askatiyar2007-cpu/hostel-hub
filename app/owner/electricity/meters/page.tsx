@@ -508,7 +508,7 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
     if (meter.pending_reading) {
       return {
         text: 'Billing Pending',
-        color: 'bg-orange-100 text-orange-800 border-orange-300',
+        color: 'bg-amber-100 text-amber-800 border-amber-300',
         icon: <AlertCircle className="h-4 w-4" />
       };
     }

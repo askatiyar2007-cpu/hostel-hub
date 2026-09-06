@@ -64,6 +64,7 @@
     "eslint-config-next": "^14.0.3",
     "fast-check": "^4.9.0",
     "jsdom": "^25.0.1",
+    "puppeteer": "^24.43.1",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.9"
   }

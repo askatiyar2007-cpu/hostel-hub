@@ -11,15 +11,15 @@
   --card-foreground: 30 15% 15%;
   --popover: 0 0% 100%;
   --popover-foreground: 30 15% 15%;
-  --primary: 15 85% 60%;
-  --primary-foreground: 40 33% 98%;
-  --primary-soft: 15 85% 95%;
+  --primary: 175 84% 32%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 175 84% 95%;
   --secondary: 40 15% 95%;
   --secondary-foreground: 30 15% 15%;
   --muted: 40 10% 96%;
   --muted-foreground: 30 10% 45%;
-  --accent: 30 85% 90%;
-  --accent-foreground: 30 40% 30%;
+  --accent: 175 60% 90%;
+  --accent-foreground: 175 84% 20%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   --success: 142 70% 45%;
@@ -28,7 +28,7 @@
   --warning-foreground: 0 0% 100%;
   --border: 30 10% 90%;
   --input: 30 10% 90%;
-  --ring: 15 85% 60%;
+  --ring: 175 84% 32%;
   --radius: 0.875rem;
 }
 
@@ -39,20 +39,20 @@
   --card-foreground: 40 5% 95%;
   --popover: 30 15% 12%;
   --popover-foreground: 40 5% 95%;
-  --primary: 15 85% 65%;
-  --primary-foreground: 30 15% 10%;
-  --primary-soft: 15 85% 20%;
+  --primary: 175 70% 40%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 175 70% 15%;
   --secondary: 30 10% 15%;
   --secondary-foreground: 40 5% 95%;
   --muted: 30 10% 15%;
   --muted-foreground: 30 5% 65%;
-  --accent: 30 15% 20%;
+  --accent: 175 40% 20%;
   --accent-foreground: 40 5% 95%;
   --destructive: 0 84% 65%;
   --destructive-foreground: 0 0% 100%;
   --border: 30 10% 20%;
   --input: 30 10% 20%;
-  --ring: 15 85% 65%;
+  --ring: 175 70% 40%;
 }
 
 * {
@@ -169,4 +169,22 @@ p {
 
 ::-webkit-scrollbar-thumb {
   @apply rounded-full bg-muted hover:bg-muted-foreground;
+}
+
+/* Owner sidebar scrollbar styling */
+.owner-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.owner-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.owner-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.owner-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

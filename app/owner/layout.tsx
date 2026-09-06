@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DashboardLayout } from '@/components/dashboard-layout';
+import { OwnerShell } from '@/components/owner/owner-shell';
 
 export default function OwnerLayout({
   children,
@@ -9,8 +9,8 @@ export default function OwnerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout>
+    <OwnerShell>
       {children}
-    </DashboardLayout>
+    </OwnerShell>
   );
 }

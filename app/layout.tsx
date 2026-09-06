@@ -31,7 +31,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
       <head>
         <meta charSet="utf-8" />
-        <meta name="theme-color" content="#f97316" />
+        <meta name="theme-color" content="#0d9488" />
       </head>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
         <QueryProvider>

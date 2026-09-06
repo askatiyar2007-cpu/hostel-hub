@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   MapPin,
@@ -12,10 +12,14 @@ import {
   DollarSign,
   AlertCircle,
   Plus,
-  Copy
+  Copy,
+  Phone,
+  Mail,
+  CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
-
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Hostel } from '@/types/database';
 
 export default function HostelDetailsPage() {
@@ -99,122 +103,106 @@ export default function HostelDetailsPage() {
   }
 
   return (
-    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <Link href="/owner/hostels" className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-            <ArrowLeft size={24} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">{hostel.name}</h1>
-            <p className="mt-1 flex items-center text-sm text-muted-foreground">
-              <MapPin size={16} className="mr-1" />
-              {hostel.address}, {hostel.city}
-            </p>
-            <div className="mt-2 flex w-fit items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
-              <span className="font-bold uppercase tracking-wider text-primary/80">HOSTEL ID:</span>
-              <code className="font-mono">{hostel.id}</code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(hostel.id);
-                  toast.success('Hostel ID copied');
-                }}
-                className="p-0.5 hover:text-primary/60"
-                title="Copy ID to Clipboard"
-              >
-                <Copy size={12} className="ml-1 inline" />
-              </button>
+    <div className="min-h-screen bg-slate-50 p-6 md:p-8 lg:p-10">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link href="/owner/hostels" className="p-2 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 transition-colors">
+              <ArrowLeft size={20} />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">{hostel.name}</h1>
+              <div className="flex items-center gap-2 text-slate-500">
+                <MapPin size={16} />
+                <span className="text-sm">{hostel.city}, {hostel.state}</span>
+              </div>
             </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" asChild>
+              <Link href={`/owner/hostels/edit/${hostel.id}`}>Edit Details</Link>
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
+              <Link href={`/owner/rooms/new?hostelId=${hostel.id}`}>
+                <Plus size={16} className="mr-2" /> Add Room
+              </Link>
+            </Button>
           </div>
         </div>
 
-        <div className="flex space-x-3">
-          <Link href={`/owner/hostels/edit/${hostel.id}`} className="inline-flex items-center rounded-full border border-border bg-card px-6 py-2.5 font-semibold text-foreground shadow-sm transition-all hover:bg-muted">
-            Edit Details
-          </Link>
-          <Link href={`/owner/rooms/new?hostelId=${hostel.id}`} className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:shadow-lg">
-            <Plus size={20} />
-            <span>Add Room</span>
-          </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Rooms', value: stats.rooms, icon: Home, color: 'text-blue-600' },
+            { label: 'Active Students', value: stats.students, icon: Users, color: 'text-indigo-600' },
+            { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-600' },
+            { label: 'Pending Complaints', value: stats.complaints, icon: AlertCircle, color: 'text-rose-600' },
+          ].map((stat, i) => (
+            <Card key={i} className="border-slate-200 shadow-sm">
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
+                  <p className="text-2xl font-bold mt-1 text-slate-900">{stat.value}</p>
+                </div>
+                <stat.icon className={`w-8 h-8 opacity-20 ${stat.color}`} />
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatItem icon={<Home size={24} />} label="Total Rooms" value={stats.rooms} color="text-primary" bg="bg-primary/10" />
-        <StatItem icon={<Users size={24} />} label="Active Students" value={stats.students} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatItem icon={<DollarSign size={24} />} label="Hostel Revenue" value={`₹${stats.revenue}`} color="text-amber-600" bg="bg-amber-50" />
-        <StatItem icon={<AlertCircle size={24} />} label="Open Complaints" value={stats.complaints} color="text-rose-600" bg="bg-rose-50" />
-      </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-3">About Property</h3>
+                <p className="text-slate-600 leading-relaxed">{hostel.description}</p>
+              </CardContent>
+            </Card>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* About Section */}
-        <div className="space-y-8 lg:col-span-2">
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-            <h3 className="mb-4 text-xl font-semibold font-display text-foreground">About the Hostel</h3>
-            <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">{hostel.description}</p>
-
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="mb-2 font-semibold text-foreground">Amenities</h4>
-                <div className="flex flex-wrap gap-2">
-                  {hostel.amenities?.map((a: string) => (
-                    <span key={a} className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
-                      {a}
-                    </span>
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Amenities</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {hostel.amenities?.map((a) => (
+                    <div key={a} className="flex items-center gap-2 p-2 bg-slate-50 rounded border border-slate-100">
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                      <span className="text-sm text-slate-700">{a}</span>
+                    </div>
                   ))}
                 </div>
-              </div>
-              <div>
-                <h4 className="mb-2 font-semibold text-foreground">Hostel Rules</h4>
-                <p className="text-sm italic text-muted-foreground">{hostel.rules || 'No specific rules mentioned.'}</p>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Quick Contact</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <Mail size={18} />
+                    <span className="text-sm">{hostel.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <Phone size={18} />
+                    <span className="text-sm">{hostel.contact_number}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-slate-200 bg-slate-900 text-slate-100">
+              <CardContent className="p-6">
+                <h3 className="text-sm font-medium opacity-70 mb-2">Hostel Unique ID</h3>
+                <div className="flex items-center justify-between">
+                  <code className="text-lg font-mono">{hostel.id.slice(0, 12)}...</code>
+                  <button onClick={() => { navigator.clipboard.writeText(hostel.id); toast.success('Copied'); }} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* Contact Sidebar */}
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-            <h3 className="mb-6 text-xl font-semibold font-display text-foreground">Contact Information</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Email</p>
-                <p className="font-medium text-foreground">{hostel.email}</p>
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Phone</p>
-                <p className="font-medium text-foreground">{hostel.contact_number}</p>
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Pincode</p>
-                <p className="font-medium text-foreground">{hostel.pincode}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface StatItemProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  color: string;
-  bg: string;
-}
-
-function StatItem({ icon, label, value, color, bg }: StatItemProps) {
-  return (
-    <div className="flex items-center space-x-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <div className={`${bg} ${color} rounded-xl p-3`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold font-display text-foreground">{value}</p>
       </div>
     </div>
   );

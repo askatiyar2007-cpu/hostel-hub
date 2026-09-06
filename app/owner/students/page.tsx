@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
-import { Search, MoreVertical, Plus, Users, Building2, AlertTriangle, X } from 'lucide-react';
+import { Search, Plus, Users, Building2, AlertTriangle, X } from 'lucide-react';
+import { StudentCard } from './components/StudentCard';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/dashboard-shell';
@@ -15,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 // User-facing labels for the two booking modes. The underlying persisted
@@ -184,25 +184,35 @@ export default function OwnerStudentsPage() {
   return (
     <DashboardShell 
       title="Students" 
-      subtitle="Manage residents across all your hostels" 
+      subtitle="Manage resident students and active room allocations across your properties." 
       badge="Residents"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div className="flex flex-1 items-center gap-2 max-w-md">
+      {/* Top Toolbar: Search, Hostel Filter, Assign CTA */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <Input 
-              placeholder="Search by name, email, phone or room..." 
+              placeholder="Search by student name, email, phone, or room..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-9 pr-8 h-10 border-gray-200 bg-white"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 border-primary/30 bg-primary/5 font-semibold text-foreground">
-                <Building2 size={18} className="text-primary" />
-                <span>{selectedHostel === 'all' ? 'All Hostels' : uniqueHostels.find(h => h.id === selectedHostel)?.name}</span>
+              <Button variant="outline" className="h-10 gap-2 border-gray-200 bg-white font-medium text-gray-700 hover:bg-gray-50">
+                <Building2 size={16} className="text-teal-600" />
+                <span className="truncate">{selectedHostel === 'all' ? 'All Hostels' : uniqueHostels.find(h => h.id === selectedHostel)?.name}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -215,158 +225,90 @@ export default function OwnerStudentsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
         <Link href="/owner/students/new">
-          <Button className="gap-2 rounded-full">
+          <Button className="h-10 gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 shadow-sm transition-colors">
             <Plus size={18} />
             <span>Assign Student</span>
           </Button>
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-6 py-4 text-left font-semibold">Student</th>
-                <th className="px-6 py-4 text-left font-semibold">Contact Info</th>
-                <th className="px-6 py-4 text-left font-semibold">Hostel & Room</th>
-                <th className="px-6 py-4 text-left font-semibold">Booking & Rent</th>
-                <th className="px-6 py-4 text-left font-semibold">Check-in Date</th>
-                <th className="px-6 py-4 text-left font-semibold">Status</th>
-                <th className="px-6 py-4 text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-muted-foreground">Loading residents...</td></tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center gap-2 text-red-500">
-                      <AlertTriangle className="h-10 w-10" />
-                      <p className="font-semibold">Error: {error}</p>
-                      <Button variant="outline" className="mt-2" onClick={fetchStudents}>
-                        Retry Loading
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredAssignments.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="h-10 w-10 text-muted-foreground/40" />
-                      <p className="text-muted-foreground">No students found matching your criteria.</p>
-                      <Button variant="link" onClick={() => {setSearchQuery(''); setSelectedHostel('all');}}>
-                        Clear all filters
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredAssignments.map((item) => {
-                const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
-                const profile = studentInfo?.profiles;
-                const studentName = item.student_name || profile?.full_name || '-';
-                const studentEmail = item.student_email || profile?.email || '-';
-                const studentPhone = item.student_phone || profile?.phone_number || '-';
-                const hostelName = item.hostels?.name || '-';
-                const roomNum = item.rooms?.room_number || '-';
-                const bookingType = BOOKING_TYPE_LABEL[item.booking_type] || BOOKING_TYPE_LABEL.shared_bed;
-                const rent = item.rooms?.rent || 0;
-                const studentId = studentInfo?.id;
-                const passportPhotoUrl = studentId ? photoUrls[studentId] : null;
-
-                return (
-                  <tr 
-                    key={item.id} 
-                    className="hover:bg-muted/30 transition-colors group cursor-pointer"
-                    onClick={() => router.push(`/owner/students/${item.id}`)}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        {passportPhotoUrl ? (
-                          <img 
-                            src={passportPhotoUrl} 
-                            alt="Student passport photo"
-                            className="h-10 w-10 rounded-full object-cover border border-border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewPhoto(passportPhotoUrl);
-                            }}
-                          />
-                        ) : profile?.avatar_url ? (
-                          <img 
-                            src={profile.avatar_url} 
-                            alt={studentName} 
-                            className="h-10 w-10 rounded-full object-cover border border-border"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
-                            {studentName?.[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-foreground">{studentName}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-foreground">{studentEmail}</p>
-                        <p className="text-xs text-muted-foreground">{studentPhone}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-foreground flex items-center gap-1.5">
-                          <Building2 size={14} className="text-muted-foreground" />
-                          {hostelName}
-                        </p>
-                        <Badge variant="outline" className="mt-1 font-medium bg-muted/30">
-                          Room {roomNum}
-                        </Badge>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-foreground">{bookingType}</p>
-                        <p className="text-xs text-primary font-bold">₹{Number(rent).toLocaleString()}/mo</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {item.start_date ? new Date(item.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none capitalize">
-                        {item.active ? 'active' : 'inactive'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
-                            <MoreVertical size={18} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/owner/students/${item.id}`)}>
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleCheckout(item.id)} className="text-destructive cursor-pointer">
-                            Check out
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Loading State */}
+      {loading ? (
+        <div className="rounded-2xl border border-teal-200/80 bg-white p-12 text-center text-gray-500 shadow-xs">
+          <div className="animate-spin inline-block w-8 h-8 border-3 border-teal-600 border-t-transparent rounded-full mb-3" />
+          <p className="font-medium text-gray-600">Loading resident students...</p>
         </div>
-      </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50/50 p-12 text-center shadow-xs">
+          <AlertTriangle className="mx-auto h-10 w-10 text-red-500 mb-2" />
+          <p className="font-semibold text-red-800 mb-2">Error: {error}</p>
+          <Button variant="outline" onClick={fetchStudents} className="border-red-200 text-red-700 hover:bg-red-50">
+            Retry Loading
+          </Button>
+        </div>
+      ) : filteredAssignments.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-xs">
+          <Users className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+          <h3 className="text-base font-semibold text-gray-900">No resident students found</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {searchQuery || selectedHostel !== 'all' 
+              ? 'No students match your current filter criteria.' 
+              : 'You do not have any active resident students assigned yet.'}
+          </p>
+          {(searchQuery || selectedHostel !== 'all') ? (
+            <Button 
+              variant="outline" 
+              onClick={() => { setSearchQuery(''); setSelectedHostel('all'); }}
+              className="mt-4 border-gray-200"
+            >
+              Clear Filters
+            </Button>
+          ) : (
+            <Link href="/owner/students/new" className="inline-block mt-4">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white font-medium gap-2">
+                <Plus size={16} /> Assign First Student
+              </Button>
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+  {filteredAssignments.map((item) => {
+    const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
+    const profile = studentInfo?.profiles;
+    const studentName = item.student_name || profile?.full_name || 'Resident Student';
+    const studentEmail = item.student_email || profile?.email || '-';
+    const studentPhone = item.student_phone || profile?.phone_number || '-';
+    const hostelName = item.hostels?.name || '-';
+    const roomNum = item.rooms?.room_number || '-';
+    const bookingType = BOOKING_TYPE_LABEL[item.booking_type] || BOOKING_TYPE_LABEL.shared_bed;
+    const rent = item.rooms?.rent || 0;
+    const studentId = studentInfo?.id;
+    const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+    const statusLabel = item.active ? 'Active' : 'Inactive';
+    const statusColorClass = item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+
+    return (
+      <StudentCard
+        key={item.id}
+        studentName={studentName}
+        studentEmail={studentEmail}
+        studentPhone={studentPhone}
+        hostelName={hostelName}
+        roomNumber={roomNum}
+        bookingType={bookingType}
+        rent={rent}
+        statusLabel={statusLabel}
+        statusColorClass={statusColorClass}
+        studentPhotoUrl={passportPhotoUrl}
+        onViewProfile={() => router.push(`/owner/students/${item.id}`)}
+        onCheckout={() => handleCheckout(item.id)}
+      />
+    );
+  })}
+</div>      )}
 
       {/* Photo Preview Modal */}
       {previewPhoto && (
