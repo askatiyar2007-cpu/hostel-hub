@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Plus, MapPin, Trash2, Search, MoreVertical, Building2, X, Users, DoorOpen } from 'lucide-react';
-import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
+import EmptyState from '@/app/components/EmptyState';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/context';
 import { Hostel } from '@/types/database';
@@ -190,7 +190,7 @@ export default function HostelsListPage() {
           ))}
         </div>
       ) : filteredHostels.length === 0 ? (
-        <EmptyState hasFilters={!!searchQuery} onClearFilters={clearFilters} />
+        <EmptyState hasFilters={!!searchQuery} onClearFilters={clearFilters} type="hostels" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredHostels.map((hostel) => (
@@ -280,38 +280,5 @@ export default function HostelsListPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function EmptyState({ hasFilters, onClearFilters }: { hasFilters: boolean; onClearFilters: () => void }) {
-  if (hasFilters) {
-    return (
-      <Card className="border-gray-200">
-        <CardContent className="p-12 text-center">
-          <Building2 className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No hostels match your filters</h3>
-          <p className="text-sm text-gray-600 mb-6">Try adjusting your search or filter criteria.</p>
-          <Button variant="outline" onClick={onClearFilters}>
-            Clear Filters
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="border-gray-200">
-      <CardContent className="p-12 text-center">
-        <Building2 className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No hostels yet</h3>
-        <p className="text-sm text-gray-600 mb-6">Add your first hostel to start managing properties, rooms, and residents.</p>
-        <Link href="/owner/hostels/new">
-          <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-            <Plus size={20} className="mr-2" />
-            Add Hostel
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
   );
 }

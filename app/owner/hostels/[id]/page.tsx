@@ -103,16 +103,17 @@ export default function HostelDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8 lg:p-10">
+
+    <div className="min-h-screen bg-card p-6 md:p-8 lg:p-10">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link href="/owner/hostels" className="p-2 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/owner/hostels" className="p-2 bg-card shadow-sm border border-border rounded-lg text-slate-600 hover:text-foreground transition-colors">
               <ArrowLeft size={20} />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">{hostel.name}</h1>
-              <div className="flex items-center gap-2 text-slate-500">
+              <h1 className="text-2xl md:text-4xl font-bold text-foreground">{hostel.name}</h1>
+              <div className="flex items-center gap-2 text-foreground">
                 <MapPin size={16} />
                 <span className="text-sm">{hostel.city}, {hostel.state}</span>
               </div>
@@ -137,11 +138,11 @@ export default function HostelDetailsPage() {
             { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-600' },
             { label: 'Pending Complaints', value: stats.complaints, icon: AlertCircle, color: 'text-rose-600' },
           ].map((stat, i) => (
-            <Card key={i} className="border-slate-200 shadow-sm">
+            <Card key={i} className="border-border shadow-sm">
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1 text-slate-900">{stat.value}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                  <p className="text-2xl font-bold mt-1 text-foreground">{stat.value}</p>
                 </div>
                 <stat.icon className={`w-8 h-8 opacity-20 ${stat.color}`} />
               </CardContent>
@@ -151,21 +152,21 @@ export default function HostelDetailsPage() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-3">About Property</h3>
-                <p className="text-slate-600 leading-relaxed">{hostel.description}</p>
+                <p className="text-foreground leading-relaxed">{hostel.description}</p>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Amenities</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {hostel.amenities?.map((a) => (
-                    <div key={a} className="flex items-center gap-2 p-2 bg-slate-50 rounded border border-slate-100">
+                    <div key={a} className="flex items-center gap-2 p-2 bg-card rounded border border-border">
                       <CheckCircle2 size={16} className="text-emerald-600" />
-                      <span className="text-sm text-slate-700">{a}</span>
+                      <span className="text-sm text-foreground">{a}</span>
                     </div>
                   ))}
                 </div>
@@ -174,15 +175,15 @@ export default function HostelDetailsPage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="border-slate-200">
+            <Card className="border-border">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Quick Contact</h3>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-slate-600">
+                  <div className="flex items-center gap-3 text-muted-foreground">
                     <Mail size={18} />
                     <span className="text-sm">{hostel.email}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-slate-600">
+                  <div className="flex items-center gap-3 text-muted-foreground">
                     <Phone size={18} />
                     <span className="text-sm">{hostel.contact_number}</span>
                   </div>
@@ -190,12 +191,12 @@ export default function HostelDetailsPage() {
               </CardContent>
             </Card>
             
-            <Card className="border-slate-200 bg-slate-900 text-slate-100">
+            <Card className="border-border bg-primary-900 text-foreground">
               <CardContent className="p-6">
                 <h3 className="text-sm font-medium opacity-70 mb-2">Hostel Unique ID</h3>
                 <div className="flex items-center justify-between">
                   <code className="text-lg font-mono">{hostel.id.slice(0, 12)}...</code>
-                  <button onClick={() => { navigator.clipboard.writeText(hostel.id); toast.success('Copied'); }} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
+                  <button onClick={() => { navigator.clipboard.writeText(hostel.id); toast.success('Copied'); }} className="p-2 hover:bg-primary-800 rounded-full transition-colors">
                     <Copy size={16} />
                   </button>
                 </div>
