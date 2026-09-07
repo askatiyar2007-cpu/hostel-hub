@@ -23,16 +23,22 @@ import {
   Coins,
   ChevronDown,
   ChevronUp,
-  Search,
   BarChart3,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
-import { colors } from '@/lib/design-tokens';
+import { OwnerBackground } from './owner-background';
+import { SidebarBackground } from './sidebar-background';
 
 interface NavItem {
   name: string;
@@ -83,7 +89,7 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
   setIsElectricityOpen: (v: boolean) => void;
 }) {
   return (
-    <nav className="space-y-6 px-3">
+    <nav className="space-y-1 px-3">
       {(() => {
         const groups = ['MAIN', 'OPERATIONS', 'SYSTEM'];
         return groups.map(group => {
@@ -91,7 +97,7 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
           if (groupItems.length === 0) return null;
           
           return (
-            <div key={group}>
+            <div key={group} className="mb-6 last:mb-0">
               {!isCollapsed && (
                 <p className="px-3 mb-2 text-xs font-semibold text-gray-400 tracking-wider">
                   {group}
@@ -113,12 +119,11 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
                             href={item.href}
                             title={item.name}
                             className={cn(
-                              "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                              "group flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                               isActive
-                                ? "bg-teal-600 text-white shadow-sm"
-                                : "text-gray-300 hover:bg-navy-800 hover:text-white"
+                                ? "bg-teal-600 text-white shadow-xs font-semibold"
+                                : "text-slate-300 hover:bg-slate-800/80 hover:text-white hover:translate-x-0.5"
                             )}
-                            style={{ backgroundColor: isActive ? colors.primary.teal[600] : undefined }}
                           >
                             <item.icon className="h-5 w-5 shrink-0 mx-auto" />
                           </Link>
@@ -127,21 +132,20 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
                             <button
                               onClick={() => setIsElectricityOpen(!isElectricityOpen)}
                               className={cn(
-                                "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                "group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                                 isActive
-                                  ? "bg-teal-600 text-white font-semibold"
-                                  : "text-gray-300 hover:bg-navy-800 hover:text-white"
+                                  ? "bg-teal-600 text-white shadow-xs font-semibold"
+                                  : "text-slate-300 hover:bg-slate-800/80 hover:text-white hover:translate-x-0.5"
                               )}
-                              style={{ backgroundColor: isActive ? colors.primary.teal[600] : undefined }}
                             >
                               <div className="flex items-center">
                                 <item.icon className="h-5 w-5 shrink-0 mr-3" />
                                 <span>{item.name}</span>
                               </div>
                               {isOpen ? (
-                                <ChevronUp size={16} className="text-gray-300" />
+                                <ChevronUp size={16} className={isActive ? "text-white" : "text-slate-400"} />
                               ) : (
-                                <ChevronDown size={16} className="text-gray-300" />
+                                <ChevronDown size={16} className={isActive ? "text-white" : "text-slate-400"} />
                               )}
                             </button>
                             {isOpen && (
@@ -153,12 +157,11 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
                                       key={child.name}
                                       href={child.href}
                                       className={cn(
-                                        "group flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                                        "group flex items-center rounded-xl px-3 py-1.5 text-xs font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                                         isChildItemActive
-                                          ? "bg-teal-600 text-white shadow-sm font-semibold"
-                                          : "text-gray-300 hover:bg-navy-800 hover:text-white"
+                                          ? "bg-teal-600 text-white shadow-xs font-semibold"
+                                          : "text-slate-300 hover:bg-slate-800/80 hover:text-white hover:translate-x-0.5"
                                       )}
-                                      style={{ backgroundColor: isChildItemActive ? colors.primary.teal[600] : undefined }}
                                     >
                                       <child.icon className="mr-2.5 h-4 w-4 shrink-0" />
                                       <span>{child.name}</span>
@@ -178,13 +181,13 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
                       key={item.name}
                       href={item.href}
                       title={isCollapsed ? item.name : ""}
+                      aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "group flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
                         isActive
-                          ? "bg-teal-600 text-white shadow-sm"
-                          : "text-gray-300 hover:bg-navy-800 hover:text-white"
+                          ? "bg-teal-600 text-white shadow-xs font-semibold"
+                          : "text-slate-300 hover:bg-slate-800/80 hover:text-white hover:translate-x-0.5"
                       )}
-                      style={{ backgroundColor: isActive ? colors.primary.teal[600] : undefined }}
                     >
                       <item.icon className={cn("h-5 w-5 shrink-0", isCollapsed ? "mx-auto" : "mr-3")} />
                       {!isCollapsed && <span>{item.name}</span>}
@@ -205,7 +208,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isElectricityOpen, setIsElectricityOpen] = useState(false);
   const pathname = usePathname();
-  const { profile, signOut, loading, accountCompletionStep, password_set } = useAuth();
+  const { profile, user, signOut, loading, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
@@ -262,38 +265,46 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Desktop Sidebar - Dark Teal/Navy */}
+    <div className="flex min-h-screen relative text-slate-900 overflow-x-hidden selection:bg-teal-100 selection:text-teal-900">
+      {/* BackgroundLayer: dedicated atmospheric environmental background matching Image 2 */}
+      <OwnerBackground />
+
+      {/* Desktop Sidebar - Deep Dark Navy/Teal with architectural skyline at bottom */}
       <aside 
         className={cn(
-          "owner-sidebar fixed left-0 top-0 z-30 hidden h-screen border-r transition-all duration-300 md:block",
+          "owner-sidebar fixed left-0 top-0 z-50 hidden h-screen border-r transition-all duration-300 md:block shadow-2xl bg-[#081720] border-slate-800/80 overflow-hidden shrink-0",
           isCollapsed ? "w-20" : "w-64"
         )}
-        style={{ backgroundColor: colors.primary.navy[950], borderColor: colors.primary.navy[900] }}
       >
-        <div className="flex h-full flex-col">
-          {/* Logo Section */}
+        {/* Architectural background decoration behind sidebar navigation */}
+        <SidebarBackground isCollapsed={isCollapsed} />
+
+        <div className="relative z-10 flex h-full flex-col">
+          {/* Logo Section - exact h-14 to match top header */}
           <div className={cn(
-            "flex items-center border-b p-4 flex-shrink-0",
+            "flex h-14 items-center border-b px-4 flex-shrink-0 border-slate-800/80 bg-[#081720]/95 backdrop-blur-xs",
             isCollapsed ? "justify-center" : "justify-between",
-          )} style={{ borderColor: colors.primary.navy[900] }}>
+          )}>
             {!isCollapsed && (
-              <Link href="/owner/dashboard" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: colors.primary.teal[500] }}>
-                  <Building2 className="h-4 w-4 text-white" />
+              <Link href="/owner/dashboard" className="flex items-center gap-2.5 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded-lg">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500 shadow-md group-hover:scale-105 transition-transform">
+                  <Building2 className="h-5 w-5 text-white" />
                 </div>
-                <span className="font-semibold text-white tracking-tight">HostelHub</span>
+                <div>
+                  <span className="font-bold text-white tracking-tight text-base block leading-none">HostelHub</span>
+                  <span className="text-[10px] font-semibold text-teal-400 tracking-wider uppercase mt-1 block">Owner Workspace</span>
+                </div>
               </Link>
             )}
             {isCollapsed && (
-              <Link href="/owner/dashboard" className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: colors.primary.teal[500] }}>
-                <Building2 className="h-4 w-4 text-white" />
+              <Link href="/owner/dashboard" className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500 shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
+                <Building2 className="h-5 w-5 text-white" />
               </Link>
             )}
           </div>
 
-          {/* Navigation with Groups - Scrollable */}
-          <div className="flex-1 overflow-y-auto py-4 min-h-0">
+          {/* Navigation with Groups - Scrollable, sitting solidly above background */}
+          <div className="relative z-10 flex-1 overflow-y-auto py-4 min-h-0">
             <NavContent 
               isCollapsed={isCollapsed}
               pathname={pathname}
@@ -302,26 +313,26 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
             />
           </div>
           
-          {/* Collapse & Logout - Fixed Footer */}
-          <div className="border-t p-4 flex-shrink-0" style={{ borderColor: colors.primary.navy[900] }}>
+          {/* Collapse & Logout - Fixed Footer, sitting solidly above background */}
+          <div className="relative z-20 border-t p-4 flex-shrink-0 border-slate-800/80 bg-[#081720] shadow-lg">
             <button
               onClick={() => signOut()}
               className={cn(
-                "flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors",
+                "flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400",
                 isCollapsed && "justify-center"
               )}
               title={isCollapsed ? "Logout" : ""}
             >
-              <LogOut className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-3")} />
+              <LogOut className={cn("h-4.5 w-4.5 shrink-0", !isCollapsed && "mr-3")} />
               {!isCollapsed && <span>Logout</span>}
             </button>
             
             <button
               onClick={toggleSidebar}
-              className="mt-4 hidden w-full items-center justify-center rounded-lg border py-2 text-gray-300 hover:bg-navy-800 md:flex"
-              style={{ borderColor: colors.primary.navy[800] }}
+              className="mt-2.5 hidden w-full items-center justify-center rounded-xl border py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/80 active:scale-95 transition-all border-slate-800 md:flex text-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </button>
           </div>
         </div>
@@ -330,7 +341,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
       {/* Mobile Sidebar Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden"
           onClick={toggleMobileSidebar}
         />
       )}
@@ -338,24 +349,26 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
       {/* Mobile Sidebar */}
       <aside 
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out md:hidden shadow-2xl bg-[#081720] overflow-hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ backgroundColor: colors.primary.navy[950] }}
       >
-        <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b p-4 flex-shrink-0" style={{ borderColor: colors.primary.navy[900] }}>
-            <Link href="/owner/dashboard" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: colors.primary.teal[500] }}>
+        {/* Architectural background decoration for mobile sidebar */}
+        <SidebarBackground isCollapsed={false} />
+
+        <div className="relative z-10 flex h-full flex-col">
+          <div className="flex h-14 items-center justify-between border-b px-4 flex-shrink-0 border-slate-800/80 bg-[#081720]/95 backdrop-blur-xs">
+            <Link href="/owner/dashboard" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 shadow-md">
                 <Building2 className="h-4 w-4 text-white" />
               </div>
-              <span className="font-semibold text-white tracking-tight">HostelHub</span>
+              <span className="font-bold text-white tracking-tight">HostelHub</span>
             </Link>
-            <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="text-white hover:bg-navy-800">
+            <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="text-white hover:bg-slate-800/60 rounded-lg cursor-pointer">
               <X size={20} />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto py-4 min-h-0">
+          <div className="relative z-10 flex-1 overflow-y-auto py-4 min-h-0">
             <NavContent 
               isCollapsed={false}
               pathname={pathname}
@@ -363,67 +376,202 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
               setIsElectricityOpen={setIsElectricityOpen}
             />
           </div>
-          <div className="border-t p-4 flex-shrink-0" style={{ borderColor: colors.primary.navy[900] }}>
+          <div className="relative z-20 border-t p-4 flex-shrink-0 border-slate-800/80 bg-[#081720] shadow-lg">
             <button
               onClick={() => signOut()}
-              className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+              className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
             >
-              <LogOut className="mr-3 h-5 w-5 shrink-0" />
+              <LogOut className="mr-3 h-4.5 w-4.5 shrink-0" />
               Logout
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className={cn(
-        "flex-1 min-w-0 max-w-full transition-all duration-300",
-        isCollapsed ? "md:pl-20" : "md:pl-64"
+      {/* Top Header - FIXED AT THE TOP (NEVER SCROLLS AWAY) */}
+      <header className={cn(
+        "fixed top-0 right-0 z-40 flex h-14 items-center justify-between border-b border-[#0d3340] bg-[#07212b] px-4 md:px-6 shadow-sm transition-all duration-300",
+        isCollapsed ? "left-0 md:left-20" : "left-0 md:left-64"
       )}>
-        {/* Top Header */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-white px-4 md:px-6" style={{ borderColor: colors.neutral[200] }}>
+        {/* Left Side: Sidebar Toggle & Branding */}
+        <div className="flex items-center gap-3">
           {/* Mobile Menu Button */}
-          <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="md:hidden">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleMobileSidebar} 
+            className="md:hidden text-teal-300 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer h-9 w-9 focus-visible:ring-2 focus-visible:ring-teal-400"
+            aria-label="Toggle navigation menu"
+          >
             <Menu size={20} />
           </Button>
 
-          {/* Search */}
-          <div className="hidden md:flex flex-1 max-w-lg">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search hostels, rooms, students..."
-                className="pl-10 h-9 bg-gray-50 border-gray-200 text-sm focus:ring-1 focus:ring-teal-500"
-              />
+          {/* Desktop Sidebar Toggle Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="hidden md:flex text-teal-300 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer h-9 w-9 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 active:scale-95"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Menu size={18} />
+          </Button>
+
+          {/* Desktop HostelHub Branding context */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white shadow-xs">
+              <Building2 className="h-4.5 w-4.5" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-bold text-white tracking-tight text-base leading-none">HostelHub</span>
+              <span className="hidden sm:inline-block text-[10px] font-semibold text-teal-400/90 tracking-wider uppercase">Workspace</span>
             </div>
           </div>
+        </div>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-gray-100">
-              <Bell className="h-5 w-5 text-gray-600" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
+          {/* Center: Clean Empty Area (No giant global search bar on dashboard) */}
+          <div className="flex-1" />
+
+          {/* Right Side Actions: Notification Bell | Separator | Owner Profile Dropdown */}
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Notifications with indicator dot */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative h-9 w-9 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 active:scale-95"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4.5 w-4.5" />
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-[#07212b]" />
             </Button>
 
-            {/* Profile */}
-            <div className="flex items-center gap-3 pl-3 border-l" style={{ borderColor: colors.neutral[200] }}>
-              <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-gray-900">{profile?.full_name || 'Owner'}</p>
-                <p className="text-xs text-gray-500">Owner</p>
-              </div>
-              <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
-                {profile?.full_name?.charAt(0) || 'O'}
-              </div>
+            {/* Subtle vertical separator */}
+            <div className="h-5 w-px bg-slate-700/80" aria-hidden="true" />
+
+            {/* Profile Dropdown */}
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button 
+                    type="button"
+                    className="flex items-center gap-2.5 py-1 px-2 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 text-left group cursor-pointer"
+                    aria-label="Owner account menu"
+                  >
+                    {/* Clean circular avatar */}
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile?.full_name || 'Owner'}
+                        className="h-8 w-8 rounded-full object-cover ring-2 ring-teal-400/40 shadow-xs shrink-0"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center text-xs font-bold tracking-wide ring-2 ring-teal-400/40 shadow-xs shrink-0">
+                        {(() => {
+                          const name = profile?.full_name || user?.user_metadata?.full_name || 'Owner';
+                          const parts = name.trim().split(/\s+/);
+                          if (parts.length >= 2) {
+                            return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+                          }
+                          return (name.charAt(0) || 'O').toUpperCase();
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Real owner name + "Owner" subtitle */}
+                    <div className="hidden sm:block leading-tight text-left">
+                      <p className="text-sm font-semibold text-white leading-none truncate max-w-[140px]">
+                        {profile?.full_name || user?.user_metadata?.full_name || 'Hostel Owner'}
+                      </p>
+                      <p className="text-[11px] text-teal-300/80 font-medium leading-none mt-1">
+                        Owner
+                      </p>
+                    </div>
+
+                    {/* Dropdown chevron */}
+                    <ChevronDown size={14} className="text-slate-400 group-hover:text-white transition-transform duration-200 group-data-[state=open]:rotate-180 ml-0.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-68 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                  {/* Account Header Card */}
+                  <div className="p-3 bg-gradient-to-r from-slate-50 to-teal-50/40 rounded-lg border border-slate-200/80 mb-1.5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 text-white flex items-center justify-center text-sm font-bold shadow-xs ring-2 ring-white">
+                        {profile?.full_name?.charAt(0)?.toUpperCase() || 'O'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-900 truncate">
+                          {profile?.full_name || 'Hostel Owner'}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate" title={profile?.email || user?.email || ''}>
+                          {profile?.email || user?.email || 'No email registered'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[11px]">
+                      <span className="font-semibold text-teal-800 bg-teal-100/70 border border-teal-200 px-2 py-0.5 rounded-full">
+                        Hostel Owner
+                      </span>
+                      <span className="text-emerald-700 font-medium flex items-center gap-1 bg-emerald-50 border border-emerald-200/70 px-2 py-0.5 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Active
+                      </span>
+                    </div>
+                  </div>
+
+                  <DropdownMenuSeparator className="my-1 border-slate-100" />
+
+                  <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100">
+                    <Link href="/owner/settings" className="flex items-center gap-2.5 w-full">
+                      <div className="p-1 rounded-md bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                        <Settings size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-800">Account Settings</span>
+                        <span className="text-[10px] text-slate-400">Profile & preferences</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100">
+                    <Link href="/owner/settings/payment-methods" className="flex items-center gap-2.5 w-full">
+                      <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+                        <CreditCard size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-800">Payment Methods</span>
+                        <span className="text-[10px] text-slate-400">UPI, Bank accounts & QR</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="my-1 border-slate-100" />
+
+                  <DropdownMenuItem 
+                    onClick={() => signOut()} 
+                    className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 focus:bg-rose-50 focus:text-rose-700 flex items-center gap-2.5"
+                  >
+                    <div className="p-1 rounded-md bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+                      <LogOut size={14} />
+                    </div>
+                    <span className="font-semibold text-rose-600">Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="min-h-[calc(100vh-3.5rem)] min-w-0 max-w-full overflow-x-hidden">
-          {children}
-        </main>
+        {/* Main Content Area - with pt-14 top offset to clear fixed header and md:pl to clear sidebar */}
+        <div className={cn(
+          "relative z-10 flex-1 min-w-0 max-w-full transition-all duration-300 pt-14",
+          isCollapsed ? "md:pl-20" : "md:pl-64"
+        )}>
+          {/* Page Content */}
+          <main className="min-h-[calc(100vh-3.5rem)] min-w-0 max-w-full">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

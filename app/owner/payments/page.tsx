@@ -395,21 +395,21 @@ export default function OwnerPaymentsDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 bg-zinc-50/50 dark:bg-zinc-950/20 min-h-screen">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6 border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6 border-slate-200">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
-            <CreditCard className="text-primary h-8 w-8" /> Payments & Collection
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
+            <CreditCard className="text-emerald-600 h-8 w-8" /> Payments & Collection
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Track student rents, verify online transfer receipts, and manage pending dues.
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleExportCSV}
-            className="border hover:bg-zinc-50 dark:hover:bg-zinc-900 text-foreground font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition bg-card"
+            className="border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-2xs transition bg-white"
           >
             <Download size={14} /> Export CSV
           </button>
@@ -417,56 +417,56 @@ export default function OwnerPaymentsDashboard() {
       </div>
 
       {/* Revenue Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm space-y-2 flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all space-y-2 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Collected Rent</span>
-            <h3 className="text-2xl font-black text-green-600">₹{metrics.totalCollected.toLocaleString()}</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Collected Rent</span>
+            <h3 className="text-2xl font-black text-emerald-600">₹{metrics.totalCollected.toLocaleString()}</h3>
           </div>
-          <div className="h-10 w-10 rounded-full bg-green-50 dark:bg-green-950/20 flex items-center justify-center text-green-600">
-            <CheckCircle size={20} />
+          <div className="h-11 w-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+            <CheckCircle size={22} />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm space-y-2 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all space-y-2 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Pending Dues</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Dues</span>
             <h3 className="text-2xl font-black text-amber-600">₹{metrics.pendingAmount.toLocaleString()}</h3>
           </div>
-          <div className="h-10 w-10 rounded-full bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center text-amber-600">
-            <Clock size={20} />
+          <div className="h-11 w-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+            <Clock size={22} />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm space-y-2 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all space-y-2 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Overdue Dues</span>
-            <h3 className="text-2xl font-black text-red-600">₹{metrics.overdueAmount.toLocaleString()}</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Overdue Dues</span>
+            <h3 className="text-2xl font-black text-rose-600">₹{metrics.overdueAmount.toLocaleString()}</h3>
           </div>
-          <div className="h-10 w-10 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center text-red-600 font-bold">
-            <AlertCircle size={20} />
+          <div className="h-11 w-11 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 font-bold shrink-0">
+            <AlertCircle size={22} />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm space-y-2 flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all space-y-2 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Active Students</span>
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-white">{metrics.totalStudents}</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Students</span>
+            <h3 className="text-2xl font-black text-slate-900">{metrics.totalStudents}</h3>
           </div>
-          <div className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300">
-            <Users size={20} />
+          <div className="h-11 w-11 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+            <Users size={22} />
           </div>
         </div>
       </div>
 
       {/* Payment Type Filter Tabs */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex border-b border-slate-200">
         <button
           onClick={() => setPaymentTypeFilter('all')}
           className={`px-4 py-2.5 font-semibold text-xs border-b-2 transition duration-150 ${
             paymentTypeFilter === 'all'
-              ? 'border-primary text-primary font-bold'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-teal-600 text-teal-700 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           All Payments
@@ -475,8 +475,8 @@ export default function OwnerPaymentsDashboard() {
           onClick={() => setPaymentTypeFilter('online')}
           className={`px-4 py-2.5 font-semibold text-xs border-b-2 transition duration-150 ${
             paymentTypeFilter === 'online'
-              ? 'border-primary text-primary font-bold'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-teal-600 text-teal-700 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           Online (Knit Pay)
@@ -485,8 +485,8 @@ export default function OwnerPaymentsDashboard() {
           onClick={() => setPaymentTypeFilter('manual')}
           className={`px-4 py-2.5 font-semibold text-xs border-b-2 transition duration-150 ${
             paymentTypeFilter === 'manual'
-              ? 'border-primary text-primary font-bold'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-teal-600 text-teal-700 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           Manual Submissions
@@ -494,16 +494,16 @@ export default function OwnerPaymentsDashboard() {
       </div>
 
       {/* Filters and Search toolbar */}
-      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col md:flex-row items-center gap-4">
+      <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col md:flex-row items-center gap-4">
         {/* Search */}
         <div className="flex-1 w-full relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 shrink-0" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 shrink-0" size={16} />
           <input
             type="text"
             placeholder="Search by student name or room number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-border bg-card text-xs rounded-xl focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 bg-white text-xs rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
 
@@ -512,7 +512,7 @@ export default function OwnerPaymentsDashboard() {
           <select
             value={selectedHostelId}
             onChange={(e) => setSelectedHostelId(e.target.value)}
-            className="w-full md:w-44 h-9 px-3 border border-border rounded-xl text-xs bg-card focus:outline-none"
+            className="w-full md:w-44 h-9 px-3 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none"
           >
             <option value="all">All Hostels</option>
             {hostels.map((h) => (
@@ -525,7 +525,7 @@ export default function OwnerPaymentsDashboard() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full md:w-40 h-9 px-3 border border-border rounded-xl text-xs bg-card focus:outline-none"
+          className="w-full md:w-40 h-9 px-3 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending</option>
@@ -538,7 +538,7 @@ export default function OwnerPaymentsDashboard() {
         <select
           value={periodFilter}
           onChange={(e) => setPeriodFilter(e.target.value)}
-          className="w-full md:w-36 h-9 px-3 border border-border rounded-xl text-xs bg-card focus:outline-none"
+          className="w-full md:w-36 h-9 px-3 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none"
         >
           <option value="all">All Time</option>
           <option value="this_month">This Month</option>
@@ -547,29 +547,29 @@ export default function OwnerPaymentsDashboard() {
       </div>
 
       {/* Main Student Fees Table */}
-      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+      <div className="bg-white rounded-xl border border-slate-200/90 overflow-hidden shadow-xs">
         {/* Bulk Action Panel (only displays when rows are selected) */}
         {selectedFeeIds.length > 0 && (
-          <div className="bg-primary/5 dark:bg-primary/10 border-b border-border px-6 py-3 flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-150">
-            <span className="font-bold text-primary">
+          <div className="bg-teal-50/80 border-b border-teal-100 px-6 py-3 flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-150">
+            <span className="font-bold text-teal-800">
               {selectedFeeIds.length} students selected
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleBulkMarkPaid}
-                className="bg-primary text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-sm hover:bg-primary/95 transition"
+                className="bg-teal-600 text-white font-semibold px-3 py-1.5 rounded-lg text-[11px] shadow-2xs hover:bg-teal-700 transition"
               >
                 Mark Paid (Bulk)
               </button>
               <button
                 onClick={handleBulkSendReminders}
-                className="border border-primary/20 text-primary font-semibold px-3 py-1.5 rounded-lg text-[11px] hover:bg-primary/5 transition bg-card"
+                className="border border-teal-200 text-teal-800 font-semibold px-3 py-1.5 rounded-lg text-[11px] hover:bg-teal-100 transition bg-white"
               >
                 Send Reminders
               </button>
               <button
                 onClick={() => setSelectedFeeIds([])}
-                className="text-muted-foreground hover:text-foreground font-semibold px-2 py-1 rounded-lg transition"
+                className="text-slate-500 hover:text-slate-800 font-semibold px-2 py-1 rounded-lg transition"
               >
                 Clear Selection
               </button>
@@ -579,41 +579,41 @@ export default function OwnerPaymentsDashboard() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-zinc-55/40 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-500 uppercase font-bold tracking-wider border-b border-border">
+            <thead className="bg-slate-50/90 text-slate-500 uppercase font-bold tracking-wider border-b border-slate-200/80">
               <tr>
-                <th className="py-4 px-4 w-12 text-center">
+                <th className="py-3.5 px-4 w-12 text-center">
                   <input
                     type="checkbox"
                     checked={filteredFees.length > 0 && selectedFeeIds.length === filteredFees.length}
                     onChange={handleSelectAll}
-                    className="rounded text-primary focus:ring-primary h-3.5 w-3.5 border-zinc-300 cursor-pointer"
+                    className="rounded text-teal-600 focus:ring-teal-500 h-3.5 w-3.5 border-slate-300 cursor-pointer"
                   />
                 </th>
-                <th className="py-4 px-4">Student</th>
-                <th className="py-4 px-2">Room</th>
-                <th className="py-4 px-2">Hostel</th>
-                <th className="py-4 px-2">Month</th>
-                <th className="py-4 px-2">Amount</th>
-                <th className="py-4 px-2">Due Date</th>
-                <th className="py-4 px-2">Status</th>
-                <th className="py-4 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4">Student</th>
+                <th className="py-3.5 px-2">Room</th>
+                <th className="py-3.5 px-2">Hostel</th>
+                <th className="py-3.5 px-2">Month</th>
+                <th className="py-3.5 px-2">Amount</th>
+                <th className="py-3.5 px-2">Due Date</th>
+                <th className="py-3.5 px-2">Status</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100">
               {loading && fees.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">Loading payments...</td>
+                  <td colSpan={9} className="py-8 text-center text-slate-500">Loading payments...</td>
                 </tr>
               ) : filteredFees.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-muted-foreground font-medium">No fee records found. Adjust your search or filters.</td>
+                  <td colSpan={9} className="py-12 text-center text-slate-500 font-medium">No fee records found. Adjust your search or filters.</td>
                 </tr>
               ) : (
                 filteredFees.map((fee) => (
                   <tr
                     key={fee.id}
-                    className={`hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors ${
-                      selectedFeeIds.includes(fee.id) ? 'bg-primary/5 dark:bg-primary/10' : ''
+                    className={`hover:bg-slate-50/60 transition-colors ${
+                      selectedFeeIds.includes(fee.id) ? 'bg-teal-50/40' : ''
                     }`}
                   >
                     <td className="py-3.5 px-4 text-center">
@@ -621,47 +621,47 @@ export default function OwnerPaymentsDashboard() {
                         type="checkbox"
                         checked={selectedFeeIds.includes(fee.id)}
                         onChange={() => handleSelectRow(fee.id)}
-                        className="rounded text-primary focus:ring-primary h-3.5 w-3.5 border-zinc-300 cursor-pointer"
+                        className="rounded text-teal-600 focus:ring-teal-500 h-3.5 w-3.5 border-slate-300 cursor-pointer"
                       />
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-foreground">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
                       <div>
                         <p>{fee.students?.profiles?.full_name || fee.room_allocations?.student_name || 'N/A'}</p>
-                        <p className="text-[10px] text-muted-foreground font-normal">{fee.students?.profiles?.email || fee.room_allocations?.student_email || ''}</p>
+                        <p className="text-[10px] text-slate-400 font-normal">{fee.students?.profiles?.email || fee.room_allocations?.student_email || ''}</p>
                       </div>
                     </td>
-                    <td className="py-3.5 px-2 font-semibold text-foreground">
+                    <td className="py-3.5 px-2 font-semibold text-blue-700">
                       Room {fee.room_allocations?.rooms?.room_number || 'N/A'}
                     </td>
-                    <td className="py-3.5 px-2 text-muted-foreground">
+                    <td className="py-3.5 px-2 text-slate-500">
                       {fee.hostels?.name || 'N/A'}
                     </td>
-                    <td className="py-3.5 px-2 font-semibold text-foreground">
+                    <td className="py-3.5 px-2 font-semibold text-slate-800">
                       {fee.billing_period}
                     </td>
-                    <td className="py-3.5 px-2 font-bold text-foreground">
+                    <td className="py-3.5 px-2 font-bold text-slate-900">
                       <div>
-                        <p>₹{fee.amount}</p>
+                        <p className="font-bold text-slate-900">₹{fee.amount}</p>
                         {fee.payment && (
-                          <div className="text-[10px] font-normal text-muted-foreground mt-0.5 space-y-0.5">
+                          <div className="text-[10px] font-normal text-slate-400 mt-0.5 space-y-0.5">
                             <p>
-                              Rec'd: <span className="font-semibold text-foreground">₹{fee.payment.amount_paid}</span>
+                              Rec'd: <span className="font-semibold text-emerald-700">₹{fee.payment.amount_paid}</span>
                             </p>
                             {fee.payment.gateway_order_id && (
-                              <p className="font-mono text-[9px] text-zinc-500">
-                                Order: <span className="select-all font-semibold text-foreground">{fee.payment.gateway_order_id}</span>
+                              <p className="font-mono text-[9px] text-slate-400">
+                                Order: <span className="select-all font-semibold text-slate-700">{fee.payment.gateway_order_id}</span>
                               </p>
                             )}
                             {fee.payment.paid_date && (
-                              <p className="text-[9px] text-zinc-500">
-                                Paid: <span className="font-semibold text-foreground">{new Date(fee.payment.paid_date).toLocaleString()}</span>
+                              <p className="text-[9px] text-slate-400">
+                                Paid: <span className="font-semibold text-slate-600">{new Date(fee.payment.paid_date).toLocaleString()}</span>
                               </p>
                             )}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-2 text-muted-foreground whitespace-nowrap">
+                    <td className="py-3.5 px-2 text-slate-500 whitespace-nowrap">
                       {new Date(fee.due_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="py-3.5 px-2">
@@ -673,7 +673,7 @@ export default function OwnerPaymentsDashboard() {
 
                           if (isOnline && isPaid) {
                             return (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 dark:bg-indigo-950/20 dark:text-indigo-300">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
                                 Online - Verified
                               </span>
                             );
@@ -681,21 +681,21 @@ export default function OwnerPaymentsDashboard() {
 
                           if (!isOnline && isPendingVerification) {
                             return (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950/20 dark:text-amber-300 animate-pulse">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs animate-pulse">
                                 Manual - Pending Verification
                               </span>
                             );
                           }
 
                           return (
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-2xs border ${
                               fee.status === 'paid'
-                                ? 'bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-300'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                                 : fee.status === 'pending_verification'
-                                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300 animate-pulse'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200/80 animate-pulse'
                                 : fee.status === 'overdue'
-                                ? 'bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300'
-                                : 'bg-teal-50 text-teal-700 dark:bg-teal-950/20 dark:text-teal-300'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                                : 'bg-teal-50 text-teal-700 border-teal-200/80'
                             }`}>
                               {fee.status === 'pending_verification' ? 'Verify Proof' : fee.status.replace('_', ' ')}
                             </span>
@@ -704,22 +704,22 @@ export default function OwnerPaymentsDashboard() {
                         {fee.payment && (
                           <div className="flex flex-wrap items-center gap-1">
                             {fee.payment.payment_status === 'verified' && (
-                              <span className="text-[9px] bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 font-bold px-1.5 py-0.5 rounded uppercase flex items-center">
+                              <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-1.5 py-0.5 rounded uppercase flex items-center">
                                 VERIFIED ✅
                               </span>
                             )}
                             {fee.payment.payment_status === 'partial' && (
-                              <span className="text-[9px] bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-bold px-1.5 py-0.5 rounded uppercase flex items-center">
+                              <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 font-bold px-1.5 py-0.5 rounded uppercase flex items-center">
                                 PARTIAL ⚠️
                               </span>
                             )}
                             {fee.payment.payment_status === 'rejected' && (
-                              <span className="text-[9px] bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-bold px-1.5 py-0.5 rounded uppercase flex items-center">
+                              <span className="text-[9px] bg-rose-50 text-rose-700 border border-rose-200 font-bold px-1.5 py-0.5 rounded uppercase flex items-center">
                                 REJECTED ❌
                               </span>
                             )}
                             {fee.payment.auto_verified && (
-                              <span className="text-[9px] bg-indigo-55 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 font-bold px-1.5 py-0.5 rounded uppercase">
+                              <span className="text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold px-1.5 py-0.5 rounded uppercase">
                                 Auto-Verified
                               </span>
                             )}
@@ -732,7 +732,7 @@ export default function OwnerPaymentsDashboard() {
                         {fee.payment && fee.status === 'pending_verification' ? (
                           <button
                             onClick={() => setSelectedFeeForView(fee)}
-                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px] shadow-sm transition flex items-center gap-1"
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px] shadow-2xs transition flex items-center gap-1"
                             title="Verify Receipt & Mark Paid"
                           >
                             <Eye size={12} /> Verify & Mark Paid
@@ -740,17 +740,17 @@ export default function OwnerPaymentsDashboard() {
                         ) : fee.status !== 'paid' ? (
                           <button
                             onClick={() => setSelectedFeeForMark(fee)}
-                            className="bg-primary hover:bg-primary/95 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px] shadow-sm transition"
+                            className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px] shadow-2xs transition"
                           >
                             Mark Paid
                           </button>
                         ) : (
-                          <span className="text-[11px] text-green-600 font-semibold px-2">Verified</span>
+                          <span className="text-[11px] text-emerald-700 font-semibold px-2">Verified</span>
                         )}
                         {fee.status !== 'paid' && fee.status !== 'pending_verification' && (
                           <button
                             onClick={() => handleSendReminder(fee)}
-                            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 border rounded-lg text-muted-foreground hover:text-foreground transition"
+                            className="p-1.5 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-800 transition"
                             title="Send Notification Reminder"
                           >
                             <Send size={12} />

@@ -9,7 +9,6 @@ import {
   Users, 
   CreditCard, 
   ArrowRight,
-  MapPin,
   Bed,
   Clock,
   CheckCircle
@@ -26,7 +25,8 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
 import { StatCard } from "@/components/owner/stat-card";
 import { StatusBadge } from "@/components/owner/status-badge";
-import { colors } from "@/lib/design-tokens";
+import { IconWrapper } from "@/components/owner/icon-wrapper";
+import { OwnerHostelCard } from "@/components/owner/owner-hostel-card";
 import Link from "next/link";
 
 export default function OwnerDashboard() {
@@ -133,280 +133,264 @@ export default function OwnerDashboard() {
       {/* Welcome + Add Hostel */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
             Welcome back, {user?.user_metadata?.full_name || 'Owner'}
           </h1>
-          <p className="mt-2 text-base text-gray-600">
+          <p className="mt-2 text-sm md:text-base text-slate-600">
             Here's what's happening across your hostels today.
           </p>
         </div>
         <NewHostelDialog onCreated={() => qc.invalidateQueries({ queryKey: ["owner-hostels"] })} />
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+      {/* Summary Stats - 5 Cards matching reference */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5 mb-8">
         <StatCard
           title="Total Hostels"
           value={totalHostels}
           subtitle="Active properties"
-          icon={<Building2 className="h-6 w-6" />}
+          icon={<Building2 className="h-5 w-5" />}
+          color="teal"
+          trend={{ value: "↑ Active & operational", isPositive: true }}
         />
         <StatCard
           title="Total Rooms"
           value={totalRooms}
           subtitle={`${availableBeds} beds available`}
-          icon={<Bed className="h-6 w-6" />}
+          icon={<Bed className="h-5 w-5" />}
+          color="blue"
+          trend={{ value: `${totalBeds} total beds`, isPositive: true }}
         />
         <StatCard
           title="Total Students"
           value={totalStudents}
           subtitle={`${overallOccupancy}% occupancy`}
-          icon={<Users className="h-6 w-6" />}
+          icon={<Users className="h-5 w-5" />}
+          color="purple"
+          trend={{ value: `${totalStudents} currently residing`, isPositive: true }}
         />
         <StatCard
           title="Monthly Revenue"
           value={`₹${monthlyRevenue.toLocaleString()}`}
-          subtitle="This month"
-          icon={<CreditCard className="h-6 w-6" />}
+          subtitle="Collected this month"
+          icon={<CreditCard className="h-5 w-5" />}
+          color="emerald"
+          trend={{ value: "Paid collections", isPositive: true }}
+        />
+        <StatCard
+          title="Pending Dues"
+          value={`₹${pendingDues.toLocaleString()}`}
+          subtitle={`From ${unpaidBillsCount} student bills`}
+          icon={<Clock className="h-5 w-5" />}
+          color="amber"
+          trend={{ value: unpaidBillsCount > 0 ? "Requires follow-up" : "All cleared", isPositive: unpaidBillsCount === 0 }}
         />
       </div>
 
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Your Hostels - Takes 2 columns */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Your Hostels</h2>
-            {hostelOccupancy.length > 4 && (
-              <Link href="/owner/hostels">
-                <Button variant="outline" size="sm" className="text-teal-600 border-teal-600 hover:bg-teal-50">
-                  View all {totalHostels} hostels
-                </Button>
-              </Link>
-            )}
-          </div>
-          
-          {displayHostels.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
-              {displayHostels.map((hostel) => (
-                <Card key={hostel.id} className="border-gray-200 hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">{hostel.name}</h3>
-                        <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
-                          <MapPin className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{hostel.city}</span>
-                        </div>
-                      </div>
-                      <StatusBadge status={hostel.status} />
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 text-sm mb-4">
-                      <div>
-                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Rooms</p>
-                        <p className="text-xl font-semibold text-gray-900">{hostel.totalRooms}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Residents</p>
-                        <p className="text-xl font-semibold text-gray-900">{hostel.occupiedBeds}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Occupancy</p>
-                        <p className="text-xl font-semibold text-gray-900">{hostel.occupancy}%</p>
-                      </div>
-                    </div>
-
-                    {/* Occupancy Progress Bar */}
-                    <div className="mb-4">
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full transition-all duration-500 rounded-full"
-                          style={{ 
-                            width: `${hostel.occupancy}%`,
-                            backgroundColor: colors.primary.teal[500]
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <p className="text-sm text-gray-600">
-                        {hostel.occupiedBeds}/{hostel.totalBeds} beds occupied
-                      </p>
-                      <Link href={`/owner/hostels/${hostel.id}`}>
-                        <Button variant="ghost" size="sm" className="h-9 text-teal-600 hover:text-teal-700 font-medium">
-                          View hostel <ArrowRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <EmptyState type="hostels" />
-          )}
-        </div>
-
-        {/* Right Column - Occupancy Overview & Needs Attention */}
-        <div className="space-y-6">
-          {/* Occupancy Overview */}
-          <Card className="border-gray-200">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Occupancy Overview</h3>
-              
-              <div className="text-center mb-6">
-                <p className="text-5xl font-bold text-gray-900 mb-2">{overallOccupancy}%</p>
-                <p className="text-sm text-gray-600">
-                  {totalStudents} occupied · {availableBeds} available
-                </p>
-              </div>
-
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden mb-4">
-                <div 
-                  className="h-full transition-all duration-500 rounded-full"
-                  style={{ 
-                    width: `${overallOccupancy}%`,
-                    backgroundColor: colors.primary.teal[500]
-                  }}
-                />
-              </div>
-
-              <p className="text-xs text-gray-500 text-center">Across your hostels</p>
-
-              {/* Hostel Breakdown */}
-              {hostelOccupancy.length > 1 && (
-                <div className="mt-6 pt-6 border-t border-gray-100">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">By Hostel</p>
-                  <div className="space-y-3">
-                    {hostelOccupancy.slice(0, 5).map((hostel) => (
-                      <div key={hostel.id} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700 truncate pr-2">{hostel.name}</span>
-                        <span className="text-sm font-medium text-gray-900 whitespace-nowrap">{hostel.occupancy}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Needs Attention */}
-          {(unpaidBillsCount > 0 || (roomRequests && roomRequests.length > 0)) && (
-            <Card className="border-gray-200">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Needs Attention</h3>
-                
-                <div className="space-y-3">
-                  {roomRequests && roomRequests.length > 0 && (
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-teal-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">Room requests</p>
-                          <p className="text-xs text-gray-600">{roomRequests.length} pending</p>
-                        </div>
-                      </div>
-                      <Link href="/owner/room-requests">
-                        <Button variant="ghost" size="sm" className="h-8 text-teal-600">
-                          View
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-
-                  {unpaidBillsCount > 0 && (
-                    <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
-                          <CreditCard className="h-4 w-4 text-teal-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">Unpaid dues</p>
-                          <p className="text-xs text-gray-600">₹{pendingDues.toLocaleString()} outstanding</p>
-                        </div>
-                      </div>
-                      <Link href="/owner/payments">
-                        <Button variant="ghost" size="sm" className="h-8 text-teal-600">
-                          View
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Everything Up to Date */}
-          {unpaidBillsCount === 0 && (!roomRequests || roomRequests.length === 0) && totalHostels > 0 && (
-            <Card className="border-gray-200 bg-green-50">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Everything is up to date</p>
-                    <p className="text-sm text-gray-600">No immediate action required</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Room Requests */}
-      <section className="mb-8">
+      {/* Your Hostels Section - Prominent full-width grid matching reference */}
+      <section className="mb-10">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Room Requests</h2>
-          <Link href="/owner/room-requests">
-            <Button variant="ghost" size="sm" className="text-teal-600">
-              View all
-            </Button>
-          </Link>
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Your Hostels</h2>
+            <p className="text-xs md:text-sm text-slate-500">Manage your hostel properties, location details, and operations.</p>
+          </div>
+          {hostelOccupancy.length > 4 && (
+            <Link href="/owner/hostels">
+              <Button variant="outline" size="sm" className="text-teal-700 border-teal-200 bg-white hover:bg-teal-50">
+                View all {totalHostels} hostels
+              </Button>
+            </Link>
+          )}
         </div>
-
-        {roomRequests && roomRequests.length > 0 ? (
-          <Card className="border-gray-200">
-            <CardContent className="p-0">
-              <div className="divide-y divide-gray-100">
-                {roomRequests.map((request: any) => (
-                  <div key={request.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center">
-                            <Users className="h-4 w-4 text-gray-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{request.profiles?.full_name}</p>
-                            <p className="text-sm text-gray-600">
-                              Requested {request.room_type} room
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right ml-4">
-                        <StatusBadge status={request.status} />
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        
+        {displayHostels.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {displayHostels.map((hostel) => (
+              <OwnerHostelCard key={hostel.id} hostel={hostel} variant="dashboard" />
+            ))}
+          </div>
         ) : (
-          <EmptyState type="requests" />
+          <EmptyState type="hostels" />
         )}
       </section>
+
+      {/* Bottom Operational Cards Row - 3 Balanced Cards matching reference (Recent Activity, Quick Actions, Need Attention) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* 1. Recent Activity */}
+        <Card className="border border-sky-100/90 bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(14,42,71,0.06),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 flex flex-col justify-between">
+          <CardContent className="p-5 md:p-6 flex flex-col flex-1 justify-between">
+            <div>
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-2.5">
+                  <IconWrapper color="blue" size="sm">
+                    <Clock className="h-4 w-4" />
+                  </IconWrapper>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Recent Activity</h3>
+                    <p className="text-xs text-slate-500">Latest updates across your hostels</p>
+                  </div>
+                </div>
+                <Link href="/owner/requests" className="inline-flex items-center gap-1 shrink-0 text-xs font-semibold text-teal-600 hover:text-teal-700 active:scale-95 transition-all cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+                  View All <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+
+              {roomRequests && roomRequests.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {roomRequests.slice(0, 3).map((req: any) => (
+                    <Link key={req.id} href="/owner/requests" className="py-2.5 px-2 -mx-2 rounded-xl hover:bg-slate-50/90 active:bg-slate-100 transition-colors flex items-center justify-between gap-2 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 block">
+                      <div className="flex items-start justify-between gap-2 w-full">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <IconWrapper color="violet" size="sm" className="shrink-0">
+                            <Users className="h-3.5 w-3.5" />
+                          </IconWrapper>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-900 group-hover:text-teal-700 transition-colors truncate">{req.profiles?.full_name || 'Student'}</p>
+                            <p className="text-xs text-slate-500 truncate">Requested {req.room_type || 'room'}</p>
+                          </div>
+                        </div>
+                        <StatusBadge status={req.status} className="text-[11px] shrink-0" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 py-4 text-left pl-2">No recent activity</p>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 mt-3">
+              <Link href="/owner/requests" className="text-xs font-semibold text-teal-700 hover:text-teal-800 hover:underline active:scale-95 transition-all block text-center cursor-pointer rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+                Manage room applications →
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 2. Quick Actions */}
+        <Card className="border border-sky-100/90 bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(14,42,71,0.06),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 flex flex-col justify-between">
+          <CardContent className="p-5 md:p-6 flex flex-col flex-1 justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-4">
+                <IconWrapper color="teal" size="sm">
+                  <Plus className="h-4 w-4" />
+                </IconWrapper>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Quick Actions</h3>
+                  <p className="text-xs text-slate-500">Common tasks and shortcuts</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <Link href="/owner/hostels/new" className="p-3 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-[0.98] transition-all flex items-center justify-between group cursor-pointer shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-white shrink-0" />
+                    <span className="text-xs font-semibold text-white whitespace-nowrap">Add Hostel</span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-white group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </Link>
+
+                <Link href="/owner/rooms" className="p-3 rounded-xl border border-blue-200/80 bg-blue-50/60 hover:bg-blue-100/60 active:scale-[0.98] transition-all flex items-center justify-between group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                  <div className="flex items-center gap-2">
+                    <Bed className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-900 whitespace-nowrap">Add Room</span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-blue-600 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </Link>
+
+                <Link href="/owner/requests" className="p-3 rounded-xl border border-amber-200/80 bg-amber-50/60 hover:bg-amber-100/60 active:scale-[0.98] transition-all flex items-center justify-between group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-900 whitespace-nowrap">View Requests</span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-amber-600 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </Link>
+
+                <Link href="/owner/students" className="p-3 rounded-xl border border-purple-200/80 bg-purple-50/60 hover:bg-purple-100/60 active:scale-[0.98] transition-all flex items-center justify-between group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-purple-600 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-900 whitespace-nowrap">View Students</span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-purple-600 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 mt-3">
+              <Link href="/owner/electricity/billing" className="text-xs font-semibold text-teal-700 hover:text-teal-800 hover:underline active:scale-95 transition-all block text-center cursor-pointer rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+                Open electricity & billing hub →
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Need Attention */}
+        <Card className="border border-sky-100/90 bg-white rounded-2xl shadow-[0_4px_20px_-2px_rgba(14,42,71,0.06),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 flex flex-col justify-between">
+          <CardContent className="p-5 md:p-6 flex flex-col flex-1 justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-4">
+                <IconWrapper color="amber" size="sm">
+                  <Clock className="h-4 w-4" />
+                </IconWrapper>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Need Attention</h3>
+                  <p className="text-xs text-slate-500">Items that need your attention</p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                {roomRequests && roomRequests.length > 0 ? (
+                  <Link href="/owner/requests" className="flex items-center justify-between p-3 rounded-xl border border-amber-200/80 bg-amber-50/70 hover:bg-amber-100/70 active:scale-[0.98] transition-all group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-7 w-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <Users className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{roomRequests.length} pending room requests</p>
+                        <p className="text-xs text-amber-700 font-medium">Requires your approval</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-amber-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </Link>
+                ) : null}
+
+                {unpaidBillsCount > 0 ? (
+                  <Link href="/owner/payments" className="flex items-center justify-between p-3 rounded-xl border border-rose-200/80 bg-rose-50/70 hover:bg-rose-100/70 active:scale-[0.98] transition-all group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-7 w-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                        <CreditCard className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{unpaidBillsCount} overdue payments</p>
+                        <p className="text-xs text-rose-700 font-medium">Total amount ₹{pendingDues.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-rose-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </Link>
+                ) : null}
+
+                {unpaidBillsCount === 0 && (!roomRequests || roomRequests.length === 0) && (
+                  <div className="flex items-center gap-3 p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-xl cursor-default">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <CheckCircle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">All systems up to date</p>
+                      <p className="text-xs text-slate-600">No pending requests or overdue dues.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 mt-3">
+              <Link href="/owner/complaints" className="text-xs font-semibold text-teal-700 hover:text-teal-800 hover:underline active:scale-95 transition-all block text-center cursor-pointer rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
+                Review complaints & feedback →
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -414,22 +398,26 @@ export default function OwnerDashboard() {
 function EmptyState({ type }: { type: 'hostels' | 'requests' }) {
   if (type === 'hostels') {
     return (
-      <Card className="border-dashed border-gray-300 bg-gray-50">
+      <Card className="border-dashed border-sky-200 bg-white/95 rounded-2xl shadow-xs cursor-default relative z-10">
         <CardContent className="p-12 text-center">
-          <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No hostels yet</h3>
-          <p className="text-sm text-gray-600">Add your first hostel to start managing rooms and students.</p>
+          <IconWrapper color="teal" size="lg" className="mx-auto mb-3">
+            <Building2 className="h-5 w-5" />
+          </IconWrapper>
+          <h3 className="text-base font-bold text-slate-900 mb-1">No hostels yet</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">Add your first hostel to start managing rooms and students.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-dashed border-gray-300 bg-gray-50">
+    <Card className="border-dashed border-sky-200 bg-white/95 rounded-2xl shadow-xs cursor-default relative z-10">
       <CardContent className="p-12 text-center">
-        <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent requests</h3>
-        <p className="text-sm text-gray-600">Room requests will appear here when students apply.</p>
+        <IconWrapper color="blue" size="lg" className="mx-auto mb-3">
+          <Clock className="h-5 w-5" />
+        </IconWrapper>
+        <h3 className="text-base font-bold text-slate-900 mb-1">No recent requests</h3>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto">Room requests will appear here when students apply.</p>
       </CardContent>
     </Card>
   );
@@ -465,7 +453,7 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-teal-600 hover:bg-teal-700 text-white font-medium">
+        <Button className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
           <Plus className="mr-2 h-4 w-4" /> Add Hostel
         </Button>
       </DialogTrigger>
@@ -498,7 +486,7 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
             <Input type="number" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={mutation.isPending} className="bg-teal-600 hover:bg-teal-700">
+            <Button type="submit" disabled={mutation.isPending} className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-semibold rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
               Create hostel
             </Button>
           </DialogFooter>

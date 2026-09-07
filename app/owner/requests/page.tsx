@@ -694,7 +694,7 @@ export default function OwnerRequestsPage() {
     >
       <div className="w-full max-w-[1150px] mx-auto">
         {/* 1. Tab Navigation */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800 gap-2 pb-px justify-between items-center flex-wrap">
+      <div className="flex border-b border-slate-200/80 gap-2 pb-px justify-between items-center flex-wrap">
         <div className="flex gap-2 overflow-x-auto">
           <TabButton 
             active={activeTab === 'pending'} 
@@ -726,29 +726,29 @@ export default function OwnerRequestsPage() {
             }}
             variant="outline"
             size="sm"
-            className="flex items-center gap-1.5 h-9 rounded-xl border-border bg-card hover:bg-muted text-foreground transition-all shadow-sm"
+            className="flex items-center gap-1.5 h-9 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all shadow-2xs font-semibold text-xs"
           >
-            <RotateCcw size={14} className={isRequestsLoading || isAllocationsLoading ? 'animate-spin' : ''} />
+            <RotateCcw size={14} className={isRequestsLoading || isAllocationsLoading ? 'animate-spin text-teal-600' : ''} />
             Refresh
           </Button>
         </div>
       </div>
 
       {/* 2. Search & Filter Bar */}
-      <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center justify-between bg-card border border-teal-200/80 p-4 rounded-2xl shadow-xs">
+      <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center justify-between bg-white border border-slate-200/90 p-4 rounded-xl shadow-xs">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
             type="text" 
             placeholder="Search by student, email, phone or parent..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 border-border/80 focus-visible:ring-teal-500"
+            className="pl-10 h-10 border-slate-200 bg-white rounded-xl text-xs focus-visible:ring-2 focus-visible:ring-teal-500/20 focus-visible:border-teal-500"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <X size={16} />
             </button>
@@ -756,7 +756,7 @@ export default function OwnerRequestsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <SlidersHorizontal size={14} /> Filters:
           </div>
 
@@ -767,7 +767,7 @@ export default function OwnerRequestsPage() {
               setHostelFilter(e.target.value);
               setRoomFilter('all');
             }}
-            className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
+            className="h-10 text-xs px-3 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none"
           >
             <option value="all">All Hostels</option>
             {uniqueHostels.map((hostel: any) => (
@@ -779,7 +779,7 @@ export default function OwnerRequestsPage() {
           <select 
             value={roomFilter}
             onChange={(e) => setRoomFilter(e.target.value)}
-            className="h-10 text-xs px-3 bg-transparent border border-border rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
+            className="h-10 text-xs px-3 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none"
           >
             <option value="all">All Rooms</option>
             {uniqueRooms.map((room: any) => (
@@ -1019,17 +1019,17 @@ function TabButton({ active, onClick, label, count }: { active: boolean; onClick
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-sm transition-all whitespace-nowrap ${
+      className={`flex items-center gap-2 px-4 py-3 border-b-2 font-semibold text-xs transition-all whitespace-nowrap ${
         active 
-          ? 'border-teal-600 text-teal-700 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-950/20' 
-          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-zinc-300'
+          ? 'border-teal-600 text-teal-700 bg-teal-50/50' 
+          : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
       }`}
     >
       {label}
       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
         active 
           ? 'bg-teal-600 text-white' 
-          : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+          : 'bg-slate-100 text-slate-600'
       }`}>
         {count}
       </span>
@@ -1076,7 +1076,7 @@ function PendingRequestCard({
   const freeSlots = capacity - occupancy;
 
   return (
-    <div className="w-full bg-white border border-teal-200/80 hover:border-teal-300 shadow-xs hover:shadow-sm rounded-2xl p-5 lg:p-5 transition-all">
+    <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-sm rounded-xl p-5 lg:p-5 transition-all">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
         {/* 1. Student (Passport Photo, Name, Contact) */}
         <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
@@ -1085,7 +1085,7 @@ function PendingRequestCard({
               <img 
                 src={passportPhotoUrl} 
                 alt="Student passport photo"
-                className="h-12 w-12 rounded-xl object-cover border border-teal-200 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all"
+                className="h-12 w-12 rounded-xl object-cover border border-violet-200 cursor-pointer group-hover:ring-2 group-hover:ring-violet-500 transition-all"
                 onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
               />
               <div 
@@ -1096,19 +1096,19 @@ function PendingRequestCard({
               </div>
             </div>
           ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold text-base border border-teal-100">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 font-bold text-base border border-violet-100">
               {studentName.charAt(0)}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>{studentName}</h3>
-            <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-gray-400" />
+            <h3 className="font-semibold text-slate-900 truncate" title={studentName}>{studentName}</h3>
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-slate-400" />
               <span className="truncate">{studentEmail}</span>
             </div>
             {studentPhone !== '-' && (
-              <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5">
-                <Phone size={12} className="shrink-0 text-gray-400" />
+              <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5">
+                <Phone size={12} className="shrink-0 text-slate-400" />
                 <span>{studentPhone}</span>
               </div>
             )}
@@ -1117,40 +1117,40 @@ function PendingRequestCard({
 
         {/* 2. Hostel & Room */}
         <div className="lg:col-span-2 min-w-0">
-          <div className="flex items-center gap-1.5 font-medium text-gray-900">
-            <Building2 size={14} className="text-teal-600 shrink-0" />
+          <div className="flex items-center gap-1.5 font-medium text-slate-900">
+            <Building2 size={14} className="text-blue-600 shrink-0" />
             <span className="truncate">{req.hostels?.name || 'Hostel Property'}</span>
           </div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-xs font-semibold">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-800 text-xs font-semibold">
               Room {room?.room_number || '-'}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-500">
               {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
             </span>
           </div>
           {room?.rent && (
-            <div className="text-xs text-gray-600 font-medium mt-1">
+            <div className="text-xs text-slate-600 font-medium mt-1">
               ₹{Number(room.rent).toLocaleString()}/month
             </div>
           )}
         </div>
 
         {/* 3. Request Info */}
-        <div className="lg:col-span-3 min-w-0 text-xs text-gray-600 space-y-1">
-          <div className="flex items-center gap-1.5 text-gray-500">
-            <Clock size={12} className="text-gray-400 shrink-0" />
+        <div className="lg:col-span-3 min-w-0 text-xs text-slate-600 space-y-1">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Clock size={12} className="text-slate-400 shrink-0" />
             <span>{new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
           </div>
           <div>
-            <span className="text-gray-500">Occupancy: </span>
-            <span className="font-semibold text-gray-800">{occupancy}/{capacity}</span>
+            <span className="text-slate-500">Occupancy: </span>
+            <span className="font-semibold text-slate-800">{occupancy}/{capacity}</span>
             <span className={`ml-1 font-medium ${freeSlots > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
               ({freeSlots > 0 ? `${freeSlots} free` : 'Full'})
             </span>
           </div>
           {emergencyContact !== 'N/A' && (
-            <div className="text-[11px] text-gray-500 truncate" title={emergencyContact}>
+            <div className="text-[11px] text-slate-500 truncate" title={emergencyContact}>
               Emg: {emergencyContact}
             </div>
           )}
@@ -1158,13 +1158,13 @@ function PendingRequestCard({
 
         {/* 4. Status */}
         <div className="lg:col-span-1 flex lg:justify-center">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs">
             <Clock size={12} /> Pending
           </span>
         </div>
 
         {/* 5. Actions */}
-        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 flex-wrap">
+        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex-wrap">
           <Button 
             onClick={onApprove} 
             disabled={freeSlots <= 0}
@@ -1177,7 +1177,7 @@ function PendingRequestCard({
             onClick={onReject} 
             variant="outline" 
             size="sm"
-            className="h-9 px-3 rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-xs font-medium flex items-center gap-1 transition-colors"
+            className="h-9 px-3 rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-medium flex items-center gap-1 transition-colors"
           >
             <XCircle size={14} /> Reject
           </Button>
@@ -1185,7 +1185,7 @@ function PendingRequestCard({
             onClick={onViewDetails} 
             variant="ghost" 
             size="sm"
-            className="h-9 px-2.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-xs font-medium flex items-center gap-1 transition-colors"
+            className="h-9 px-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-medium flex items-center gap-1 transition-colors"
           >
             <Eye size={14} /> Details
           </Button>
@@ -1193,7 +1193,7 @@ function PendingRequestCard({
       </div>
 
       {freeSlots <= 0 && (
-        <div className="mt-3 p-2.5 bg-red-50 text-red-700 rounded-lg flex items-center gap-2 text-xs font-medium border border-red-100">
+        <div className="mt-3 p-2.5 bg-rose-50 text-rose-700 rounded-lg flex items-center gap-2 text-xs font-medium border border-rose-100">
           <AlertTriangle size={14} className="shrink-0" />
           Approval is blocked because the requested room is currently full.
         </div>
@@ -1238,7 +1238,7 @@ function ApprovedAllocationCard({
   const rent = room?.rent ?? 0;
 
   return (
-    <div className="w-full bg-white border border-teal-200/80 hover:border-teal-300 shadow-xs hover:shadow-sm rounded-2xl p-5 lg:p-6 transition-all space-y-4">
+    <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-sm rounded-xl p-5 lg:p-6 transition-all space-y-4">
       {/* Main Row: Student -> Hostel/Room -> Timeline/Rent -> Status -> Primary Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
         {/* 1. Resident Student */}
@@ -1248,7 +1248,7 @@ function ApprovedAllocationCard({
               <img 
                 src={passportPhotoUrl} 
                 alt="Student passport photo"
-                className="h-12 w-12 rounded-xl object-cover border border-teal-200 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all"
+                className="h-12 w-12 rounded-xl object-cover border border-violet-200 cursor-pointer group-hover:ring-2 group-hover:ring-violet-500 transition-all"
                 onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
               />
               <div 
@@ -1259,19 +1259,19 @@ function ApprovedAllocationCard({
               </div>
             </div>
           ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold text-base border border-teal-100">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 font-bold text-base border border-violet-100">
               {studentName.charAt(0)}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>{studentName}</h3>
-            <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-gray-400" />
+            <h3 className="font-semibold text-slate-900 truncate" title={studentName}>{studentName}</h3>
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-slate-400" />
               <span className="truncate">{studentEmail}</span>
             </div>
             {studentPhone !== '-' && (
-              <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5">
-                <Phone size={12} className="shrink-0 text-gray-400" />
+              <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5">
+                <Phone size={12} className="shrink-0 text-slate-400" />
                 <span>{studentPhone}</span>
               </div>
             )}
@@ -1280,31 +1280,31 @@ function ApprovedAllocationCard({
 
         {/* 2. Hostel & Room */}
         <div className="lg:col-span-2 min-w-0">
-          <div className="flex items-center gap-1.5 font-medium text-gray-900">
-            <Building2 size={14} className="text-teal-600 shrink-0" />
+          <div className="flex items-center gap-1.5 font-medium text-slate-900">
+            <Building2 size={14} className="text-blue-600 shrink-0" />
             <span className="truncate">{alloc.hostels?.name || 'Hostel Property'}</span>
           </div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-xs font-semibold">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-800 text-xs font-semibold">
               Room {room?.room_number || '-'}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-500">
               {alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
             </span>
           </div>
-          <div className="text-xs text-gray-600 font-medium mt-1">
+          <div className="text-xs text-slate-600 font-medium mt-1">
             ₹{Number(rent).toLocaleString()}/month
           </div>
         </div>
 
         {/* 3. Allocation Timeline */}
-        <div className="lg:col-span-2 min-w-0 text-xs text-gray-600 space-y-1">
-          <div className="flex items-center gap-1.5 text-gray-500">
-            <Clock size={12} className="text-gray-400 shrink-0" />
+        <div className="lg:col-span-2 min-w-0 text-xs text-slate-600 space-y-1">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Clock size={12} className="text-slate-400 shrink-0" />
             <span>Joined {new Date(alloc.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
           </div>
           {emergencyContact !== 'N/A' && (
-            <div className="text-[11px] text-gray-500 truncate" title={emergencyContact}>
+            <div className="text-[11px] text-slate-500 truncate" title={emergencyContact}>
               Emg: {emergencyContact}
             </div>
           )}
@@ -1312,18 +1312,18 @@ function ApprovedAllocationCard({
 
         {/* 4. Status */}
         <div className="lg:col-span-1 flex lg:justify-center">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
             <Check size={12} /> Approved
           </span>
         </div>
 
         {/* 5. Primary Actions */}
-        <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-1.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 flex-wrap">
+        <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-1.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex-wrap">
           <Button 
             onClick={onViewAgreement}
             variant="outline" 
             size="sm"
-            className="h-8 px-2.5 rounded-lg border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+            className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
           >
             <FileText size={13} /> Agreement
           </Button>
@@ -1331,7 +1331,7 @@ function ApprovedAllocationCard({
             onClick={onViewDetails}
             variant="outline" 
             size="sm"
-            className="h-8 px-2.5 rounded-lg border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+            className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
           >
             <User size={13} /> Profile
           </Button>
@@ -1339,7 +1339,7 @@ function ApprovedAllocationCard({
             onClick={onViewHistory}
             variant="outline" 
             size="sm"
-            className="h-8 px-2.5 rounded-lg border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+            className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
           >
             <DollarSign size={13} /> History
           </Button>
@@ -1347,7 +1347,7 @@ function ApprovedAllocationCard({
             onClick={onCheckout}
             variant="outline" 
             size="sm"
-            className="h-8 px-2.5 rounded-lg border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-1"
+            className="h-8 px-2.5 rounded-lg border-rose-200 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-1"
           >
             <LogOut size={13} /> Checkout
           </Button>
@@ -1355,12 +1355,12 @@ function ApprovedAllocationCard({
       </div>
 
       {/* Sub-panel: Security Deposit & Monthly Fees Schedule */}
-      <div className="pt-3 border-t border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-slate-50/60 p-3.5 rounded-xl border border-gray-100">
+      <div className="pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/70">
         {/* Deposit Box */}
-        <div className="md:col-span-4 flex items-center justify-between gap-3 p-2.5 bg-white rounded-lg border border-gray-200/70">
+        <div className="md:col-span-4 flex items-center justify-between gap-3 p-2.5 bg-white rounded-lg border border-slate-200/70">
           <div>
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Security Deposit</div>
-            <div className="text-xs font-bold text-gray-900 mt-0.5">
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Security Deposit</div>
+            <div className="text-xs font-bold text-slate-900 mt-0.5">
               ₹{Number(alloc.rooms?.security_deposit || rent * 2).toLocaleString()}
             </div>
           </div>
@@ -1376,7 +1376,7 @@ function ApprovedAllocationCard({
                 </span>
                 <button 
                   onClick={onMarkDepositPaid}
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 py-0.5 rounded text-xs transition-colors"
+                  className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-2 py-0.5 rounded text-xs transition-colors"
                 >
                   Mark Paid
                 </button>
@@ -1388,8 +1388,8 @@ function ApprovedAllocationCard({
         {/* Fees Schedule Box */}
         <div className="md:col-span-8 space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-gray-700 uppercase tracking-wider text-[11px]">Monthly Fees</span>
-            <span className="text-[11px] text-gray-500 font-medium">
+            <span className="font-semibold text-slate-700 uppercase tracking-wider text-[11px]">Monthly Fees</span>
+            <span className="text-[11px] text-slate-500 font-medium">
               {alloc.student_fees?.length || 0} scheduled
             </span>
           </div>
@@ -1418,7 +1418,7 @@ function ApprovedAllocationCard({
               }
 
               if (displayFees.length === 0) {
-                return <p className="text-xs text-gray-500 italic col-span-2">No fees scheduled yet.</p>;
+                return <p className="text-xs text-slate-500 italic col-span-2">No fees scheduled yet.</p>;
               }
 
               return displayFees.map((fee: any, idx: number) => {
@@ -1426,12 +1426,12 @@ function ApprovedAllocationCard({
                 const hasProof = fee.status === 'pending_verification';
                 const displayPeriod = fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
                 return (
-                  <div key={fee.id} className="p-2.5 border rounded-lg bg-white flex items-center justify-between gap-2 border-gray-200/70">
+                  <div key={fee.id} className="p-2.5 border rounded-lg bg-white flex items-center justify-between gap-2 border-slate-200/70">
                     <div className="min-w-0">
-                      <div className="font-semibold text-xs text-gray-900 truncate">
+                      <div className="font-semibold text-xs text-slate-900 truncate">
                         {displayPeriod} {isMonth1 ? '(Current)' : ''}
                       </div>
-                      <div className="text-[11px] text-gray-500">
+                      <div className="text-[11px] text-slate-500">
                         ₹{fee.amount_due || fee.amount || 0} &bull; Due: {new Date(fee.due_date).toLocaleDateString()}
                       </div>
                     </div>
@@ -1439,10 +1439,10 @@ function ApprovedAllocationCard({
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${
                         fee.status === 'paid' 
-                          ? 'bg-green-100 text-green-800' 
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
                           : fee.status === 'pending_verification' 
-                          ? 'bg-amber-100 text-amber-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}>
                         {fee.status.replace('_', ' ')}
                       </span>
@@ -1496,17 +1496,17 @@ function RejectedRequestCard({
   const room = req.rooms;
 
   return (
-    <div className="w-full bg-white border border-gray-200 hover:border-gray-300 shadow-xs rounded-2xl p-5 transition-all">
+    <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs rounded-xl p-5 transition-all">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
         {/* 1. Student */}
         <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 font-bold text-base">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 font-bold text-base border border-slate-200">
             {studentName.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>{studentName}</h3>
-            <div className="text-xs text-gray-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-gray-400" />
+            <h3 className="font-semibold text-slate-900 truncate" title={studentName}>{studentName}</h3>
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-slate-400" />
               <span className="truncate">{studentEmail}</span>
             </div>
           </div>
@@ -1514,52 +1514,52 @@ function RejectedRequestCard({
 
         {/* 2. Hostel & Room */}
         <div className="lg:col-span-2 min-w-0">
-          <div className="flex items-center gap-1.5 font-medium text-gray-900">
-            <Building2 size={14} className="text-gray-500 shrink-0" />
+          <div className="flex items-center gap-1.5 font-medium text-slate-900">
+            <Building2 size={14} className="text-blue-600 shrink-0" />
             <span className="truncate">{req.hostels?.name || 'Hostel'}</span>
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-slate-500 mt-1">
             Room {room?.room_number || '-'} &bull; {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
           </div>
         </div>
 
         {/* 3. Submission Info */}
-        <div className="lg:col-span-3 min-w-0 text-xs text-gray-500">
+        <div className="lg:col-span-3 min-w-0 text-xs text-slate-500">
           <div className="flex items-center gap-1.5">
-            <Clock size={12} className="text-gray-400 shrink-0" />
+            <Clock size={12} className="text-slate-400 shrink-0" />
             <span>Submitted {new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
           </div>
         </div>
 
         {/* 4. Status */}
         <div className="lg:col-span-1 flex lg:justify-center">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
             <XCircle size={12} /> Rejected
           </span>
         </div>
 
         {/* 5. Actions */}
-        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 flex-wrap">
+        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex-wrap">
           <Button 
             onClick={onViewDetails} 
             variant="ghost" 
             size="sm"
-            className="h-8 px-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 text-xs font-medium flex items-center gap-1"
+            className="h-8 px-2.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-medium flex items-center gap-1"
           >
             <Eye size={13} /> Details
           </Button>
           <Button 
             onClick={onRereview} 
             size="sm"
-            className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium flex items-center gap-1 transition-colors"
+            className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium flex items-center gap-1 shadow-2xs"
           >
             <RotateCcw size={13} /> Re-review
           </Button>
           <Button 
-            onClick={onDelete}
-            variant="outline"
+            onClick={onDelete} 
+            variant="outline" 
             size="sm"
-            className="h-8 px-2.5 rounded-lg border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-medium flex items-center gap-1 transition-colors"
+            className="h-8 px-2.5 rounded-lg border-rose-200 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-1"
           >
             <Trash2 size={13} /> Delete
           </Button>
@@ -1647,7 +1647,7 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
             <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 font-display border-b pb-1.5">Accommodation Details</h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               <span className="text-muted-foreground font-semibold">Hostel:</span> <span className="font-semibold text-foreground text-right">{item.hostels?.name}</span>
-              <span className="text-muted-foreground font-semibold">Room:</span> <span className="font-semibold text-foreground text-right">Room {item.rooms?.room_number} ({item.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'})</span>
+              <span className="text-muted-foreground font-semibold">Room:</span> <span className="font-semibold text-foreground text-right">Room {item.rooms?.room_number} ({item.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'})</span>
               <span className="text-muted-foreground font-semibold">Rent:</span> <span className="font-bold text-teal-700 text-right">₹{Number(item.rooms?.rent).toLocaleString()}/mo</span>
             </div>
           </div>

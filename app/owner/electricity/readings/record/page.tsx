@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { IconWrapper } from '@/components/owner/icon-wrapper';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -306,24 +308,29 @@ function ReadingEntryContent() {
   const daysElapsed = getDaysElapsed();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
           size="icon"
           onClick={() => window.location.href = '/owner/electricity/meters'}
+          className="border-slate-200 hover:bg-slate-50 text-slate-700 h-9 w-9 rounded-lg shadow-2xs"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Zap className="h-8 w-8 text-yellow-500" />
-            Record Reading
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Room {meterInfo.room_number} • {meterInfo.meter_number}
-          </p>
+        <div className="flex items-center gap-3.5">
+          <IconWrapper color="amber" size="lg">
+            <Zap className="h-5 w-5" />
+          </IconWrapper>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Record Meter Reading
+            </h1>
+            <p className="text-sm text-slate-600 mt-0.5">
+              Room {meterInfo.room_number} • <span className="font-mono text-xs font-semibold text-slate-700">{meterInfo.meter_number}</span> • {meterInfo.hostel_name}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -332,41 +339,39 @@ function ReadingEntryContent() {
         <div className="lg:col-span-2 space-y-6">
           {/* Previous Reading Info */}
           {meterInfo.last_reading && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Previous Reading</CardTitle>
+            <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+              <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+                <CardTitle className="text-sm font-semibold text-slate-900">Previous Benchmark Reading</CardTitle>
+                <CardDescription className="text-xs text-slate-500">Last verified reading recorded for this room submeter</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Reading Value</p>
-                    <p className="text-2xl font-bold">{meterInfo.last_reading.value} kWh</p>
+                  <div className="p-3.5 rounded-lg bg-slate-50/70 border border-slate-100">
+                    <p className="text-xs text-slate-500 font-medium">Last Reading Value</p>
+                    <p className="text-2xl font-bold text-slate-900 mt-0.5">{meterInfo.last_reading.value} <span className="text-xs font-normal text-slate-500">kWh</span></p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Days Ago</p>
-                    <p className="text-2xl font-bold">{daysElapsed} days</p>
+                  <div className="p-3.5 rounded-lg bg-slate-50/70 border border-slate-100">
+                    <p className="text-xs text-slate-500 font-medium">Days Elapsed</p>
+                    <p className="text-2xl font-bold text-slate-900 mt-0.5">{daysElapsed} <span className="text-xs font-normal text-slate-500">days ago</span></p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Date & Time</p>
-                  <p className="text-sm">
-                    {new Date(meterInfo.last_reading.timestamp).toLocaleString('en-IN')}
-                  </p>
+                <div className="mt-3 text-xs text-slate-500">
+                  <span>Recorded on: {new Date(meterInfo.last_reading.timestamp).toLocaleString('en-IN')}</span>
                 </div>
               </CardContent>
             </Card>
           )}
 
           {/* Reading Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>New Reading</CardTitle>
-              <CardDescription>Enter the current meter reading</CardDescription>
+          <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+            <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+              <CardTitle className="text-sm font-semibold text-slate-900">New Reading Entry</CardTitle>
+              <CardDescription className="text-xs text-slate-500">Enter the current cumulative reading displayed on the physical meter</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               {/* Reading Value */}
-              <div className="space-y-2">
-                <Label>Reading Value (kWh) *</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Reading Value (kWh) *</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -374,21 +379,24 @@ function ReadingEntryContent() {
                   placeholder="e.g., 1250.50"
                   value={readingValue}
                   onChange={(e) => setReadingValue(e.target.value)}
-                  className={validationError ? 'border-red-500' : ''}
+                  className={cn(
+                    "bg-slate-50/60 border-slate-200 hover:border-slate-300 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 rounded-lg",
+                    validationError && "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20"
+                  )}
                 />
                 {validationError && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertTriangle className="h-4 w-4" />
+                  <p className="text-xs text-rose-600 flex items-center gap-1 mt-1">
+                    <AlertTriangle className="h-3.5 w-3.5" />
                     {validationError}
                   </p>
                 )}
               </div>
 
               {/* Reason */}
-              <div className="space-y-2">
-                <Label>Reason *</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Reason for Reading *</Label>
                 <Select value={reason} onValueChange={(v: any) => setReason(v)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -397,7 +405,7 @@ function ReadingEntryContent() {
                     <SelectItem value="month_end">Month End</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">
+                <p className="text-[11px] text-slate-400">
                   {reason === 'initial' && 'First reading for occupied room (establishes opening billing segment)'}
                   {reason === 'occupancy_change' && 'Student joining/leaving (closes and creates segments)'}
                   {reason === 'month_end' && 'End of month reading (closes and creates segments)'}
@@ -405,13 +413,14 @@ function ReadingEntryContent() {
               </div>
 
               {/* Notes */}
-              <div className="space-y-2">
-                <Label>Notes (Optional)</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Notes (Optional)</Label>
                 <Textarea
-                  placeholder="Additional notes or observations"
+                  placeholder="Additional notes or meter observations..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
+                  className="bg-slate-50/60 border-slate-200 hover:border-slate-300 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 rounded-lg"
                 />
               </div>
             </CardContent>
@@ -422,24 +431,28 @@ function ReadingEntryContent() {
         <div className="space-y-6">
           {/* Consumption Preview */}
           {expectedConsumption !== null && expectedConsumption >= 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Consumption
-                </CardTitle>
+            <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+              <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+                <div className="flex items-center gap-2.5">
+                  <IconWrapper color="blue" size="sm">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                  </IconWrapper>
+                  <CardTitle className="text-sm font-semibold text-slate-900">
+                    Consumption Preview
+                  </CardTitle>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-center">
+              <CardContent className="p-6">
+                <div className="text-center py-2">
                   <p className="text-4xl font-bold text-blue-600">
                     {expectedConsumption.toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">kWh consumed</p>
-                  {daysElapsed && (
-                    <p className="text-xs text-gray-400 mt-2">
-                      ˜ {(expectedConsumption / daysElapsed).toFixed(2)} kWh/day
+                  <p className="text-xs text-slate-500 mt-1 font-medium">kWh consumed in period</p>
+                  {daysElapsed ? (
+                    <p className="text-xs text-slate-400 mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                      ≈ {(expectedConsumption / daysElapsed).toFixed(2)} kWh / day
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
@@ -447,16 +460,16 @@ function ReadingEntryContent() {
 
           {/* High Consumption Warning */}
           {highConsumptionWarning && (
-            <Card className="border-yellow-500 border-2">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-yellow-700">
-                  <AlertTriangle className="h-5 w-5" />
-                  High Consumption
+            <Card className="border border-amber-300 bg-amber-50/60 shadow-xs rounded-xl overflow-hidden">
+              <CardHeader className="bg-amber-100/60 px-6 py-3.5 border-b border-amber-200/80">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-900">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  High Consumption Notice
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-yellow-800">
-                  This reading shows consumption over 1000 kWh. Please verify the reading is correct before submitting.
+              <CardContent className="p-5">
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  This reading reflects consumption over 1,000 kWh. Please confirm the physical reading before submitting.
                 </p>
               </CardContent>
             </Card>
@@ -464,17 +477,17 @@ function ReadingEntryContent() {
 
           {/* Segment Impact Info */}
           {reason !== 'initial' && (
-            <Card className="border-blue-500 border-2">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-blue-700">
-                  <Info className="h-5 w-5" />
-                  Billing Impact
+            <Card className="border border-blue-200 bg-blue-50/50 shadow-xs rounded-xl overflow-hidden">
+              <CardHeader className="bg-blue-100/50 px-6 py-3.5 border-b border-blue-200/70">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-blue-900">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  Billing Cycle Impact
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-blue-800">
-                  {reason === 'occupancy_change' && 'This reading will close the current billing segment and create a new one with updated occupants.'}
-                  {reason === 'month_end' && 'This reading will close the current month\'s billing segment and start a new one with the same occupants.'}
+              <CardContent className="p-5">
+                <p className="text-xs text-blue-800 leading-relaxed">
+                  {reason === 'occupancy_change' && 'This reading will close the current billing segment and establish a new segment with revised room occupancy.'}
+                  {reason === 'month_end' && 'This reading will finalize the month-end billing segment and initialize the upcoming month cycle.'}
                 </p>
               </CardContent>
             </Card>
@@ -482,7 +495,7 @@ function ReadingEntryContent() {
 
           {/* Submit Button */}
           <Button 
-            className="w-full" 
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs h-11" 
             size="lg"
             onClick={handleSubmit}
             disabled={!!validationError || !readingValue || submitLoading}
@@ -496,20 +509,20 @@ function ReadingEntryContent() {
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
               Confirm High Consumption
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-slate-500">
               This reading shows unusually high consumption ({expectedConsumption?.toFixed(2)} kWh).
               Are you sure the reading is correct?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={submitLoading}>
+            <Button onClick={handleSubmit} disabled={submitLoading} className="bg-teal-600 hover:bg-teal-700 text-white font-medium">
               {submitLoading ? 'Recording...' : 'Confirm & Record'}
             </Button>
           </DialogFooter>

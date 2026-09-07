@@ -270,7 +270,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             </div>
             <p className="text-sm font-semibold text-muted-foreground flex items-center justify-center md:justify-start gap-1">
               <Building2 size={14} />
-              {allocation.hostels?.name} &bull; Room {allocation.rooms?.room_number} &bull; {allocation.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'}
+              {allocation.hostels?.name} &bull; Room {allocation.rooms?.room_number} &bull; {allocation.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
             </p>
             <p className="text-xs text-muted-foreground">
               Checked in on {new Date(allocation.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}

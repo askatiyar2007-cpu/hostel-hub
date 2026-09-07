@@ -105,18 +105,18 @@ export default function OwnerComplaintsPage() {
 
   const getPriorityColor = (priority: number) => {
     switch (priority) {
-      case 1: return 'text-red-600 bg-red-100 border-red-200';
-      case 2: return 'text-amber-600 bg-amber-100 border-amber-200';
-      default: return 'text-blue-600 bg-blue-100 border-blue-200';
+      case 1: return 'text-rose-700 bg-rose-50 border border-rose-200/80 shadow-2xs font-semibold text-[11px]';
+      case 2: return 'text-amber-700 bg-amber-50 border border-amber-200/80 shadow-2xs font-semibold text-[11px]';
+      default: return 'text-blue-700 bg-blue-50 border border-blue-200/80 shadow-2xs font-semibold text-[11px]';
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved': return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none"><CheckCircle2 className="mr-1 h-3 w-3" /> Resolved</Badge>;
-      case 'in_progress': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none"><Clock className="mr-1 h-3 w-3" /> In Progress</Badge>;
-      case 'open': return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none"><Circle className="mr-1 h-3 w-3" /> Open</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+      case 'resolved': return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200/80 shadow-2xs text-[11px] font-semibold"><CheckCircle2 className="mr-1 h-3 w-3" /> Resolved</Badge>;
+      case 'in_progress': return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-200/80 shadow-2xs text-[11px] font-semibold"><Clock className="mr-1 h-3 w-3" /> In Progress</Badge>;
+      case 'open': return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-200/80 shadow-2xs text-[11px] font-semibold"><Circle className="mr-1 h-3 w-3" /> Open</Badge>;
+      default: return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs text-[11px] font-semibold capitalize">{status}</Badge>;
     }
   };
 
@@ -142,21 +142,21 @@ export default function OwnerComplaintsPage() {
       <div className="flex flex-col gap-6 mb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Tabs defaultValue="all" className="w-full sm:w-auto" onValueChange={setStatusTab}>
-            <TabsList className="bg-muted/50 p-1">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="open">Open</TabsTrigger>
-              <TabsTrigger value="in_progress">In Progress</TabsTrigger>
-              <TabsTrigger value="resolved">Resolved</TabsTrigger>
+            <TabsList className="bg-white border border-slate-200 p-1 rounded-xl shadow-2xs">
+              <TabsTrigger value="all" className="rounded-lg text-xs font-semibold data-[state=active]:bg-teal-600 data-[state=active]:text-white">All</TabsTrigger>
+              <TabsTrigger value="open" className="rounded-lg text-xs font-semibold data-[state=active]:bg-amber-500 data-[state=active]:text-white">Open</TabsTrigger>
+              <TabsTrigger value="in_progress" className="rounded-lg text-xs font-semibold data-[state=active]:bg-amber-500 data-[state=active]:text-white">In Progress</TabsTrigger>
+              <TabsTrigger value="resolved" className="rounded-lg text-xs font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Resolved</TabsTrigger>
             </TabsList>
           </Tabs>
           
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <Input 
               placeholder="Search complaints..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-9 h-10 border-slate-200 bg-white rounded-xl text-xs"
             />
           </div>
         </div>
@@ -165,69 +165,69 @@ export default function OwnerComplaintsPage() {
       <div className="grid grid-cols-1 gap-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Clock className="h-10 w-10 text-primary animate-spin" />
-            <p className="text-muted-foreground font-medium">Loading complaints...</p>
+            <Clock className="h-10 w-10 text-teal-600 animate-spin" />
+            <p className="text-slate-500 font-medium text-sm">Loading complaints...</p>
           </div>
         ) : filteredComplaints.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-2xl border border-dashed border-border bg-muted/30">
-            <div className="rounded-full bg-muted p-4">
-              <MessageSquare size={32} className="text-muted-foreground/60" />
+          <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-slate-200 bg-white">
+            <div className="rounded-full bg-slate-100 p-4">
+              <MessageSquare size={32} className="text-slate-400" />
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-foreground">No complaints found</p>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+              <p className="text-base font-bold text-slate-900">No complaints found</p>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
                 {searchQuery || statusTab !== 'all' 
                   ? "Try adjusting your filters or search terms." 
                   : "Everything looks good! No issues have been reported yet."}
               </p>
             </div>
             {(searchQuery || statusTab !== 'all') && (
-              <Button variant="outline" onClick={() => {setSearchQuery(''); setStatusTab('all');}}>
+              <Button variant="outline" onClick={() => {setSearchQuery(''); setStatusTab('all');}} className="border-slate-200 text-xs">
                 Clear all filters
               </Button>
             )}
           </div>
         ) : filteredComplaints.map((complaint) => (
-          <div key={complaint.id} className="group rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all duration-200">
+          <div key={complaint.id} className="group rounded-xl border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-md transition-all duration-200">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge variant="outline" className={getPriorityColor(complaint.priority)}>
                     {complaint.priority === 1 ? 'HIGH' : complaint.priority === 2 ? 'MEDIUM' : 'LOW'} PRIORITY
                   </Badge>
-                  <Badge variant="outline" className="text-purple-600 bg-purple-100 border-purple-200">
+                  <Badge variant="outline" className="text-purple-700 bg-purple-50 border-purple-200 text-[11px] font-semibold">
                     {CATEGORY_LABEL[complaint.category] || complaint.category}
                   </Badge>
                   {getStatusBadge(complaint.status)}
                 </div>
                 
-                <h3 className="text-xl font-semibold font-display mb-2">{complaint.title}</h3>
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-2 md:line-clamp-none">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">{complaint.title}</h3>
+                <p className="text-slate-600 text-xs mb-4 line-clamp-2 md:line-clamp-none leading-relaxed">
                   {complaint.description}
                 </p>
                 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground font-medium">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium">
                   <div className="flex items-center gap-1.5">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary">
+                    <div className="h-6 w-6 rounded-full bg-violet-50 border border-violet-100 flex items-center justify-center text-[10px] text-violet-700 font-bold">
                       {complaint.student_full_name?.[0] || '?'}
                     </div>
                     <span>{complaint.student_full_name || 'Unknown student'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} />
+                    <Clock size={13} className="text-slate-400" />
                     <span>{new Date(complaint.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <MessageSquare size={14} />
-                    <span>{complaint.hostels?.name}</span>
+                    <MessageSquare size={13} className="text-blue-500" />
+                    <span className="text-slate-700 font-semibold">{complaint.hostels?.name}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 self-end md:self-center shrink-0">
-                <span className="text-xs text-muted-foreground font-medium hidden md:inline">Update Status:</span>
+                <span className="text-xs text-slate-400 font-semibold hidden md:inline">Update Status:</span>
                 <select 
-                  className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all cursor-pointer"
                   defaultValue={complaint.status}
                   onChange={(e) => updateStatus(complaint.id, e.target.value)}
                 >

@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { IconWrapper } from '@/components/owner/icon-wrapper';
+import { cn } from '@/lib/utils';
 
 interface MeterWithDetails {
   id: string;
@@ -225,27 +227,31 @@ export default function MeterManagementPage() {
     : meters;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Zap className="h-8 w-8 text-yellow-500" />
-            Electricity Meters
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Manage electricity meters for your rooms
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <IconWrapper color="amber" size="lg">
+            <Zap className="h-5 w-5" />
+          </IconWrapper>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Electricity Meters
+            </h1>
+            <p className="text-sm text-slate-600 mt-0.5">
+              Manage electricity submeters, monitor pending readings, and track consumption
+            </p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link href={selectedHostel && selectedHostel !== 'all' ? `/owner/electricity/meters/bulk?hostelId=${selectedHostel}` : '/owner/electricity/meters/bulk'}>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium">
               <Layers className="h-4 w-4" />
               Bulk Create Meters
             </Button>
           </Link>
-          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs">
             <Plus className="h-4 w-4" />
             Add Meter
           </Button>
@@ -253,20 +259,24 @@ export default function MeterManagementPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
+      <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+          <div className="flex items-center gap-2.5">
+            <IconWrapper color="teal" size="sm">
+              <Filter className="h-3.5 w-3.5" />
+            </IconWrapper>
+            <CardTitle className="text-sm font-semibold text-slate-900">
+              Filter Meter Records
+            </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Hostel Filter */}
-            <div className="space-y-2">
-              <Label>Hostel</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Hostel</Label>
               <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue placeholder="Select hostel" />
                 </SelectTrigger>
                 <SelectContent>
@@ -281,10 +291,10 @@ export default function MeterManagementPage() {
             </div>
             
             {/* Status Filter */}
-            <div className="space-y-2">
-              <Label>Status</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,13 +306,13 @@ export default function MeterManagementPage() {
             </div>
             
             {/* Pending Reading Filter */}
-            <div className="space-y-2">
-              <Label>Readings</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Readings</Label>
               <Select 
                 value={pendingFilter ? 'pending' : 'all'} 
                 onValueChange={(v) => setPendingFilter(v === 'pending')}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -464,10 +474,6 @@ interface MeterCardProps {
 }
 
 function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
-  const getMeterStatusColor = (status: string) => {
-    return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
-  };
-  
   const getReadingStatus = () => {
     if (meter.pending_reading) {
       return {
@@ -533,34 +539,42 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
   const billingStatus = getBillingStatus();
 
   return (
-    <Card className={meter.pending_reading ? 'border-yellow-500 border-2' : ''}>
-      <CardHeader>
+    <Card className={cn(
+      "border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow",
+      meter.pending_reading ? 'border-amber-400 ring-2 ring-amber-400/20' : ''
+    )}>
+      <CardHeader className="bg-slate-50/70 px-5 py-4 border-b border-slate-100">
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">Room {meter.room_number}</CardTitle>
-            <CardDescription className="font-mono text-sm">
-              {meter.meter_number}
-            </CardDescription>
+          <div className="flex items-center gap-3">
+            <IconWrapper color={meter.status === 'active' ? "blue" : "indigo"} size="md">
+              <Zap className="h-4 w-4" />
+            </IconWrapper>
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900">Room {meter.room_number}</CardTitle>
+              <CardDescription className="font-mono text-xs text-slate-500 mt-0.5">
+                {meter.meter_number}
+              </CardDescription>
+            </div>
           </div>
-          <Badge className={getMeterStatusColor(meter.status)}>
+          <Badge className={meter.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-normal shadow-none" : "bg-slate-100 text-slate-600 border-slate-200 font-normal"}>
             {meter.status === 'active' ? 'Active' : 'Inactive'}
           </Badge>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="p-5 space-y-4">
         {/* Meter Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">Meter Status</span>
-          <Badge className={getMeterStatusColor(meter.status)} variant="outline">
+          <span className="text-slate-500 text-xs">Meter Status</span>
+          <Badge className={meter.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-normal text-xs" : "bg-slate-100 text-slate-600 border-slate-200 font-normal text-xs"} variant="outline">
             {meter.status === 'active' ? 'Active' : 'Inactive'}
           </Badge>
         </div>
 
         {/* Reading Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">Reading Status</span>
-          <Badge className={`${readingStatus.color} border`} variant="outline">
+          <span className="text-slate-500 text-xs">Reading Status</span>
+          <Badge className={`${readingStatus.color} border text-xs font-normal`} variant="outline">
             {readingStatus.icon}
             <span className="ml-1">{readingStatus.text}</span>
           </Badge>
@@ -568,8 +582,8 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
 
         {/* Billing Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">Billing Status</span>
-          <Badge className={`${billingStatus.color} border`} variant="outline">
+          <span className="text-slate-500 text-xs">Billing Status</span>
+          <Badge className={`${billingStatus.color} border text-xs font-normal`} variant="outline">
             {billingStatus.icon}
             <span className="ml-1">{billingStatus.text}</span>
           </Badge>
@@ -577,48 +591,48 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
 
         {/* Last Reading */}
         {meter.last_reading ? (
-          <div className="space-y-1">
-            <p className="text-sm text-gray-500">Last Reading</p>
-            <p className="text-2xl font-bold">{meter.last_reading.value} kWh</p>
-            <p className="text-xs text-gray-400">
+          <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 border border-slate-100">
+            <p className="text-xs text-slate-500 font-medium">Last Reading</p>
+            <p className="text-xl font-bold text-slate-900">{meter.last_reading.value} <span className="text-xs font-normal text-slate-500">kWh</span></p>
+            <p className="text-[11px] text-slate-400">
               {formatDate(meter.last_reading.timestamp)}
             </p>
           </div>
         ) : (
-          <div className="space-y-1">
-            <p className="text-sm text-gray-500">No readings yet</p>
-            <p className="text-sm text-gray-400">Record your first reading</p>
+          <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 border border-slate-100">
+            <p className="text-xs text-slate-500 font-medium">No readings yet</p>
+            <p className="text-xs text-slate-400">Record initial reading to start tracking</p>
           </div>
         )}
         
         {/* Reading Required Message */}
         {meter.pending_reading && (
-          <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded">
-            <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+          <div className="flex items-start gap-2.5 p-3 bg-amber-50/80 border border-amber-200/80 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-yellow-800 font-medium">
+              <p className="text-xs text-amber-900 font-semibold">
                 Reading Required
               </p>
-              <p className="text-xs text-yellow-700 mt-1">
-                New student allocation detected. Record a New Allocation reading to start the new billing segment.
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                New student allocation detected. Record a reading to start the new billing segment.
               </p>
             </div>
           </div>
         )}
         
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-1">
           <Button 
             size="sm" 
             variant="outline" 
-            className="flex-1"
+            className="flex-1 text-xs border-slate-200 hover:bg-slate-50 text-slate-700"
             onClick={() => window.location.href = `/owner/electricity/readings/history?meter_id=${meter.id}`}
           >
             History
           </Button>
           <Button 
             size="sm" 
-            className="flex-1"
+            className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs"
             onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}${meter.pending_reading ? '&reason=occupancy_change' : ''}`}
           >
             Record Reading

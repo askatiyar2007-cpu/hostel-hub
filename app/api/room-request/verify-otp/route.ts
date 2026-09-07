@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
       if (actualOccupancy > 0) {
         console.log('[ROOM VERIFY OTP] Entire room not available, occupancy:', actualOccupancy);
         return NextResponse.json(
-          { error: 'Entire room is unavailable because this room already has an occupant. Choose Shared Bed or another room.' },
+          { error: 'Entire room is unavailable because this room already has an occupant. Choose Shared Room or another room.' },
           { status: 400 }
         );
       }

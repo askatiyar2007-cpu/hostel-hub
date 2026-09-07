@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { IconWrapper } from '@/components/owner/icon-wrapper';
+import { cn } from '@/lib/utils';
 
 interface Hostel {
   id: string;
@@ -178,33 +180,37 @@ export default function RateConfigurationPage() {
   const selectedHostelName = hostels.find(h => h.id === selectedHostelId)?.name || '';
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <TrendingUp className="h-8 w-8 text-blue-600" />
-          Electricity Rate Configuration
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Configure electricity rates per kWh for your hostels
-        </p>
+      <div className="flex items-center gap-3.5">
+        <IconWrapper color="blue" size="lg">
+          <TrendingUp className="h-5 w-5" />
+        </IconWrapper>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Electricity Rate Configuration
+          </h1>
+          <p className="text-sm text-slate-600 mt-0.5">
+            Configure tariff rates per kWh, review current active pricing, and inspect historical rate adjustments
+          </p>
+        </div>
       </div>
 
       {/* Hostel Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Select Hostel</CardTitle>
-          <CardDescription>Choose the hostel to configure rates for</CardDescription>
+      <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+          <CardTitle className="text-sm font-semibold text-slate-900">Select Hostel</CardTitle>
+          <CardDescription className="text-xs text-slate-500">Choose the property to view and configure electricity rates</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {hostelsLoading ? (
-            <div className="h-10 animate-pulse bg-gray-100 rounded-md" />
+            <div className="h-10 animate-pulse bg-slate-100 rounded-lg" />
           ) : hostels.length === 0 ? (
-            <p className="text-sm text-gray-500">No hostels found. Please create a hostel first.</p>
+            <p className="text-sm text-slate-500">No hostels found. Please create a hostel first.</p>
           ) : (
             <div className="max-w-md">
               <Select value={selectedHostelId} onValueChange={setSelectedHostelId}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue placeholder="Select a hostel" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,30 +228,34 @@ export default function RateConfigurationPage() {
 
       {/* Current Rate Display */}
       {selectedHostelId && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              Current Rate
-            </CardTitle>
-            <CardDescription>
-              {selectedHostelName}
-            </CardDescription>
+        <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+          <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+            <div className="flex items-center gap-2.5">
+              <IconWrapper color="emerald" size="sm">
+                <TrendingUp className="h-3.5 w-3.5" />
+              </IconWrapper>
+              <div>
+                <CardTitle className="text-sm font-semibold text-slate-900">Current Active Rate</CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  {selectedHostelName}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {rateDataLoading ? (
-              <div className="h-16 animate-pulse bg-gray-100 rounded-md" />
+              <div className="h-16 animate-pulse bg-slate-100 rounded-lg" />
             ) : currentRate !== null ? (
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-green-600">
+              <div className="space-y-1">
+                <div className="text-3xl sm:text-4xl font-bold text-emerald-600">
                   ₹{currentRate.toFixed(4)}
                 </div>
-                <p className="text-sm text-gray-500">per kWh</p>
+                <p className="text-xs text-slate-500">per kilowatt-hour (kWh)</p>
               </div>
             ) : (
-              <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg">
-                <AlertCircle className="h-5 w-5" />
-                <p className="text-sm">No rate configured for this hostel yet</p>
+              <div className="flex items-center gap-2 text-amber-800 bg-amber-50/80 border border-amber-200/80 p-3 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                <p className="text-xs font-medium">No rate configured for this hostel yet. Set an initial rate below.</p>
               </div>
             )}
           </CardContent>
@@ -254,16 +264,16 @@ export default function RateConfigurationPage() {
 
       {/* Rate Update Form */}
       {selectedHostelId && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Update Rate</CardTitle>
-            <CardDescription>
-              Set a new electricity rate. This will create a new rate entry effective from now.
+        <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+          <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+            <CardTitle className="text-sm font-semibold text-slate-900">Update Rate</CardTitle>
+            <CardDescription className="text-xs text-slate-500">
+              Set a new electricity rate. This will create an effective timestamped record for subsequent billing calculations.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="newRate">New Rate (₹ per kWh) *</Label>
+          <CardContent className="p-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="newRate" className="text-xs font-semibold text-slate-700">New Rate (₹ per kWh) *</Label>
               <Input
                 id="newRate"
                 type="number"
@@ -273,79 +283,89 @@ export default function RateConfigurationPage() {
                 value={newRate}
                 onChange={(e) => setNewRate(e.target.value)}
                 disabled={isSubmitting}
+                className="bg-slate-50/60 border-slate-200 hover:border-slate-300 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 rounded-lg max-w-md"
               />
-              <p className="text-xs text-gray-500">
-                Enter the rate in rupees per kilowatt-hour (e.g., 10.50 for ₹10.50/kWh)
+              <p className="text-[11px] text-slate-400">
+                Enter the unit rate in rupees per kilowatt-hour (e.g., 10.50 for ₹10.50/kWh)
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="notes" className="text-xs font-semibold text-slate-700">Notes (Optional)</Label>
               <Textarea
                 id="notes"
-                placeholder="Reason for rate change, approval reference, etc."
+                placeholder="Reason for rate change, government tariff revision, or approval reference..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 disabled={isSubmitting}
+                className="bg-slate-50/60 border-slate-200 hover:border-slate-300 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 rounded-lg max-w-xl"
               />
             </div>
 
-            <Button
-              onClick={handleUpdateRate}
-              disabled={isSubmitting || !newRate}
-              className="w-full"
-            >
-              {isSubmitting ? 'Updating Rate...' : 'Update Rate'}
-            </Button>
+            <div className="pt-2">
+              <Button
+                onClick={handleUpdateRate}
+                disabled={isSubmitting || !newRate}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs h-10 px-6"
+              >
+                {isSubmitting ? 'Updating Rate...' : 'Update Rate'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Rate History */}
       {selectedHostelId && rateHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <History className="h-5 w-5 text-blue-600" />
-              Rate History
-            </CardTitle>
-            <CardDescription>
-              Complete history of rate changes for {selectedHostelName}
-            </CardDescription>
+        <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+          <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+            <div className="flex items-center gap-2.5">
+              <IconWrapper color="blue" size="sm">
+                <History className="h-3.5 w-3.5" />
+              </IconWrapper>
+              <div>
+                <CardTitle className="text-sm font-semibold text-slate-900">Rate History</CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Audit log of past rate revisions for {selectedHostelName}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="space-y-3">
               {rateHistory.map((entry) => (
                 <div
                   key={entry.id}
-                  className={`p-4 rounded-lg border ${
+                  className={cn(
+                    "p-4 rounded-xl border transition-all",
                     entry.is_current
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
+                      ? "border-emerald-200/90 bg-emerald-50/50 shadow-xs"
+                      : "border-slate-200/80 bg-slate-50/60"
+                  )}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl font-bold text-slate-900">
                           ₹{entry.rate_per_unit.toFixed(4)}
                         </span>
+                        <span className="text-xs text-slate-500">/ kWh</span>
                         {entry.is_current && (
-                          <Badge className="bg-green-600 text-white">Current</Badge>
+                          <Badge className="bg-emerald-600 text-white font-medium shadow-none text-xs">Current Active</Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
                         <span>Effective from: {formatDate(entry.effective_from)}</span>
                       </div>
                       {entry.created_by_name && (
-                        <p className="text-xs text-gray-500">
-                          Created by: {entry.created_by_name}
+                        <p className="text-xs text-slate-500">
+                          Recorded by: <span className="font-medium text-slate-700">{entry.created_by_name}</span>
                         </p>
                       )}
                       {entry.notes && (
-                        <p className="text-sm text-gray-600 mt-1">{entry.notes}</p>
+                        <p className="text-xs text-slate-600 mt-1 bg-white/80 p-2 rounded-lg border border-slate-200/60">{entry.notes}</p>
                       )}
                     </div>
                   </div>

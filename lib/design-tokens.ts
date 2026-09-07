@@ -43,6 +43,46 @@ export const colors = {
     danger: '#ef4444',
     info: '#3b82f6',
   },
+
+
+  // Secondary Accents (Categorical / Information hierarchy)
+  accent: {
+    blue: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+    },
+    indigo: {
+      50: '#eef2ff',
+      100: '#e0e7ff',
+      500: '#6366f1',
+      600: '#4f46e5',
+      700: '#4338ca',
+    },
+    violet: {
+      50: '#f5f3ff',
+      100: '#ede9fe',
+      500: '#8b5cf6',
+      600: '#7c3aed',
+      700: '#6d28d9',
+    },
+    amber: {
+      50: '#fffbeb',
+      100: '#fef3c7',
+      500: '#f59e0b',
+      600: '#d97706',
+      700: '#b45309',
+    },
+    rose: {
+      50: '#fff1f2',
+      100: '#ffe4e6',
+      500: '#f43f5e',
+      600: '#e11d48',
+      700: '#be123c',
+    },
+  },
   
   // Neutral Colors
   neutral: {
@@ -65,6 +105,19 @@ export const colors = {
     secondary: '#f8fafc',
     tertiary: '#f1f5f9',
   },
+};
+
+export const semanticAlias = {
+  primary: colors.primary.teal,
+  room: colors.accent.blue,
+  student: colors.accent.violet,
+  warning: colors.accent.amber,
+  destructive: colors.accent.rose,
+  security: colors.accent.indigo,
+  info: colors.accent.blue,
+  pending: colors.accent.amber,
+  rejected: colors.accent.rose,
+  active: colors.primary.teal,
 };
 
 export const typography = {

@@ -189,7 +189,7 @@ export async function sendStudentInvitationEmail({
               </div>
               <div class="detail-item">
                 <div class="detail-label">Booking Type</div>
-                <div class="detail-value">${bookingType === 'entire_room' ? 'Entire Room' : 'Shared Bed'}</div>
+                <div class="detail-value">${bookingType === 'entire_room' ? 'Entire Room' : 'Shared Room'}</div>
               </div>
             </div>
 

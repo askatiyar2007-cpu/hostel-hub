@@ -23,12 +23,13 @@ export function DashboardShell({
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
             {badge ? (
-              <span className="mb-2 inline-block rounded-full bg-teal-50 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800">
+              <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
                 {badge}
               </span>
             ) : null}
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display">{title}</h1>
-            {subtitle ? <p className="mt-1 text-muted-foreground">{subtitle}</p> : null}
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">{title}</h1>
+            {subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}
           </div>
         </div>
         {children}

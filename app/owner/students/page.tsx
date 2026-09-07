@@ -21,11 +21,11 @@ import { toast } from 'sonner';
 // User-facing labels for the two booking modes. The underlying persisted
 // value and public.booking_type enum are unchanged -- only the displayed
 // text differs: "entire_room" reads as "Entire Room" (whole room,
-// exclusive) and "shared_bed" reads as "Entire Shared Room" (shared with
+// exclusive) and "shared_bed" reads as "Shared Room" (shared with
 // other students under the existing bed-level allocation model).
 const BOOKING_TYPE_LABEL: Record<string, string> = {
   entire_room: 'Entire Room',
-  shared_bed: 'Entire Shared Room'
+  shared_bed: 'Shared Room'
 };
 
 export default function OwnerStudentsPage() {
@@ -191,18 +191,18 @@ export default function OwnerStudentsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <Input 
               placeholder="Search by student name, email, phone, or room..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-8 h-10 border-gray-200 bg-white"
+              className="pl-9 pr-8 h-10 border-slate-200 bg-white rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X size={16} />
               </button>
@@ -210,12 +210,12 @@ export default function OwnerStudentsPage() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10 gap-2 border-gray-200 bg-white font-medium text-gray-700 hover:bg-gray-50">
+              <Button variant="outline" className="h-10 gap-2 border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 rounded-xl">
                 <Building2 size={16} className="text-teal-600" />
                 <span className="truncate">{selectedHostel === 'all' ? 'All Hostels' : uniqueHostels.find(h => h.id === selectedHostel)?.name}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white border-slate-200 rounded-xl shadow-lg">
               <DropdownMenuItem onClick={() => setSelectedHostel('all')}>All Hostels</DropdownMenuItem>
               {uniqueHostels.map(hostel => (
                 <DropdownMenuItem key={hostel.id} onClick={() => setSelectedHostel(hostel.id)}>
@@ -227,7 +227,7 @@ export default function OwnerStudentsPage() {
         </div>
 
         <Link href="/owner/students/new">
-          <Button className="h-10 gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 shadow-sm transition-colors">
+          <Button className="h-10 gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 shadow-xs transition-colors text-sm">
             <Plus size={18} />
             <span>Assign Student</span>
           </Button>
@@ -236,23 +236,23 @@ export default function OwnerStudentsPage() {
 
       {/* Loading State */}
       {loading ? (
-        <div className="rounded-2xl border border-teal-200/80 bg-white p-12 text-center text-gray-500 shadow-xs">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center text-slate-500 shadow-xs">
           <div className="animate-spin inline-block w-8 h-8 border-3 border-teal-600 border-t-transparent rounded-full mb-3" />
-          <p className="font-medium text-gray-600">Loading resident students...</p>
+          <p className="font-medium text-slate-600">Loading resident students...</p>
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50/50 p-12 text-center shadow-xs">
-          <AlertTriangle className="mx-auto h-10 w-10 text-red-500 mb-2" />
-          <p className="font-semibold text-red-800 mb-2">Error: {error}</p>
-          <Button variant="outline" onClick={fetchStudents} className="border-red-200 text-red-700 hover:bg-red-50">
+        <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-12 text-center shadow-xs">
+          <AlertTriangle className="mx-auto h-10 w-10 text-rose-500 mb-2" />
+          <p className="font-semibold text-rose-800 mb-2">Error: {error}</p>
+          <Button variant="outline" onClick={fetchStudents} className="border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg">
             Retry Loading
           </Button>
         </div>
       ) : filteredAssignments.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-xs">
-          <Users className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-          <h3 className="text-base font-semibold text-gray-900">No resident students found</h3>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
+          <Users className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+          <h3 className="text-base font-bold text-slate-900">No resident students found</h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
             {searchQuery || selectedHostel !== 'all' 
               ? 'No students match your current filter criteria.' 
               : 'You do not have any active resident students assigned yet.'}
@@ -261,13 +261,13 @@ export default function OwnerStudentsPage() {
             <Button 
               variant="outline" 
               onClick={() => { setSearchQuery(''); setSelectedHostel('all'); }}
-              className="mt-4 border-gray-200"
+              className="mt-4 border-slate-200 text-slate-700 rounded-lg text-xs"
             >
               Clear Filters
             </Button>
           ) : (
             <Link href="/owner/students/new" className="inline-block mt-4">
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white font-medium gap-2">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold gap-2 rounded-xl text-xs shadow-xs">
                 <Plus size={16} /> Assign First Student
               </Button>
             </Link>

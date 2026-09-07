@@ -236,7 +236,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
         <StatCard label="Current Hostel" value={hostel?.name ?? "—"} hint={hostel?.city ?? ""} />
         <StatCard label="Current Room" value={`Room ${room?.room_number ?? "—"}`} hint={room?.room_type || room?.type || "double"} />
         <StatCard label="Monthly Rent" value={`₹${Number(room?.rent ?? 0).toLocaleString()}`} />
-        <StatCard label="Booking Type" value={approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'} />
+        <StatCard label="Booking Type" value={approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'} />
       </div>
 
       {/* Your Allocated Room Card */}
@@ -279,7 +279,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
                     <p className="font-bold text-foreground text-base mt-0.5">Room {room?.room_number}</p>
                   </div>
                   <span className="text-xs bg-primary/10 text-primary font-bold px-2 py-1 rounded-lg">
-                    {approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'}
+                    {approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
                   </span>
                 </div>
                 <div className="border-t border-border/40 pt-2.5">

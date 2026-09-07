@@ -726,7 +726,7 @@ export default function RoomRequestPage() {
       if (bookingType === 'entire_room' && occupiedBeds > 0) {
         setShowOccupancyAlert(true);
 
-        return 'Entire room is unavailable because this room already has an occupant. Choose Entire Shared Room or another room.';
+        return 'Entire room is unavailable because this room already has an occupant. Choose Shared Room or another room.';
       }
 
       if (occupiedBeds >= (selectedRoom?.capacity ?? 0)) {
@@ -957,7 +957,7 @@ export default function RoomRequestPage() {
               </span>
 
               <span>
-                {pendingRequest.booking_type === 'entire_room' ? 'Entire Room' : 'Entire Shared Room'}
+                {pendingRequest.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
               </span>
             </p>
 
@@ -1912,7 +1912,7 @@ export default function RoomRequestPage() {
                         />
 
                         <span className="text-sm font-medium">
-                          Entire Shared Room
+                          Shared Room
                         </span>
 
                       </label>
@@ -1968,7 +1968,7 @@ export default function RoomRequestPage() {
                       {bookingType ===
                       'entire_room'
                         ? 'Note: Booking the entire room means you will pay for all beds in this room.'
-                        : 'Note: Entire Shared Room means you will share this room with other residents.'}
+                        : 'Note: Shared Room means you will share this room with other residents.'}
 
                     </span>
 
@@ -2219,7 +2219,7 @@ export default function RoomRequestPage() {
             </h3>
 
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Entire room is unavailable because this room already has an occupant. Choose Entire Shared Room or another room.
+              Entire room is unavailable because this room already has an occupant. Choose Shared Room or another room.
             </p>
 
             <div className="flex justify-end">

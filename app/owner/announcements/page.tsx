@@ -244,13 +244,13 @@ export default function OwnerAnnouncementsPage() {
   const getPriorityStyle = (type: string) => {
     switch (type) {
       case 'emergency':
-        return 'bg-red-100 text-red-700 border-red-200';
+        return 'bg-rose-50 text-rose-700 border-rose-200/80 shadow-2xs';
       case 'maintenance':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200/80 shadow-2xs';
       case 'fee_reminder':
-        return 'bg-amber-100 text-amber-700 border-amber-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200/80 shadow-2xs';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200/80 shadow-2xs';
     }
   };
 
@@ -272,22 +272,22 @@ export default function OwnerAnnouncementsPage() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">Announcements</h1>
-          <p className="text-muted-foreground">Publish news, reminders, and alerts for your students</p>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-slate-900">Announcements</h1>
+          <p className="text-slate-500 text-sm mt-1">Publish news, reminders, and alerts for your students</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <select 
             value={selectedHostelFilter}
             onChange={(e) => setSelectedHostelFilter(e.target.value)}
-            className="h-10 rounded-xl border border-border bg-card px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-500"
           >
             <option value="all">All Hostels</option>
             {hostels.map(h => (
               <option key={h.id} value={h.id}>{h.name}</option>
             ))}
           </select>
-          <Button onClick={handleCreateOpen}>
-            <Plus size={20} className="mr-2" />
+          <Button onClick={handleCreateOpen} className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-2xs text-xs font-semibold h-10 px-4">
+            <Plus size={16} className="mr-1.5" />
             Create Announcement
           </Button>
         </div>
@@ -295,65 +295,65 @@ export default function OwnerAnnouncementsPage() {
 
       {/* Main Content */}
       {loading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-border bg-card py-20">
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-20">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="text-sm font-medium text-muted-foreground">Loading announcements...</p>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+            <p className="text-xs font-medium text-slate-500">Loading announcements...</p>
           </div>
         </div>
       ) : filteredAnnouncements.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-2xl border-2 border-dashed border-border bg-muted/40">
-          <div className="rounded-full bg-muted p-4">
-            <Megaphone size={32} className="text-muted-foreground/60" />
+        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-white">
+          <div className="rounded-full bg-slate-100 p-4">
+            <Megaphone size={32} className="text-slate-400" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold text-foreground font-display">No announcements found</p>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-1">
+            <p className="text-base font-bold text-slate-900">No announcements found</p>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
               Create your first announcement to share updates with your students.
             </p>
           </div>
-          <Button onClick={handleCreateOpen} variant="ghost">
+          <Button onClick={handleCreateOpen} variant="outline" className="border-teal-200 text-teal-700 hover:bg-teal-50 text-xs">
             Create Announcement &rarr;
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {filteredAnnouncements.map((item) => (
-            <div key={item.id} className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all duration-200">
+            <div key={item.id} className="group relative flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-md transition-all duration-200">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase border ${getPriorityStyle(item.notice_type)}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityStyle(item.notice_type)}`}>
                     {getPriorityLabel(item.notice_type)}
                   </span>
                   {item.hostels && (
-                    <span className="text-xs text-muted-foreground flex items-center bg-muted px-2 py-0.5 rounded">
-                      <Building2 size={12} className="mr-1" />
+                    <span className="text-xs text-slate-600 font-medium flex items-center bg-blue-50 border border-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                      <Building2 size={12} className="mr-1 text-blue-600" />
                       {item.hostels.name}
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground flex items-center ml-auto">
-                    <Calendar size={12} className="mr-1" />
+                  <span className="text-xs text-slate-400 flex items-center ml-auto">
+                    <Calendar size={12} className="mr-1 text-slate-400" />
                     {new Date(item.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold font-display text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 mt-2 text-sm whitespace-pre-wrap leading-relaxed">{item.body}</p>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-slate-600 text-xs whitespace-pre-wrap leading-relaxed">{item.body}</p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border flex justify-end gap-2">
+              <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-2">
                 <button 
                   onClick={() => handleEditOpen(item)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors p-1.5 hover:bg-muted rounded-lg"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors p-1.5 hover:bg-slate-50 rounded-lg"
                 >
-                  <Edit2 size={14} />
+                  <Edit2 size={13} />
                   <span>Edit</span>
                 </button>
                 <button 
                   onClick={() => handleDeleteOpen(item)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-destructive hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors p-1.5 hover:bg-rose-50 rounded-lg"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                   <span>Delete</span>
                 </button>
               </div>

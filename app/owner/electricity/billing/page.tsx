@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { IconWrapper } from '@/components/owner/icon-wrapper';
 
 interface BillingSummary {
   total_consumption_all: number;
@@ -179,23 +180,27 @@ export default function BillingOverviewPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <DollarSign className="h-8 w-8 text-green-500" />
-            Billing Overview
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Monthly electricity billing summary
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <IconWrapper color="emerald" size="lg">
+            <DollarSign className="h-5 w-5" />
+          </IconWrapper>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Billing Overview
+            </h1>
+            <p className="text-sm text-slate-600 mt-0.5">
+              Monthly electricity billing summaries, room breakdowns, and consumption tracking
+            </p>
+          </div>
         </div>
         
         <Button 
           onClick={handleExport} 
           disabled={exportLoading || !selectedHostel || !selectedMonth}
-          className="gap-2"
+          className="gap-2 bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs shrink-0"
         >
           <Download className="h-4 w-4" />
           {exportLoading ? 'Exporting...' : 'Export CSV'}
@@ -203,20 +208,24 @@ export default function BillingOverviewPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
+      <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+          <div className="flex items-center gap-2.5">
+            <IconWrapper color="teal" size="sm">
+              <Filter className="h-3.5 w-3.5" />
+            </IconWrapper>
+            <CardTitle className="text-sm font-semibold text-slate-900">
+              Filter Billing Records
+            </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Hostel Filter */}
-            <div className="space-y-2">
-              <Label>Hostel</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Hostel</Label>
               <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue placeholder="Select hostel" />
                 </SelectTrigger>
                 <SelectContent>
@@ -230,10 +239,10 @@ export default function BillingOverviewPage() {
             </div>
             
             {/* Month Filter */}
-            <div className="space-y-2">
-              <Label>Billing Month</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Billing Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,10 +256,10 @@ export default function BillingOverviewPage() {
             </div>
             
             {/* Room Type Filter */}
-            <div className="space-y-2">
-              <Label>Room Type</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Room Status Filter</Label>
               <Select value={roomTypeFilter} onValueChange={(v: any) => setRoomTypeFilter(v)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,106 +275,130 @@ export default function BillingOverviewPage() {
 
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Revenue</CardDescription>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+              <CardDescription className="text-xs font-medium text-slate-500">Total Revenue</CardDescription>
+              <IconWrapper color="emerald" size="sm">
+                <DollarSign className="h-3.5 w-3.5" />
+              </IconWrapper>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-emerald-600">
                 {formatCurrency(summary.total_revenue_paise)}
               </p>
+              <p className="text-xs text-slate-400 mt-1">Calculated billings</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Consumption</CardDescription>
+          <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+              <CardDescription className="text-xs font-medium text-slate-500">Total Consumption</CardDescription>
+              <IconWrapper color="amber" size="sm">
+                <Zap className="h-3.5 w-3.5" />
+              </IconWrapper>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-600">
-                {summary.total_consumption_all.toFixed(2)} kWh
+              <p className="text-2xl font-bold text-amber-600">
+                {summary.total_consumption_all.toFixed(2)} <span className="text-xs font-medium text-slate-500">kWh</span>
               </p>
+              <p className="text-xs text-slate-400 mt-1">Total electricity used</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Occupied Rooms</CardDescription>
+          <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+              <CardDescription className="text-xs font-medium text-slate-500">Occupied Rooms</CardDescription>
+              <IconWrapper color="blue" size="sm">
+                <FileText className="h-3.5 w-3.5" />
+              </IconWrapper>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{roomBilling.length}</p>
+              <p className="text-2xl font-bold text-slate-900">{roomBilling.length}</p>
+              <p className="text-xs text-slate-400 mt-1">Active billing accounts</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Empty Rooms</CardDescription>
+          <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+              <CardDescription className="text-xs font-medium text-slate-500">Empty Rooms</CardDescription>
+              <IconWrapper color="violet" size="sm">
+                <Zap className="h-3.5 w-3.5" />
+              </IconWrapper>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-gray-500">{roomBilling.filter(r => r.empty_room_consumption > 0).length}</p>
+              <p className="text-2xl font-bold text-slate-700">{roomBilling.filter(r => r.empty_room_consumption > 0).length}</p>
+              <p className="text-xs text-slate-400 mt-1">Standby consumption</p>
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* Room Billing Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Room-wise Billing
-          </CardTitle>
-          <CardDescription>
-            {filteredRooms.length} rooms • {selectedMonth}
-          </CardDescription>
+      <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+          <div className="flex items-center gap-2.5">
+            <IconWrapper color="blue" size="sm">
+              <FileText className="h-3.5 w-3.5" />
+            </IconWrapper>
+            <div>
+              <CardTitle className="text-sm font-semibold text-slate-900">
+                Room-wise Billing
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                {filteredRooms.length} rooms • {selectedMonth}
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Loading billing data...</p>
+            <div className="text-center py-12">
+              <p className="text-slate-500 text-sm">Loading billing data...</p>
             </div>
           ) : filteredRooms.length === 0 ? (
-            <div className="text-center py-8">
-              <Zap className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No billing data for selected period</p>
+            <div className="text-center py-12">
+              <Zap className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium text-sm">No billing data for selected period</p>
+              <p className="text-slate-400 text-xs mt-1">Select another hostel or billing month to inspect records.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Room</TableHead>
-                  <TableHead>Segments</TableHead>
-                  <TableHead>Consumption</TableHead>
-                  <TableHead>Revenue</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Actions</TableHead>
+                <TableRow className="bg-slate-50/70 hover:bg-slate-50/70 border-b border-slate-200/80">
+                  <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider pl-6">Room</TableHead>
+                  <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Segments</TableHead>
+                  <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Consumption</TableHead>
+                  <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Revenue</TableHead>
+                  <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Type</TableHead>
+                  <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider text-right pr-6">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRooms.map(room => (
-                  <TableRow key={room.room_id}>
-                    <TableCell className="font-medium">
+                  <TableRow key={room.room_id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
+                    <TableCell className="font-semibold text-slate-900 pl-6">
                       Room {room.room_number}
                     </TableCell>
-                    <TableCell>{room.segments_count}</TableCell>
-                    <TableCell>{room.total_consumption.toFixed(2)} kWh</TableCell>
-                    <TableCell className="font-semibold">
+                    <TableCell className="text-slate-600">{room.segments_count}</TableCell>
+                    <TableCell className="text-slate-700 font-medium">{room.total_consumption.toFixed(2)} kWh</TableCell>
+                    <TableCell className="font-bold text-emerald-600">
                       {formatCurrency(room.total_revenue_paise)}
                     </TableCell>
                     <TableCell>
                       {room.empty_room_consumption > 0 && room.total_consumption > room.empty_room_consumption ? (
-                        <Badge variant="outline">Mixed</Badge>
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200/80 font-normal">Mixed</Badge>
                       ) : room.empty_room_consumption > 0 ? (
-                        <Badge variant="outline" className="bg-gray-100">Empty</Badge>
+                        <Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-200 font-normal">Empty</Badge>
                       ) : (
-                        <Badge className="bg-green-100 text-green-800">Occupied</Badge>
+                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200/80 font-normal shadow-none hover:bg-emerald-100">Occupied</Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right pr-6">
                       <Button 
                         size="sm" 
                         variant="outline"
+                        className="h-8 text-xs border-slate-200 hover:border-slate-300 hover:bg-slate-100"
                         onClick={() => window.location.href = `/owner/electricity/billing/room-details?room_id=${room.room_id}&month=${selectedMonth}`}
                       >
                         View Details

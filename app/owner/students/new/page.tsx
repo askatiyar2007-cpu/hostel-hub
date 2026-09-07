@@ -19,7 +19,7 @@ type BookingType = 'shared_bed' | 'entire_room';
 // value (BookingType) and public.booking_type enum are unchanged -- only
 // the displayed text differs: "entire_room" reads as "Entire Room" (the
 // student gets the whole room exclusively) and "shared_bed" reads as
-// "Entire Shared Room" (the student shares the room with other students
+// "Shared Room" (the student shares the room with other students
 // under the existing bed-level allocation model).
 const BOOKING_TYPE_LABEL: Record<BookingType, string> = {
   entire_room: 'Entire Room',
