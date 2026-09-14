@@ -2,8 +2,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { supabase } from '@/lib/supabase/client';
-import { Zap, Calendar, Users, TrendingUp, Info } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Zap, Calendar, Users, TrendingUp, Info, IndianRupee, Clock, Building2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ChargeData {
   segment_id: string;
@@ -90,150 +90,163 @@ export default function StudentElectricityPage() {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
   
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Clock className="animate-spin h-8 w-8 text-teal-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="h-16 w-16 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
+          <Info className="h-8 w-8 text-rose-600" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Data</h2>
+        <p className="text-slate-600 text-center max-w-md">{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Zap className="h-8 w-8 text-yellow-500" />
-          Electricity
-        </h1>
-        <p className="text-muted-foreground mt-1">Your electricity charges and usage</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-slate-900 font-display">Electricity</h1>
+        <p className="text-slate-600">Your electricity charges and usage</p>
       </div>
 
-      {loading ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading electricity data...</p>
-          </CardContent>
-        </Card>
-      ) : error ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{error}</p>
-          </CardContent>
-        </Card>
-      ) : charges.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium text-foreground">No electricity charges for {formatMonth(month)}</p>
-            <p className="text-sm text-muted-foreground mt-2">Check back later or contact support if you believe this is incorrect.</p>
+      {charges.length === 0 ? (
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-12 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto mb-4">
+              <Zap className="h-8 w-8 text-amber-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No electricity charges for {formatMonth(month)}</h3>
+            <p className="text-slate-600 max-w-md mx-auto">Check back later or contact support if you believe this is incorrect.</p>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* Summary Card */}
-          <Card className="border-2 border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div>
-                  <span className="text-muted-foreground text-sm font-normal">Your electricity charge</span>
-                  <div className="text-3xl font-bold text-primary mt-1">₹{(total/100).toFixed(2)}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-muted-foreground">Billing month</div>
-                  <div className="text-lg font-semibold">{formatMonth(month)}</div>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          {/* Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-blue-600" />
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border border-slate-200 bg-white shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                    <IndianRupee className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Your consumption</p>
-                    <p className="text-2xl font-bold">{totalConsumption.toFixed(2)} kWh</p>
+                    <p className="text-xs text-slate-500">Total Charge</p>
+                    <p className="font-bold text-slate-900">₹{(total/100).toFixed(2)}</p>
                   </div>
                 </div>
+                <p className="text-xs text-slate-400">{formatMonth(month)}</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Users className="h-5 w-5 text-green-600" />
+            <Card className="border border-slate-200 bg-white shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                    <TrendingUp className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Occupants</p>
-                    <p className="text-2xl font-bold">{charges[0]?.occupant_count || 1}</p>
+                    <p className="text-xs text-slate-500">Total Consumption</p>
+                    <p className="font-bold text-slate-900">{totalConsumption.toFixed(2)} kWh</p>
                   </div>
                 </div>
+                <p className="text-xs text-slate-400">{charges.length} segments</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-slate-200 bg-white shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Average Rate</p>
+                    <p className="font-bold text-slate-900">₹{avgRate.toFixed(2)}/kWh</p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400">Per unit</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Billing Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Billing details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Billing period</span>
-                  <span className="font-medium">{formatMonth(month)}</span>
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-slate-900">Billing Details</h3>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-500 mb-1">Billing Period</p>
+                  <p className="font-semibold text-slate-900">{formatMonth(month)}</p>
                 </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Billing segments</span>
-                  <span className="font-medium">{charges.length}</span>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-500 mb-1">Billing Segments</p>
+                  <p className="font-semibold text-slate-900">{charges.length}</p>
                 </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Average rate</span>
-                  <span className="font-medium">₹{avgRate.toFixed(2)}/kWh</span>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-500 mb-1">Average Rate</p>
+                  <p className="font-semibold text-slate-900">₹{avgRate.toFixed(2)}/kWh</p>
                 </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Your share</span>
-                  <span className="font-bold text-primary">₹{(total/100).toFixed(2)}</span>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-500 mb-1">Your Share</p>
+                  <p className="font-bold text-slate-900">₹{(total/100).toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Room Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Room breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="h-5 w-5 text-purple-600" />
+                <h3 className="font-semibold text-slate-900">Room Breakdown</h3>
+              </div>
+
               <div className="space-y-4">
                 {charges.map((c, i) => (
-                  <div key={i} className="p-4 bg-muted/20 rounded-xl border">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-semibold text-lg">Room {c.room_number}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {c.start_date ? new Date(c.start_date).toLocaleDateString() : ''} 
-                          {c.end_date ? ` - ${new Date(c.end_date).toLocaleDateString()}` : ''}
-                        </p>
+                  <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">Room {c.room_number}</p>
+                          <p className="text-xs text-slate-500">
+                            {c.start_date ? new Date(c.start_date).toLocaleDateString() : ''} 
+                            {c.end_date ? ` - ${new Date(c.end_date).toLocaleDateString()}` : ''}
+                          </p>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-primary">₹{(c.charge_amount_paise/100).toFixed(2)}</p>
+                        <p className="text-xl font-bold text-slate-900">₹{(c.charge_amount_paise/100).toFixed(2)}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-3 gap-4 pt-3 border-t border-slate-200">
                       <div>
-                        <p className="text-muted-foreground">Consumption</p>
-                        <p className="font-medium">{c.consumption_units.toFixed(2)} kWh</p>
+                        <p className="text-xs text-slate-500 mb-1">Consumption</p>
+                        <p className="font-semibold text-slate-900">{c.consumption_units.toFixed(2)} kWh</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Rate</p>
-                        <p className="font-medium">₹{c.rate_per_unit.toFixed(2)}/kWh</p>
+                        <p className="text-xs text-slate-500 mb-1">Rate</p>
+                        <p className="font-semibold text-slate-900">₹{c.rate_per_unit.toFixed(2)}/kWh</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Occupants</p>
-                        <p className="font-medium">{c.occupant_count}</p>
+                        <p className="text-xs text-slate-500 mb-1">Occupants</p>
+                        <p className="font-semibold text-slate-900">{c.occupant_count}</p>
                       </div>
                     </div>
                   </div>

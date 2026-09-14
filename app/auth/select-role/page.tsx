@@ -79,14 +79,16 @@ export default function SelectRolePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 text-center bg-card border border-border p-8 rounded-3xl shadow-sm">
-          <Building2 className="mx-auto h-12 w-12 text-primary" />
-          <h2 className="text-2xl font-bold tracking-tight">Access Denied</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="min-h-screen bg-[#EFF8FF]/60 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-6 text-center bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-[#0F766E] ring-1 ring-teal-600/15">
+            <Building2 className="h-6 w-6" />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-display">Access Denied</h2>
+          <p className="text-sm text-slate-600">
             Please log in first to select your account role.
           </p>
-          <Button onClick={() => router.push('/login')} className="w-full h-11 rounded-full mt-4">
+          <Button onClick={() => router.push('/auth/login')} className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#0B5F59] mt-2">
             Go to Login
           </Button>
         </div>
@@ -95,19 +97,29 @@ export default function SelectRolePage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#EFF8FF] via-[#F8FAFC] to-[#ECFDF5] flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full space-y-8">
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-              <Building2 className="h-5 w-5" />
+          <div className="inline-flex items-center gap-3 mb-2">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-700 via-emerald-600 to-teal-800 text-white shadow-md shadow-teal-900/15 ring-1 ring-teal-500/20">
+              <Building2 className="h-5 w-5 text-white" />
+              <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white">
+                <span className="text-[8px] font-bold">✦</span>
+              </div>
             </div>
-            <span className="text-2xl font-semibold tracking-tight font-display text-foreground">HostelHub</span>
+            <div className="flex flex-col text-left">
+              <span className="text-xl font-bold tracking-tight text-slate-900 font-display leading-tight">
+                Hostel<span className="text-[#0F766E]">Hub</span>
+              </span>
+              <span className="text-[9px] font-semibold tracking-wider text-teal-800/80 uppercase leading-none">
+                Your Stay, Simplified
+              </span>
+            </div>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-foreground">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight font-display text-slate-900">
             What is your role?
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto">
             Are you a Hostel Owner or Student? Choose your profile role to unlock the specialized dashboards, permissions, and management tools.
           </p>
         </div>

@@ -14,6 +14,8 @@ interface OtpInputProps {
   autoFocus?: boolean;
   id?: string;
   "aria-describedby"?: string;
+  className?: string;
+  containerClassName?: string;
 }
 
 function onlyDigits(input: string): string {
@@ -30,6 +32,8 @@ export function OtpInput({
   autoFocus = true,
   id,
   "aria-describedby": ariaDescribedBy,
+  className,
+  containerClassName,
 }: OtpInputProps) {
   const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const hasCalledCompleteRef = React.useRef(false);
@@ -156,7 +160,7 @@ export function OtpInput({
     <div
       role="group"
       aria-label="Verification code"
-      className="flex flex-row gap-2 sm:gap-3"
+      className={cn("flex flex-row gap-2 sm:gap-3", containerClassName)}
     >
       {digits.map((digit, index) => (
         <input
@@ -183,6 +187,7 @@ export function OtpInput({
             "focus:outline-none focus:ring-2 focus:ring-ring",
             error && "border-destructive focus:ring-destructive",
             disabled && "cursor-not-allowed opacity-50",
+            className,
           )}
         />
       ))}

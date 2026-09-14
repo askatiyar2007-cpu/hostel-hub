@@ -5,17 +5,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Megaphone, Receipt, MessageSquareWarning, Plus, Building2 } from "lucide-react";
-import { DashboardShell, StatCard } from "@/components/dashboard-shell";
+import { Megaphone, Receipt, MessageSquareWarning, Plus, Building2, Bed, CreditCard, Zap, FileText, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
+import { cn } from "@/lib/utils";
 
 // Student Dashboard Container
 export default function StudentDashboardPage() {
@@ -96,11 +97,9 @@ function StudentDashboard() {
   if (isAuthLoading || isStudentLoading) {
     console.log('[Dashboard] Student record or auth is loading...');
     return (
-      <DashboardShell title="Loading..." badge="Student">
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </DashboardShell>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      </div>
     );
   }
 
@@ -108,26 +107,39 @@ function StudentDashboard() {
 
   if (isLoading) {
     return (
-      <DashboardShell title="Loading..." badge="Student">
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </DashboardShell>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      </div>
     );
   }
 
   if (!allocation) {
     return (
-      <DashboardShell title="Hi there 👋" subtitle="Welcome to your dashboard." badge="Student">
-        <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center shadow-sm">
-          <Building2 className="mx-auto h-12 w-12 text-muted-foreground/60" />
-          <h3 className="mt-4 text-lg font-semibold font-display">No Hostel Assigned</h3>
-          <p className="mt-2 text-muted-foreground">You haven&apos;t been assigned to any room yet.</p>
-          <Link href="/student/room-request" className="mt-4 inline-block">
-            <Button className="rounded-full shadow-md">Request a Room</Button>
-          </Link>
+      <div className="space-y-6">
+        {/* Hero Section */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-slate-900 font-display">
+            {getGreeting()}, {profile?.full_name || 'Student'} 👋
+          </h1>
+          <p className="text-slate-600">Welcome to your HostelHub.</p>
         </div>
-      </DashboardShell>
+
+        {/* No Allocation Card */}
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-12 text-center">
+            <div className="mx-auto h-16 w-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mb-4">
+              <Building2 className="h-8 w-8 text-teal-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No Active Room Allocation</h3>
+            <p className="text-slate-600 mb-6">You haven't been assigned to any room yet.</p>
+            <Link href="/student/room-request">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-sm">
+                Request a Room
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -140,6 +152,13 @@ function StudentDashboard() {
   );
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 // AllocationCard Component rendering the details when data exists
 interface AllocationCardProps {
   allocation: any;
@@ -149,13 +168,7 @@ interface AllocationCardProps {
 
 function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
   const { profile } = useAuth();
-  // room_requests.student_id and room_allocations.student_id are FKs to
-  // public.students.id -- this remains the correct identifier for those uses.
   const studentId = allocation.student_id;
-  // complaints.student_id is a FK to auth.users.id (confirmed via schema), a
-  // different identifier space than public.students.id. Use the signed-in
-  // user's id here, matching the pattern already used in
-  // app/owner/students/[id]/page.tsx (profiles.user_id).
   const authUserId = profile?.user_id;
   const qc = useQueryClient();
   const [confirmingCheckout, setConfirmingCheckout] = useState(false);
@@ -222,264 +235,489 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
     },
   });
 
-
   const depositBill = (bills ?? []).find((b: any) => b.bill_type === 'deposit');
   const depositStatus = depositBill ? (depositBill.status === 'paid' ? 'Paid' : 'Pending') : 'Pending';
 
   const rentBill = (bills ?? []).find((b: any) => b.bill_type === 'rent');
   const monthlyRentStatus = rentBill ? (rentBill.status === 'paid' ? 'Paid' : 'Pending') : 'Pending';
 
+  const pendingBills = (bills ?? []).filter((b: any) => b.status !== 'paid');
+  const unpaidComplaints = (complaints ?? []).filter((c: any) => c.status !== 'resolved');
+
   return (
-    <DashboardShell title="Hi there 👋" subtitle="Your hostel at a glance." badge="Student">
-      {/* 4 Stat Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Current Hostel" value={hostel?.name ?? "—"} hint={hostel?.city ?? ""} />
-        <StatCard label="Current Room" value={`Room ${room?.room_number ?? "—"}`} hint={room?.room_type || room?.type || "double"} />
-        <StatCard label="Monthly Rent" value={`₹${Number(room?.rent ?? 0).toLocaleString()}`} />
-        <StatCard label="Booking Type" value={approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'} />
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-900 font-display">
+          {getGreeting()}, {profile?.full_name || 'Student'} 👋
+        </h1>
+        <p className="text-sm text-slate-600">Welcome back to HostelHub.</p>
       </div>
 
-      {/* Your Allocated Room Card */}
-      <div className="mt-6">
-        <div className="rounded-3xl border border-border bg-card shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
-          {/* Header Banner: ✅ YOUR ACTIVE ALLOCATION */}
-          <div className="bg-emerald-500/10 dark:bg-emerald-500/20 border-b border-border/60 px-6 py-4 flex items-center gap-2">
-            <span className="text-emerald-600 dark:text-emerald-400 text-lg">✅</span>
-            <h4 className="font-bold text-sm tracking-wider uppercase text-emerald-800 dark:text-emerald-300 font-display">
-              Your Active Allocation
-            </h4>
+      {/* Approved Request Confirmation Card */}
+      {approvedRequest && (
+        <Card className="border border-emerald-200 bg-gradient-to-r from-emerald-50/60 to-emerald-50/20 shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              {/* Student Profile Photo */}
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile?.full_name || 'Student'}
+                  className="h-14 w-14 rounded-full object-cover ring-2 ring-emerald-400/30 shrink-0"
+                />
+              ) : (
+                <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-lg font-bold ring-2 ring-emerald-400/30 shrink-0">
+                  {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h3 className="text-base font-bold text-emerald-900">Room Allocation Confirmed</h3>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    Approved
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-700 mb-3">Welcome to your new home, {profile?.full_name?.split(' ')[0] || 'Student'}.</p>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Hostel</p>
+                    <p className="font-semibold text-slate-900 text-xs truncate">{hostel?.name || '—'}</p>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Room</p>
+                    <p className="font-semibold text-slate-900 text-xs">Room {room?.room_number || '—'}</p>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Type</p>
+                    <p className="font-semibold text-slate-900 text-xs capitalize">{approvedRequest.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}</p>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">Rent</p>
+                    <p className="font-semibold text-slate-900 text-xs">₹{Number(room?.rent ?? 0).toLocaleString()}/month</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Link href="/student/bills" className="block">
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium">
+                      View Payment Details
+                    </Button>
+                  </Link>
+                  <Link href="/student/dashboard" className="block">
+                    <Button size="sm" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-lg font-medium">
+                      View Room
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Hostel</p>
+                <p className="font-semibold text-slate-900 text-sm truncate max-w-[100px]">{hostel?.name || '—'}</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400">{hostel?.city || ''}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                <Bed className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Room</p>
+                <p className="font-semibold text-slate-900 text-sm">Room {room?.room_number || '—'}</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400">{room?.room_type || room?.type || '—'}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Monthly Rent</p>
+                <p className="font-semibold text-slate-900 text-sm">₹{Number(room?.rent ?? 0).toLocaleString()}</p>
+              </div>
+            </div>
+            <p className={cn("text-xs font-medium", monthlyRentStatus === 'Paid' ? 'text-green-600' : 'text-amber-600')}>
+              {monthlyRentStatus}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Status</p>
+                <p className="font-semibold text-slate-900 text-sm">Active</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400">Since {allocation.start_date ? new Date(allocation.start_date).toLocaleDateString() : '—'}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Stay Card */}
+      <Card className="border border-slate-200 bg-white shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Your Current Stay</h2>
+              <p className="text-sm text-slate-500">Hostel and room information</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Active Allocation
+              </span>
+            </div>
           </div>
 
-          {/* Details Body */}
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
-            {/* Group 1: Hostel Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Hostel Info */}
             <div className="space-y-4">
-              <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-display flex items-center gap-1 font-semibold">🏢 Hostel Information</h5>
-              <div className="space-y-3 bg-muted/20 p-4 rounded-2xl border">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                Hostel Information
+              </div>
+              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
                 <div>
-                  <span className="text-xs text-muted-foreground">Hostel</span>
-                  <p className="font-bold text-foreground text-base mt-0.5">{hostel?.name || 'Blue Sky'}</p>
+                  <p className="text-xs text-slate-500 mb-1">Hostel Name</p>
+                  <p className="font-semibold text-slate-900">{hostel?.name || '—'}</p>
                 </div>
-                <div className="border-t border-border/40 pt-2.5">
-                  <span className="text-xs text-muted-foreground">Address</span>
-                  <p className="font-medium text-foreground text-xs mt-0.5 leading-relaxed">
-                    {hostel?.address || 'Keshavpura Sector 7'}, {hostel?.area || 'Keshavpura'}, {hostel?.city || 'Kota'}, {hostel?.state || 'Rajasthan'} - {hostel?.pincode || ''}
+                <div className="pt-3 border-t border-slate-200">
+                  <p className="text-xs text-slate-500 mb-1">Location</p>
+                  <p className="text-sm text-slate-700">
+                    {hostel?.address && hostel?.area && hostel?.city && hostel?.state 
+                      ? `${hostel.address}, ${hostel.area}, ${hostel.city}, ${hostel.state}`
+                      : '—'}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Group 2: Room Details */}
+            {/* Room Info */}
             <div className="space-y-4">
-              <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-display flex items-center gap-1 font-semibold">🛏️ Room Information</h5>
-              <div className="space-y-3 bg-muted/20 p-4 rounded-2xl border">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <Bed className="h-4 w-4 text-purple-600" />
+                Room Information
+              </div>
+              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-xs text-muted-foreground">Room</span>
-                    <p className="font-bold text-foreground text-base mt-0.5">Room {room?.room_number}</p>
+                    <p className="text-xs text-slate-500 mb-1">Room Number</p>
+                    <p className="font-semibold text-slate-900">Room {room?.room_number || '—'}</p>
                   </div>
-                  <span className="text-xs bg-primary/10 text-primary font-bold px-2 py-1 rounded-lg">
+                  <span className="text-xs bg-purple-100 text-purple-700 font-medium px-2 py-1 rounded-lg">
                     {approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
                   </span>
                 </div>
-                <div className="border-t border-border/40 pt-2.5">
-                  <span className="text-xs text-muted-foreground">Capacity</span>
-                  <p className="font-semibold text-foreground text-xs mt-0.5">
-                    {room?.capacity ?? 2} beds | Occupied: {room?.occupied_beds ?? room?.occupancy ?? 1}
+                <div className="pt-3 border-t border-slate-200">
+                  <p className="text-xs text-slate-500 mb-1">Capacity</p>
+                  <p className="text-sm text-slate-700">
+                    {room?.capacity ?? 2} beds • {room?.occupied_beds ?? room?.occupancy ?? 1} occupied
                   </p>
                 </div>
-                <div className="border-t border-border/40 pt-2.5">
-                  <span className="text-xs text-muted-foreground">Monthly Rent</span>
-                  <p className="font-bold text-primary text-base mt-0.5">₹{Number(room?.rent ?? 0).toLocaleString()}</p>
+                <div className="pt-3 border-t border-slate-200">
+                  <p className="text-xs text-slate-500 mb-1">Monthly Rent</p>
+                  <p className="font-semibold text-slate-900">₹{Number(room?.rent ?? 0).toLocaleString()}</p>
                 </div>
               </div>
             </div>
 
-            {/* Group 3: Logistics & Financials */}
-            <div className="space-y-4 md:col-span-2 lg:col-span-1">
-              <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-display flex items-center gap-1 font-semibold">📋 Logistics & Financials</h5>
-              <div className="space-y-3 bg-muted/20 p-4 rounded-2xl border">
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="text-xs text-muted-foreground">Allocated Date</span>
-                  <span className="font-semibold text-foreground">
-                    {allocation.start_date ? new Date(allocation.start_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-0.5 border-t border-border/40 pt-2">
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                    ✅ ACTIVE
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-0.5 border-t border-border/40 pt-2">
-                  <span className="text-xs text-muted-foreground">Security Deposit</span>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+            {/* Financial Info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <CreditCard className="h-4 w-4 text-amber-600" />
+                Financial Status
+              </div>
+              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-slate-500">Security Deposit</p>
+                  <span className={cn("text-xs font-semibold px-2 py-1 rounded-full", 
                     depositStatus === 'Paid' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300' 
-                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  }`}>
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-amber-100 text-amber-700'
+                  )}>
                     {depositStatus}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-0.5 border-t border-border/40 pt-2">
-                  <span className="text-xs text-muted-foreground">Monthly Fees</span>
-                  <span className="font-semibold text-foreground">
-                    ₹{Number(room?.rent ?? 0).toLocaleString()}{' '}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                  <p className="text-xs text-slate-500">Monthly Fees</p>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-900 text-sm">₹{Number(room?.rent ?? 0).toLocaleString()}</span>
+                    <span className={cn("text-xs font-semibold px-2 py-1 rounded-full", 
                       monthlyRentStatus === 'Paid'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
-                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                    }`}>
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-amber-100 text-amber-700'
+                    )}>
                       {monthlyRentStatus}
                     </span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                  <p className="text-xs text-slate-500">Check-in Date</p>
+                  <span className="text-sm text-slate-700">
+                    {allocation.start_date ? new Date(allocation.start_date).toLocaleDateString() : '—'}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons Section */}
-          <div className="border-t bg-muted/10 px-6 py-5">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Link href={`/hostel/${allocation.hostel_id}`}>
-                <Button variant="outline" className="w-full rounded-xl">View Hostel</Button>
-              </Link>
-              <Link href="/student/documents">
-                <Button variant="outline" className="w-full rounded-xl">Download Agreement</Button>
-              </Link>
-              <Link href="/student/bills">
-                <Button variant="outline" className="w-full rounded-xl bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary font-semibold">Pay Fees</Button>
-              </Link>
-              {confirmingCheckout ? (
-                <div className="flex items-center gap-1 bg-red-50 dark:bg-red-950/20 border border-red-200/50 p-1 rounded-xl w-full justify-between">
-                  <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold pl-2">Checkout?</span>
-                  <div className="flex gap-1">
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      className="rounded-lg font-semibold text-[10px] h-7 px-2"
-                      onClick={() => checkoutMutation.mutate()}
-                      disabled={checkoutMutation.isPending}
-                    >
-                      {checkoutMutation.isPending ? '...' : 'Yes'}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-lg text-[10px] h-7 px-2"
-                      onClick={() => setConfirmingCheckout(false)}
-                    >
-                      No
-                    </Button>
-                  </div>
+          {/* Actions */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href={`/hostels/${allocation.hostel_id}`}>
+              <Button variant="outline" className="rounded-xl">View Hostel</Button>
+            </Link>
+            <Link href="/student/documents">
+              <Button variant="outline" className="rounded-xl">Download Agreement</Button>
+            </Link>
+            <Link href="/student/bills">
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">Pay Fees</Button>
+            </Link>
+            {confirmingCheckout ? (
+              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 p-2 rounded-xl">
+                <span className="text-xs text-rose-700 font-medium">Checkout?</span>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="rounded-lg text-xs h-7 px-3"
+                    onClick={() => checkoutMutation.mutate()}
+                    disabled={checkoutMutation.isPending}
+                  >
+                    {checkoutMutation.isPending ? '...' : 'Yes'}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-lg text-xs h-7 px-3"
+                    onClick={() => setConfirmingCheckout(false)}
+                  >
+                    No
+                  </Button>
                 </div>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                  onClick={() => setConfirmingCheckout(true)}
-                >
-                  Check Out
-                </Button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50"
+                onClick={() => setConfirmingCheckout(true)}
+              >
+                Check Out
+              </Button>
+            )}
           </div>
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Link href="/student/bills" className="block">
+          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm">Pay Bill</p>
+                  <p className="text-xs text-slate-500">{pendingBills.length} pending</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/student/electricity" className="block">
+          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm">Electricity</p>
+                  <p className="text-xs text-slate-500">View usage</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/student/complaints" className="block">
+          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+                  <MessageSquareWarning className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm">Complaints</p>
+                  <p className="text-xs text-slate-500">{unpaidComplaints.length} active</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/student/documents" className="block">
+          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm">Documents</p>
+                  <p className="text-xs text-slate-500">View & download</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      {/* Quick Actions Grid */}
-      <div className="mt-6">
-        <h3 className="font-semibold text-base mb-3 font-display">Quick Actions</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link href="/student/bills" className="block">
-            <Button variant="outline" className="w-full h-16 justify-start gap-3 rounded-xl border border-border bg-card text-foreground shadow-sm hover:bg-muted/50 p-4">
-              <Receipt className="h-5 w-5 text-primary shrink-0" />
-              <div className="text-left leading-tight">
-                <p className="font-semibold text-sm">Pay Bill</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">View and settle dues</p>
+      {/* Bills & Complaints */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-amber-600" />
+                <h3 className="font-semibold text-slate-900">Recent Bills</h3>
               </div>
-            </Button>
-          </Link>
-          
-          <Link href="/student/dashboard#complaints" className="block">
-            <Button variant="outline" className="w-full h-16 justify-start gap-3 rounded-xl border border-border bg-card text-foreground shadow-sm hover:bg-muted/50 p-4">
-              <MessageSquareWarning className="h-5 w-5 text-primary shrink-0" />
-              <div className="text-left leading-tight">
-                <p className="font-semibold text-sm">Raise Complaint</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Report hostel issues</p>
+              <Link href="/student/bills" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
+                View all →
+              </Link>
+            </div>
+            {bills && bills.length > 0 ? (
+              <div className="space-y-3">
+                {bills.slice(0, 5).map((b: any) => (
+                  <div key={b.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div>
+                      <p className="font-medium text-slate-900 capitalize text-sm">{b.bill_type}</p>
+                      <p className="text-xs text-slate-500">Due {new Date(b.due_date).toLocaleDateString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-slate-900">₹{Number(b.amount).toLocaleString()}</p>
+                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", 
+                        b.status === 'paid' ? 'bg-green-100 text-green-700' : 
+                        b.status === 'overdue' ? 'bg-rose-100 text-rose-700' : 
+                        'bg-amber-100 text-amber-700'
+                      )}>
+                        {b.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </Button>
-          </Link>
+            ) : (
+              <div className="text-center py-8">
+                <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-500">No bills yet</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <Link href="/student/documents" className="block">
-            <Button variant="outline" className="w-full h-16 justify-start gap-3 rounded-xl border border-border bg-card text-foreground shadow-sm hover:bg-muted/50 p-4">
-              <Megaphone className="h-5 w-5 text-primary shrink-0" />
-              <div className="text-left leading-tight">
-                <p className="font-semibold text-sm">Download Documents</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Agreement, forms & slips</p>
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MessageSquareWarning className="h-5 w-5 text-rose-600" />
+                <h3 className="font-semibold text-slate-900">Complaints</h3>
               </div>
-            </Button>
-          </Link>
-        </div>
+              <NewComplaintDialog studentId={authUserId ?? ''} hostelId={allocation.hostel_id} onCreated={() => qc.invalidateQueries({ queryKey: ["student-complaints"] })} />
+            </div>
+            {complaints && complaints.length > 0 ? (
+              <div className="space-y-3">
+                {complaints.slice(0, 5).map((c: any) => (
+                  <div key={c.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-medium text-slate-900 text-sm">{c.title}</p>
+                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full capitalize", 
+                        c.status === 'resolved' ? 'bg-green-100 text-green-700' : 
+                        c.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 
+                        'bg-amber-100 text-amber-700'
+                      )}>
+                        {c.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 capitalize">{c.category}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <ShieldCheck className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-500">No complaints yet</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 font-semibold font-display"><Receipt className="h-4 w-4 text-primary" /> Bills</h2>
-          {bills && bills.length > 0 ? (
-            <div className="space-y-2">
-              {bills.slice(0, 6).map((b) => (
-                <div key={b.id} className="flex items-center justify-between rounded-xl bg-muted/40 p-3 text-sm">
-                  <div>
-                    <div className="font-medium capitalize">{b.bill_type}</div>
-                    <div className="text-xs text-muted-foreground">Due {new Date(b.due_date).toLocaleDateString()}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold">₹{Number(b.amount).toLocaleString()}</div>
-                    <span className={`text-[10px] font-semibold uppercase ${b.status === "paid" ? "text-green-600" : b.status === "overdue" ? "text-red-600" : "text-amber-600"}`}>{b.status}</span>
-                  </div>
-                </div>
-              ))}
+      {/* Announcements */}
+      <Card className="border border-slate-200 bg-white shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-slate-900">Announcements</h3>
             </div>
-          ) : <p className="text-sm text-muted-foreground">No bills yet.</p>}
-        </section>
-
-        <section id="complaints" className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-semibold font-display"><MessageSquareWarning className="h-4 w-4 text-primary" /> Complaints</h2>
-            <NewComplaintDialog studentId={authUserId ?? ''} hostelId={allocation.hostel_id} onCreated={() => qc.invalidateQueries({ queryKey: ["student-complaints"] })} />
+            <Link href="/student/announcements" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
+              View all →
+            </Link>
           </div>
-          {complaints && complaints.length > 0 ? (
-            <div className="space-y-2">
-              {complaints.slice(0, 6).map((c) => (
-                <div key={c.id} className="rounded-xl bg-muted/40 p-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{c.title}</span>
-                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">{c.status.replace("_", " ")}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground capitalize">{c.category}</div>
-                </div>
-              ))}
-            </div>
-          ) : <p className="text-sm text-muted-foreground">No complaints yet.</p>}
-        </section>
-
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 font-semibold font-display"><Megaphone className="h-4 w-4 text-primary" /> Announcements</h2>
           {notices && notices.length > 0 ? (
             <div className="space-y-3">
-              {notices.map((n) => (
-                <div key={n.id} className="rounded-xl bg-muted/40 p-3">
-                  <div className="font-medium">{n.title}</div>
-                  <p className="text-sm text-muted-foreground">{n.body}</p>
-                  <div className="mt-1 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleDateString()}</div>
+              {notices.map((n: any) => (
+                <div key={n.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-semibold text-slate-900">{n.title}</p>
+                    <p className="text-xs text-slate-500">{new Date(n.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <p className="text-sm text-slate-600">{n.body}</p>
                 </div>
               ))}
             </div>
-          ) : <p className="text-sm text-muted-foreground">No announcements right now.</p>}
-        </section>
-      </div>
-    </DashboardShell>
+          ) : (
+            <div className="text-center py-8">
+              <Megaphone className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm text-slate-500">No announcements right now</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -501,20 +739,20 @@ function NewComplaintDialog({ studentId, hostelId, onCreated }: { studentId: str
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="rounded-full shadow-sm"><Plus className="mr-1 h-3 w-3" /> New</Button>
+        <Button size="sm" className="rounded-xl"><Plus className="mr-1 h-4 w-4" /> New</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="rounded-xl">
         <DialogHeader><DialogTitle>Raise a complaint</DialogTitle></DialogHeader>
-        <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
           <div><Label>Title</Label><Input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
           <div>
             <Label>Category</Label>
-            <select className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <select className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {["electrical","plumbing","wifi","cleaning","furniture","security","other"].map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div><Label>Describe the issue</Label><Textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-          <DialogFooter><Button type="submit" disabled={mutation.isPending}>Submit</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={mutation.isPending} className="rounded-xl">Submit</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

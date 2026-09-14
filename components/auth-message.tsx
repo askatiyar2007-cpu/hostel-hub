@@ -15,9 +15,10 @@ export interface AuthMessageProps {
   description: string;
   action?: AuthMessageAction;
   onDismiss?: () => void;
+  className?: string;
 }
 
-export function AuthMessage({ variant, title, description, action, onDismiss }: AuthMessageProps) {
+export function AuthMessage({ variant, title, description, action, onDismiss, className }: AuthMessageProps) {
   const isError = variant === 'error';
 
   return (
@@ -27,6 +28,7 @@ export function AuthMessage({ variant, title, description, action, onDismiss }: 
       className={cn(
         'relative rounded-2xl border p-4 flex flex-col gap-2',
         isError ? 'border-destructive bg-destructive/5' : 'border-primary bg-primary/5',
+        className,
       )}
     >
       {onDismiss && (

@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [passwordSet, setPasswordSet] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [skipAccountStateApi, setSkipAccountStateApi] = useState(false);
 
   const refreshAuthState = async (): Promise<void> => {
     const {
@@ -81,6 +82,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // get_account_state() SQL function's completion rules. Any changes to
     // account completion requirements now only need to update the SQL function.
     try {
+      // Skip API call if it previously failed (service-role key missing in dev)
+      if (skipAccountStateApi) {
+        console.log('[AuthContext] Skipping account-state API due to previous failure (development mode)');
+        if (profileData) {
+          if (!profileData.role) {
+            setAccountCompletionStep('role');
+          } else if (!profileData.full_name) {
+            setAccountCompletionStep('password');
+          } else {
+            setAccountCompletionStep('complete');
+          }
+          setPasswordSet(true);
+        } else {
+          setAccountCompletionStep(null);
+          setPasswordSet(null);
+        }
+        return;
+      }
+
       const response = await fetch('/api/auth/account-state');
       if (response.ok) {
         const state = await response.json();
@@ -93,17 +113,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // incomplete signup with temporary onboarding data
         setPasswordSet(state.password_set ?? null);
       } else {
-        // Fallback: if API fails, assume incomplete to be safe. This prevents
-        // accidentally granting dashboard access due to API errors.
+        // Fallback: if API fails, use client-side logic for development
         console.error('Failed to fetch account state:', response.status);
-        setAccountCompletionStep(null);
-        setPasswordSet(null);
+        setSkipAccountStateApi(true); // Permanently skip API on subsequent calls
+        // Development fallback: check profile for basic completion
+        if (profileData) {
+          if (!profileData.role) {
+            setAccountCompletionStep('role');
+          } else if (!profileData.full_name) {
+            setAccountCompletionStep('password');
+          } else {
+            setAccountCompletionStep('complete');
+          }
+          setPasswordSet(true); // Assume password is set if profile exists
+        } else {
+          setAccountCompletionStep(null);
+          setPasswordSet(null);
+        }
       }
     } catch (error) {
       console.error('Unable to fetch account state:', error);
-      // Same fallback: assume incomplete on error
-      setAccountCompletionStep(null);
-      setPasswordSet(null);
+      setSkipAccountStateApi(true); // Permanently skip API on subsequent calls
+      // Development fallback: check profile for basic completion
+      if (profileData) {
+        if (!profileData.role) {
+          setAccountCompletionStep('role');
+        } else if (!profileData.full_name) {
+          setAccountCompletionStep('password');
+        } else {
+          setAccountCompletionStep('complete');
+        }
+        setPasswordSet(true); // Assume password is set if profile exists
+      } else {
+        setAccountCompletionStep(null);
+        setPasswordSet(null);
+      }
     }
   };
 
@@ -125,10 +169,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      void synchronize();
+      console.log('[AuthContext] Auth state changed, skipping sync if account-state previously failed');
+      // Don't auto-sync on auth state change if account-state API previously failed
+      // This prevents infinite loops when service-role key is missing
+      if (!skipAccountStateApi) {
+        void synchronize();
+      }
     });
-    const refreshOnFocus = () => void synchronize();
-    const refreshOnPageShow = () => void synchronize();
+
+    // Only sync on focus/pageshow if account-state hasn't failed
+    // This prevents repeated 500 errors when service-role key is missing
+    const refreshOnFocus = () => {
+      if (!skipAccountStateApi) {
+        void synchronize();
+      }
+    };
+    const refreshOnPageShow = () => {
+      if (!skipAccountStateApi) {
+        void synchronize();
+      }
+    };
 
     window.addEventListener('focus', refreshOnFocus);
     window.addEventListener('pageshow', refreshOnPageShow);
@@ -139,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('focus', refreshOnFocus);
       window.removeEventListener('pageshow', refreshOnPageShow);
     };
-  }, []);
+  }, [skipAccountStateApi]);
 
   const handleActualSignOut = async (): Promise<void> => {
     try {

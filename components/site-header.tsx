@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from "next/link";
@@ -20,10 +20,11 @@ export function SiteHeader() {
   const dashboardPath = dashboardPathForRole(profile?.role) ?? '/auth/select-role';
   const pathname = usePathname();
   
-  // Don't render public header on Owner routes
-  if (pathname?.startsWith('/owner')) {
+  // Do not render on the public homepage or dedicated auth routes
+  if (pathname === '/' || pathname?.startsWith('/auth')) {
     return null;
   }
+
   
   // CRITICAL: Only show dashboard link for COMPLETED accounts.
   // password_set=false means NOT a HostelHub user, so no dashboard link should be shown.

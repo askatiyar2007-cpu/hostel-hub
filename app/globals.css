@@ -188,3 +188,410 @@ p {
 .owner-sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* Accessibility: Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-float-subtle,
+  .animate-pulse-glow,
+  .animate-shake,
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* Webkit autofill styling for dark inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #032423 inset !important;
+  -webkit-text-fill-color: white !important;
+  background-color: #032423 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================================================
+   AUTH BACKGROUND ANIMATIONS
+   Only atmospheric layers move: clouds, ambient light, leaves.
+   Buildings/trees/card/forms are intentionally static.
+   ============================================================ */
+
+/* Clouds: slow horizontal drift, ~40-50px over 45-55s (clearly visible
+   if you watch for 10-15 seconds, but calm). */
+@keyframes cloud-drift-1 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(45px); }
+}
+
+@keyframes cloud-drift-2 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-40px); }
+}
+
+@keyframes cloud-drift-3 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(35px); }
+}
+
+.animate-cloud-drift-1 {
+  animation: cloud-drift-1 50s ease-in-out infinite;
+}
+
+.animate-cloud-drift-2 {
+  animation: cloud-drift-2 55s ease-in-out infinite;
+}
+
+.animate-cloud-drift-3 {
+  animation: cloud-drift-3 45s ease-in-out infinite;
+}
+
+/* Cloud opacity breathing - subtle fade in/out */
+@keyframes cloud-breathe-1 {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes cloud-breathe-2 {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 0.75; }
+}
+
+@keyframes cloud-breathe-3 {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.7; }
+}
+
+.animate-cloud-breathe-1 {
+  animation: cloud-breathe-1 50s ease-in-out infinite;
+}
+
+.animate-cloud-breathe-2 {
+  animation: cloud-breathe-2 55s ease-in-out infinite;
+}
+
+.animate-cloud-breathe-3 {
+  animation: cloud-breathe-3 45s ease-in-out infinite;
+}
+
+/* Ambient light glows: subtle drift + opacity breathing */
+@keyframes ambient-glow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(15px, -10px) scale(1.03);
+    opacity: 1;
+  }
+}
+
+@keyframes ambient-glow-rev {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(-12px, 8px) scale(1.02);
+    opacity: 1;
+  }
+}
+
+.animate-ambient-glow {
+  animation: ambient-glow 32s ease-in-out infinite;
+}
+
+.animate-ambient-glow-rev {
+  animation: ambient-glow-rev 36s ease-in-out infinite;
+}
+
+/* Leaves: at most two, very slow, very subtle. */
+@keyframes leaf-float-1 {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.3;
+  }
+  33% {
+    transform: translate(12px, -15px) rotate(45deg);
+    opacity: 0.35;
+  }
+  66% {
+    transform: translate(22px, 5px) rotate(90deg);
+    opacity: 0.25;
+  }
+}
+
+@keyframes leaf-float-2 {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.25;
+  }
+  33% {
+    transform: translate(-14px, -12px) rotate(-50deg);
+    opacity: 0.3;
+  }
+  66% {
+    transform: translate(-24px, 6px) rotate(-100deg);
+    opacity: 0.2;
+  }
+}
+
+@keyframes leaf-float-3 {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.28;
+  }
+  33% {
+    transform: translate(8px, -10px) rotate(30deg);
+    opacity: 0.32;
+  }
+  66% {
+    transform: translate(16px, 4px) rotate(60deg);
+    opacity: 0.24;
+  }
+}
+
+.animate-leaf-float-1 {
+  animation: leaf-float-1 50s ease-in-out infinite;
+}
+
+.animate-leaf-float-2 {
+  animation: leaf-float-2 55s ease-in-out infinite;
+}
+
+.animate-leaf-float-3 {
+  animation: leaf-float-3 45s ease-in-out infinite;
+}
+
+/* Atmospheric breathing - very subtle mist movement */
+@keyframes atmospheric-breathing {
+  0%, 100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.animate-atmospheric-breathing {
+  animation: atmospheric-breathing 35s ease-in-out infinite;
+}
+
+/* Reduced motion: stop all decorative background animation. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient-glow,
+  .animate-ambient-glow-rev,
+  .animate-cloud-drift-1,
+  .animate-cloud-drift-2,
+  .animate-cloud-drift-3,
+  .animate-cloud-breathe-1,
+  .animate-cloud-breathe-2,
+  .animate-cloud-breathe-3,
+  .animate-leaf-float-1,
+  .animate-leaf-float-2,
+  .animate-leaf-float-3,
+  .animate-atmospheric-breathing {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   HOMEPAGE ANIMATIONS
+   ============================================================ */
+
+/* Hero entrance animation - more visible and smoother */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
+/* Floating animation for hero visual cards - subtle but visible */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Scroll reveal animation */
+@keyframes scrollReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-scroll-reveal {
+  opacity: 0;
+  animation: scrollReveal 0.6s ease-out forwards;
+}
+
+/* ============================================================
+   CAMPUS ATMOSPHERIC ANIMATIONS (HOMEPAGE & AUTHENTICATION)
+   ============================================================ */
+
+/* Cloud drift animations: very slow, peaceful horizontal movement */
+@keyframes cloudDriftSlow {
+  0% { transform: translateX(0px); }
+  50% { transform: translateX(45px); }
+  100% { transform: translateX(0px); }
+}
+
+@keyframes cloudDriftMid {
+  0% { transform: translateX(0px); }
+  50% { transform: translateX(-50px); }
+  100% { transform: translateX(0px); }
+}
+
+@keyframes cloudDriftFar {
+  0% { transform: translateX(0px); }
+  50% { transform: translateX(30px); }
+  100% { transform: translateX(0px); }
+}
+
+.animate-cloud-slow {
+  animation: cloudDriftSlow 68s ease-in-out infinite;
+}
+
+.animate-cloud-mid {
+  animation: cloudDriftMid 52s ease-in-out infinite;
+}
+
+.animate-cloud-far {
+  animation: cloudDriftFar 84s ease-in-out infinite;
+}
+
+/* Morning sunlight ambient warmth flare */
+@keyframes sunGlowPulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.98;
+    transform: scale(1.05);
+  }
+}
+
+.animate-sun-glow {
+  animation: sunGlowPulse 18s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center center;
+}
+
+/* Trees and foliage gentle ambient sway */
+@keyframes treeSwayGentle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1.2deg); }
+}
+
+@keyframes treeSwayAlt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-1.3deg); }
+}
+
+.animate-tree-sway {
+  animation: treeSwayGentle 14s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+.animate-tree-sway-alt {
+  animation: treeSwayAlt 17s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+/* Foreground foliage corner framing with depth of field */
+@keyframes foliageSwayLeft {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  50% {
+    transform: rotate(1.8deg) skewX(0.8deg);
+  }
+}
+
+@keyframes foliageSwayRight {
+  0%, 100% {
+    transform: rotate(0deg) skewX(0deg);
+  }
+  50% {
+    transform: rotate(-2deg) skewX(-0.9deg);
+  }
+}
+
+.animate-foliage-left {
+  animation: foliageSwayLeft 13s ease-in-out infinite;
+  transform-origin: top left;
+}
+
+.animate-foliage-right {
+  animation: foliageSwayRight 16s ease-in-out infinite;
+  transform-origin: top right;
+}
+
+/* Subtle ambient bokeh/particle drift */
+@keyframes ambientParticleDrift {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(14px, -18px);
+    opacity: 0.65;
+  }
+}
+
+.animate-particle-drift {
+  animation: ambientParticleDrift 22s ease-in-out infinite;
+}
+
+/* Reduced motion for all animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-float,
+  .animate-scroll-reveal,
+  .animate-cloud-slow,
+  .animate-cloud-mid,
+  .animate-cloud-far,
+  .animate-sun-glow,
+  .animate-tree-sway,
+  .animate-tree-sway-alt,
+  .animate-foliage-left,
+  .animate-foliage-right,
+  .animate-particle-drift {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+
+
+

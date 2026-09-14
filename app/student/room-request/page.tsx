@@ -9,7 +9,6 @@ import {
   User, MapPin, Shield, Upload, X
 } from 'lucide-react';
 import Link from 'next/link';
-import { DashboardShell } from '@/components/dashboard-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -809,14 +808,9 @@ export default function RoomRequestPage() {
 
   if (isAllocationLoading) {
     return (
-      <DashboardShell
-        title="Loading..."
-        badge="Student"
-      >
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </DashboardShell>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      </div>
     );
   }
 
@@ -826,31 +820,32 @@ export default function RoomRequestPage() {
 
   if (activeAllocation) {
     return (
-      <DashboardShell
-        title="Room Allocated"
-        subtitle="You already have an active room allocation."
-        badge="Student"
-      >
-        <div className="mx-auto max-w-md rounded-3xl border border-border bg-card p-8 shadow-sm text-center space-y-6">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-slate-900 font-display">Room Allocated</h1>
+          <p className="text-slate-600">You already have an active room allocation.</p>
+        </div>
 
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 mx-auto dark:bg-green-950/30">
-            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+        <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm text-center space-y-6">
+
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mx-auto">
+            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
 
           <div>
-            <h3 className="text-xl font-bold font-display text-foreground">
+            <h3 className="text-xl font-bold font-display text-slate-900">
               You already have an active room allocation
             </h3>
 
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-slate-600 mt-1">
               Please visit your dashboard to manage your room allocation.
             </p>
           </div>
 
-          <div className="rounded-2xl bg-muted/30 border p-5 text-left text-sm space-y-3">
+          <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5 text-left text-sm space-y-3">
 
             <div>
-              <span className="font-semibold text-muted-foreground uppercase text-[10px] block font-display tracking-wider">
+              <span className="font-semibold text-slate-500 uppercase text-[10px] block font-display tracking-wider">
                 Hostel
               </span>
 
@@ -897,12 +892,12 @@ export default function RoomRequestPage() {
             </Button>
           </Link>
 
-          <p className="text-xs text-muted-foreground mt-4">
+          <p className="text-xs text-slate-500 mt-4">
             To request a different room, check out from your current allocation first.
           </p>
 
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
@@ -912,15 +907,16 @@ export default function RoomRequestPage() {
 
   if (pendingRequest) {
     return (
-      <DashboardShell
-        title="Pending Approval"
-        subtitle="Your room request is being reviewed by the owner."
-        badge="Student"
-      >
-        <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 shadow-md text-center space-y-6">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-slate-900 font-display">Pending Approval</h1>
+          <p className="text-slate-600">Your room request is being reviewed by the owner.</p>
+        </div>
 
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 mx-auto dark:bg-amber-950">
-            <Clock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+        <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-md text-center space-y-6">
+
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 mx-auto">
+            <Clock className="h-8 w-8 text-amber-600" />
           </div>
 
           <div>
@@ -998,7 +994,7 @@ export default function RoomRequestPage() {
           </Link>
 
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
@@ -1007,11 +1003,12 @@ export default function RoomRequestPage() {
   // ------------------------------------------------------------
 
   return (
-    <DashboardShell
-      title="Request a Room"
-      subtitle="Find a hostel, pick a room and submit your request."
-      badge="Student"
-    >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-slate-900 font-display">Request a Room</h1>
+        <p className="text-slate-600">Find a hostel, pick a room and submit your request.</p>
+      </div>
 
       {/* ------------------------------------------------------
           EXISTING REQUESTS
@@ -2239,6 +2236,6 @@ export default function RoomRequestPage() {
         </div>
       )}
 
-    </DashboardShell>
+    </div>
   );
 }

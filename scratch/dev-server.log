@@ -1,0 +1,1263 @@
+
+> hostelhub@1.0.0 dev
+> next dev -p 3000
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.6s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 601ms (126 modules)
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 12.1s (1605 modules)
+ GET /auth/login 200 in 13632ms
+ ✓ Compiled in 1652ms (814 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1331ms (1607 modules)
+ GET / 200 in 1828ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 778ms (1613 modules)
+ ○ Compiling /api/auth/account-state ...
+ ✓ Compiled /api/auth/account-state in 2.3s (881 modules)
+SUPABASE_SERVICE_ROLE_KEY is not configured. Account state lookup requires service role permissions.
+ GET /api/auth/account-state 500 in 3952ms
+SUPABASE_SERVICE_ROLE_KEY is not configured. Account state lookup requires service role permissions.
+ GET /api/auth/account-state 500 in 367ms
+ ○ Compiling /owner/dashboard ...
+ ✓ Compiled /owner/dashboard in 2.2s (1780 modules)
+ ✓ Compiled in 2.3s (1704 modules)
+ ✓ Compiled in 1058ms (1704 modules)
+ ✓ Compiled in 767ms (1704 modules)
+ ✓ Compiled in 999ms (1704 modules)
+ ✓ Compiled in 1441ms (1122 modules)
+ ✓ Compiled in 379ms (574 modules)
+ GET /auth/login 200 in 300ms
+ GET /auth/login 200 in 88ms
+ ○ Compiling /auth/forgot-password ...
+ ✓ Compiled /auth/forgot-password in 2.3s (1130 modules)
+ GET /auth/forgot-password 200 in 2866ms
+ ✓ Compiled /auth/reset-password in 352ms (1124 modules)
+ GET /auth/reset-password 200 in 455ms
+ GET /auth/login 200 in 160ms
+ GET /auth/forgot-password 200 in 74ms
+ GET /auth/reset-password 200 in 70ms
+ GET /auth/login 200 in 108ms
+ GET /auth/forgot-password 200 in 71ms
+ GET /auth/reset-password 200 in 77ms
+ ✓ Compiled in 1077ms (1128 modules)
+ GET /auth/login 200 in 298ms
+ ✓ Compiled /auth/forgot-password in 279ms (553 modules)
+ GET /auth/forgot-password 200 in 444ms
+ ✓ Compiled /auth/reset-password in 251ms (558 modules)
+ GET /auth/reset-password 200 in 405ms
+ GET /auth/login 200 in 215ms
+ ✓ Compiled in 1386ms (1133 modules)
+ ✓ Compiled in 437ms (1133 modules)
+ ✓ Compiled in 714ms (1133 modules)
+ ⨯ ./app/auth/forgot-password/page.tsx
+Error: 
+  [31mx[0m Unexpected token `AuthShell`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\BIT\Downloads\hostelhub combine\files\app\auth\forgot-password\page.tsx[0m:198:1]
+ [2m198[0m |   ];
+ [2m199[0m | 
+ [2m200[0m |   return (
+ [2m201[0m |     <AuthShell>
+     : [31;1m     ^^^^^^^^^[0m
+ [2m202[0m |         <AuthCard>
+ [2m203[0m |           <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+ [2m204[0m |             <div className="shrink-0 pb-4">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/auth/forgot-password/page.tsx
+ ○ Compiling /_error ...
+ ⨯ ./app/auth/forgot-password/page.tsx
+Error: 
+  [31mx[0m Unexpected token `AuthShell`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\BIT\Downloads\hostelhub combine\files\app\auth\forgot-password\page.tsx[0m:198:1]
+ [2m198[0m |   ];
+ [2m199[0m | 
+ [2m200[0m |   return (
+ [2m201[0m |     <AuthShell>
+     : [31;1m     ^^^^^^^^^[0m
+ [2m202[0m |         <AuthCard>
+ [2m203[0m |           <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+ [2m204[0m |             <div className="shrink-0 pb-4">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/auth/forgot-password/page.tsx
+ GET /auth/login 500 in 33ms
+ ⨯ ./app/auth/forgot-password/page.tsx
+Error: 
+  [31mx[0m Unexpected token `AuthShell`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\BIT\Downloads\hostelhub combine\files\app\auth\forgot-password\page.tsx[0m:198:1]
+ [2m198[0m |   ];
+ [2m199[0m | 
+ [2m200[0m |   return (
+ [2m201[0m |     <AuthShell>
+     : [31;1m     ^^^^^^^^^[0m
+ [2m202[0m |         <AuthCard>
+ [2m203[0m |           <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+ [2m204[0m |             <div className="shrink-0 pb-4">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/auth/forgot-password/page.tsx
+ GET /_next/static/webpack/7ec75b1af5cf2299.webpack.hot-update.json 500 in 1246ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /auth/login 500 in 17ms
+ ✓ Compiled /_not-found in 2.1s (1361 modules)
+ GET /auth/login 200 in 467ms
+ ✓ Compiled in 836ms (1347 modules)
+ ✓ Compiled in 520ms (767 modules)
+ ⨯ ./components/auth/AuthBackground.tsx
+Error: 
+  [31mx[0m Unexpected token `svg`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\BIT\Downloads\hostelhub combine\files\components\auth\AuthBackground.tsx[0m:105:1]
+ [2m105[0m | 
+ [2m106[0m | function CampusScene() {
+ [2m107[0m |   return (
+ [2m108[0m |     <svg
+     : [31;1m     ^^^[0m
+ [2m109[0m |       className="absolute inset-x-0 bottom-0 w-full h-full"
+ [2m110[0m |       viewBox="0 0 1440 600"
+ [2m111[0m |       preserveAspectRatio="xMidYMax slice"
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/auth/AuthBackground.tsx
+./components/auth/index.ts
+./app/auth/login/page.tsx
+ ✓ Compiled in 947ms (1358 modules)
+ ✓ Compiled in 2s (1358 modules)
+ ✓ Compiled in 931ms (1358 modules)
+ ✓ Compiled in 1084ms (1358 modules)
+ ✓ Compiled in 937ms (1358 modules)
+ ✓ Compiled in 1013ms (1358 modules)
+ ✓ Compiled in 1008ms (1358 modules)
+ ✓ Compiled in 930ms (1358 modules)
+ ✓ Compiled in 905ms (1358 modules)
+ ✓ Compiled in 356ms (765 modules)
+ ✓ Compiled in 924ms (1358 modules)
+ GET /auth/login 200 in 344ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 798ms (1361 modules)
+ GET /_next/static/css/app/layout.css?v=1789126667907 404 in 1035ms
+ GET /_next/static/chunks/webpack.js?v=1789126667907 404 in 1041ms
+ GET /_next/static/chunks/main-app.js?v=1789126667907 404 in 1024ms
+ GET /_next/static/chunks/app/auth/login/page.js 404 in 1022ms
+ GET /_next/static/chunks/app/layout.js 404 in 1021ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 1024ms
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\auth\login\page.js:1:34680
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\auth\login\page.js:1:34737)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderPageComponent (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:1910:24)
+    at async DevServer.renderToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:818:17)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:359:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/auth/login'
+}
+ ✓ Compiled /_error in 354ms (1349 modules)
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js:1:340
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js:1:383)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\pages\\_document.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /auth/login 500 in 424ms
+ GET /_next/static/chunks/fallback/webpack.js 404 in 77ms
+ GET /_next/static/chunks/fallback/main.js 404 in 77ms
+ GET /_next/static/chunks/fallback/react-refresh.js 404 in 76ms
+ GET /_next/static/chunks/fallback/pages/_error.js 404 in 73ms
+ GET /_next/static/chunks/fallback/pages/_app.js 404 in 72ms
+ ✓ Compiled / in 401ms (601 modules)
+ GET / 200 in 542ms
+ GET /_next/static/css/app/layout.css?v=1789126681647 404 in 40ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 39ms
+ GET /_next/static/chunks/app/page.js 404 in 37ms
+ GET /_next/static/chunks/main-app.js?v=1789126681647 404 in 36ms
+ GET / 200 in 40ms
+ GET /_next/static/css/app/layout.css?v=1789126704308 404 in 52ms
+ GET /_next/static/chunks/main-app.js?v=1789126704308 404 in 57ms
+ GET /_next/static/chunks/app/page.js 404 in 50ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 56ms
+ GET / 200 in 57ms
+ GET /_next/static/css/app/layout.css?v=1789126755193 404 in 49ms
+ GET /_next/static/chunks/main-app.js?v=1789126755193 404 in 51ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 50ms
+ GET /_next/static/chunks/app/page.js 404 in 48ms
+ GET / 200 in 75ms
+ GET /_next/static/css/app/layout.css?v=1789126757061 404 in 26ms
+ GET /_next/static/chunks/main-app.js?v=1789126757061 404 in 28ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 27ms
+ GET /_next/static/chunks/app/page.js 404 in 26ms
+ GET / 200 in 77ms
+ GET /_next/static/css/app/layout.css?v=1789126757776 404 in 46ms
+ GET /_next/static/chunks/main-app.js?v=1789126757776 404 in 50ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 49ms
+ GET /_next/static/chunks/app/page.js 404 in 49ms
+ GET / 200 in 56ms
+ GET /_next/static/css/app/layout.css?v=1789126758852 404 in 22ms
+ GET /_next/static/chunks/main-app.js?v=1789126758852 404 in 36ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 35ms
+ GET /_next/static/chunks/app/page.js 404 in 34ms
+ GET / 200 in 61ms
+ GET /_next/static/css/app/layout.css?v=1789126759699 404 in 21ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 27ms
+ GET /_next/static/chunks/main-app.js?v=1789126759699 404 in 32ms
+ GET /_next/static/chunks/app/page.js 404 in 27ms
+ GET / 200 in 74ms
+ GET /_next/static/css/app/layout.css?v=1789126760044 404 in 26ms
+ GET /_next/static/chunks/app/page.js 404 in 28ms
+ GET /_next/static/chunks/main-app.js?v=1789126760044 404 in 32ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 30ms
+ GET / 200 in 23ms
+ GET /_next/static/css/app/layout.css?v=1789126760216 404 in 23ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ GET /_next/static/chunks/main-app.js?v=1789126760216 404 in 28ms
+ GET /_next/static/chunks/app/page.js 404 in 26ms
+ GET / 200 in 87ms
+ GET /_next/static/css/app/layout.css?v=1789126761063 404 in 21ms
+ GET /_next/static/chunks/main-app.js?v=1789126761063 404 in 29ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 27ms
+ GET /_next/static/chunks/app/page.js 404 in 26ms
+ GET / 200 in 21ms
+ GET /_next/static/css/app/layout.css?v=1789126761205 404 in 21ms
+ GET /_next/static/chunks/main-app.js?v=1789126761205 404 in 27ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 26ms
+ GET /_next/static/chunks/app/page.js 404 in 26ms
+ GET / 200 in 22ms
+ GET /_next/static/css/app/layout.css?v=1789126761341 404 in 29ms
+ GET /_next/static/chunks/main-app.js?v=1789126761341 404 in 28ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 25ms
+ GET /_next/static/chunks/app/page.js 404 in 25ms
+ GET / 200 in 27ms
+ GET /_next/static/css/app/layout.css?v=1789126761479 404 in 28ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 31ms
+ GET /_next/static/chunks/main-app.js?v=1789126761479 404 in 35ms
+ GET /_next/static/chunks/app/page.js 404 in 31ms
+ GET / 200 in 26ms
+ GET /_next/static/css/app/layout.css?v=1789126761583 404 in 36ms
+ GET /_next/static/chunks/app/page.js 404 in 42ms
+ GET /_next/static/chunks/main-app.js?v=1789126761583 404 in 45ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 44ms
+ GET / 200 in 32ms
+ GET /_next/static/css/app/layout.css?v=1789126761692 404 in 37ms
+ GET /_next/static/chunks/main-app.js?v=1789126761692 404 in 32ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 31ms
+ GET /_next/static/chunks/app/page.js 404 in 30ms
+ GET / 200 in 77ms
+ GET /_next/static/css/app/layout.css?v=1789126764937 404 in 24ms
+ GET /_next/static/chunks/main-app.js?v=1789126764937 404 in 30ms
+ GET /_next/static/chunks/app/page.js 404 in 29ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 30ms
+ ✓ Compiled /login in 280ms (604 modules)
+ GET /login 200 in 454ms
+ GET /_next/static/css/app/layout.css?v=1789126769336 404 in 32ms
+ GET /_next/static/chunks/main-app.js?v=1789126769336 404 in 45ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 44ms
+ GET /_next/static/chunks/app/login/page.js 404 in 43ms
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\login\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\auth\login\page.js:1:34680
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\auth\login\page.js:1:34737)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderPageComponent (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:1910:24)
+    at async DevServer.renderToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:818:17)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:359:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\login\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/auth/login'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 605ms (1346 modules)
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js:1:340
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js:1:383)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\pages\\_document.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /auth/login 500 in 673ms
+ ✓ Compiled /login in 351ms (597 modules)
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\login\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\login\page.js:1:2021
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\login\page.js:1:2073)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderPageComponent (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:1910:24)
+    at async DevServer.renderToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:818:17)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:359:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\login\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/login'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 602ms (1364 modules)
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js:1:340
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\pages\_document.js:1:383)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\pages\\_document.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /login 500 in 1030ms
+ ✓ Compiled /_not-found in 257ms (1353 modules)
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\_not-found\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /_next/static/chunks/fallback/react-refresh.js 500 in 303ms
+ GET /_next/static/chunks/fallback/webpack.js 500 in 302ms
+ GET /_next/static/chunks/fallback/main.js 500 in 301ms
+ GET /_next/static/chunks/fallback/pages/_app.js 500 in 263ms
+ GET /_next/static/chunks/fallback/pages/_error.js 500 in 261ms
+ ✓ Compiled / in 483ms (605 modules)
+ GET / 200 in 883ms
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /_next/static/css/app/layout.css?v=1789127563090 500 in 32ms
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9276.js'
+Require stack:
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\page.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\build\utils.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1569:15)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1123:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1147:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1174:12)
+    at Module._load (node:internal/modules/cjs/loader:1346:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at __webpack_require__.f.require (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:203:28)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\webpack-runtime.js:162:22)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2658
+    at Object.<anonymous> (C:\Users\BIT\Downloads\hostelhub combine\files\build\server\app\_not-found\page.js:1:2710)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1679:12)
+    at mod.require (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:196:16)
+    at requirePage (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:84
+    at async loadComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\load-components.js:103:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\next-server.js:714:36)
+    at async DevServer.findPageComponents (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2090:30)
+    at async pipe.req.req (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\base-server.js:922:25)
+    at async C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:374:24)
+    at async requestHandlerImpl (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (C:\Users\BIT\Downloads\hostelhub combine\files\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\webpack-runtime.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\build\\server\\app\\page.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\BIT\\Downloads\\hostelhub combine\\files\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ GET /_next/static/chunks/main-app.js?v=1789127563090 500 in 33ms
+ GET /_next/static/chunks/app-pages-internals.js 500 in 30ms
+ GET /_next/static/chunks/app/page.js 500 in 29ms
+[?25h

@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, Fraunces } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/context';
 import { QueryProvider } from '@/lib/query-provider';
-import { SiteHeader } from '@/components/site-header';
+
+import { SiteHeader } from '@/components/site-header'; // Added import for SiteHeader
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -16,10 +17,14 @@ const fraunces = Fraunces({
   variable: '--font-display',
 });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+};
+
 export const metadata: Metadata = {
   title: 'HostelHub - Hostel Management SaaS',
   description: 'Complete hostel management solution for owners, students, and parents',
-  viewport: 'width=device-width, initial-scale=1.0',
 };
 
 export default function RootLayout({

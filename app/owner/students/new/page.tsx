@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth/context';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Copy, ExternalLink, CheckCircle2, AlertCircle, Building2, User, Mail, Phone, Calendar, Home } from 'lucide-react';
 import Link from 'next/link';
-import { DashboardShell } from '@/components/dashboard-shell';
+
 import { useQuery } from '@tanstack/react-query';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -256,11 +256,19 @@ export default function AssignStudentPage() {
   };
 
   return (
-    <DashboardShell
-      title="Assign Student"
-      subtitle="Complete student registration, choose an available room, and generate an allocation invitation."
-      badge="Owner"
-    >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+            Owner
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Assign Student</h1>
+        <p className="text-sm text-slate-500">Complete student registration, choose an available room, and generate an allocation invitation.</p>
+      </div>
+
       <div className="mb-6">
         <Link href="/owner/students" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft size={16} className="mr-2" /> Back to Student List
@@ -729,6 +737,6 @@ export default function AssignStudentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardShell>
+    </div>
   );
 }

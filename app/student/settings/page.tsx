@@ -4,15 +4,15 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  User, Lock, Bell, ShieldCheck, FileText, LogOut, 
-  Building2, Calendar, CheckCircle2, ShieldAlert
+import {
+  User, Lock, Bell, ShieldCheck, FileText, LogOut,
+  Building2, Calendar, CheckCircle2, ShieldAlert, ArrowRight, Home
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { DashboardShell } from '@/components/dashboard-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 
@@ -75,25 +75,7 @@ export default function StudentSettingsPage() {
     }
   });
 
-  // Fetch latest approved request for profile snapshot (address, parent details, etc.)
-  const { data: latestRequest } = useQuery({
-    queryKey: ['latest-approved-request', studentId],
-    enabled: !!studentId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('room_requests')
-        .select('*')
-        .eq('student_id', studentId!)
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Save Preferences Mutation
+  // Save Preferences
   const savePreferences = async () => {
     setSavingPrefs(true);
     try {
@@ -113,7 +95,7 @@ export default function StudentSettingsPage() {
     }
   };
 
-  // Change Password Mutation
+  // Change Password
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 8) {
@@ -127,7 +109,6 @@ export default function StudentSettingsPage() {
 
     setVerifyingPassword(true);
     try {
-      // Verify old password by signing in again
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email: user!.email!,
         password: oldPassword
@@ -137,7 +118,6 @@ export default function StudentSettingsPage() {
         throw new Error('Verification of old password failed. Please check your credentials.');
       }
 
-      // Update password
       const { error: updateErr } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -156,352 +136,354 @@ export default function StudentSettingsPage() {
     }
   };
 
-  const handleDownloadDoc = (docName: string) => {
-    toast.success(`Generating and downloading ${docName}...`);
-  };
-
   return (
-    <DashboardShell title="Settings" subtitle="Manage your account settings, preferences and documents." badge="Student">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Side: Navigation Links & Details */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Section 1: Profile Details (Read Only) */}
-          <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2">
-                <User className="text-primary h-5 w-5" /> My Profile
-              </h3>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase bg-muted px-2 py-0.5 rounded">Read-Only</span>
-            </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-slate-900 font-display">Settings</h1>
+        <p className="text-slate-600">Manage your profile, notifications, security and HostelHub account.</p>
+      </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-muted-foreground text-xs">Full Name</Label>
-                <Input disabled value={profile?.full_name || 'N/A'} className="mt-1 bg-muted/40 cursor-not-allowed" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Email Address</Label>
-                <Input disabled value={profile?.email || 'N/A'} className="mt-1 bg-muted/40 cursor-not-allowed" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Phone Number</Label>
-                <Input disabled value={profile?.phone_number || 'N/A'} className="mt-1 bg-muted/40 cursor-not-allowed" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Parent/Guardian Name</Label>
-                <Input disabled value={latestRequest?.parent_name || 'N/A'} className="mt-1 bg-muted/40 cursor-not-allowed" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Parent Phone</Label>
-                <Input disabled value={latestRequest?.parent_phone || 'N/A'} className="mt-1 bg-muted/40 cursor-not-allowed" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Parent Email</Label>
-                <Input disabled value={latestRequest?.parent_email || 'N/A'} className="mt-1 bg-muted/40 cursor-not-allowed" />
-              </div>
-              <div className="sm:col-span-2">
-                <Label className="text-muted-foreground text-xs">Address</Label>
-                <textarea 
-                  disabled 
-                  value={latestRequest?.address || 'N/A'} 
-                  rows={2}
-                  className="mt-1 flex w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm cursor-not-allowed focus-visible:outline-none disabled:opacity-80" 
-                />
-              </div>
-            </div>
-            
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 bg-muted/20 p-3 rounded-xl border border-border/50 mt-2">
-              <ShieldAlert className="h-4 w-4 shrink-0 text-amber-500" />
-              <span>Cannot edit details - Linked directly to your active room request/allocation.</span>
-            </p>
-          </section>
-
-          {/* Section 2: Preferences (Editable) */}
-          <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2">
-                <Bell className="text-primary h-5 w-5" /> Preferences
-              </h3>
-            </div>
-
-            <div className="space-y-4">
-              {/* Toggle 1 */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/20 border">
-                <div className="space-y-0.5">
-                  <span className="font-semibold text-sm text-foreground block">Email Notifications</span>
-                  <span className="text-xs text-muted-foreground">Receive payment receipts and invoice updates via email.</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={emailNotif}
-                  onChange={(e) => setEmailNotif(e.target.checked)}
-                  className="h-5 w-10 appearance-none bg-muted rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-primary before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-5.5 border border-border"
-                />
-              </div>
-
-              {/* Toggle 2 */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/20 border">
-                <div className="space-y-0.5">
-                  <span className="font-semibold text-sm text-foreground block">Hostel Announcements</span>
-                  <span className="text-xs text-muted-foreground">Receive push notifications for notices published by the owner.</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={announceNotif}
-                  onChange={(e) => setAnnounceNotif(e.target.checked)}
-                  className="h-5 w-10 appearance-none bg-muted rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-primary before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-5.5 border border-border"
-                />
-              </div>
-
-              {/* Toggle 3 */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/20 border">
-                <div className="space-y-0.5">
-                  <span className="font-semibold text-sm text-foreground block">Payment Reminders</span>
-                  <span className="text-xs text-muted-foreground">Receive monthly rent reminders 3 days before the due date.</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={payRemind}
-                  onChange={(e) => setPayRemind(e.target.checked)}
-                  className="h-5 w-10 appearance-none bg-muted rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-primary before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-5.5 border border-border"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button onClick={savePreferences} disabled={savingPrefs} className="rounded-xl px-6 font-semibold">
-                {savingPrefs ? 'Saving...' : 'Save Preferences'}
-              </Button>
-            </div>
-          </section>
-
-          {/* Section 3: Documents */}
-          <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2">
-                <FileText className="text-primary h-5 w-5" /> My Documents
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col items-center justify-center text-center gap-1.5 rounded-2xl border bg-muted/10"
-                onClick={() => handleDownloadDoc('Agreement PDF')}
-              >
-                <FileText className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-xs font-semibold leading-none">Agreement PDF</span>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col items-center justify-center text-center gap-1.5 rounded-2xl border bg-muted/10"
-                onClick={() => handleDownloadDoc('Allocation Certificate')}
-              >
-                <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-xs font-semibold leading-none">Allocation Cert.</span>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="h-20 flex-col items-center justify-center text-center gap-1.5 rounded-2xl border bg-muted/10"
-                onClick={() => handleDownloadDoc('Billing Receipts')}
-              >
-                <Calendar className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-xs font-semibold leading-none">Receipts List</span>
-              </Button>
-            </div>
-          </section>
-
-        </div>
-
-        {/* Right Side: Account, Allocation Details & Security */}
-        <div className="space-y-6">
-          
-          {/* Section 4: Security (Password Reset) */}
-          <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2">
-                <Lock className="text-primary h-5 w-5" /> Security & Passwords
-              </h3>
-            </div>
-            
-            <p className="text-xs text-muted-foreground">Keep your account secure by resetting your password periodically.</p>
-            <Button onClick={() => setIsPasswordModalOpen(true)} className="w-full rounded-xl py-5 font-semibold">
-              Change Password
-            </Button>
-          </section>
-
-          {/* Section 5: My Allocation (Read Only) */}
-          <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2">
-                <Building2 className="text-primary h-5 w-5" /> My Allocation
-              </h3>
-            </div>
-
-            {allocation ? (
-              <div className="space-y-4">
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between border-b pb-1.5">
-                    <span className="text-muted-foreground font-semibold">Hostel:</span>
-                    <span className="font-semibold text-foreground">{allocation.hostels?.name}</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-1.5">
-                    <span className="text-muted-foreground font-semibold">Room Number:</span>
-                    <span className="font-semibold text-foreground">Room {allocation.rooms?.room_number}</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-1.5">
-                    <span className="text-muted-foreground font-semibold">Allocation Date:</span>
-                    <span className="font-medium text-foreground">{new Date(allocation.start_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between pb-1">
-                    <span className="text-muted-foreground font-semibold">Status:</span>
-                    <span className="font-bold text-green-600">Active ✅</span>
-                  </div>
-                </div>
-
-                <a href="/student/dashboard" className="block w-full">
-                  <Button variant="outline" className="w-full rounded-xl font-semibold">
-                    View Full Room Details
-                  </Button>
-                </a>
-              </div>
+      {/* Profile Card */}
+      <Card className="border border-slate-200 bg-white shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-5">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile?.full_name || 'Student'}
+                className="h-20 w-20 rounded-full object-cover ring-2 ring-teal-400/40"
+              />
             ) : (
-              <div className="text-center py-4 space-y-2">
-                <p className="text-xs text-muted-foreground">No active allocation details.</p>
-                <a href="/student/room-request" className="block w-full">
-                  <Button variant="outline" className="w-full rounded-xl font-semibold">
-                    Request a Room
-                  </Button>
-                </a>
+              <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center text-2xl font-bold ring-2 ring-teal-400/40">
+                {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
               </div>
             )}
-          </section>
-
-          {/* Section 6: Account Actions */}
-          <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="border-b pb-4">
-              <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2">
-                <User className="text-primary h-5 w-5" /> Account Details
-              </h3>
-            </div>
-
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <div className="flex justify-between">
-                <span>Account Created:</span>
-                <span className="font-medium text-foreground">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Room Allocated:</span>
-                <span className="font-medium text-foreground">{allocation?.start_date ? new Date(allocation.start_date).toLocaleDateString() : 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Last Login:</span>
-                <span className="font-medium text-foreground">{user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleTimeString() : 'N/A'}</span>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-900">{profile?.full_name || 'Student'}</h3>
+              <p className="text-sm text-slate-500">{profile?.email || 'No email'}</p>
+              {profile?.phone_number && (
+                <p className="text-sm text-slate-500">{profile.phone_number}</p>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 border border-teal-200 px-2.5 py-0.5 text-[10px] font-semibold text-teal-700">
+                  Student
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  Active
+                </span>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            <Button 
-              variant="outline" 
-              className="w-full rounded-xl py-5 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 font-semibold gap-2"
-              onClick={signOut}
-            >
-              <LogOut className="h-4 w-4" /> Sign Out
-            </Button>
-          </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Account Section */}
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center">
+                  <User className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Account</h3>
+                  <p className="text-xs text-slate-500">Profile information</p>
+                </div>
+              </div>
 
+              <div className="space-y-3 pt-2">
+                <div>
+                  <Label className="text-xs text-slate-500">Full Name</Label>
+                  <Input disabled value={profile?.full_name || 'N/A'} className="mt-1 bg-slate-50 border-slate-200 cursor-not-allowed" />
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-500">Email</Label>
+                  <Input disabled value={profile?.email || 'N/A'} className="mt-1 bg-slate-50 border-slate-200 cursor-not-allowed" />
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-500">Phone</Label>
+                  <Input disabled value={profile?.phone_number || 'N/A'} className="mt-1 bg-slate-50 border-slate-200 cursor-not-allowed" />
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800">Profile details are linked to your room request and cannot be edited here.</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preferences Section */}
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Notifications</h3>
+                  <p className="text-xs text-slate-500">Email alerts and reminders</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Email Notifications</p>
+                    <p className="text-xs text-slate-500">Payment receipts and invoices</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={emailNotif}
+                    onChange={(e) => setEmailNotif(e.target.checked)}
+                    className="h-5 w-9 appearance-none bg-slate-300 rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-teal-600 before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-4.5 border border-slate-400"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Announcements</p>
+                    <p className="text-xs text-slate-500">Hostel notices and updates</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={announceNotif}
+                    onChange={(e) => setAnnounceNotif(e.target.checked)}
+                    className="h-5 w-9 appearance-none bg-slate-300 rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-teal-600 before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-4.5 border border-slate-400"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Payment Reminders</p>
+                    <p className="text-xs text-slate-500">3 days before due date</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={payRemind}
+                    onChange={(e) => setPayRemind(e.target.checked)}
+                    className="h-5 w-9 appearance-none bg-slate-300 rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-teal-600 before:content-[''] before:h-4 before:w-4 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-4.5 border border-slate-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={savePreferences} disabled={savingPrefs} className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">
+                  {savingPrefs ? 'Saving...' : 'Save Preferences'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Allocation Card */}
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Current Allocation</h3>
+                  <p className="text-xs text-slate-500">Your room details</p>
+                </div>
+              </div>
+
+              {allocation ? (
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="text-slate-500">Hostel</span>
+                      <span className="font-medium text-slate-900">{allocation.hostels?.name}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="text-slate-500">Room</span>
+                      <span className="font-medium text-slate-900">Room {allocation.rooms?.room_number}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="text-slate-500">Check-in</span>
+                      <span className="font-medium text-slate-900">{new Date(allocation.start_date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-slate-500">Status</span>
+                      <span className="font-bold text-emerald-600">Active</span>
+                    </div>
+                  </div>
+
+                  <a href="/student/dashboard" className="block">
+                    <Button variant="outline" className="w-full rounded-xl font-medium">
+                      View Details <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </a>
+                </div>
+              ) : (
+                <div className="text-center py-6 space-y-3">
+                  <Home className="h-8 w-8 text-slate-300 mx-auto" />
+                  <p className="text-sm text-slate-500">No active allocation</p>
+                  <a href="/student/room-request" className="block">
+                    <Button variant="outline" className="w-full rounded-xl font-medium">
+                      Request a Room
+                    </Button>
+                  </a>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Security Card */}
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center">
+                  <Lock className="h-5 w-5 text-rose-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Security</h3>
+                  <p className="text-xs text-slate-500">Password and account</p>
+                </div>
+              </div>
+
+              <Button onClick={() => setIsPasswordModalOpen(true)} className="w-full border border-slate-200 hover:bg-slate-50 rounded-xl font-medium">
+                Change Password
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Documents Card */}
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Documents</h3>
+                  <p className="text-xs text-slate-500">Agreements and receipts</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Button variant="ghost" className="w-full justify-start rounded-xl text-slate-700 hover:bg-slate-50" onClick={() => toast.info('Document download coming soon')}>
+                  <ShieldCheck className="h-4 w-4 mr-3 text-emerald-600" />
+                  <span className="text-sm">Allocation Certificate</span>
+                </Button>
+                <Button variant="ghost" className="w-full justify-start rounded-xl text-slate-700 hover:bg-slate-50" onClick={() => toast.info('Document download coming soon')}>
+                  <Calendar className="h-4 w-4 mr-3 text-blue-600" />
+                  <span className="text-sm">Payment Receipts</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sign Out */}
+          <Button
+            variant="outline"
+            className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl font-medium"
+            onClick={signOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" /> Sign Out
+          </Button>
+        </div>
       </div>
 
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-card border border-border rounded-3xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h4 className="font-bold text-lg text-foreground font-display flex items-center gap-2">
-                <Lock className="text-primary h-5 w-5" /> Change Password
-              </h4>
-              <button onClick={() => setIsPasswordModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-[540px] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-2rem)]">
+            <div className="flex items-center justify-between border-b border-slate-200 p-5 pb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
+                  <Lock className="text-teal-600 h-4 w-4" />
+                </div>
+                <h4 className="font-bold text-base text-slate-900 font-display">Change Password</h4>
+              </div>
+              <button onClick={() => setIsPasswordModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
                 &times;
               </button>
             </div>
 
-            <form onSubmit={handleChangePassword} className="space-y-4 text-sm">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="old-pass">Current Password</Label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsPasswordModalOpen(false);
-                      router.push('/auth/forgot-password');
-                    }}
-                    className="text-xs text-primary hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
-                  >
-                    Forgot your current password?
-                  </button>
+            <div className="overflow-y-auto p-5 pt-4 flex-1">
+              <form onSubmit={handleChangePassword} className="space-y-4 text-sm">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="old-pass" className="text-xs font-medium">Current Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPasswordModalOpen(false);
+                        router.push('/auth/forgot-password');
+                      }}
+                      className="text-xs text-teal-600 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <Input
+                    id="old-pass"
+                    type="password"
+                    required
+                    placeholder="Enter current password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="h-10"
+                  />
                 </div>
-                <Input 
-                  id="old-pass" 
-                  type="password" 
-                  required 
-                  placeholder="Enter current password"
-                  value={oldPassword} 
-                  onChange={(e) => setOldPassword(e.target.value)} 
-                />
-              </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="new-pass">New Password</Label>
-                <Input 
-                  id="new-pass" 
-                  type="password" 
-                  required 
-                  placeholder="Min. 8 characters"
-                  value={newPassword} 
-                  onChange={(e) => setNewPassword(e.target.value)} 
-                />
-              </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-pass" className="text-xs font-medium">New Password</Label>
+                  <Input
+                    id="new-pass"
+                    type="password"
+                    required
+                    placeholder="Min. 8 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="confirm-pass">Confirm New Password</Label>
-                <Input 
-                  id="confirm-pass" 
-                  type="password" 
-                  required 
-                  placeholder="Repeat new password"
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                />
-              </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm-pass" className="text-xs font-medium">Confirm New Password</Label>
+                  <Input
+                    id="confirm-pass"
+                    type="password"
+                    required
+                    placeholder="Repeat new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-10"
+                  />
+                </div>
 
-              <div className="rounded-xl bg-muted/30 p-3 border space-y-1 text-xs text-muted-foreground">
-                <span className="font-bold text-foreground block uppercase text-[9px] tracking-wider font-display">Password Requirements</span>
-                <p className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3 w-3 text-primary shrink-0" /> Minimum 8 characters
-                </p>
-                <p className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3 w-3 text-primary shrink-0" /> Numbers, symbols, and uppercase letters recommended
-                </p>
-              </div>
+                <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 space-y-1.5 text-xs text-slate-600">
+                  <span className="font-bold text-slate-900 block uppercase text-[9px] tracking-wider font-display">Password Requirements</span>
+                  <p className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3 w-3 text-teal-600 shrink-0" /> Minimum 8 characters
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3 w-3 text-teal-600 shrink-0" /> Numbers, symbols, and uppercase letters recommended
+                  </p>
+                </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <Button variant="ghost" type="button" onClick={() => setIsPasswordModalOpen(false)} className="rounded-xl">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={verifyingPassword} className="rounded-xl px-5 font-semibold">
-                  {verifyingPassword ? 'Updating...' : 'Update Password'}
-                </Button>
-              </div>
-            </form>
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button variant="ghost" type="button" onClick={() => setIsPasswordModalOpen(false)} className="rounded-lg h-9 px-4">
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={verifyingPassword} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg h-9 px-5 font-semibold">
+                    {verifyingPassword ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
-    </DashboardShell>
+    </div>
   );
 }

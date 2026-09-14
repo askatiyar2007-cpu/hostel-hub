@@ -27,7 +27,7 @@ import {
   Trash2, 
   X as CloseIcon
 } from 'lucide-react';
-import { DashboardShell } from '@/components/dashboard-shell';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase/client';
@@ -643,15 +643,25 @@ export default function OwnerRequestsPage() {
 
   if (isRequestsLoading || isAllocationsLoading || approveMutation.isPending || checkoutMutation.isPending || rejectMutation.isPending || rereviewMutation.isPending || deleteMutation.isPending) {
     return (
-      <DashboardShell title="Room Requests & Allocations" subtitle="Processing database updates..." badge="Owner">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+              Owner
+            </span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Room Requests & Allocations</h1>
+          <p className="text-sm text-slate-500">Processing database updates...</p>
+        </div>
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
             <p className="text-sm font-semibold text-muted-foreground">
-              {approveMutation.isPending 
-                ? "Approving request and generating fees..." 
-                : checkoutMutation.isPending 
-                ? "Checking out student and updating occupancy..." 
+              {approveMutation.isPending
+                ? "Approving request and generating fees..."
+                : checkoutMutation.isPending
+                ? "Checking out student and updating occupancy..."
                 : rejectMutation.isPending
                 ? "Rejecting request..."
                 : rereviewMutation.isPending
@@ -662,7 +672,7 @@ export default function OwnerRequestsPage() {
             </p>
           </div>
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
@@ -670,7 +680,17 @@ export default function OwnerRequestsPage() {
     const timestamp = new Date().toISOString();
     console.error(`[${timestamp}] [OwnerRequestsPage] Render error state:`, allocationsError);
     return (
-      <DashboardShell title="Room Requests & Allocations" subtitle="Error loading data" badge="Owner">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+              Owner
+            </span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Room Requests & Allocations</h1>
+          <p className="text-sm text-slate-500">Error loading data</p>
+        </div>
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-red-500 max-w-md text-center">
             <AlertTriangle size={40} className="text-red-500" />
@@ -681,17 +701,24 @@ export default function OwnerRequestsPage() {
             </Button>
           </div>
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
   return (
-    <DashboardShell 
-      title="Room Requests" 
-      subtitle="Review and manage student room requests, approve allocations, and track resident onboarding." 
-      badge="Owner"
-      className="p-4 sm:p-6 lg:px-6 lg:py-8"
-    >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+            Owner
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Room Requests</h1>
+        <p className="text-sm text-slate-500">Review and manage student room requests, approve allocations, and track resident onboarding.</p>
+      </div>
+
       <div className="w-full max-w-[1150px] mx-auto">
         {/* 1. Tab Navigation */}
       <div className="flex border-b border-slate-200/80 gap-2 pb-px justify-between items-center flex-wrap">
@@ -1009,7 +1036,7 @@ export default function OwnerRequestsPage() {
           </div>
         </div>
       )}
-    </DashboardShell>
+    </div>
   );
 }
 

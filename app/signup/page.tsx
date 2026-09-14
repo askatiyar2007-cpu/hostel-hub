@@ -7,7 +7,7 @@ export default function SignupPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/auth/login');
+    router.replace('/auth/login?tab=signup');
   }, [router]);
 
   return null;

@@ -19,6 +19,16 @@ export async function GET() {
     return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
   }
 
+  // Check if service role key is properly configured
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey || serviceRoleKey.trim() === '') {
+    console.error('SUPABASE_SERVICE_ROLE_KEY is not configured. Account state lookup requires service role permissions.');
+    return NextResponse.json(
+      { error: 'Server configuration error: Service role key missing.' },
+      { status: 500 }
+    );
+  }
+
   // Call get_account_state via service-role client (the function requires
   // service_role grant and is not directly accessible to anon/authenticated roles)
   const { data, error } = await supabaseServer.rpc('get_account_state', {

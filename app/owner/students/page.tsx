@@ -7,7 +7,7 @@ import { Search, Plus, Users, Building2, AlertTriangle, X } from 'lucide-react';
 import { StudentCard } from './components/StudentCard';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { DashboardShell } from '@/components/dashboard-shell';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -182,13 +182,21 @@ export default function OwnerStudentsPage() {
   }, [assignments, searchQuery, selectedHostel]);
 
   return (
-    <DashboardShell 
-      title="Students" 
-      subtitle="Manage resident students and active room allocations across your properties." 
-      badge="Residents"
-    >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+            Residents
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Students</h1>
+        <p className="text-sm text-slate-500">Manage resident students and active room allocations across your properties.</p>
+      </div>
+
       {/* Top Toolbar: Search, Hostel Filter, Assign CTA */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -332,6 +340,6 @@ export default function OwnerStudentsPage() {
           </div>
         </div>
       )}
-    </DashboardShell>
+    </div>
   );
 }

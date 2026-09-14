@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DashboardLayout } from '@/components/dashboard-layout';
+import { StudentShell } from '@/components/student/student-shell';
 
 export default function StudentLayout({
   children,
@@ -9,8 +9,8 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout>
+    <StudentShell>
       {children}
-    </DashboardLayout>
+    </StudentShell>
   );
 }

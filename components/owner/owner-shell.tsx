@@ -562,14 +562,16 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main Content Area - with pt-14 top offset to clear fixed header and md:pl to clear sidebar */}
+        {/* Main Content Area - with pt-20 top offset to clear fixed header and md:ml to clear sidebar */}
         <div className={cn(
-          "relative z-10 flex-1 min-w-0 max-w-full transition-all duration-300 pt-14",
-          isCollapsed ? "md:pl-20" : "md:pl-64"
+          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-20",
+          isCollapsed ? "md:ml-20" : "md:ml-64"
         )}>
           {/* Page Content */}
-          <main className="min-h-[calc(100vh-3.5rem)] min-w-0 max-w-full">
-            {children}
+          <main className="min-h-[calc(100vh-5rem)] min-w-0">
+            <div className="w-full max-w-full overflow-x-hidden">
+              {children}
+            </div>
           </main>
         </div>
       </div>

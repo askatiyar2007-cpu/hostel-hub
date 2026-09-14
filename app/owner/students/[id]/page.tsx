@@ -9,7 +9,7 @@ import {
   Calendar, AlertTriangle, FileText, 
   DollarSign, Activity, Settings, UserCheck, GraduationCap, X
 } from 'lucide-react';
-import { DashboardShell } from '@/components/dashboard-shell';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -182,20 +182,40 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
   if (loading) {
     return (
-      <DashboardShell title="Resident Profile" subtitle="Loading profile..." badge="Owner">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+              Owner
+            </span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Resident Profile</h1>
+          <p className="text-sm text-slate-500">Loading profile...</p>
+        </div>
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <p className="text-sm font-semibold text-muted-foreground">Loading student database...</p>
           </div>
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
   if (error || !allocation || !student) {
     return (
-      <DashboardShell title="Resident Profile" subtitle="Error loading profile" badge="Owner">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+              Owner
+            </span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Resident Profile</h1>
+          <p className="text-sm text-slate-500">Error loading profile</p>
+        </div>
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-red-500 max-w-md text-center">
             <AlertTriangle size={40} />
@@ -205,7 +225,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             </Button>
           </div>
         </div>
-      </DashboardShell>
+      </div>
     );
   }
 
@@ -222,11 +242,19 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   const emergencyContact = latestRequest?.emergency_contact || (latestRequest?.emergency_contact_name && latestRequest?.emergency_contact_phone ? `${latestRequest?.emergency_contact_name} - ${latestRequest?.emergency_contact_phone}` : latestRequest?.emergency_contact_name);
 
   return (
-    <DashboardShell 
-      title="Resident Profile" 
-      subtitle={`Detailed resident ledger and profile card for ${studentName}.`} 
-      badge="Owner"
-    >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+            Owner
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Resident Profile</h1>
+        <p className="text-sm text-slate-500">Detailed resident ledger and profile card for {studentName}.</p>
+      </div>
+
       {/* Back to list button */}
       <div className="mb-6">
         <Button 
@@ -569,6 +597,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         </div>
       )}
 
-    </DashboardShell>
+    </div>
   );
 }

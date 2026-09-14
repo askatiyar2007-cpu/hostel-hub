@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth/context';
 import { Complaint } from '@/types/database';
 import { MessageSquare, Clock, Search, CheckCircle2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
-import { DashboardShell } from '@/components/dashboard-shell';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -134,12 +134,20 @@ export default function OwnerComplaintsPage() {
   }, [complaints, searchQuery, statusTab]);
 
   return (
-    <DashboardShell 
-      title="Complaints" 
-      subtitle="Track and resolve issues reported by students" 
-      badge="Maintenance"
-    >
-      <div className="flex flex-col gap-6 mb-8">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+            Maintenance
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Complaints</h1>
+        <p className="text-sm text-slate-500">Track and resolve issues reported by students</p>
+      </div>
+
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Tabs defaultValue="all" className="w-full sm:w-auto" onValueChange={setStatusTab}>
             <TabsList className="bg-white border border-slate-200 p-1 rounded-xl shadow-2xs">
@@ -241,6 +249,6 @@ export default function OwnerComplaintsPage() {
           </div>
         ))}
       </div>
-    </DashboardShell>
+    </div>
   );
 }
