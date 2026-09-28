@@ -15,10 +15,10 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
   ];
 
   return (
-    <div className="w-full mb-4">
+    <div className="w-full mb-4 select-none">
       <div className="flex items-center justify-between max-w-[260px] mx-auto relative">
         {/* Background track */}
-        <div className="absolute top-3 left-3 right-3 h-[2px] bg-teal-900/60 -z-0" />
+        <div className="absolute top-3 left-3 right-3 h-[2px] bg-teal-950/60 -z-0" />
 
         {/* Active progress bar */}
         <div
@@ -40,7 +40,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                     ? 'bg-[#0D9488] text-white shadow-xs'
                     : isActive
                     ? 'bg-[#0D9488] text-white ring-3 ring-[#0D9488]/30 shadow-xs'
-                    : 'bg-[#075A56] border border-teal-400/20 text-teal-200/50'
+                    : 'bg-[#053A36] border border-teal-400/20 text-teal-200/50'
                 }`}
               >
                 {isDone ? <Check className="h-3 w-3 stroke-[3]" /> : step.num}

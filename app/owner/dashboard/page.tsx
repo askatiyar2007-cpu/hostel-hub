@@ -426,7 +426,7 @@ function EmptyState({ type }: { type: 'hostels' | 'requests' }) {
 function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", city: "", area: "", description: "", starting_price: "" });
+  const [form, setForm] = useState({ name: "", city: "", area: "", state: "", pincode: "", address: "", description: "", starting_price: "" });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -435,6 +435,9 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
         name: form.name,
         city: form.city,
         area: form.area || null,
+        state: form.state,
+        pincode: form.pincode,
+        address: form.address,
         description: form.description || null,
         starting_price: form.starting_price ? Number(form.starting_price) : 0,
         status: "pending",
@@ -444,7 +447,7 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
     onSuccess: () => {
       toast.success("Hostel created — pending admin approval.");
       setOpen(false);
-      setForm({ name: "", city: "", area: "", description: "", starting_price: "" });
+      setForm({ name: "", city: "", area: "", state: "", pincode: "", address: "", description: "", starting_price: "" });
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -467,6 +470,10 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
             <Label>Name</Label>
             <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
+          <div>
+            <Label>Full Address</Label>
+            <Input required placeholder="House No, Street, Landmark" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>City</Label>
@@ -475,6 +482,16 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
             <div>
               <Label>Area</Label>
               <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>State</Label>
+              <Input required value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+            </div>
+            <div>
+              <Label>Pincode</Label>
+              <Input required value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} />
             </div>
           </div>
           <div>

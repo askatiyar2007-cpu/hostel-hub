@@ -136,6 +136,23 @@ export default function AssignStudentPage() {
     if (!formData.room_id) return toast.error('Please select a Room');
     if (!formData.start_date) return toast.error('Check-in Date is required');
 
+    // Validate booking type against room occupancy
+    const selectedRoom = rooms.find(r => r.id === formData.room_id);
+    if (selectedRoom) {
+      const capacity = selectedRoom.capacity || 0;
+      const occupied = selectedRoom.occupied_count || 0;
+
+      if (formData.booking_type === 'entire_room') {
+        if (occupied > 0) {
+          return toast.error('This room already has an occupant and cannot be assigned as an entire room.');
+        }
+      } else if (formData.booking_type === 'shared_bed') {
+        if (occupied >= capacity) {
+          return toast.error('This room is full and cannot accommodate another student.');
+        }
+      }
+    }
+
     setLoading(true);
 
     try {

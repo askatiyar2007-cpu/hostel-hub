@@ -88,10 +88,10 @@ function ResetPasswordForm() {
     <AuthShell>
       <AuthCard>
         <div>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 text-left">
             <div className="text-center space-y-1">
-              <div className="mx-auto w-12 h-12 bg-[#002b27] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/30 text-[#0dbb9c]">
-                <Lock className="w-6 h-6 text-[#0dbb9c]" />
+              <div className="mx-auto w-12 h-12 bg-[#043330] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/20 text-teal-200 shadow-inner">
+                <Lock className="w-6 h-6 text-[#0D9488]" />
               </div>
               <h2 className="text-2xl sm:text-[1.65rem] font-bold tracking-tight text-white font-display">
                 Create New Password
@@ -134,7 +134,7 @@ function ResetPasswordForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0dbb9c] to-[#0ab898] hover:from-[#0ec9a8] hover:to-[#0bc7a5] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-[#0bb99a]/35 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] cursor-pointer uppercase"
+              className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] cursor-pointer"
             >
               {loading ? (
                 <>
@@ -153,7 +153,7 @@ function ResetPasswordForm() {
               type="button"
               onClick={() => router.push('/auth/login')}
               disabled={loading}
-              className="w-full h-11 px-4 rounded-full border border-teal-700/80 bg-[#002522] hover:bg-[#002f2b] text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] disabled:opacity-50 cursor-pointer"
+              className="w-full h-11 px-4 rounded-full border border-teal-400/25 bg-[#053A36] hover:bg-[#06423E] hover:-translate-y-0.5 active:translate-y-0 text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] disabled:opacity-50 cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to Login</span>
@@ -168,8 +168,8 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-teal-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#EFF8FF]">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#0F766E]"></div>
       </div>
     }>
       <ResetPasswordForm />

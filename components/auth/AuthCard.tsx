@@ -9,42 +9,44 @@ interface AuthCardProps {
 
 /**
  * AuthCard:
- * - The ONLY major card surface on the login / signup page
- * - Sophisticated deep teal / blue-green gradient: #063F3D -> #064E4A -> #075E59
- * - Subtle tonal variation and very subtle internal lighting
- * - Thin low-opacity border (border-white/10 to border-teal-500/20)
- * - Soft, deep shadow for premium physical elevation without neon glow
- * - Compact width: 440px - 480px, fitting comfortably on 1365x768, 1440x900, 1920x1080
+ * - The ONLY major card surface on the authentication page
+ * - Restored previous dark premium style:
+ *   TOP: #07534C -> #064A44 -> #063F3A -> BOTTOM: #043B37
+ * - Deep dark teal / blue-green tonal gradient (NOT bright green, NOT neon)
+ * - Subtle 1px border, soft shadow, moderate radius
+ * - Comfortable desktop width (440px - 480px)
+ * - Remains physically anchored on tab switch
+ * - Entrance animation on page load only
  */
 export function AuthCard({ children, className = '' }: AuthCardProps) {
   return (
-    <div className="relative w-full max-w-[450px] sm:max-w-[465px]">
+    <div className="relative w-full max-w-[460px] sm:max-w-[480px] animate-auth-card-enter">
       {/* Soft atmospheric ambient shadow */}
       <div
-        className="absolute -inset-1 rounded-[30px] bg-teal-950/30 blur-lg pointer-events-none"
+        className="absolute -inset-1 rounded-[28px] bg-[#011C1A]/40 blur-xl pointer-events-none"
         aria-hidden="true"
       />
 
-      {/* Primary Card Surface */}
+      {/* Primary Dark Premium Card Surface */}
       <div
-        className={`relative rounded-[24px] sm:rounded-[26px] border border-teal-400/20 text-white backdrop-blur-md overflow-hidden transition-none ${className}`}
+        className={`relative rounded-[22px] sm:rounded-[24px] border border-teal-500/20 text-white backdrop-blur-md overflow-hidden transition-none ${className}`}
         style={{
-          background: 'linear-gradient(168deg, #075E59 0%, #064E4A 45%, #063F3D 100%)',
+          background: 'linear-gradient(175deg, #07534C 0%, #064A44 35%, #063F3A 70%, #043B37 100%)',
           boxShadow:
-            '0 24px 50px -12px rgba(3, 35, 33, 0.6), 0 8px 24px -6px rgba(3, 35, 33, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+            '0 24px 50px -12px rgba(1, 24, 22, 0.65), 0 8px 20px -6px rgba(1, 24, 22, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
         }}
       >
-        {/* Very subtle internal top highlight for depth */}
+        {/* Subtle internal top ambient highlight for depth */}
         <div
           className="absolute inset-x-0 top-0 h-28 pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(20, 184, 166, 0.15) 0%, transparent 80%)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(20, 184, 166, 0.1) 0%, transparent 80%)',
           }}
           aria-hidden="true"
         />
 
-        {/* Card inner padding designed for comfortable fit */}
-        <div className="relative z-10 p-5 sm:px-7 sm:py-6">{children}</div>
+        {/* Card inner content container with comfortable breathing room */}
+        <div className="relative z-10 p-6 sm:px-8 sm:py-7">{children}</div>
       </div>
     </div>
   );

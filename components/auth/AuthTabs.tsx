@@ -12,18 +12,19 @@ interface AuthTabsProps {
 
 /**
  * AuthTabs:
- * - Rounded pill switcher nested cleanly inside the deep teal authentication card
- * - Container: Deep teal surface (#043634) with subtle translucent border
+ * - Nested cleanly inside the dark premium teal card
+ * - Fixed container: deep teal surface (#032623) with subtle border
  * - Active tab: Refined HostelHub teal (#0F766E to #0D9488) with crisp white text
  * - Inactive tab: Soft muted teal-white text with clean hover
- * - Zero sliding or layout shifts on switch
+ * - Zero sliding pill animation; strictly smooth opacity transition
+ * - Outer card remains completely anchored
  */
 export function AuthTabs({ activeTab, onTabChange, disabled = false }: AuthTabsProps) {
   return (
     <div
       role="tablist"
       aria-label="Authentication Options"
-      className="grid grid-cols-2 p-1 rounded-full bg-[#043330]/90 border border-teal-500/20 shadow-inner mb-4"
+      className="grid grid-cols-2 p-1 rounded-xl bg-[#032623] border border-teal-500/20 shadow-inner mb-4 select-none"
     >
       <button
         type="button"
@@ -33,10 +34,10 @@ export function AuthTabs({ activeTab, onTabChange, disabled = false }: AuthTabsP
         id="auth-tab-login"
         disabled={disabled}
         onClick={() => onTabChange('login')}
-        className={`flex items-center justify-center h-8.5 sm:h-9 rounded-full text-xs sm:text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] ${
+        className={`flex items-center justify-center h-9 sm:h-9.5 rounded-lg text-xs sm:text-[13px] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] ${
           activeTab === 'login'
             ? 'bg-gradient-to-r from-[#0F766E] to-[#0D9488] text-white font-bold shadow-xs'
-            : 'text-teal-100/75 hover:text-white font-medium'
+            : 'text-teal-100/75 hover:text-white font-medium hover:bg-white/[0.05]'
         } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
       >
         Sign In
@@ -49,10 +50,10 @@ export function AuthTabs({ activeTab, onTabChange, disabled = false }: AuthTabsP
         id="auth-tab-signup"
         disabled={disabled}
         onClick={() => onTabChange('signup')}
-        className={`flex items-center justify-center h-8.5 sm:h-9 rounded-full text-xs sm:text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] ${
+        className={`flex items-center justify-center h-9 sm:h-9.5 rounded-lg text-xs sm:text-[13px] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] ${
           activeTab === 'signup'
             ? 'bg-gradient-to-r from-[#0F766E] to-[#0D9488] text-white font-bold shadow-xs'
-            : 'text-teal-100/75 hover:text-white font-medium'
+            : 'text-teal-100/75 hover:text-white font-medium hover:bg-white/[0.05]'
         } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
       >
         Sign Up

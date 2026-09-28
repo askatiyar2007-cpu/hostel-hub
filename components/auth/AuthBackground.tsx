@@ -4,14 +4,17 @@ import React from 'react';
 
 /**
  * AuthBackground:
- * - Peaceful, calm morning university campus environment (20–30% visual intensity)
- * - Soft morning sky with gentle sunlight
- * - Subtle cumulus clouds drifting slowly (45s-75s)
- * - Distant, refined campus & hostel buildings (soft silhouettes, not cartoonish or overpowering)
- * - Gentle rolling green lawns & delicate campus shade trees
- * - Atmospheric morning mist & subtle bokeh particles
- * - NO giant leaves, NO neon glow, NO cartoon jungle elements
- * - 100% accessible contrast for floating text and anchored dark-teal authentication card
+ * - Calm, premium university campus atmosphere on a peaceful, bright morning
+ * - Predominantly pale cool-blue/white daylight palette (#F4FAFD, #EEF8FC, #F8FCFD)
+ * - NOT a cartoon illustration, NOT a jungle, NOT heavily green
+ * - 5 subtle atmospheric layers:
+ *   1. Soft sky base with subtle cool blue tonal gradient
+ *   2. Large soft white clouds drifting slowly in distant sky (feGaussianBlur)
+ *   3. Distant campus architecture (8-15% visual intensity, low contrast silhouettes)
+ *   4. Distant campus greenery & lawns (muted pale sage/teal at ~10-12% opacity)
+ *   5. Soft morning haze & gentle atmospheric particles
+ * - Leaves upper-left quiet for marketing typography
+ * - Respects prefers-reduced-motion
  */
 export function AuthBackground() {
   return (
@@ -19,11 +22,11 @@ export function AuthBackground() {
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none select-none z-0 overflow-hidden"
       style={{
-        backgroundColor: '#F3F9FC',
+        backgroundColor: '#F4FAFD',
         backgroundImage: `
-          radial-gradient(ellipse 70% 50% at 12% 10%, rgba(254, 243, 199, 0.45) 0%, rgba(243, 249, 252, 0) 55%),
-          radial-gradient(ellipse 65% 45% at 88% 18%, rgba(224, 242, 254, 0.5) 0%, rgba(243, 249, 252, 0) 60%),
-          linear-gradient(180deg, #E6F3FA 0%, #EEF7FC 28%, #F5FAFD 55%, #FAFCFD 80%, #FFFFFF 100%)
+          radial-gradient(ellipse 75% 55% at 12% 10%, rgba(255, 252, 242, 0.7) 0%, rgba(244, 250, 253, 0) 65%),
+          radial-gradient(ellipse 70% 50% at 88% 14%, rgba(228, 244, 253, 0.6) 0%, rgba(244, 250, 253, 0) 60%),
+          linear-gradient(180deg, #EDF6FA 0%, #F3F9FC 35%, #F8FCFD 70%, #FFFFFF 100%)
         `,
       }}
     >
@@ -35,251 +38,268 @@ export function AuthBackground() {
         className="w-full h-full"
       >
         <defs>
-          {/* Depth of field / atmospheric filters */}
-          <filter id="bgCloudBlur" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="8" />
+          {/* Atmospheric Blurs */}
+          <filter id="distantHazeBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.5" />
           </filter>
-          <filter id="bgSoftBlur" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="16" />
+          <filter id="softCloudBlur" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="22" />
           </filter>
-          <filter id="bgSunAura" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="30" />
+          <filter id="wispyCloudBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="14" />
+          </filter>
+          <filter id="morningAuraBlur" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="45" />
           </filter>
 
           {/* Cloud Gradients */}
-          <linearGradient id="cloudBody" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="cloudGradMain" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.85" />
-            <stop offset="70%" stopColor="#F0F9FF" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#E0F2FE" stopOpacity="0.3" />
+            <stop offset="70%" stopColor="#F0F7FA" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#E4F1F7" stopOpacity="0.1" />
           </linearGradient>
 
-          {/* Distant Campus Silhouettes (pale atmospheric blue/teal) */}
+          <linearGradient id="cloudGradSubtle" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.65" />
+            <stop offset="80%" stopColor="#EBF4F9" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#DDEEF6" stopOpacity="0" />
+          </linearGradient>
+
+          {/* Distant Campus Horizon (8–14% visual intensity in cool slate/mist) */}
           <linearGradient id="distantSkylineGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7DD3FC" stopOpacity="0.3" />
-            <stop offset="60%" stopColor="#38BDF8" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#BAE6FD" stopOpacity="0.05" />
+            <stop offset="0%" stopColor="#64748B" stopOpacity="0.14" />
+            <stop offset="65%" stopColor="#94A3B8" stopOpacity="0.10" />
+            <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.02" />
           </linearGradient>
 
-          {/* Midground Campus & Hostel Buildings */}
-          <linearGradient id="hostelBuildingGrad1" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#E2E8F0" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.4" />
+          {/* Distant Student Residence Wings (8–13% visual intensity) */}
+          <linearGradient id="distantResBuilding" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#475569" stopOpacity="0.12" />
+            <stop offset="70%" stopColor="#94A3B8" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#E2E8F0" stopOpacity="0.02" />
           </linearGradient>
 
-          <linearGradient id="hostelBuildingGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F1F5F9" stopOpacity="0.65" />
-            <stop offset="100%" stopColor="#E2E8F0" stopOpacity="0.45" />
+          {/* Very Muted Lawn Contours (pale sage/teal at 9–14% opacity) */}
+          <linearGradient id="distantLawnGrad1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#94B9AA" stopOpacity="0.14" />
+            <stop offset="60%" stopColor="#7DA695" stopOpacity="0.10" />
+            <stop offset="100%" stopColor="#679180" stopOpacity="0.03" />
           </linearGradient>
 
-          {/* Subtle Teal Accent for Architecture */}
-          <linearGradient id="subtleTealFacade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0F766E" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#064E4A" stopOpacity="0.25" />
+          <linearGradient id="distantLawnGrad2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#A8C8BC" stopOpacity="0.15" />
+            <stop offset="70%" stopColor="#8BAFA1" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#719A8B" stopOpacity="0.02" />
           </linearGradient>
 
-          {/* Warm Morning Windows */}
-          <linearGradient id="morningWindow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FEF3C7" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#FDE68A" stopOpacity="0.3" />
+          {/* Delicate Distant Trees */}
+          <linearGradient id="distantTreeGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#648A7A" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#436657" stopOpacity="0.12" />
           </linearGradient>
 
-          {/* Rolling Campus Lawns (soft, gentle sage green) */}
-          <linearGradient id="lawnGrad1" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6EE7B7" stopOpacity="0.3" />
-            <stop offset="60%" stopColor="#34D399" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#059669" stopOpacity="0.12" />
+          {/* Subtle Campus Promenade */}
+          <linearGradient id="distantPathGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#E2E8F0" stopOpacity="0.25" />
           </linearGradient>
 
-          <linearGradient id="lawnGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#A7F3D0" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#34D399" stopOpacity="0.18" />
-          </linearGradient>
-
-          {/* Soft Tree Canopies */}
-          <linearGradient id="treeGrad1" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#34D399" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#047857" stopOpacity="0.45" />
-          </linearGradient>
-
-          <linearGradient id="treeGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6EE7B7" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#059669" stopOpacity="0.4" />
+          {/* Bottom Ambient Daylight Fog */}
+          <linearGradient id="bottomDaylightFog" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#F8FCFD" stopOpacity="0" />
+            <stop offset="45%" stopColor="#F8FCFD" stopOpacity="0.65" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.95" />
           </linearGradient>
         </defs>
 
-        {/* 1. Gentle Sunlight Aura (Top-Left) */}
+        {/* ============================================================
+            LAYER 1: Soft Morning Sunlight Aura (Upper-Left)
+            ============================================================ */}
         <g className="animate-sun-glow">
-          <circle cx="220" cy="120" r="220" fill="#FEF3C7" fillOpacity="0.25" filter="url(#bgSunAura)" />
-          <circle cx="220" cy="120" r="110" fill="#FFFBEB" fillOpacity="0.35" filter="url(#bgSoftBlur)" />
-          <circle cx="220" cy="120" r="45" fill="#FFFFFF" fillOpacity="0.75" filter="url(#bgCloudBlur)" />
+          <circle cx="240" cy="120" r="260" fill="#FEF9E7" fillOpacity="0.25" filter="url(#morningAuraBlur)" />
+          <circle cx="240" cy="120" r="140" fill="#FFFDF5" fillOpacity="0.35" filter="url(#softCloudBlur)" />
         </g>
 
-        {/* 2. Soft Drifting Morning Clouds */}
-        <g className="animate-cloud-slow" opacity="0.85">
-          {/* Left Upper Cloud Bank */}
+        {/* ============================================================
+            LAYER 2: Large Soft Morning Clouds (Upper distant sky)
+            ============================================================ */}
+        <g className="animate-cloud-slow" opacity="0.9">
+          {/* Broad soft cloud form across upper-center */}
           <path
-            d="M260 140 C290 100, 350 90, 395 110 C430 92, 480 94, 520 120 C560 112, 610 128, 630 162 C655 182, 660 215, 640 240 C625 260, 595 270, 560 270 C495 275, 390 275, 320 270 C275 264, 250 240, 255 208 C260 178, 255 155, 260 140 Z"
-            fill="url(#cloudBody)"
-            filter="url(#bgCloudBlur)"
+            d="M320 120 C380 75, 480 65, 540 95 C590 70, 670 75, 720 110 C780 98, 850 115, 880 155 C920 180, 930 220, 900 250 C870 270, 830 280, 780 280 C680 285, 540 285, 440 280 C370 275, 330 245, 335 210 C340 175, 325 145, 320 120 Z"
+            fill="url(#cloudGradMain)"
+            filter="url(#softCloudBlur)"
           />
-          {/* Far Right Upper Cloud */}
+          {/* Distant eastern soft cloud */}
           <path
-            d="M1380 110 C1415 75, 1475 68, 1520 90 C1562 72, 1625 72, 1670 102 C1720 92, 1780 114, 1800 152 C1838 170, 1860 210, 1838 245 C1824 270, 1792 284, 1760 284 C1700 292, 1595 298, 1490 292 C1415 288, 1370 260, 1360 220 C1350 180, 1365 140, 1380 110 Z"
-            fill="url(#cloudBody)"
-            filter="url(#bgCloudBlur)"
-          />
-        </g>
-
-        <g className="animate-cloud-mid" opacity="0.65">
-          {/* Center Mid-altitude Soft Cloud */}
-          <path
-            d="M740 160 C770 130, 820 125, 858 142 C892 128, 940 130, 975 152 C1010 144, 1055 158, 1072 188 C1095 205, 1100 232, 1080 252 C1068 268, 1040 276, 1010 276 C955 280, 860 280, 800 276 C760 272, 738 252, 742 225 C745 200, 738 178, 740 160 Z"
-            fill="url(#cloudBody)"
-            filter="url(#bgCloudBlur)"
+            d="M1320 90 C1380 50, 1470 40, 1530 70 C1590 45, 1680 50, 1730 90 C1790 75, 1870 100, 1890 145 C1930 175, 1940 220, 1910 255 C1890 280, 1840 295, 1790 295 C1700 300, 1580 300, 1460 295 C1380 290, 1330 260, 1320 215 C1310 170, 1315 125, 1320 90 Z"
+            fill="url(#cloudGradMain)"
+            filter="url(#softCloudBlur)"
           />
         </g>
 
-        {/* 3. Distant University Campus Skyline & Rolling Hills */}
-        <g className="distant-campus" opacity="0.65">
-          {/* Rolling Hills Silhouette */}
+        <g className="animate-cloud-mid" opacity="0.75">
+          {/* Wispy mid-altitude cloud */}
           <path
-            d="M0 640 Q400 580 960 605 T1920 600 V860 H0 Z"
+            d="M780 160 C820 125, 890 120, 940 140 C980 125, 1050 128, 1090 152 C1135 142, 1195 158, 1220 190 C1250 210, 1255 240, 1230 262 C1215 278, 1180 286, 1140 286 C1060 290, 940 290, 860 286 C810 282, 780 260, 785 230 C790 200, 780 180, 780 160 Z"
+            fill="url(#cloudGradSubtle)"
+            filter="url(#wispyCloudBlur)"
+          />
+        </g>
+
+        {/* ============================================================
+            LAYER 3: Distant University & Hostel Architecture
+            (8–14% visual intensity — noticed as campus atmosphere, NOT a drawing)
+            ============================================================ */}
+        <g className="distant-campus-architecture" filter="url(#distantHazeBlur)">
+          {/* Rolling Far Horizon Foothills */}
+          <path
+            d="M0 645 Q440 595 960 620 T1920 605 V880 H0 Z"
             fill="url(#distantSkylineGrad)"
           />
 
-          {/* Distant Campus Towers & Buildings (Center/West) */}
-          <g fill="#93C5FD" fillOpacity="0.22">
-            <rect x="220" y="520" width="45" height="120" rx="3" />
-            <polygon points="220,520 242,475 265,520" />
-            <rect x="280" y="550" width="70" height="90" rx="2" />
-            <rect x="365" y="530" width="55" height="110" rx="2" />
-            <rect x="435" y="560" width="60" height="80" rx="2" />
+          {/* Distant Campus Skyline Silhouettes (spires, towers, dorm blocks) */}
+          <g fill="url(#distantSkylineGrad)">
+            {/* University Bell Tower / Campanile */}
+            <rect x="250" y="525" width="28" height="115" rx="2" />
+            <polygon points="250,525 264,485 278,525" />
+            <rect x="259" y="542" width="10" height="16" rx="4" fill="#FFFFFF" fillOpacity="0.25" />
 
-            {/* Distant East Skyline */}
-            <rect x="1480" y="535" width="65" height="105" rx="2" />
-            <rect x="1560" y="515" width="50" height="125" rx="3" />
-            <polygon points="1560,515 1585,470 1610,515" />
-            <rect x="1625" y="545" width="80" height="95" rx="2" />
-            <rect x="1720" y="560" width="70" height="80" rx="2" />
+            {/* Distant Academic Hall */}
+            <rect x="290" y="555" width="60" height="85" rx="2" />
+            <polygon points="288,555 320,535 352,555" />
+
+            {/* Distant Student Residence Block 1 */}
+            <rect x="360" y="542" width="70" height="98" rx="2" />
+            <rect x="365" y="562" width="60" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.25" />
+            <rect x="365" y="580" width="60" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.25" />
+            <rect x="365" y="598" width="60" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.25" />
+
+            {/* Far Center-East Campus Skyline */}
+            <rect x="1440" y="550" width="55" height="90" rx="2" />
+            <polygon points="1440,550 1467,525 1495,550" />
+            <rect x="1510" y="530" width="34" height="110" rx="2" />
+            <polygon points="1510,530 1527,495 1544,530" />
+            <rect x="1560" y="555" width="75" height="85" rx="2" />
+            <rect x="1650" y="565" width="65" height="75" rx="2" />
           </g>
-        </g>
 
-        {/* 4. Midground Modern Student Residence Buildings (Light, architectural, subtle) */}
-        <g className="campus-hostels" opacity="0.75">
-          {/* Left Wing Hostel Residence (behind marketing text, soft and elegant) */}
-          <g>
-            <rect x="80" y="580" width="220" height="160" rx="6" fill="url(#hostelBuildingGrad1)" stroke="#94A3B8" strokeWidth="1" strokeOpacity="0.4" />
-            <rect x="100" y="580" width="30" height="160" fill="url(#subtleTealFacade)" />
-            {/* Subtle Windows */}
-            <g fill="url(#morningWindow)" opacity="0.7">
-              <rect x="145" y="605" width="22" height="24" rx="2" />
-              <rect x="180" y="605" width="22" height="24" rx="2" />
-              <rect x="215" y="605" width="22" height="24" rx="2" />
-              <rect x="250" y="605" width="22" height="24" rx="2" />
+          {/* Mid-Distant Modern Student Residences (Clean, understated horizontal lines) */}
+          <g fill="url(#distantResBuilding)">
+            {/* West Modern Residence Wing */}
+            <rect x="90" y="605" width="210" height="145" rx="3" />
+            {/* Rooftop pergola silhouette */}
+            <rect x="105" y="597" width="180" height="8" rx="1" />
+            {/* Subtle Balcony Bands */}
+            <rect x="110" y="635" width="170" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.3" />
+            <rect x="110" y="670" width="170" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.3" />
+            <rect x="110" y="705" width="170" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.3" />
+            {/* Faint morning window accents */}
+            <g fill="#FEF9E7" fillOpacity="0.25">
+              <rect x="125" y="618" width="16" height="12" rx="1" />
+              <rect x="155" y="618" width="16" height="12" rx="1" />
+              <rect x="185" y="618" width="16" height="12" rx="1" />
+              <rect x="215" y="618" width="16" height="12" rx="1" />
+              <rect x="245" y="618" width="16" height="12" rx="1" />
 
-              <rect x="145" y="645" width="22" height="24" rx="2" />
-              <rect x="180" y="645" width="22" height="24" rx="2" />
-              <rect x="215" y="645" width="22" height="24" rx="2" />
-              <rect x="250" y="645" width="22" height="24" rx="2" />
+              <rect x="125" y="650" width="16" height="12" rx="1" />
+              <rect x="155" y="650" width="16" height="12" rx="1" />
+              <rect x="185" y="650" width="16" height="12" rx="1" />
+              <rect x="215" y="650" width="16" height="12" rx="1" />
+              <rect x="245" y="650" width="16" height="12" rx="1" />
 
-              <rect x="145" y="685" width="22" height="24" rx="2" />
-              <rect x="180" y="685" width="22" height="24" rx="2" />
-              <rect x="215" y="685" width="22" height="24" rx="2" />
-              <rect x="250" y="685" width="22" height="24" rx="2" />
+              <rect x="125" y="685" width="16" height="12" rx="1" />
+              <rect x="155" y="685" width="16" height="12" rx="1" />
+              <rect x="185" y="685" width="16" height="12" rx="1" />
+              <rect x="215" y="685" width="16" height="12" rx="1" />
+              <rect x="245" y="685" width="16" height="12" rx="1" />
+            </g>
+
+            {/* East Modern Residence Wing */}
+            <rect x="1600" y="590" width="240" height="160" rx="3" />
+            <rect x="1620" y="625" width="200" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.3" />
+            <rect x="1620" y="660" width="200" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.3" />
+            <rect x="1620" y="695" width="200" height="3" rx="1" fill="#FFFFFF" fillOpacity="0.3" />
+            <g fill="#FEF9E7" fillOpacity="0.25">
+              <rect x="1635" y="605" width="16" height="12" rx="1" />
+              <rect x="1665" y="605" width="16" height="12" rx="1" />
+              <rect x="1695" y="605" width="16" height="12" rx="1" />
+              <rect x="1725" y="605" width="16" height="12" rx="1" />
+              <rect x="1755" y="605" width="16" height="12" rx="1" />
+
+              <rect x="1635" y="640" width="16" height="12" rx="1" />
+              <rect x="1665" y="640" width="16" height="12" rx="1" />
+              <rect x="1695" y="640" width="16" height="12" rx="1" />
+              <rect x="1725" y="640" width="16" height="12" rx="1" />
+              <rect x="1755" y="640" width="16" height="12" rx="1" />
             </g>
           </g>
+        </g>
 
-          {/* East Wing Hostel (Right side, framing) */}
-          <g>
-            <rect x="1580" y="565" width="260" height="180" rx="6" fill="url(#hostelBuildingGrad2)" stroke="#94A3B8" strokeWidth="1" strokeOpacity="0.4" />
-            <rect x="1760" y="565" width="35" height="180" fill="url(#subtleTealFacade)" />
-            <g fill="url(#morningWindow)" opacity="0.7">
-              <rect x="1610" y="595" width="22" height="24" rx="2" />
-              <rect x="1645" y="595" width="22" height="24" rx="2" />
-              <rect x="1680" y="595" width="22" height="24" rx="2" />
-              <rect x="1715" y="595" width="22" height="24" rx="2" />
+        {/* ============================================================
+            LAYER 4: Distant Greenery, Lawns & Sparse Trees (Muted Sage)
+            ============================================================ */}
+        <g className="distant-campus-landscape">
+          {/* Gentle Upper Rolling Lawn */}
+          <path
+            d="M0 720 Q480 675 960 700 T1920 705 V1080 H0 Z"
+            fill="url(#distantLawnGrad1)"
+          />
 
-              <rect x="1610" y="635" width="22" height="24" rx="2" />
-              <rect x="1645" y="635" width="22" height="24" rx="2" />
-              <rect x="1680" y="635" width="22" height="24" rx="2" />
-              <rect x="1715" y="635" width="22" height="24" rx="2" />
+          {/* Gentle Lower Lawn Swell */}
+          <path
+            d="M0 765 Q420 730 900 750 T1920 745 V1080 H0 Z"
+            fill="url(#distantLawnGrad2)"
+          />
 
-              <rect x="1610" y="675" width="22" height="24" rx="2" />
-              <rect x="1645" y="675" width="22" height="24" rx="2" />
-              <rect x="1680" y="675" width="22" height="24" rx="2" />
-              <rect x="1715" y="675" width="22" height="24" rx="2" />
-            </g>
+          {/* Subtle Campus Promenade Walkway */}
+          <path
+            d="M-40 820 Q440 770 940 790 T1960 780 L1960 825 Q1440 830 940 840 T-40 860 Z"
+            fill="url(#distantPathGrad)"
+          />
+
+          {/* Sparse, distant shade trees (Organic shapes, very low opacity, gentle sway) */}
+          {/* Tree 1: West quad */}
+          <g className="animate-tree-sway" opacity="0.8">
+            <path d="M324 745 Q326 705 324 675 L331 675 Q329 705 330 745 Z" fill="#475569" fillOpacity="0.16" />
+            <path
+              d="M328 650 C305 650 295 628 310 610 C300 592 322 570 345 582 C362 570 388 588 384 610 C400 628 388 650 362 650 Z"
+              fill="url(#distantTreeGrad)"
+            />
+          </g>
+
+          {/* Tree 2: Center lawn */}
+          <g className="animate-tree-sway-alt" opacity="0.75">
+            <path d="M640 765 Q642 725 640 695 L646 695 Q645 725 645 765 Z" fill="#475569" fillOpacity="0.14" />
+            <path
+              d="M644 670 C625 670 616 652 628 638 C620 622 638 605 656 615 C670 605 690 618 687 636 C700 650 690 670 670 670 Z"
+              fill="url(#distantTreeGrad)"
+            />
+          </g>
+
+          {/* Tree 3: East residence garden */}
+          <g className="animate-tree-sway" opacity="0.8">
+            <path d="M1540 755 Q1542 718 1540 685 L1547 685 Q1545 718 1546 755 Z" fill="#475569" fillOpacity="0.16" />
+            <path
+              d="M1544 660 C1520 660 1510 638 1525 620 C1515 600 1538 580 1560 592 C1578 580 1604 598 1600 620 C1616 638 1605 660 1580 660 Z"
+              fill="url(#distantTreeGrad)"
+            />
           </g>
         </g>
 
-        {/* 5. Rolling Campus Grounds, Paths & Subtle Trees */}
-        <g className="campus-lawns">
-          {/* Upper Lawn Swell */}
-          <path
-            d="M0 720 Q480 670 960 695 T1920 700 V1080 H0 Z"
-            fill="url(#lawnGrad1)"
-          />
-
-          {/* Lower Lawn Swell */}
-          <path
-            d="M0 765 Q420 725 900 745 T1920 740 V1080 H0 Z"
-            fill="url(#lawnGrad2)"
-          />
-
-          {/* Subtle Campus Winding Path */}
-          <path
-            d="M-20 815 Q440 770 940 790 T1940 780 L1940 820 Q1440 825 940 835 T-20 855 Z"
-            fill="#F8FAFC"
-            fillOpacity="0.6"
-            stroke="#CBD5E1"
-            strokeWidth="0.8"
-            strokeOpacity="0.4"
-          />
-
-          {/* Delicate, organic Campus Trees (swaying gently, NO cartoon bubbles) */}
-          {/* Tree 1: Left */}
-          <g className="animate-tree-sway" opacity="0.7">
-            <path d="M338 745 Q340 705 338 675 L346 675 Q344 705 345 745 Z" fill="#5A4738" />
-            <circle cx="342" cy="645" r="38" fill="url(#treeGrad1)" />
-            <circle cx="318" cy="655" r="28" fill="url(#treeGrad2)" />
-            <circle cx="365" cy="652" r="30" fill="url(#treeGrad1)" />
-          </g>
-
-          {/* Tree 2: Center-Left */}
-          <g className="animate-tree-sway-alt" opacity="0.65">
-            <path d="M680 770 Q682 725 680 690 L687 690 Q685 725 686 770 Z" fill="#5A4738" />
-            <circle cx="684" cy="660" r="35" fill="url(#treeGrad2)" />
-            <circle cx="660" cy="670" r="26" fill="url(#treeGrad1)" />
-            <circle cx="705" cy="668" r="27" fill="url(#treeGrad2)" />
-          </g>
-
-          {/* Tree 3: East */}
-          <g className="animate-tree-sway" opacity="0.7">
-            <path d="M1520 755 Q1522 715 1520 680 L1528 680 Q1526 715 1527 755 Z" fill="#5A4738" />
-            <circle cx="1524" cy="648" r="40" fill="url(#treeGrad1)" />
-            <circle cx="1498" cy="660" r="30" fill="url(#treeGrad2)" />
-            <circle cx="1550" cy="655" r="32" fill="url(#treeGrad2)" />
-          </g>
+        {/* ============================================================
+            LAYER 5: Faint Atmospheric Morning Dust / Bokeh (Very subtle)
+            ============================================================ */}
+        <g className="animate-particle-drift" opacity="0.45">
+          <circle cx="280" cy="340" r="3" fill="#FEF9E7" filter="url(#wispyCloudBlur)" />
+          <circle cx="560" cy="260" r="3.5" fill="#FFFFFF" filter="url(#wispyCloudBlur)" />
+          <circle cx="940" cy="320" r="2.5" fill="#BAE6FD" filter="url(#wispyCloudBlur)" />
+          <circle cx="1380" cy="270" r="3.5" fill="#FEF9E7" filter="url(#wispyCloudBlur)" />
+          <circle cx="1690" cy="310" r="3" fill="#FFFFFF" filter="url(#wispyCloudBlur)" />
         </g>
 
-        {/* 6. Subtle Ambient Morning Dust / Bokeh Particles (very calm, low opacity) */}
-        <g className="animate-particle-drift">
-          <circle cx="280" cy="360" r="3.5" fill="#FEF3C7" opacity="0.35" filter="url(#bgCloudBlur)" />
-          <circle cx="520" cy="280" r="4" fill="#FFFFFF" opacity="0.4" filter="url(#bgCloudBlur)" />
-          <circle cx="920" cy="340" r="3" fill="#BAE6FD" opacity="0.3" filter="url(#bgCloudBlur)" />
-          <circle cx="1320" cy="290" r="4" fill="#FEF3C7" opacity="0.3" filter="url(#bgCloudBlur)" />
-          <circle cx="1680" cy="330" r="3.5" fill="#FFFFFF" opacity="0.35" filter="url(#bgCloudBlur)" />
-        </g>
-
-        {/* 7. Soft bottom atmospheric haze gradient */}
-        <rect x="0" y="780" width="1920" height="300" fill="url(#bottomHaze)" opacity="0.6" />
-        <defs>
-          <linearGradient id="bottomHaze" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
-            <stop offset="70%" stopColor="#FFFFFF" stopOpacity="0.65" />
-            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.9" />
-          </linearGradient>
-        </defs>
+        {/* Soft bottom atmospheric daylight mist transition */}
+        <rect x="0" y="760" width="1920" height="320" fill="url(#bottomDaylightFog)" />
       </svg>
     </div>
   );

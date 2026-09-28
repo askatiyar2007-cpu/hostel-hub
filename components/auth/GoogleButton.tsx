@@ -21,11 +21,11 @@ export function GoogleButton({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className="w-full h-11 px-4 rounded-full bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-800 font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-3 border border-transparent disabled:opacity-65 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#023d38] cursor-pointer"
+      className="w-full h-12 sm:h-[52px] px-5 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-800 font-semibold text-[14px] sm:text-[15px] shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-200 ease-out flex items-center justify-center gap-3 border border-slate-200/60 disabled:opacity-65 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#07534C] cursor-pointer select-none"
     >
       {loading ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin text-[#0dbb9c]" />
+          <Loader2 className="h-5 w-5 animate-spin text-[#0F766E]" />
           <span className="text-slate-600">Connecting to Google...</span>
         </>
       ) : (

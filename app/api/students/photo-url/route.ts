@@ -1,13 +1,14 @@
 /**
  * GET /api/students/photo-url
- * 
+ *
  * Generates a signed URL for a student's passport photo from their room request
- * 
+ *
  * Only accessible to:
  * - Owners of the hostel where the student has a room request
  * - Super admins
- * 
+ *
  * The photo belongs to the student's room_request.photo_path
+ * Includes both pending and approved room requests
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -51,18 +52,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch the student's room request with photo_path and hostel ownership
+    // Include both pending and approved requests to show correct photo for pending requests
     const { data: roomRequest, error: requestError } = await supabase
       .from('room_requests')
       .select(`
         id,
         photo_path,
         hostel_id,
+        status,
         hostels!inner (
           owner_id
         )
       `)
       .eq('student_id', studentId)
-      .eq('status', 'approved')
+      .in('status', ['pending', 'approved'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -77,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     if (!roomRequest) {
       return NextResponse.json(
-        { error: 'No approved room request found for this student' },
+        { error: 'No room request found for this student' },
         { status: 404 }
       );
     }

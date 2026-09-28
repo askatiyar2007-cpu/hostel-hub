@@ -34,41 +34,37 @@ const features = [
 
 export function AuthMarketing() {
   return (
-    <div className="flex flex-col justify-center h-full max-w-xl py-2 select-none">
-      {/* 1. Authentic HostelHub Brand Logo sitting directly on the background */}
-      <div className="mb-6">
+    <div className="flex flex-col justify-center h-full max-w-xl py-2 select-none animate-auth-marketing-enter">
+      {/* 1. Real HostelHub Logo directly on the background */}
+      <div className="mb-7">
         <HostelHubLogo size="lg" variant="dark" href="/" />
       </div>
 
-      {/* 2. Premium Headline & Supporting Text sitting directly on the background (NO card) */}
-      <div className="space-y-3 mb-8">
-        <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-slate-900 tracking-tight leading-[1.14] font-display">
+      {/* 2. Editorial Typography: 42–58px desktop, dark navy #102033 with #0F766E accent */}
+      <div className="space-y-3.5 mb-9">
+        <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-[#102033] tracking-tight leading-[1.12] font-display">
           Find Your Perfect{' '}
-          <span className="text-[#064E4A] block sm:inline">Stay at HostelHub</span>
+          <span className="text-[#0F766E] block sm:inline">Stay at HostelHub</span>
         </h1>
-        <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-lg font-medium">
+        <p className="text-base sm:text-[17px] text-slate-600 leading-relaxed max-w-lg font-normal">
           Manage your stay, pay your bills, and stay connected — all in one place.
         </p>
       </div>
 
-      {/* 3. Lightweight, elegant feature items directly on background (NOT 4 giant cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-4.5 mb-8">
+      {/* 3. Lightweight Inline Feature Blocks: Pure line icons & typography (NO boxes, NO cards, NO white circles) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mb-8">
         {features.map((item) => {
           const Icon = item.icon;
           return (
-            <div
-              key={item.title}
-              className="flex items-start gap-3 p-1.5 transition-transform duration-200"
-            >
-              {/* Elegant icon in subtle circular background */}
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/85 text-[#064E4A] shadow-xs border border-teal-900/10 backdrop-blur-xs">
-                <Icon className="h-4.5 w-4.5" />
+            <div key={item.title} className="flex items-start gap-3">
+              <div className="pt-0.5 text-[#0F766E] shrink-0">
+                <Icon className="h-5 w-5 stroke-[2.25]" />
               </div>
-              <div className="flex flex-col min-w-0 pt-0.5">
-                <span className="text-sm font-bold text-slate-900 leading-snug">
+              <div className="flex flex-col min-w-0">
+                <span className="text-[15px] font-semibold text-[#102033] leading-snug">
                   {item.title}
                 </span>
-                <span className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                <span className="text-xs sm:text-[13px] text-slate-500 mt-0.5 leading-relaxed">
                   {item.desc}
                 </span>
               </div>
@@ -77,8 +73,8 @@ export function AuthMarketing() {
         })}
       </div>
 
-      {/* 4. Subtle community endorsement text directly on background */}
-      <div className="pt-4 border-t border-slate-300/50 flex flex-col gap-1 max-w-md">
+      {/* 4. Subtle community endorsement text */}
+      <div className="pt-4 border-t border-slate-300/40 flex flex-col gap-1 max-w-md">
         <span className="text-[11px] font-bold tracking-wider text-[#0F766E] uppercase">
           • Better Stays • Brighter Futures
         </span>

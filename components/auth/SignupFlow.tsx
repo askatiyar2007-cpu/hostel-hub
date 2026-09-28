@@ -144,7 +144,7 @@ export function SignupFlow({
             type="button"
             disabled={!selectedRole || loading || googleLoading}
             onClick={handleStep1Next}
-            className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/20 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#064E4A] cursor-pointer"
+            className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#064E48] cursor-pointer"
           >
             <span>Continue to Details</span>
             <ArrowRight className="h-4 w-4 stroke-[2.5]" />
@@ -306,7 +306,7 @@ export function SignupFlow({
               type="button"
               onClick={() => goToStep(1)}
               disabled={loading}
-              className="h-11 px-4 rounded-full border border-teal-400/25 bg-[#075A56] hover:bg-[#08625D] text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] disabled:opacity-50 cursor-pointer"
+              className="h-11 px-4 rounded-full border border-teal-400/25 bg-[#053A36] hover:bg-[#06423E] hover:-translate-y-0.5 active:translate-y-0 text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] disabled:opacity-50 cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back</span>
@@ -315,7 +315,7 @@ export function SignupFlow({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/20 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#064E4A] cursor-pointer"
+              className="flex-1 h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#064E48] cursor-pointer"
             >
               {loading ? (
                 <>
@@ -357,7 +357,7 @@ export function SignupFlow({
               error={otpError}
               autoFocus
               containerClassName="gap-2 sm:gap-2.5"
-              className="border-teal-400/25 bg-[#075A56] text-white font-mono text-xl sm:text-2xl h-10.5 w-10 sm:h-11 sm:w-11 rounded-xl focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/30"
+              className="border-teal-500/25 bg-[#053A36] text-white font-mono text-xl sm:text-2xl h-10.5 w-10 sm:h-11 sm:w-11 rounded-xl focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/30"
             />
           </div>
 
@@ -366,7 +366,7 @@ export function SignupFlow({
             type="button"
             disabled={loading || verificationCode.length !== 6}
             onClick={handleStep3Verify}
-            className="w-full h-11 px-4 mt-1.5 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/20 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#064E4A] cursor-pointer"
+            className="w-full h-11 px-4 mt-1.5 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] focus-visible:ring-offset-2 focus-visible:ring-offset-[#064E48] cursor-pointer"
           >
             {loading ? (
               <>

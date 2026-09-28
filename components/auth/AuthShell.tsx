@@ -30,12 +30,12 @@ function SwitchLink({
       <button
         type="button"
         onClick={() => onTabChange(isSignup ? 'login' : 'signup')}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white text-xs font-semibold text-slate-700 hover:text-[#064E4A] backdrop-blur-md border border-slate-200/80 shadow-xs transition-all duration-150 cursor-pointer"
+        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-[#0F766E] transition-colors cursor-pointer group"
       >
         <span>{isSignup ? 'Already have an account?' : "Don't have an account?"}</span>
-        <span className="text-[#064E4A] font-bold flex items-center gap-0.5">
+        <span className="text-[#0F766E] font-semibold flex items-center gap-1 group-hover:underline underline-offset-4">
           {isSignup ? 'Sign In' : 'Sign Up'}
-          <ArrowRight className="h-3 w-3" />
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </span>
       </button>
     );
@@ -44,12 +44,12 @@ function SwitchLink({
   return (
     <Link
       href={isSignup ? '/auth/login?tab=login' : '/auth/login?tab=signup'}
-      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white text-xs font-semibold text-slate-700 hover:text-[#064E4A] backdrop-blur-md border border-slate-200/80 shadow-xs transition-all duration-150"
+      className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-[#0F766E] transition-colors group"
     >
       <span>{isSignup ? 'Already have an account?' : "Don't have an account?"}</span>
-      <span className="text-[#064E4A] font-bold flex items-center gap-0.5">
+      <span className="text-[#0F766E] font-semibold flex items-center gap-1 group-hover:underline underline-offset-4">
         {isSignup ? 'Sign In' : 'Sign Up'}
-        <ArrowRight className="h-3 w-3" />
+        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </span>
     </Link>
   );
@@ -58,7 +58,7 @@ function SwitchLink({
 export function AuthShell({ children, activeTab, onTabChange }: AuthShellProps) {
   return (
     <div className="min-h-screen relative isolate overflow-x-hidden flex flex-col justify-between select-none">
-      {/* Calm, peaceful, morning university campus atmospheric background (20-30% visual intensity) */}
+      {/* Calm, peaceful, morning university campus atmospheric background */}
       <AuthBackground />
 
       {/* Top Header Bar */}
@@ -71,7 +71,7 @@ export function AuthShell({ children, activeTab, onTabChange }: AuthShellProps) 
         {/* Desktop left space (logo is positioned inside AuthMarketing directly on background) */}
         <div className="hidden lg:block" />
 
-        {/* Top-Right Switch Link */}
+        {/* Top-Right Lightweight Switch Link (NO white card / pill) */}
         <div className="flex items-center ml-auto">
           <Suspense fallback={<div className="h-7 w-40" />}>
             <SwitchLink activeTab={activeTab} onTabChange={onTabChange} />
@@ -94,10 +94,10 @@ export function AuthShell({ children, activeTab, onTabChange }: AuthShellProps) 
               </div>
 
               {/* Mobile Compact View (Directly on background, NO white card) */}
-              <div className="lg:hidden text-center sm:text-left space-y-2 py-1 max-w-md mx-auto sm:mx-0">
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight font-display">
+              <div className="lg:hidden text-center sm:text-left space-y-2 py-1 max-w-md mx-auto sm:mx-0 animate-auth-marketing-enter">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#102033] tracking-tight leading-tight font-display">
                   Find Your Perfect{' '}
-                  <span className="text-[#064E4A]">Stay at HostelHub</span>
+                  <span className="text-[#0F766E]">Stay at HostelHub</span>
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                   Manage your stay, pay your bills, and stay connected — all in one place.

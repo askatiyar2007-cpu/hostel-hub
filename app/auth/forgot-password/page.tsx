@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
       } else {
         toast.error(data.error || 'Failed to send verification code');
       }
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
       } else {
         toast.error(data.error || 'Invalid verification code');
       }
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
       } else {
         toast.error(data.error || 'Failed to resend code');
       }
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.');
     } finally {
       setResendLoading(false);
@@ -183,7 +183,7 @@ export default function ForgotPasswordPage() {
       } else {
         toast.error(data.error || 'Failed to reset password');
       }
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -203,10 +203,10 @@ export default function ForgotPasswordPage() {
         <div>
           {otpVerified ? (
             /* STEP 3: Reset Password */
-            <form onSubmit={handleResetPassword} className="space-y-4">
+            <form onSubmit={handleResetPassword} className="space-y-4 text-left">
               <div className="text-center space-y-1">
-                <div className="mx-auto w-12 h-12 bg-[#002b27] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/30 text-[#0dbb9c]">
-                  <Lock className="w-6 h-6 text-[#0dbb9c]" />
+                <div className="mx-auto w-12 h-12 bg-[#043330] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/20 text-teal-200 shadow-inner">
+                  <Lock className="w-6 h-6 text-[#0D9488]" />
                 </div>
                 <h2 className="text-2xl sm:text-[1.65rem] font-bold tracking-tight text-white font-display">
                   Reset Password
@@ -273,7 +273,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
-                className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0dbb9c] to-[#0ab898] hover:from-[#0ec9a8] hover:to-[#0bc7a5] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-[#0bb99a]/35 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] cursor-pointer uppercase"
+                className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -292,7 +292,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={() => router.push('/auth/login')}
                 disabled={loading}
-                className="w-full h-11 px-4 rounded-full border border-teal-700/80 bg-[#002522] hover:bg-[#002f2b] text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] disabled:opacity-50 cursor-pointer"
+                className="w-full h-11 px-4 rounded-full border border-teal-400/25 bg-[#053A36] hover:bg-[#06423E] hover:-translate-y-0.5 active:translate-y-0 text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] disabled:opacity-50 cursor-pointer"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Back to Login</span>
@@ -300,10 +300,10 @@ export default function ForgotPasswordPage() {
             </form>
           ) : emailSent ? (
             /* STEP 2: Verify OTP */
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <form onSubmit={handleVerifyOtp} className="space-y-4 text-left">
               <div className="text-center space-y-1">
-                <div className="mx-auto w-12 h-12 bg-[#002b27] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/30 text-[#0dbb9c]">
-                  <Mail className="w-6 h-6 text-[#0dbb9c]" />
+                <div className="mx-auto w-12 h-12 bg-[#043330] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/20 text-teal-200 shadow-inner">
+                  <Mail className="w-6 h-6 text-[#0D9488]" />
                 </div>
                 <h2 className="text-2xl sm:text-[1.65rem] font-bold tracking-tight text-white font-display">
                   Verify Your Email
@@ -323,14 +323,14 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                   autoFocus
                   containerClassName="gap-2 sm:gap-2.5"
-                  className="border-teal-700/80 bg-[#002522] text-white font-mono text-xl sm:text-2xl h-11 w-10 sm:h-12 sm:w-11 rounded-xl focus:border-[#0dbb9c] focus:ring-2 focus:ring-[#0dbb9c]/30"
+                  className="border-teal-500/25 bg-[#053A36] text-white font-mono text-xl sm:text-2xl h-11 w-10 sm:h-12 sm:w-11 rounded-xl focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/30"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || otp.length !== 6}
-                className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0dbb9c] to-[#0ab898] hover:from-[#0ec9a8] hover:to-[#0bc7a5] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-[#0bb99a]/35 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] cursor-pointer uppercase"
+                className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -350,7 +350,7 @@ export default function ForgotPasswordPage() {
                   type="button"
                   disabled={resendLoading || resendCountdown > 0 || loading}
                   onClick={handleResendOtp}
-                  className="text-xs font-bold text-[#0dbb9c] hover:text-[#2dd4bf] flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="text-xs font-bold text-[#0D9488] hover:text-[#2DD4BF] flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <RefreshCw className={`h-3 w-3 ${resendLoading ? 'animate-spin' : ''}`} />
                   {resendLoading ? 'Sending...' : resendCountdown > 0
@@ -373,10 +373,10 @@ export default function ForgotPasswordPage() {
             </form>
           ) : (
             /* STEP 1: Send Email */
-            <form onSubmit={handleSendOtp} className="space-y-4">
+            <form onSubmit={handleSendOtp} className="space-y-4 text-left">
               <div className="text-center space-y-1">
-                <div className="mx-auto w-12 h-12 bg-[#002b27] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/30 text-[#0dbb9c]">
-                  <Mail className="w-6 h-6 text-[#0dbb9c]" />
+                <div className="mx-auto w-12 h-12 bg-[#043330] rounded-2xl flex items-center justify-center mb-2 ring-1 ring-teal-500/20 text-teal-200 shadow-inner">
+                  <Mail className="w-6 h-6 text-[#0D9488]" />
                 </div>
                 <h2 className="text-2xl sm:text-[1.65rem] font-bold tracking-tight text-white font-display">
                   Forgot Password?
@@ -403,7 +403,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0dbb9c] to-[#0ab898] hover:from-[#0ec9a8] hover:to-[#0bc7a5] active:brightness-95 text-white font-bold text-sm tracking-wide shadow-md shadow-[#0bb99a]/35 transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] cursor-pointer uppercase"
+                className="w-full h-11 px-4 rounded-full bg-gradient-to-r from-[#0F766E] to-[#0D9488] hover:from-[#115E59] hover:to-[#0F766E] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] text-white font-bold text-sm tracking-wide shadow-md shadow-teal-950/25 hover:shadow-lg hover:shadow-teal-950/35 transition-all duration-200 ease-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -422,7 +422,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={() => router.push('/auth/login')}
                 disabled={loading}
-                className="w-full h-11 px-4 rounded-full border border-teal-700/80 bg-[#002522] hover:bg-[#002f2b] text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0dbb9c] disabled:opacity-50 cursor-pointer"
+                className="w-full h-11 px-4 rounded-full border border-teal-400/25 bg-[#053A36] hover:bg-[#06423E] hover:-translate-y-0.5 active:translate-y-0 text-teal-100 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] disabled:opacity-50 cursor-pointer"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Back to Login</span>
