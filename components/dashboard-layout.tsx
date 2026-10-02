@@ -97,6 +97,22 @@ const roleNavItems: Record<UserRole, NavItem[]> = {
   ],
 };
 
+export function getDashboardForRole(role?: string | null): string {
+  switch (role) {
+    case 'super_admin':
+      return '/admin/dashboard';
+    case 'owner':
+    case 'hostel_owner':
+      return '/owner/dashboard';
+    case 'parent':
+      return '/parent/dashboard';
+    case 'student':
+      return '/student/dashboard';
+    default:
+      return '/auth/login';
+  }
+}
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -123,26 +139,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
 
-  // CRITICAL BUSINESS RULE ENFORCEMENT:
+  // CRITICAL BUSINESS RULE ENFORCEMENT & ROLE ROUTE GUARDS:
   // password_set=false means NOT a HostelHub user, regardless of whether profile
   // or role data exists. An incomplete signup (e.g., Google OAuth where user
   // selected a role but never set a password) must NEVER access the dashboard.
   // The saved role is only temporary onboarding progress and grants NO access.
-  //
-  // This guard enforces the fundamental state machine:
-  // password_set=false → incomplete signup → NOT a user → NO dashboard access
-  // password_set=true → completed password step → check remaining onboarding steps
-  //
-  // For abandoned signups (user closed tab at password page, later reopened site),
-  // this guard signs them out and redirects to /auth/login instead of restoring
-  // the incomplete onboarding session at /auth/setup-password. This prevents
-  // incomplete accounts from being treated as authenticated users.
   useEffect(() => {
     if (loading || !profile) return;
 
     // Check password_set FIRST, before any other completion checks.
-    // If password_set is explicitly false, this is NOT a HostelHub user yet.
-    // Sign them out and redirect to login page (fresh visit behavior).
     if (password_set === false) {
       console.log('[DashboardLayout] Detected incomplete account (password_set=false), signing out');
       void signOut().then(() => {
@@ -152,8 +157,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
 
     // Only check accountCompletionStep if password_set is true (or null due to API error).
-    // These checks handle legitimate onboarding-in-progress scenarios where the user
-    // is actively completing their account setup (not an abandoned signup).
     if (accountCompletionStep === 'role') {
       router.push('/auth/select-role');
       return;
@@ -161,8 +164,25 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
     if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
       router.push('/auth/setup-password');
+      return;
     }
-  }, [loading, profile, accountCompletionStep, password_set, router, signOut]);
+
+    // Role Route Guard:
+    // /admin/* is strictly for super_admin
+    // /parent/* is strictly for parent
+    const isAdminPath = pathname?.startsWith('/admin');
+    const isParentPath = pathname?.startsWith('/parent');
+
+    if (isAdminPath && profile.role !== 'super_admin') {
+      router.replace(getDashboardForRole(profile.role));
+      return;
+    }
+
+    if (isParentPath && profile.role !== 'parent') {
+      router.replace(getDashboardForRole(profile.role));
+      return;
+    }
+  }, [loading, profile, accountCompletionStep, password_set, router, signOut, pathname]);
 
   if (loading) {
     return (
@@ -173,6 +193,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (profile && accountCompletionStep && accountCompletionStep !== 'complete') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  const isAdminPath = pathname?.startsWith('/admin');
+  const isParentPath = pathname?.startsWith('/parent');
+  const isUnauthorizedRole =
+    (isAdminPath && profile && profile.role !== 'super_admin') ||
+    (isParentPath && profile && profile.role !== 'parent');
+
+  if (profile && isUnauthorizedRole) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

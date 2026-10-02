@@ -5,9 +5,6 @@ import Link from 'next/link';
 import { 
   Building2, 
   MapPin, 
-  Bed, 
-  Users, 
-  DoorOpen, 
   ArrowRight, 
   MoreVertical, 
   Trash2, 
@@ -57,7 +54,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
       {/* ========================================================================= */}
       {/* 1. MEDIA / IMAGE REGION (Strictly Bounded, Never Bleeds Outside)          */}
       {/* ========================================================================= */}
-      <div className="relative h-44 sm:h-48 w-full overflow-hidden shrink-0 border-b border-sky-100/90 bg-slate-50 select-none">
+      <div className="relative h-36 sm:h-38 w-full overflow-hidden shrink-0 border-b border-sky-100/90 bg-slate-50 select-none">
         {hostel.cover_image_url ? (
           <Link
             href={`/owner/hostels/${hostel.id}`}
@@ -170,7 +167,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
       {/* ========================================================================= */}
       {/* 2. INFORMATION REGION (Solid White, 100% Isolated, Zero Overlap)           */}
       {/* ========================================================================= */}
-      <div className="relative z-10 flex flex-col flex-1 p-5 sm:p-6 bg-white">
+      <div className="relative z-10 flex flex-col flex-1 p-4 sm:p-5 bg-white">
         {/* Hostel Name & Location */}
         <div className="mb-3 min-w-0">
           <Link
@@ -178,7 +175,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
             className="group/title block cursor-pointer focus-visible:outline-none focus-visible:underline"
           >
             <h3 
-              className="text-lg font-bold text-slate-900 leading-snug truncate group-hover/title:text-teal-700 transition-colors" 
+              className="text-lg sm:text-xl font-bold text-slate-900 leading-snug truncate group-hover/title:text-teal-700 transition-colors" 
               title={hostel.name}
             >
               {hostel.name}
@@ -186,64 +183,46 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-teal-600" />
-            <span className="truncate">{locationText || 'Location not specified'}</span>
+            <span className="truncate font-medium">{locationText || 'Location not specified'}</span>
           </div>
         </div>
 
-        {/* Description */}
+        {/* Short Description */}
         {hostel.description ? (
-          <p className="text-xs text-slate-500 line-clamp-2 mb-3.5 leading-relaxed min-w-0">
+          <p className="text-xs text-slate-500 line-clamp-1 mb-3.5 leading-relaxed">
             {hostel.description}
           </p>
         ) : (
-          <p className="text-xs text-slate-400 italic mb-3.5 min-w-0">
-            No description provided.
+          <p className="text-xs text-slate-400 italic mb-3.5">
+            Active property management
           </p>
         )}
 
-        {/* Room & Bed Statistics Row */}
-        <div className="grid grid-cols-3 gap-3 mb-3.5 p-3 rounded-xl bg-slate-50/80 border border-sky-100/70 text-xs">
-          {/* Total Rooms */}
-          <div className="flex flex-col items-center gap-1.5 min-w-0 text-center">
-            <div className="h-8 w-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-              <DoorOpen className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 w-full">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Rooms</p>
-              <p className="text-sm font-bold text-slate-900 leading-tight">{hostel.totalRooms}</p>
-            </div>
+        {/* Room & Bed Statistics Row - Ultra Compact Row */}
+        <div className="flex items-center justify-between mb-3.5 border-y border-slate-100 py-2.5">
+          <div className="flex flex-col min-w-0 text-left">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Rooms</span>
+            <span className="text-sm font-bold text-slate-900">{hostel.totalRooms}</span>
           </div>
-
-          {/* Residents / Occupied Beds */}
-          <div className="flex flex-col items-center gap-1.5 min-w-0 text-center">
-            <div className="h-8 w-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
-              <Users className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 w-full">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Residents</p>
-              <p className="text-sm font-bold text-purple-700 leading-tight">{hostel.occupiedBeds}</p>
-            </div>
+          <div className="w-px h-8 bg-slate-200" />
+          <div className="flex flex-col min-w-0 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Residents</span>
+            <span className="text-sm font-bold text-purple-700">{hostel.occupiedBeds}</span>
           </div>
-
-          {/* Available Beds */}
-          <div className="flex flex-col items-center gap-1.5 min-w-0 text-center">
-            <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shrink-0">
-              <Bed className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 w-full">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Available</p>
-              <p className="text-sm font-bold text-teal-700 leading-tight">{availableBeds}</p>
-            </div>
+          <div className="w-px h-8 bg-slate-200" />
+          <div className="flex flex-col min-w-0 text-right">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Available</span>
+            <span className="text-sm font-bold text-teal-700">{availableBeds}</span>
           </div>
         </div>
 
         {/* Occupancy Progress */}
-        <div className="space-y-1.5 mb-4">
+        <div className="space-y-1.5 mb-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-500 font-medium">Occupancy Rate</span>
             <span className="font-bold text-teal-700">{occupancyRate}%</span>
           </div>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div 
               className="h-full transition-all duration-500 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500"
               style={{ width: `${Math.min(100, Math.max(0, occupancyRate))}%` }}

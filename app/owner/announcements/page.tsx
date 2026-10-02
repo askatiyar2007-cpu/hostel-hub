@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PageHeader } from "@/components/owner/page-header";
 
 interface NoticeWithHostel {
   id: string;
@@ -268,13 +269,12 @@ export default function OwnerAnnouncementsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-slate-900">Announcements</h1>
-          <p className="text-slate-500 text-sm mt-1">Publish news, reminders, and alerts for your students</p>
-        </div>
+      <PageHeader 
+        title="Announcements"
+        description="Publish news, reminders, and alerts for your students"
+      >
         <div className="flex flex-wrap items-center gap-3">
           <select 
             value={selectedHostelFilter}
@@ -291,7 +291,7 @@ export default function OwnerAnnouncementsPage() {
             Create Announcement
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Main Content */}
       {loading ? (

@@ -5,8 +5,8 @@ import { sendStudentInvitationEmail } from '@/lib/email/brevo';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate the owner using cookie-based client
-    const supabase = createClient();
+    // 1. Authenticate the owner (supports cookies and mobile Bearer JWT)
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     // Debug logging (safe - no sensitive data)
@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (profile.role !== 'owner') {
-      console.log('[Assignment API] Authorization failed - not an owner. Actual role:', profile.role);
+    if (profile.role !== 'hostel_owner') {
+      console.log('[Assignment API] Authorization failed - not a hostel owner. Actual role:', profile.role);
       return NextResponse.json(
         { error: 'Forbidden: Only hostel owners can assign students.' },
         { status: 403 }

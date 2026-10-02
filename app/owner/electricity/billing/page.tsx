@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { IconWrapper } from '@/components/owner/icon-wrapper';
+import { PageHeader } from "@/components/owner/page-header";
 
 interface BillingSummary {
   total_consumption_all: number;
@@ -182,21 +183,11 @@ export default function BillingOverviewPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <IconWrapper color="emerald" size="lg">
-            <DollarSign className="h-5 w-5" />
-          </IconWrapper>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Billing Overview
-            </h1>
-            <p className="text-sm text-slate-600 mt-0.5">
-              Monthly electricity billing summaries, room breakdowns, and consumption tracking
-            </p>
-          </div>
-        </div>
-        
+      <PageHeader 
+        title="Billing Overview"
+        description="Monthly electricity billing summaries, room breakdowns, and consumption tracking"
+        icon={<DollarSign className="h-5 w-5" />}
+      >
         <Button 
           onClick={handleExport} 
           disabled={exportLoading || !selectedHostel || !selectedMonth}
@@ -205,7 +196,7 @@ export default function BillingOverviewPage() {
           <Download className="h-4 w-4" />
           {exportLoading ? 'Exporting...' : 'Export CSV'}
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Filters */}
       <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">

@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const { meter_id, reading_value, reason, notes } = validationResult.data;
     
     // Initialize Supabase client
-    const supabase = await createClient();
+    const supabase = createClient(request);
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

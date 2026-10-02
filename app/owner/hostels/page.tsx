@@ -10,7 +10,9 @@ import { useAuth } from '@/lib/auth/context';
 import { Hostel } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from "@/components/owner/page-header";
 import { OwnerHostelCard } from '@/components/owner/owner-hostel-card';
+import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
 export default function HostelsListPage() {
   const { profile } = useAuth();
@@ -44,7 +46,7 @@ export default function HostelsListPage() {
 
         const { data: allocationsData } = await supabase
           .from('room_allocations')
-          .select('hostel_id, room_id, student_id, student_name, start_date')
+          .select('hostel_id, room_id, student_id, student_name, start_date, booking_type')
           .in('hostel_id', hostelIds)
           .eq('active', true);
         
@@ -84,16 +86,21 @@ export default function HostelsListPage() {
   const hostelsWithCounts = hostels.map(hostel => {
     const hostelRooms = rooms.filter(r => r.hostel_id === hostel.id);
     const hostelAllocations = allocations.filter(a => a.hostel_id === hostel.id);
-    const totalBeds = hostelRooms.reduce((acc, r) => acc + (r.capacity ?? 0), 0);
-    const occupiedBeds = hostelAllocations.length;
-    const availableBeds = Math.max(0, totalBeds - occupiedBeds);
+    const {
+      totalBeds,
+      occupiedBeds,
+      availableBeds,
+      occupancyPercentage
+    } = calculateHostelOccupancy(hostelRooms, hostelAllocations);
 
     return {
       ...hostel,
       totalRooms: hostelRooms.length,
-      totalResidents: occupiedBeds,
+      totalResidents: hostelAllocations.length,
       totalBeds,
+      occupiedBeds,
       availableBeds,
+      occupancy: occupancyPercentage,
     };
   });
 
@@ -112,17 +119,12 @@ export default function HostelsListPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 max-w-[1800px] mx-auto">
+    <div className="w-full">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div className="flex-1">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-            Hostels
-          </h1>
-          <p className="mt-2 text-sm md:text-base text-slate-600">
-            Manage your hostel properties, location details, and operations.
-          </p>
-        </div>
+      <PageHeader 
+        title="Hostels"
+        description="Manage your hostel properties, location details, and operations."
+      >
         <Link
           href="/owner/hostels/new"
           className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 font-semibold text-sm transition-colors shadow-xs"
@@ -130,7 +132,7 @@ export default function HostelsListPage() {
           <Plus size={18} />
           <span>Add Hostel</span>
         </Link>
-      </div>
+      </PageHeader>
 
       {/* Search Toolbar */}
       <div className="flex items-center gap-4 mb-6">
@@ -162,7 +164,7 @@ export default function HostelsListPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="border-slate-200/90 shadow-xs overflow-hidden rounded-xl bg-white">
               <CardContent className="p-0">
-                <div className="h-44 bg-slate-100 animate-pulse" />
+                <div className="h-36 sm:h-38 bg-slate-100 animate-pulse" />
                 <div className="p-5 space-y-3">
                   <div className="h-6 bg-slate-200 rounded animate-pulse w-3/4" />
                   <div className="h-4 bg-slate-100 rounded animate-pulse w-1/2" />

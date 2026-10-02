@@ -41,7 +41,7 @@ export default function OwnerPaymentsDashboard() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
 
   const fetchData = useCallback(async () => {
-    const ownerId = user?.id || profile?.id;
+    const ownerId = user?.id || profile?.user_id;
     if (!ownerId) return;
     setLoading(true);
     try {
@@ -178,7 +178,7 @@ export default function OwnerPaymentsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id, user?.id]);
+  }, [profile?.user_id, user?.id]);
 
   useEffect(() => {
     fetchData();
@@ -395,7 +395,7 @@ export default function OwnerPaymentsDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen">
+    <div className="w-full max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6 border-slate-200">
         <div>

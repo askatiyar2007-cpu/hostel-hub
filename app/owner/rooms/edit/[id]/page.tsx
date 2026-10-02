@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function EditRoomPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const router = useRouter();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -35,13 +35,14 @@ export default function EditRoomPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!id || !profile?.id) return;
+      const ownerId = user?.id || profile?.user_id;
+      if (!id || !ownerId) return;
 
       // Fetch hostels for dropdown
       const { data: hostelsData } = await supabase
         .from('hostels')
         .select('id, name')
-        .eq('owner_id', profile.id);
+        .eq('owner_id', ownerId);
       
       setHostels(hostelsData || []);
 
@@ -83,7 +84,7 @@ export default function EditRoomPage() {
     }
 
     fetchData();
-  }, [id, profile, router]);
+  }, [id, user?.id, profile?.user_id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

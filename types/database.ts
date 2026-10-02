@@ -94,17 +94,23 @@ export interface RoomAllocation {
   created_at: string;
 }
 
-export interface Bill {
+export interface StudentFee {
   id: string;
-  hostel_id: string;
+  allocation_id: string;
   student_id: string;
-  bill_type: 'rent' | 'electricity' | 'deposit' | 'mess' | 'maintenance' | 'other';
-  amount: number;
+  room_id?: string;
+  hostel_id: string;
+  month_year: string;
+  amount_due: number;
+  amount?: number;
   due_date: string;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'failed';
-  description?: string;
-  paid_at?: string;
+  status: 'pending' | 'pending_verification' | 'paid' | 'overdue' | 'cancelled';
+  paid_date?: string;
+  payment_method?: string;
+  is_overdue?: boolean;
+  late_fee_applied?: number;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface ElectricityReading {
@@ -122,12 +128,28 @@ export interface ElectricityReading {
 
 export interface Payment {
   id: string;
-  bill_id: string;
+  fee_id?: string;
+  student_fees_id?: string;
   student_id: string;
+  allocation_id?: string;
+  hostel_id?: string;
+  amount_paid?: number;
   amount: number;
-  payment_method: 'upi' | 'card' | 'net_banking' | 'wallet';
-  transaction_id: string;
-  status: 'pending' | 'success' | 'failed';
+  payment_method: string;
+  payment_status?: string;
+  reference_number?: string;
+  paid_date?: string;
+  verified_by?: string;
+  verified_at?: string;
+  notes?: string;
+  proof_url?: string;
+  payment_type?: string;
+  status?: string;
+  payment_mode?: string;
+  gateway_order_id?: string;
+  gateway_payment_id?: string;
+  gateway_signature?: string;
+  transaction_id?: string;
   paid_at?: string;
   created_at: string;
 }

@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
+import { PageHeader } from "@/components/owner/page-header";
 
 // User-facing labels for the two booking modes. The underlying persisted
 // value and public.booking_type enum are unchanged -- only the displayed
@@ -138,7 +139,7 @@ export default function OwnerStudentsPage() {
   const handleCheckout = async (allocId: string) => {
     if (!window.confirm('Are you sure you want to check out this student? This will deactivate their room allocation immediately.')) return;
     try {
-      const { error: checkoutErr } = await supabase.rpc('checkout_student', { p_alloc_id: allocId });
+      const { error: checkoutErr } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocId });
       if (checkoutErr) throw checkoutErr;
       toast.success('Student checked out successfully!');
       fetchStudents();
@@ -184,16 +185,11 @@ export default function OwnerStudentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-            Residents
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Students</h1>
-        <p className="text-sm text-slate-500">Manage resident students and active room allocations across your properties.</p>
-      </div>
+      <PageHeader 
+        label="Residents"
+        title="Students"
+        description="Manage resident students and active room allocations across your properties."
+      />
 
       {/* Top Toolbar: Search, Hostel Filter, Assign CTA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

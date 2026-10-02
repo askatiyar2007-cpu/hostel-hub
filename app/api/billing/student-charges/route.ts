@@ -45,8 +45,8 @@ interface StudentChargesResponse {
  */
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authenticate the user using cookie-based client
-    const supabase = createClient();
+    // 1. Authenticate the user (supports cookies and mobile Bearer JWT)
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

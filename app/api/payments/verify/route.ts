@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { createClient, supabaseServer } from '@/lib/supabase/server';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Authenticate caller
+    const supabase = createClient(req);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { order_id, payment_id, signature } = await req.json();
 
     if (!order_id) {
@@ -12,10 +24,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Retrieve the existing pending payment record
+    // 2. Retrieve the existing pending payment record
     const { data: payment, error: paymentFetchError } = await supabaseServer
       .from('payments')
-      .select('id, student_fees_id, student_id, amount_paid, payment_status')
+      .select('id, student_fees_id, student_id, amount_paid, payment_status, hostel_id')
       .eq('gateway_order_id', order_id)
       .maybeSingle();
 
@@ -24,6 +36,53 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Payment transaction record not found' },
         { status: 404 }
+      );
+    }
+
+    // 3. Authorize caller against payment record
+    const { data: profile, error: profileError } = await supabaseServer
+      .from('profiles')
+      .select('id, user_id, role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: 'Forbidden: User profile not found' },
+        { status: 403 }
+      );
+    }
+
+    if (profile.role === 'student') {
+      const { data: studentRecord } = await supabaseServer
+        .from('students')
+        .select('id')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+
+      if (!studentRecord || studentRecord.id !== payment.student_id) {
+        return NextResponse.json(
+          { error: 'Forbidden: You can only verify your own payments' },
+          { status: 403 }
+        );
+      }
+    } else if (profile.role === 'owner' || profile.role === 'hostel_owner') {
+      const { data: hostel } = await supabaseServer
+        .from('hostels')
+        .select('id, owner_id')
+        .eq('id', payment.hostel_id)
+        .single();
+
+      if (!hostel || hostel.owner_id !== user.id) {
+        return NextResponse.json(
+          { error: 'Forbidden: You do not own the hostel associated with this payment' },
+          { status: 403 }
+        );
+      }
+    } else if (profile.role !== 'super_admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Unauthorized' },
+        { status: 403 }
       );
     }
 
@@ -36,38 +95,60 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Validate transaction status
-    const knitPayMode = process.env.KNITPAY_MODE || 'sandbox';
-    const isSandbox = knitPayMode === 'sandbox' || order_id.startsWith('mock_');
+    // 4. Validate transaction status
+    const isProd = process.env.NODE_ENV === 'production';
+    const knitPayMode = process.env.KNITPAY_MODE || (isProd ? 'production' : 'sandbox');
+    const isSandbox = !isProd && (knitPayMode === 'sandbox' || knitPayMode === 'test');
     let verified = false;
 
-    if (isSandbox) {
-      // In Sandbox mode, instantly verify it
+    if (isProd && order_id.startsWith('mock_')) {
+      return NextResponse.json(
+        { error: 'Mock orders cannot be verified in production environment' },
+        { status: 400 }
+      );
+    }
+
+    if (isSandbox && order_id.startsWith('mock_')) {
+      // In Sandbox/Development mode ONLY, accept mock order testing
       verified = true;
     } else {
-      // Production mode: verify signature or query gateway endpoint
-      try {
-        const response = await fetch(`https://knit-pay-upi.p.rapidapi.com/order/status/${order_id}`, {
-          method: 'GET',
-          headers: {
-            'X-RapidAPI-Key': process.env.KNITPAY_API_KEY || '',
-            'X-RapidAPI-Host': process.env.RAPIDAPI_HOST || 'knit-pay-upi.p.rapidapi.com'
-          }
-        });
+      // Production mode / Real gateway verification
+      const apiSecret = process.env.KNITPAY_API_SECRET;
 
-        if (response.ok) {
-          const data = await response.json();
-          // Assume transaction is valid if status is active or paid
-          verified = data.status === 'SUCCESS' || data.status === 'PAID' || data.paid === true;
-        } else {
-          // If query fails, fail-safe verify for signatures if present
-          console.warn('Webhook / status validation failed, falling back to signature check');
-          verified = !!signature;
+      // Check A: HMAC signature verification if signature and payment_id are provided
+      if (signature && payment_id && apiSecret) {
+        try {
+          const expectedSig = createHmac('sha256', apiSecret)
+            .update(`${order_id}|${payment_id}`)
+            .digest('hex');
+          const sigBuf = Buffer.from(signature, 'hex');
+          const expBuf = Buffer.from(expectedSig, 'hex');
+          if (sigBuf.length === expBuf.length && timingSafeEqual(sigBuf, expBuf)) {
+            verified = true;
+          }
+        } catch {
+          // Signature parsing failed
         }
-      } catch (err) {
-        console.error('Failed to verify payment via production gateway API:', err);
-        // Signature validation fallback
-        verified = !!signature;
+      }
+
+      // Check B: Query gateway endpoint directly
+      if (!verified && process.env.KNITPAY_API_KEY) {
+        try {
+          const response = await fetch(`https://knit-pay-upi.p.rapidapi.com/order/status/${order_id}`, {
+            method: 'GET',
+            headers: {
+              'X-RapidAPI-Key': process.env.KNITPAY_API_KEY || '',
+              'X-RapidAPI-Host': process.env.RAPIDAPI_HOST || 'knit-pay-upi.p.rapidapi.com'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            verified = data.status === 'SUCCESS' || data.status === 'PAID' || data.paid === true;
+          }
+        } catch (err) {
+          console.error('Failed to verify payment via production gateway API:', err);
+        }
       }
     }
 
@@ -77,7 +158,7 @@ export async function POST(req: NextRequest) {
         .from('payments')
         .update({
           payment_status: 'failed',
-          notes: 'Online payment verification failed or was cancelled.'
+          notes: 'Online payment verification failed: invalid signature or unverified gateway status.'
         })
         .eq('id', payment.id);
 

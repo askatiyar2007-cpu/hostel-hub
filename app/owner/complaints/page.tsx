@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from "@/components/owner/page-header";
 
 const CATEGORY_LABEL: Record<string, string> = {
   electrical: 'Electrical',
@@ -136,16 +137,11 @@ export default function OwnerComplaintsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-            Maintenance
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Complaints</h1>
-        <p className="text-sm text-slate-500">Track and resolve issues reported by students</p>
-      </div>
+      <PageHeader 
+        label="Maintenance"
+        title="Complaints"
+        description="Track and resolve issues reported by students"
+      />
 
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

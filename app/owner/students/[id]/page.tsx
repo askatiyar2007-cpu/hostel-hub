@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { PaymentHistoryModal } from '../../requests/payment-modals';
+import { PageHeader } from "@/components/owner/page-header";
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   const [student, setStudent] = useState<any>(null);
   const [latestRequest, setLatestRequest] = useState<any>(null);
   const [fees, setFees] = useState<any[]>([]);
-  const [electricityBills, setElectricityBills] = useState<any[]>([]);
+  const [electricityCharges, setElectricityCharges] = useState<number>(0);
   const [complaints, setComplaints] = useState<any[]>([]);
 
   // Modal states
@@ -103,16 +104,21 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         .order('due_date', { ascending: false });
       setFees(feesData || []);
 
-      // 5. Fetch Electricity Bills
-      if (studentData?.profiles?.user_id) {
-        const { data: billsData } = await supabase
-          .from('bills')
-          .select('*')
-          .eq('student_id', studentData.profiles.user_id)
-          .eq('bill_type', 'electricity');
-        setElectricityBills(billsData || []);
+      // 5. Fetch Electricity Charges
+      const { data: electricityChargesData } = await supabase
+        .from('student_electricity_charges')
+        .select('charge_amount_paise')
+        .eq('student_id', allocData.student_id)
+        .eq('hostel_id', allocData.hostel_id);
 
-        // 6. Fetch Student Complaints
+      const totalElectricityRupees = (electricityChargesData || []).reduce(
+        (sum: number, c: any) => sum + (Number(c.charge_amount_paise || 0) / 100),
+        0
+      );
+      setElectricityCharges(totalElectricityRupees);
+
+      // 6. Fetch Student Complaints
+      if (studentData?.profiles?.user_id) {
         const { data: complaintsData } = await supabase
           .from('complaints')
           .select('*')
@@ -136,7 +142,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     if (!window.confirm('Are you sure you want to check out this student? This will deactivate their room allocation immediately.')) return;
     setCheckoutLoading(true);
     try {
-      const { error: checkoutErr } = await supabase.rpc('checkout_student', { p_alloc_id: allocationId });
+      const { error: checkoutErr } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocationId });
       if (checkoutErr) throw checkoutErr;
       toast.success('Student checked out successfully!');
       router.push('/owner/students');
@@ -161,11 +167,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   // Current Month Fee
   const currentMonthFee = fees.length > 0 ? Number(fees[0].amount || 0) : monthlyRent;
 
-  // Electricity Charges (unpaid electricity bills)
-  const electricityCharges = electricityBills
-    .filter(b => b.status === 'pending' || b.status === 'overdue')
-    .reduce((sum, b) => sum + Number(b.amount || 0), 0);
-
   // Helper for displaying fields
   const renderProfileField = (label: string, value: any, icon?: React.ReactNode) => {
     if (value === null || value === undefined || String(value).trim() === '' || String(value).trim() === '-') return null;
@@ -183,16 +184,11 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-              Owner
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Resident Profile</h1>
-          <p className="text-sm text-slate-500">Loading profile...</p>
-        </div>
+        <PageHeader 
+          label="Owner"
+          title="Resident Profile"
+          description="Loading profile..."
+        />
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -206,16 +202,11 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   if (error || !allocation || !student) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-              Owner
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Resident Profile</h1>
-          <p className="text-sm text-slate-500">Error loading profile</p>
-        </div>
+        <PageHeader 
+          label="Owner"
+          title="Resident Profile"
+          description="Error loading profile"
+        />
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-red-500 max-w-md text-center">
             <AlertTriangle size={40} />
@@ -244,16 +235,11 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-            Owner
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Resident Profile</h1>
-        <p className="text-sm text-slate-500">Detailed resident ledger and profile card for {studentName}.</p>
-      </div>
+      <PageHeader 
+        label="Owner"
+        title="Resident Profile"
+        description={`Detailed resident ledger and profile card for ${studentName}.`}
+      />
 
       {/* Back to list button */}
       <div className="mb-6">

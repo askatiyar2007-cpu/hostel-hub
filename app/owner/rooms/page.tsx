@@ -18,6 +18,8 @@ import {
 
 import { StatusBadge } from '@/components/owner/status-badge';
 import { IconWrapper } from '@/components/owner/icon-wrapper';
+import { PageHeader } from "@/components/owner/page-header";
+import { calculateRoomOccupancy } from '@/lib/utils/occupancy';
 
 interface RoomWithHostel {
   id: string;
@@ -35,6 +37,7 @@ interface RoomWithHostel {
   room_allocations?: {
     id: string;
     active: boolean;
+    booking_type?: string;
   }[];
 }
 
@@ -51,7 +54,7 @@ export default function OwnerRoomsPage() {
     try {
       const { data, error } = await supabase
         .from('rooms')
-        .select('*, hostels!inner(name, owner_id), room_allocations(id, active)')
+        .select('*, hostels!inner(name, owner_id), room_allocations(id, active, booking_type)')
         .eq('hostels.owner_id', profile.user_id);
 
       if (error) throw error;
@@ -96,21 +99,12 @@ export default function OwnerRoomsPage() {
     }
   };
 
-  // Calculate summary metrics
-  const totalRooms = rooms.length;
-  const totalBeds = rooms.reduce((sum, room) => sum + (room.capacity || 0), 0);
-  const occupiedBeds = rooms.reduce((sum, room) => {
-    const occupied = room.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
-    return sum + occupied;
-  }, 0);
-  const availableBeds = totalBeds - occupiedBeds;
-  const overallOccupancy = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
-
   // Calculate per-room metrics
   const roomsWithMetrics = rooms.map(room => {
-    const occupied = room.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
-    const remaining = Math.max(0, room.capacity - occupied);
-    const occupancy = room.capacity > 0 ? Math.round((occupied / room.capacity) * 100) : 0;
+    const { occupied, remaining, occupancyPercentage: occupancy } = calculateRoomOccupancy(
+      room.capacity,
+      room.room_allocations
+    );
 
     return {
       ...room,
@@ -119,6 +113,13 @@ export default function OwnerRoomsPage() {
       occupancy,
     };
   });
+
+  // Calculate summary metrics
+  const totalRooms = rooms.length;
+  const totalBeds = rooms.reduce((sum, room) => sum + (room.capacity || 0), 0);
+  const occupiedBeds = roomsWithMetrics.reduce((sum, room) => sum + room.occupied, 0);
+  const availableBeds = Math.max(0, totalBeds - occupiedBeds);
+  const overallOccupancy = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
 
   // Filter rooms
   const filteredRooms = roomsWithMetrics.filter(room => {
@@ -137,34 +138,27 @@ export default function OwnerRoomsPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 max-w-[1800px] min-w-0 max-w-full mx-auto">
+    <div className="w-full">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-            Rooms
-          </h1>
-          <p className="mt-2 text-sm md:text-base text-slate-500">
-            Manage rooms, occupancy, and availability across your hostels.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href={selectedHostel !== 'all' ? `/owner/rooms/bulk?hostelId=${selectedHostel}` : "/owner/rooms/bulk"}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 font-semibold text-sm transition-colors shadow-xs"
-          >
-            <Plus size={18} />
-            <span>Bulk Create</span>
-          </Link>
-          <Link
-            href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 font-semibold text-sm transition-colors shadow-xs"
-          >
-            <Plus size={18} />
-            <span>Add Room</span>
-          </Link>
-        </div>
-      </div>
+      <PageHeader 
+        title="Rooms"
+        description="Manage rooms, occupancy, and availability across your hostels."
+      >
+        <Link
+          href={selectedHostel !== 'all' ? `/owner/rooms/bulk?hostelId=${selectedHostel}` : "/owner/rooms/bulk"}
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 font-semibold text-sm transition-colors shadow-xs"
+        >
+          <Plus size={18} />
+          <span>Bulk Create</span>
+        </Link>
+        <Link
+          href={selectedHostel !== 'all' ? `/owner/rooms/new?hostelId=${selectedHostel}` : "/owner/rooms/new"}
+          className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 font-semibold text-sm transition-colors shadow-xs"
+        >
+          <Plus size={18} />
+          <span>Add Room</span>
+        </Link>
+      </PageHeader>
 
       {/* Compact Operational Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 px-2">

@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
 export default function PublicHostelPage() {
   const router = useRouter();
@@ -55,23 +56,25 @@ export default function PublicHostelPage() {
           .select('*', { count: 'exact', head: true })
           .eq('hostel_id', id);
 
-        const { count: studentsCount } = await supabase
+        const { data: allocationsData } = await supabase
           .from('room_allocations')
-          .select('*', { count: 'exact', head: true })
+          .select('room_id, booking_type')
           .eq('hostel_id', id)
           .eq('active', true);
 
         const { data: roomsData } = await supabase
           .from('rooms')
-          .select('capacity')
+          .select('id, capacity')
           .eq('hostel_id', id);
 
-        const totalBeds = roomsData?.reduce((sum: number, r: any) => sum + (r.capacity || 0), 0) || 0;
-        const availableBeds = Math.max(0, totalBeds - (studentsCount || 0));
+        const { availableBeds } = calculateHostelOccupancy(
+          roomsData || [],
+          allocationsData || []
+        );
 
         setStats({
           rooms: roomsCount || 0,
-          students: studentsCount || 0,
+          students: allocationsData?.length || 0,
           availableBeds
         });
       } catch (error) {

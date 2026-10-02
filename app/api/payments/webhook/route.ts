@@ -1,22 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase/server';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
-    console.log('Payment webhook received:', JSON.stringify(payload));
+    const rawBody = await req.text();
+    if (!rawBody || !rawBody.trim()) {
+      return NextResponse.json({ error: 'Empty webhook payload' }, { status: 400 });
+    }
 
-    // 1. Identify order details from various potential payload formats
+    let payload: any;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+
+    console.log('Payment webhook received for order inspection');
+
+    // 1. Webhook Signature Verification
+    const webhookSecret = process.env.KNITPAY_WEBHOOK_SECRET || process.env.KNITPAY_API_SECRET;
+    const isProd = process.env.NODE_ENV === 'production';
+
+    const signature = 
+      req.headers.get('x-knitpay-signature') || 
+      req.headers.get('x-webhook-signature') || 
+      req.headers.get('x-razorpay-signature');
+
+    if (!signature) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Missing webhook signature header' },
+        { status: 401 }
+      );
+    }
+
+    if (!webhookSecret) {
+      console.error('Webhook secret unconfigured');
+      return NextResponse.json(
+        { error: isProd ? 'Server configuration error: webhook secret required' : 'Unauthorized: Webhook secret not configured' },
+        { status: isProd ? 500 : 401 }
+      );
+    }
+
+    try {
+      const expectedSig = createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+      const sigBuf = Buffer.from(signature, 'hex');
+      const expBuf = Buffer.from(expectedSig, 'hex');
+
+      if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid webhook signature' }, { status: 401 });
+      }
+    } catch (err) {
+      return NextResponse.json({ error: 'Unauthorized: Webhook signature verification error' }, { status: 401 });
+    }
+
+    // 2. Identify order details from verified payload
     let orderId = payload.orderId || payload.order_id || payload.gateway_order_id;
     let paymentId = payload.paymentId || payload.payment_id || payload.transaction_id;
-    let status = payload.status || payload.event || 'SUCCESS'; // Default to success if undefined in simple webhook mocks
+    const rawStatus = payload.status || payload.event;
 
-    // If nested structures exist (e.g. Razorpay webhook format)
+    // Reject if status is missing - never default to SUCCESS
+    if (!rawStatus || typeof rawStatus !== 'string') {
+      return NextResponse.json(
+        { error: 'Missing or invalid status field in webhook payload' },
+        { status: 400 }
+      );
+    }
+    const status = rawStatus.trim().toLowerCase();
+
+    // If nested structures exist (e.g. standard gateway webhook format)
     if (payload.payload?.payment?.entity) {
       const entity = payload.payload.payment.entity;
       orderId = orderId || entity.order_id;
       paymentId = paymentId || entity.id;
-      status = status || entity.status;
     }
 
     if (!orderId) {
@@ -42,8 +98,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Update payment status based on webhook status
-    const isSuccess = ['SUCCESS', 'PAID', 'payment.captured', 'captured', 'completed'].includes(status.toLowerCase());
-    const isFailure = ['FAILED', 'payment.failed', 'failed', 'cancelled', 'rejected'].includes(status.toLowerCase());
+    const isSuccess = ['success', 'paid', 'payment.captured', 'captured', 'completed'].includes(status);
+    const isFailure = ['failed', 'payment.failed', 'cancelled', 'rejected'].includes(status);
+
+    if (!isSuccess && !isFailure) {
+      return NextResponse.json({ error: `Unsupported or untrusted payment status: ${rawStatus}` }, { status: 400 });
+    }
 
     if (isSuccess) {
       // Mark payment as completed

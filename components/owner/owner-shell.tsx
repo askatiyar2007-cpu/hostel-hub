@@ -37,8 +37,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
+import { getDashboardForRole } from '@/components/dashboard-layout';
 import { OwnerBackground } from './owner-background';
 import { SidebarBackground } from './sidebar-background';
+import { OwnerNotifications } from './owner-notifications';
 
 interface NavItem {
   name: string;
@@ -245,6 +247,13 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
 
     if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
       router.push('/auth/setup-password');
+      return;
+    }
+
+    // Role Route Guard: Only owner / hostel_owner can access /owner/*
+    if (profile.role !== 'owner' && profile.role !== 'hostel_owner') {
+      router.replace(getDashboardForRole(profile.role));
+      return;
     }
   }, [loading, profile, accountCompletionStep, password_set, router, signOut]);
 
@@ -257,6 +266,14 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
   }
 
   if (profile && accountCompletionStep && accountCompletionStep !== 'complete') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (profile && profile.role !== 'owner' && profile.role !== 'hostel_owner') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
@@ -435,16 +452,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
 
           {/* Right Side Actions: Notification Bell | Separator | Owner Profile Dropdown */}
           <div className="flex items-center gap-3 md:gap-4">
-            {/* Notifications with indicator dot */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="relative h-9 w-9 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 active:scale-95"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4.5 w-4.5" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-[#07212b]" />
-            </Button>
+            <OwnerNotifications />
 
             {/* Subtle vertical separator */}
             <div className="h-5 w-px bg-slate-700/80" aria-hidden="true" />
@@ -562,14 +570,14 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main Content Area - with pt-20 top offset to clear fixed header and md:ml to clear sidebar */}
+        {/* Main Content Area - with pt-14 to perfectly clear the h-14 fixed header and md:ml to clear sidebar */}
         <div className={cn(
-          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-20",
+          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-14",
           isCollapsed ? "md:ml-20" : "md:ml-64"
         )}>
           {/* Page Content */}
-          <main className="min-h-[calc(100vh-5rem)] min-w-0">
-            <div className="w-full max-w-full overflow-x-hidden">
+          <main className="min-h-[calc(100vh-5rem)] min-w-0 pb-12">
+            <div className="px-4 pt-3 pb-8 md:px-8 md:pt-4 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
               {children}
             </div>
           </main>

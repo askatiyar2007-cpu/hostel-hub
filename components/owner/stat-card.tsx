@@ -43,41 +43,60 @@ export function StatCard({
   const isClickable = Boolean(onClick || href);
 
   const cardContent = (
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">{title}</p>
-        <p className="mt-2 text-2xl md:text-3xl font-bold text-slate-900 tracking-tight leading-tight truncate">{value}</p>
-        {subtitle && (
-          <p className="mt-1 text-xs text-slate-500 truncate">{subtitle}</p>
-        )}
-        {trend && (
-          <p
+    <div className="flex flex-col justify-between h-full">
+      {/* 1. TITLE + ICON */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-snug">
+          {title}
+        </p>
+        {icon && (
+          <div
             className={cn(
-              "mt-1.5 text-xs font-medium truncate",
-              trend.isPositive ? "text-emerald-600" : "text-rose-600"
+              "flex h-9 w-9 items-center justify-center rounded-xl border shrink-0 shadow-2xs",
+              iconTheme.bg,
+              iconTheme.border,
+              iconTheme.text
             )}
           >
-            {trend.value}
-          </p>
+            {icon}
+          </div>
         )}
       </div>
-      {icon && (
-        <div
-          className={cn(
-            "flex h-11 w-11 items-center justify-center rounded-xl border shrink-0 shadow-2xs",
-            iconTheme.bg,
-            iconTheme.border,
-            iconTheme.text
-          )}
-        >
-          {icon}
+
+      {/* 2. FULL VALUE */}
+      <div className="mb-1.5">
+        <div className="text-2xl sm:text-2xl lg:text-[26px] xl:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          {value}
         </div>
-      )}
+      </div>
+
+      {/* 3. SHORT SUPPORTING DESCRIPTION */}
+      <div className="flex-1 flex flex-col justify-end">
+        {subtitle && (
+          <p className="text-xs text-slate-500 leading-relaxed">
+            {subtitle}
+          </p>
+        )}
+
+        {/* 4. STATUS/SECONDARY INFORMATION */}
+        {trend && (
+          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center">
+            <span
+              className={cn(
+                "text-[11px] font-semibold leading-tight",
+                trend.isPositive ? "text-emerald-600" : "text-amber-600"
+              )}
+            >
+              {trend.value}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 
   const cardClasses = cn(
-    "rounded-2xl border border-sky-100/90 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.07),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 transition-all duration-200",
+    "rounded-2xl border border-sky-100/90 bg-white p-4.5 sm:p-5 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.07),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 transition-all duration-200 flex flex-col justify-between h-full",
     isClickable
       ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-4px_rgba(14,42,71,0.12),0_4px_8px_-2px_rgba(14,42,71,0.06)] hover:border-sky-300 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
       : "cursor-default",

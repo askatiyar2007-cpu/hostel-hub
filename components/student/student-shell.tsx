@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
+import { getDashboardForRole } from '@/components/dashboard-layout';
 import { OwnerBackground } from '../owner/owner-background';
 import { SidebarBackground } from '../owner/sidebar-background';
 
@@ -139,6 +140,13 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
     if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
       router.push('/auth/setup-password');
+      return;
+    }
+
+    // Role Route Guard: Only student can access /student/*
+    if (profile.role !== 'student') {
+      router.replace(getDashboardForRole(profile.role));
+      return;
     }
   }, [loading, profile, accountCompletionStep, password_set, router, signOut]);
 
@@ -151,6 +159,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   }
 
   if (profile && accountCompletionStep && accountCompletionStep !== 'complete') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (profile && profile.role !== 'student') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />

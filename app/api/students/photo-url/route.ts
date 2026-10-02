@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createClient(request);
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -51,14 +51,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch the student's room request with photo_path and hostel ownership
+    // Fetch the student's room request with photo_path and hostel ownership using service role
     // Include both pending and approved requests to show correct photo for pending requests
-    const { data: roomRequest, error: requestError } = await supabase
+    const { data: roomRequest, error: requestError } = await supabaseServer
       .from('room_requests')
       .select(`
         id,
         photo_path,
         hostel_id,
+        student_id,
         status,
         hostels!inner (
           owner_id
@@ -92,22 +93,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify owner authorization
+    // Authorization verification
     const hostel = roomRequest.hostels as any;
-    if (hostel.owner_id !== user.id) {
-      // Check if user is super admin
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+    let isAuthorized = hostel?.owner_id === user.id;
 
-      if (!profile || profile.role !== 'super_admin') {
-        return NextResponse.json(
-          { error: 'Forbidden: You do not have permission to access this photo' },
-          { status: 403 }
-        );
+    if (!isAuthorized) {
+      // Check if user is super admin or the student themselves
+      const { data: profile } = await supabaseServer
+        .from('profiles')
+        .select('id, role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profile?.role === 'super_admin') {
+        isAuthorized = true;
+      } else if (profile?.role === 'student') {
+        const { data: studentRecord } = await supabaseServer
+          .from('students')
+          .select('id')
+          .eq('profile_id', profile.id)
+          .eq('id', studentId)
+          .maybeSingle();
+
+        if (studentRecord) {
+          isAuthorized = true;
+        }
       }
+    }
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: 'Forbidden: You do not have permission to access this photo' },
+        { status: 403 }
+      );
     }
 
     // Generate signed URL (valid for 1 hour) using service role client

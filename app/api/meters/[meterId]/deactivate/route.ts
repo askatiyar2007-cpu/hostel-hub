@@ -42,8 +42,8 @@ export async function POST(
       );
     }
 
-    // 1. Authenticate the owner using cookie-based client
-    const supabase = createClient();
+    // 1. Authenticate the owner (supports cookies and mobile Bearer JWT)
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

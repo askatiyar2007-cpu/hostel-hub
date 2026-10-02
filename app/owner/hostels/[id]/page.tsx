@@ -114,8 +114,8 @@ export default function HostelDetailsPage() {
         .eq('active', true);
 
       const { data: revData } = await supabase
-        .from('bills')
-        .select('amount')
+        .from('student_fees')
+        .select('amount_due, amount')
         .eq('status', 'paid')
         .eq('hostel_id', id);
 
@@ -125,7 +125,7 @@ export default function HostelDetailsPage() {
         .eq('hostel_id', id)
         .eq('status', 'open');
 
-      const totalRev = revData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+      const totalRev = revData?.reduce((sum, item) => sum + Number(item.amount_due ?? item.amount ?? 0), 0) || 0;
 
       setStats({
         rooms: roomsCount || 0,

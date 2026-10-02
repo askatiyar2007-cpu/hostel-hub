@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient, supabaseServer } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic';
  * reimplementing the completion logic, ensuring the database and client never
  * diverge on what "complete" means.
  */
-export async function GET() {
-  const sessionClient = createClient();
+export async function GET(req: NextRequest) {
+  const sessionClient = createClient(req);
   const { data: { user }, error: userError } = await sessionClient.auth.getUser();
 
   if (userError || !user?.email) {

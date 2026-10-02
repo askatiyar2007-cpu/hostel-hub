@@ -479,7 +479,7 @@ function BulkRoomForm() {
   const currentStep = rooms.length === 0 ? 1 : !commonDetailsApplied ? 2 : Object.keys(errors).length === 0 ? 4 : 3;
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 max-w-6xl mx-auto">
+    <div className="w-full">
       {/* Header */}
       <div className="mb-8">
         <div className="mb-6 p-4 rounded-xl bg-white border border-teal-200 shadow-xs">

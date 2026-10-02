@@ -1,6 +1,7 @@
 // lib/utils/api.ts
 import { supabase } from '@/lib/supabase/client';
-import { Hostel, Room, Bill } from '@/types/database';
+import { Hostel, Room } from '@/types/database';
+import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
 export const hostelAPI = {
   // Get all hostels for a user
@@ -131,11 +132,11 @@ export const studentAPI = {
   },
 };
 
-export const billAPI = {
-  // Get bills for a student
-  async getBillsByStudent(studentId: string) {
+export const feeAPI = {
+  // Get fees for a student
+  async getFeesByStudent(studentId: string) {
     const { data, error } = await supabase
-      .from('bills')
+      .from('student_fees')
       .select('*')
       .eq('student_id', studentId)
       .order('due_date', { ascending: false });
@@ -144,39 +145,16 @@ export const billAPI = {
     return data;
   },
 
-  // Get pending bills
-  async getPendingBills(hostelId: string) {
+  // Get pending fees for a hostel
+  async getPendingFees(hostelId: string) {
     const { data, error } = await supabase
-      .from('bills')
+      .from('student_fees')
       .select('*')
       .eq('hostel_id', hostelId)
       .eq('status', 'pending');
     
     if (error) throw error;
     return data;
-  },
-
-  // Create bill
-  async createBill(bill: Partial<Bill>) {
-    const { data, error } = await supabase
-      .from('bills')
-      .insert([bill])
-      .select();
-    
-    if (error) throw error;
-    return data[0];
-  },
-
-  // Update bill status
-  async updateBillStatus(billId: string, status: string) {
-    const { data, error } = await supabase
-      .from('bills')
-      .update({ status, paid_date: new Date().toISOString() })
-      .eq('id', billId)
-      .select();
-    
-    if (error) throw error;
-    return data[0];
   },
 };
 
@@ -298,30 +276,35 @@ export const complaintAPI = {
 export const analyticsAPI = {
   // Get hostel analytics
   async getHostelAnalytics(hostelId: string) {
-    // Get total students
-    const { data: students } = await supabase
+    // Get total active allocations with room_id and booking_type
+    const { data: allocations } = await supabase
       .from('room_allocations')
-      .select('id')
+      .select('id, room_id, booking_type, active')
       .eq('hostel_id', hostelId)
       .eq('active', true);
 
-    // Get revenue
-    const { data: bills } = await supabase
-      .from('bills')
-      .select('amount')
+    // Get revenue from student_fees
+    const { data: fees } = await supabase
+      .from('student_fees')
+      .select('amount, amount_due')
       .eq('hostel_id', hostelId)
       .eq('status', 'paid');
 
-    // Get rooms
+    // Get rooms with capacity
     const { data: rooms } = await supabase
       .from('rooms')
-      .select('id')
+      .select('id, capacity')
       .eq('hostel_id', hostelId);
 
+    const { occupancyPercentage } = calculateHostelOccupancy(
+      rooms || [],
+      allocations || []
+    );
+
     return {
-      totalStudents: students?.length || 0,
-      totalRevenue: bills?.reduce((sum, bill) => sum + (bill.amount || 0), 0) || 0,
-      occupancyRate: rooms?.length ? Math.round(((students?.length || 0) / rooms.length) * 100) : 0,
+      totalStudents: allocations?.length || 0,
+      totalRevenue: fees?.reduce((sum, fee) => sum + Number(fee.amount_due ?? fee.amount ?? 0), 0) || 0,
+      occupancyRate: occupancyPercentage,
     };
   },
 };

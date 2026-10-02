@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
     const { otp, hostelId, roomId, bookingType, details, photoPath } = await req.json();
     console.log('[ROOM VERIFY OTP] Request body validated:', { hostelId, roomId, bookingType, hasPhoto: !!photoPath });
 
-    // Use SSR client for authentication check only
-    const authClient = createClient();
+    // Use client for authentication check (supports cookies and mobile Bearer JWT)
+    const authClient = createClient(req);
     const { data: { user }, error: authError } = await authClient.auth.getUser();
     console.log('[ROOM VERIFY OTP] Auth check completed:', { hasUser: !!user, authError: authError?.message });
 

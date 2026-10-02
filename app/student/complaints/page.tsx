@@ -34,20 +34,22 @@ const CATEGORY_ICON: Record<string, any> = {
 };
 
 export default function StudentComplaintsPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', category: 'other' });
 
   const fetchComplaints = useCallback(async () => {
     try {
-      if (!profile?.user_id) return;
+      const userId = user?.id || profile?.user_id;
+      if (!userId) return;
 
       const { data, error } = await supabase
         .from('complaints')
         .select('*')
-        .eq('student_id', profile.user_id)
+        .eq('student_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -57,7 +59,7 @@ export default function StudentComplaintsPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.user_id]);
+  }, [user?.id, profile?.user_id]);
 
   useEffect(() => {
     fetchComplaints();
@@ -65,26 +67,63 @@ export default function StudentComplaintsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.user_id) return;
+    const userId = user?.id || profile?.user_id;
+    if (!userId || !profile?.id) {
+      toast.error('User profile not loaded');
+      return;
+    }
 
+    setSubmitting(true);
     try {
-      const { error } = await supabase.from('complaints').insert({
-        student_id: profile.user_id,
-        title: form.title,
-        description: form.description,
+      // 1. Resolve student record
+      const { data: studentRecord, error: studentError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+
+      if (studentError) throw studentError;
+      if (!studentRecord?.id) {
+        toast.error('No student record found. You must have a registered student profile to file a complaint.');
+        return;
+      }
+
+      // 2. Resolve active room allocation to get hostel_id
+      const { data: allocation, error: allocError } = await supabase
+        .from('room_allocations')
+        .select('hostel_id')
+        .eq('student_id', studentRecord.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      if (allocError) throw allocError;
+      if (!allocation?.hostel_id) {
+        toast.error('No active room allocation found. You must be assigned to a hostel to file a complaint.');
+        return;
+      }
+
+      // 3. Insert complaint with active hostel_id and status 'open'
+      const { error: insertError } = await supabase.from('complaints').insert({
+        hostel_id: allocation.hostel_id,
+        student_id: userId,
+        title: form.title.trim(),
+        description: form.description.trim(),
         category: form.category as any,
-        status: 'pending',
+        status: 'open',
         priority: 2
       });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+
       toast.success('Complaint submitted successfully');
       setDialogOpen(false);
       setForm({ title: '', description: '', category: 'other' });
       fetchComplaints();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting complaint:', error);
-      toast.error('Failed to submit complaint');
+      toast.error(error.message || 'Failed to submit complaint');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -92,6 +131,9 @@ export default function StudentComplaintsPage() {
     switch (status) {
       case 'resolved': return { color: 'bg-green-100 text-green-700', label: 'Resolved' };
       case 'in_progress': return { color: 'bg-blue-100 text-blue-700', label: 'In Progress' };
+      case 'assigned': return { color: 'bg-purple-100 text-purple-700', label: 'Assigned' };
+      case 'open': return { color: 'bg-amber-100 text-amber-700', label: 'Open' };
+      case 'closed': return { color: 'bg-slate-100 text-slate-700', label: 'Closed' };
       case 'pending': return { color: 'bg-amber-100 text-amber-700', label: 'Pending' };
       default: return { color: 'bg-slate-100 text-slate-700', label: status };
     }
@@ -168,8 +210,8 @@ export default function StudentComplaintsPage() {
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="rounded-xl">
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">
-                  Submit
+                <Button type="submit" disabled={submitting} className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">
+                  {submitting ? 'Submitting...' : 'Submit'}
                 </Button>
               </div>
             </form>

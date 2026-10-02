@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone, Building2, Clock, Eye } from 'lucide-react';
+import { Mail, Phone, Building2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ActionButton {
@@ -32,10 +32,6 @@ interface RequestCardProps {
   rent?: string | number;
   // Request Info section
   createdAt?: string;
-  occupancy?: number;
-  capacity?: number;
-  freeSlots?: number;
-  emergencyContact?: string;
   // Status badge
   statusLabel: string;
   statusColorClass: string; // e.g. 'bg-amber-100 text-amber-800'
@@ -55,144 +51,134 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   bookingType,
   rent,
   createdAt,
-  occupancy,
-  capacity,
-  freeSlots,
-  emergencyContact,
   statusLabel,
   statusColorClass,
   financialRows,
   actions,
 }) => {
-  const freeSlotLabel = freeSlots && freeSlots > 0 ? `${freeSlots} free` : 'Full';
-  const freeSlotColor = freeSlots && freeSlots > 0 ? 'text-emerald-600' : 'text-rose-600';
-
   return (
-    <Card className="w-full bg-white border border-teal-200/80 hover:border-teal-300 shadow-sm rounded-xl p-4 transition-all">
-      {/* Summary Strip */}
-      <div className="flex flex-col md:flex-row md:items-center md:gap-4">
-        {/* Student */}
-        <div className="flex items-center gap-2 min-w-0 md:w-1/5">
+    <Card className="w-full bg-white border border-slate-200/90 hover:border-sky-300 shadow-xs hover:shadow-md rounded-2xl p-5 transition-all">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6">
+        
+        {/* Primary: Student Identity & Status */}
+        <div className="flex items-center gap-4 min-w-0 flex-1 w-full border-b xl:border-b-0 xl:border-r border-slate-100 pb-4 xl:pb-0 xl:pr-6">
           {studentPhotoUrl ? (
-            <div className="relative group shrink-0">
-              <img
-                src={studentPhotoUrl}
-                alt="Student passport photo"
-                className="h-10 w-10 rounded-xl object-cover border border-teal-200 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all"
-              />
-              <div
-                className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
-                onClick={() => {}}
-              >
-                <Eye size={14} />
-              </div>
-            </div>
+            <img src={studentPhotoUrl} alt="Student" className="h-14 w-14 rounded-full object-cover border-2 border-slate-100 shadow-xs shrink-0" />
           ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 font-bold border border-teal-100">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-fuchsia-50 text-violet-700 font-bold text-lg border border-violet-100 shadow-xs">
               {studentName.charAt(0)}
             </div>
           )}
           <div className="flex flex-col min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate" title={studentName}>
+            <h3 className="font-bold text-slate-900 text-lg truncate mb-1" title={studentName}>
               {studentName}
             </h3>
-            <div className="flex items-center text-xs text-gray-500 space-x-1 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-gray-400" />
-              <span className="truncate">{studentEmail}</span>
-            </div>
-            {studentPhone && studentPhone !== '-' && (
-              <div className="flex items-center text-xs text-gray-500 space-x-1 truncate mt-0.5">
-                <Phone size={12} className="shrink-0 text-gray-400" />
-                <span>{studentPhone}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Hostel / Room */}
-        <div className="flex flex-col min-w-0 md:w-1/5">
-          <div className="flex items-center text-sm font-medium text-gray-900">
-            <Building2 size={14} className="text-teal-600 shrink-0 mr-1" />
-            <span className="truncate" title={hostelName}>{hostelName}</span>
-          </div>
-          <div className="flex items-center text-xs text-gray-500 space-x-1 mt-1">
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-xs font-semibold">
-              Room {roomNumber}
+            <span className={cn('inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-2xs', statusColorClass)}>
+              <Clock size={12} className="mr-1.5" /> {statusLabel}
             </span>
-            {bookingType && <span className="text-xs text-gray-500">{bookingType}</span>}
           </div>
-          {rent && (
-            <div className="text-xs font-medium text-gray-600 mt-1">
-              ₹{Number(rent).toLocaleString()}/mo
-            </div>
-          )}
         </div>
 
-        {/* Request Information */}
-        <div className="flex flex-col min-w-0 md:w-2/5 text-sm text-gray-600 space-y-1">
-          {createdAt && (
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <Clock size={12} className="text-gray-400 shrink-0" />
-              <span>{new Date(createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+        {/* Data Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-[2.5] w-full">
+          
+          {/* Contact */}
+          <div className="flex flex-col min-w-0">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Contact</p>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-700 truncate flex items-center gap-1.5" title={studentEmail}>
+                <Mail size={13} className="text-slate-400 shrink-0" />
+                <span className="truncate">{studentEmail}</span>
+              </p>
+              {studentPhone && studentPhone !== '-' && (
+                <p className="text-sm font-medium text-slate-500 truncate flex items-center gap-1.5" title={studentPhone}>
+                  <Phone size={13} className="text-slate-400 shrink-0" />
+                  <span>{studentPhone}</span>
+                </p>
+              )}
             </div>
-          )}
-          {occupancy !== undefined && capacity !== undefined && (
-            <div>
-              <span className="text-gray-500">Occupancy: </span>
-              <span className="font-semibold text-gray-800">{occupancy}/{capacity}</span>
-              <span className={`ml-1 font-medium ${freeSlotColor}`}>({freeSlotLabel})</span>
+          </div>
+
+          {/* Residence */}
+          <div className="flex flex-col min-w-0">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Accommodation</p>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-900 truncate flex items-center gap-1.5" title={hostelName}>
+                <Building2 size={13} className="text-teal-600 shrink-0" />
+                <span className="truncate">{hostelName}</span>
+              </p>
+              <p className="text-sm font-semibold text-blue-600 truncate flex items-center gap-1.5">
+                <span>Room {roomNumber}</span>
+                {bookingType && <span className="text-slate-400 font-medium ml-1">({bookingType})</span>}
+              </p>
+              {createdAt && (
+                <p className="text-xs font-medium text-slate-500">
+                  Req: {new Date(createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                </p>
+              )}
             </div>
-          )}
-          {emergencyContact && emergencyContact !== 'N/A' && (
-            <div className="text-xs text-gray-500 truncate" title={emergencyContact}>Emg: {emergencyContact}</div>
-          )}
+          </div>
+
+          {/* Financial summary inline if provided */}
+          <div className="flex flex-col min-w-0">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Financial</p>
+            <div className="space-y-1">
+              {rent && (
+                <p className="text-sm font-bold text-emerald-700">
+                  ₹{Number(rent).toLocaleString()}/mo
+                </p>
+              )}
+              {financialRows?.map((row, idx) => (
+                <div key={idx} className="flex flex-wrap items-center gap-1 text-xs">
+                  <span className="text-slate-500">{row.label}:</span>
+                  <span className="font-semibold text-slate-900">{row.amount}</span>
+                  <span className={cn(
+                    "ml-1 text-[10px] font-bold uppercase tracking-wider",
+                    row.status === 'paid' ? "text-emerald-600" :
+                    row.status === 'overdue' ? "text-rose-600" : "text-amber-600"
+                  )}>
+                    ({row.status})
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
-        {/* Status */}
-        <div className="flex items-center md:justify-center md:w-1/5">
-          <span className={cn('inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold', statusColorClass)}>
-            <Clock size={12} /> {statusLabel}
-          </span>
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2 mt-2 md:mt-0 md:w-1/5 md:justify-end">
+        {/* Actions Grid */}
+        <div className="flex flex-wrap sm:flex-col gap-2 shrink-0 w-full sm:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 xl:border-l border-slate-100 xl:pl-6">
           {actions.map((action, idx) => (
             <Button
               key={idx}
               onClick={action.onClick}
               variant={action.variant as any}
               size="sm"
-              className={cn('h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5', action.className)}
+              className={cn(
+                'flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium shadow-xs', 
+                action.className,
+                !action.variant && 'bg-teal-600 hover:bg-teal-700 text-white' // default solid
+              )}
             >
               {action.icon}
               {action.label}
             </Button>
           ))}
-        </div>
-      </div>
-
-      {/* Financial (optional) */}
-      {financialRows && financialRows.length > 0 && (
-        <div className="mt-3 border-t pt-2">
-          {financialRows.map((row, idx) => (
-            <div key={idx} className="flex items-center justify-between py-1 text-sm">
-              <span className="font-medium text-gray-700">{row.label}</span>
-              <span className="font-semibold text-gray-900">{row.amount}</span>
-              {row.status === 'pending' && row.onMarkPaid && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-7 px-2 bg-teal-100 hover:bg-teal-200 text-teal-800"
-                  onClick={row.onMarkPaid}
-                >
-                  Mark Paid
-                </Button>
-              )}
-            </div>
+          {/* Also expose the Mark Paid buttons from financialRows as primary actions if needed */}
+          {financialRows?.filter(r => r.status === 'pending' && r.onMarkPaid).map((row, idx) => (
+            <Button
+              key={`pay-${idx}`}
+              onClick={row.onMarkPaid}
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium border-teal-200 text-teal-700 hover:bg-teal-50 shadow-xs"
+            >
+              Mark {row.label} Paid
+            </Button>
           ))}
         </div>
-      )}
+
+      </div>
     </Card>
   );
 };

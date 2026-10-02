@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 const selectableRoles = new Set(['student', 'owner']);
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const sessionClient = createClient();
+  const sessionClient = createClient(request);
   const { data: { user }, error: userError } = await sessionClient.auth.getUser();
 
   if (userError || !user) {

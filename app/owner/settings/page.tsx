@@ -271,7 +271,7 @@ export default function OwnerSettingsPage() {
   const ownerEmail = profile?.email || user?.email || 'owner@hostelhub.in';
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 lg:p-10 max-w-6xl mx-auto space-y-8 min-w-0">
+    <div className="w-full max-w-6xl mx-auto space-y-8 min-w-0">
       {/* ========================================================================= */}
       {/* 1. Page Title & Subtitle                                                  */}
       {/* ========================================================================= */}

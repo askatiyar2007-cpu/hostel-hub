@@ -33,6 +33,8 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import { MarkDepositPaidModal, MarkFeePaidModal, PaymentHistoryModal } from './payment-modals';
+import { PageHeader } from "@/components/owner/page-header";
+import { calculateRoomOccupancy } from '@/lib/utils/occupancy';
 
 type TabType = 'pending' | 'approved' | 'rejected';
 
@@ -83,7 +85,7 @@ export default function OwnerRequestsPage() {
             occupied_count,
             occupied_beds,
             rent,
-            room_allocations(id, active)
+            room_allocations(id, active, booking_type)
           ),
           hostels!inner(
             id,
@@ -196,7 +198,7 @@ export default function OwnerRequestsPage() {
           student_name,
           student_email,
           student_phone,
-          rooms!inner(id, room_number, capacity, occupancy, occupied_count, rent, room_allocations(id, active)),
+          rooms!inner(id, room_number, capacity, occupancy, occupied_count, rent, room_allocations(id, active, booking_type)),
           hostels!inner(id, name, owner_id)
         `)
         .eq('hostels.owner_id', user!.id)
@@ -510,7 +512,7 @@ export default function OwnerRequestsPage() {
   // 6. Mutation: Check Out Student
   const checkoutMutation = useMutation({
     mutationFn: async (allocId: string) => {
-      const { error } = await supabase.rpc('checkout_student', { p_alloc_id: allocId });
+      const { error } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocId });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -644,16 +646,11 @@ export default function OwnerRequestsPage() {
   if (isRequestsLoading || isAllocationsLoading || approveMutation.isPending || checkoutMutation.isPending || rejectMutation.isPending || rereviewMutation.isPending || deleteMutation.isPending) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-              Owner
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Room Requests & Allocations</h1>
-          <p className="text-sm text-slate-500">Processing database updates...</p>
-        </div>
+        <PageHeader 
+          label="Owner"
+          title="Room Requests & Allocations"
+          description="Processing database updates..."
+        />
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
@@ -681,16 +678,11 @@ export default function OwnerRequestsPage() {
     console.error(`[${timestamp}] [OwnerRequestsPage] Render error state:`, allocationsError);
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-              Owner
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Room Requests & Allocations</h1>
-          <p className="text-sm text-slate-500">Error loading data</p>
-        </div>
+        <PageHeader 
+          label="Owner"
+          title="Room Requests & Allocations"
+          description="Error loading data"
+        />
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-red-500 max-w-md text-center">
             <AlertTriangle size={40} className="text-red-500" />
@@ -708,16 +700,11 @@ export default function OwnerRequestsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-            Owner
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Room Requests</h1>
-        <p className="text-sm text-slate-500">Review and manage student room requests, approve allocations, and track resident onboarding.</p>
-      </div>
+      <PageHeader 
+        label="Owner"
+        title="Room Requests"
+        description="Review and manage student room requests, approve allocations, and track resident onboarding."
+      />
 
       <div className="w-full max-w-[1150px] mx-auto">
         {/* 1. Tab Navigation */}
@@ -1099,8 +1086,10 @@ function PendingRequestCard({
   
   const room = req.rooms;
   const capacity = room?.capacity ?? 0;
-  const occupancy = room?.room_allocations?.filter((a: any) => a.active === true).length ?? 0;
-  const freeSlots = capacity - occupancy;
+  const { occupied: occupancy, availableBeds: freeSlots } = calculateRoomOccupancy(
+    capacity,
+    room?.room_allocations
+  );
 
   return (
     <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-sm rounded-xl p-5 lg:p-5 transition-all">

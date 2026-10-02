@@ -176,7 +176,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       if (!allocation) return;
-      const { error } = await supabase.rpc('checkout_student', { p_alloc_id: allocation.id });
+      const { error } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocation.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -208,11 +208,20 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
     },
   });
 
-  const { data: bills } = useQuery({
-    queryKey: ["student-bills", studentId],
-    enabled: !!studentId,
+  const { data: studentFees } = useQuery({
+    queryKey: ["student-fees", studentId, allocation?.id],
+    enabled: !!studentId && !!allocation?.id,
     queryFn: async () => {
-      const { data } = await supabase.from("bills").select("*").eq("student_id", studentId).order("due_date", { ascending: false });
+      const { data, error } = await supabase
+        .from("student_fees")
+        .select("*")
+        .eq("student_id", studentId)
+        .eq("allocation_id", allocation.id)
+        .order("due_date", { ascending: false });
+      if (error) {
+        console.error("[Dashboard] Error fetching student fees:", error);
+        return [];
+      }
       return data ?? [];
     },
   });
@@ -235,13 +244,33 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
     },
   });
 
-  const depositBill = (bills ?? []).find((b: any) => b.bill_type === 'deposit');
-  const depositStatus = depositBill ? (depositBill.status === 'paid' ? 'Paid' : 'Pending') : 'Pending';
+  // Use actual deposit_status from room_allocations
+  const isDepositPaid = allocation?.deposit_status === 'paid';
+  const depositStatus = isDepositPaid ? 'Paid' : 'Pending';
 
-  const rentBill = (bills ?? []).find((b: any) => b.bill_type === 'rent');
-  const monthlyRentStatus = rentBill ? (rentBill.status === 'paid' ? 'Paid' : 'Pending') : 'Pending';
+  // Find current month's fee, or the earliest unpaid, or most recent
+  const now = new Date();
+  const currentMonthFee = (studentFees ?? []).find((f: any) => {
+    if (!f.due_date) return false;
+    const d = new Date(f.due_date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }) || (studentFees ?? []).find((f: any) => f.status !== 'paid') || (studentFees ?? [])[0];
 
-  const pendingBills = (bills ?? []).filter((b: any) => b.status !== 'paid');
+  const currentRentAmount = currentMonthFee
+    ? Number(currentMonthFee.amount_due ?? currentMonthFee.amount ?? room?.rent ?? 0)
+    : Number(room?.rent ?? 0);
+
+  const monthlyRentStatus = currentMonthFee
+    ? currentMonthFee.status === 'paid'
+      ? 'Paid'
+      : currentMonthFee.status === 'pending_verification'
+      ? 'Pending Verification'
+      : currentMonthFee.status === 'overdue'
+      ? 'Overdue'
+      : 'Pending'
+    : 'Pending';
+
+  const pendingFees = (studentFees ?? []).filter((f: any) => f.status === 'pending' || f.status === 'overdue' || f.status === 'pending_verification');
   const unpaidComplaints = (complaints ?? []).filter((c: any) => c.status !== 'resolved');
 
   return (
@@ -358,7 +387,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
               </div>
               <div>
                 <p className="text-xs text-slate-500">Monthly Rent</p>
-                <p className="font-semibold text-slate-900 text-sm">₹{Number(room?.rent ?? 0).toLocaleString()}</p>
+                <p className="font-semibold text-slate-900 text-sm">₹{currentRentAmount.toLocaleString()}</p>
               </div>
             </div>
             <p className={cn("text-xs font-medium", monthlyRentStatus === 'Paid' ? 'text-green-600' : 'text-amber-600')}>
@@ -471,7 +500,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
                 <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
                   <p className="text-xs text-slate-500">Monthly Fees</p>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900 text-sm">₹{Number(room?.rent ?? 0).toLocaleString()}</span>
+                    <span className="font-semibold text-slate-900 text-sm">₹{currentRentAmount.toLocaleString()}</span>
                     <span className={cn("text-xs font-semibold px-2 py-1 rounded-full", 
                       monthlyRentStatus === 'Paid'
                         ? 'bg-green-100 text-green-700'
@@ -549,7 +578,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
                 </div>
                 <div>
                   <p className="font-semibold text-slate-900 text-sm">Pay Bill</p>
-                  <p className="text-xs text-slate-500">{pendingBills.length} pending</p>
+                  <p className="text-xs text-slate-500">{pendingFees.length} pending</p>
                 </div>
               </div>
             </CardContent>
@@ -612,28 +641,29 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-amber-600" />
-                <h3 className="font-semibold text-slate-900">Recent Bills</h3>
+                <h3 className="font-semibold text-slate-900">Recent Fees</h3>
               </div>
               <Link href="/student/bills" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
                 View all →
               </Link>
             </div>
-            {bills && bills.length > 0 ? (
+            {studentFees && studentFees.length > 0 ? (
               <div className="space-y-3">
-                {bills.slice(0, 5).map((b: any) => (
-                  <div key={b.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                {studentFees.slice(0, 5).map((f: any) => (
+                  <div key={f.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div>
-                      <p className="font-medium text-slate-900 capitalize text-sm">{b.bill_type}</p>
-                      <p className="text-xs text-slate-500">Due {new Date(b.due_date).toLocaleDateString()}</p>
+                      <p className="font-medium text-slate-900 capitalize text-sm">{f.month_year ? `Rent (${f.month_year})` : 'Monthly Rent'}</p>
+                      <p className="text-xs text-slate-500">Due {new Date(f.due_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-slate-900">₹{Number(b.amount).toLocaleString()}</p>
-                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", 
-                        b.status === 'paid' ? 'bg-green-100 text-green-700' : 
-                        b.status === 'overdue' ? 'bg-rose-100 text-rose-700' : 
+                      <p className="font-semibold text-slate-900">₹{Number(f.amount_due ?? f.amount ?? 0).toLocaleString()}</p>
+                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full capitalize", 
+                        f.status === 'paid' ? 'bg-green-100 text-green-700' : 
+                        f.status === 'overdue' ? 'bg-rose-100 text-rose-700' : 
+                        f.status === 'pending_verification' ? 'bg-blue-100 text-blue-700' :
                         'bg-amber-100 text-amber-700'
                       )}>
-                        {b.status}
+                        {f.status.replace('_', ' ')}
                       </span>
                     </div>
                   </div>
@@ -642,7 +672,7 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
             ) : (
               <div className="text-center py-8">
                 <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm text-slate-500">No bills yet</p>
+                <p className="text-sm text-slate-500">No fee records yet</p>
               </div>
             )}
           </CardContent>

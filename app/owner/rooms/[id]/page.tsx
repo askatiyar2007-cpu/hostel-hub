@@ -10,9 +10,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { calculateRoomOccupancy } from '@/lib/utils/occupancy';
 
 export default function ViewRoomPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const router = useRouter();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -35,13 +36,14 @@ export default function ViewRoomPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!id || !profile?.id) return;
+      const ownerId = user?.id || profile?.user_id;
+      if (!id || !ownerId) return;
 
       // Fetch hostels for dropdown
       const { data: hostelsData } = await supabase
         .from('hostels')
         .select('id, name')
-        .eq('owner_id', profile.id);
+        .eq('owner_id', ownerId);
       
       setHostels(hostelsData || []);
 
@@ -74,7 +76,7 @@ export default function ViewRoomPage() {
       // Fetch allocations for residents
       const { data: allocationsData } = await supabase
         .from('room_allocations')
-        .select('student_id, student_name, start_date')
+        .select('student_id, student_name, start_date, booking_type')
         .eq('room_id', id)
         .eq('active', true);
       
@@ -83,7 +85,7 @@ export default function ViewRoomPage() {
     }
 
     fetchData();
-  }, [id, profile, router]);
+  }, [id, user?.id, profile?.user_id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +149,7 @@ export default function ViewRoomPage() {
     );
   }
 
-  const occupiedCount = allocations.length;
+  const { occupied: occupiedCount } = calculateRoomOccupancy(roomData?.capacity || 1, allocations);
 
   return (
     <div className="p-6 md:p-8 lg:p-10 max-w-5xl mx-auto">

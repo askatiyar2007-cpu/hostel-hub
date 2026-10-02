@@ -11,12 +11,47 @@ import {
   AlertCircle,
   CheckCircle2,
   Building2,
-  IndianRupee
+  IndianRupee,
+  Copy,
+  Upload,
+  FileText,
+  X,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+
+function formatBillingMonth(monthYear?: string, dueDate?: string): string {
+  if (monthYear) {
+    const parts = monthYear.split('-');
+    if (parts.length === 2) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      if (!isNaN(year) && !isNaN(month)) {
+        const d = new Date(year, month - 1, 1);
+        return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      }
+    }
+    return monthYear;
+  }
+  if (dueDate) {
+    return new Date(dueDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  }
+  return 'Monthly Fee';
+}
 
 export default function StudentBillsPage() {
   const { profile } = useAuth();
@@ -26,13 +61,22 @@ export default function StudentBillsPage() {
   const [feesData, setFeesData] = useState<any>({ fees: [], total_due: 0, total_paid: 0, total_overdue: 0 });
   const [loading, setLoading] = useState(true);
 
+  // Offline Payment Submission State
+  const [selectedFeeForPayment, setSelectedFeeForPayment] = useState<any>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<'upi' | 'bank' | 'cash'>('upi');
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+
   const fetchData = useCallback(async () => {
     if (!profile?.id) return;
     setLoading(true);
     try {
       const { data: student, error: studentError } = await supabase
         .from('students')
-        .select('id')
+        .select('id, profile_id')
         .eq('profile_id', profile.id)
         .maybeSingle();
 
@@ -52,6 +96,7 @@ export default function StudentBillsPage() {
           hostel_id,
           active,
           start_date,
+          deposit_status,
           rooms(
             id,
             room_number,
@@ -72,13 +117,13 @@ export default function StudentBillsPage() {
       if (alloc) {
         const { data: depositPayments } = await supabase
           .from('payments')
-          .select('id, payment_status')
+          .select('id, payment_status, status')
           .eq('student_id', student.id)
           .is('student_fees_id', null)
-          .eq('payment_status', 'completed')
           .limit(1);
 
-        const hasPaidDeposit = depositPayments && depositPayments.length > 0;
+        const hasPaidDeposit = (alloc as any).deposit_status === 'paid' || 
+          (depositPayments && depositPayments.some((p: any) => p.payment_status === 'completed' || p.status === 'completed'));
         const allocationWithDeposit = {
           ...alloc,
           deposit_status: hasPaidDeposit ? 'paid' : 'pending'
@@ -87,12 +132,17 @@ export default function StudentBillsPage() {
 
         const hostelData = alloc.hostels as any;
         const ownerId = Array.isArray(hostelData) ? hostelData[0]?.owner_id : hostelData?.owner_id;
-        const { data: methods, error: methodsError } = await supabase
+        let methodsQuery = supabase
           .from('payment_methods')
           .select('*')
-          .eq('owner_id', ownerId)
-          .eq('is_active', true)
-          .order('is_primary', { ascending: false });
+          .eq('hostel_id', alloc.hostel_id)
+          .eq('is_active', true);
+
+        if (ownerId) {
+          methodsQuery = methodsQuery.eq('owner_id', ownerId);
+        }
+
+        const { data: methods, error: methodsError } = await methodsQuery.order('is_primary', { ascending: false });
 
         if (methodsError) throw methodsError;
         setPaymentMethods(methods ?? []);
@@ -104,10 +154,13 @@ export default function StudentBillsPage() {
             payments (
               id,
               amount_paid,
+              amount,
               payment_method,
               reference_number,
               payment_status,
+              status,
               paid_date,
+              paid_at,
               notes
             )
           `)
@@ -119,14 +172,17 @@ export default function StudentBillsPage() {
 
         const formattedFees = (fees ?? []).map((fee: any) => {
           const payment = fee.payments && fee.payments.length > 0
-            ? fee.payments.find((p: any) => p.payment_status === 'completed' || p.payment_status === 'pending_verification') || fee.payments[0]
+            ? fee.payments.find((p: any) => p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification') || fee.payments[0]
             : null;
+          const feeAmount = Number(fee.amount_due ?? fee.amount ?? 0);
           return {
             ...fee,
+            amount: feeAmount,
+            month_year: fee.month_year,
             reference_number: payment?.reference_number,
-            payment_method: payment?.payment_method,
-            paid_date: payment?.paid_date,
-            payment_status: payment?.payment_status
+            payment_method: payment?.payment_method || fee.payment_method,
+            paid_date: payment?.paid_date || payment?.paid_at || fee.paid_date,
+            payment_status: payment?.payment_status || payment?.status || fee.status
           };
         });
 
@@ -170,8 +226,19 @@ export default function StudentBillsPage() {
     if (!feesData.fees || feesData.fees.length === 0) return null;
     const now = new Date();
     const currentMonthFee = feesData.fees.find((f: any) => {
-      const d = new Date(f.due_date);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (f.month_year) {
+        const parts = f.month_year.split('-');
+        if (parts.length === 2) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          if (y === now.getFullYear() && m === (now.getMonth() + 1)) return true;
+        }
+      }
+      if (f.due_date) {
+        const d = new Date(f.due_date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      return false;
     });
     if (currentMonthFee) return currentMonthFee;
 
@@ -203,6 +270,134 @@ export default function StudentBillsPage() {
       return { text: 'Due Today', className: 'bg-teal-100 text-teal-800 font-bold' };
     } else {
       return { text: `Overdue by ${Math.abs(diffDays)} days`, className: 'bg-rose-100 text-rose-800 font-bold' };
+    }
+  };
+
+  const openPaymentModal = (fee: any) => {
+    if (fee.status === 'paid') {
+      toast.info('This fee is already marked as paid.');
+      return;
+    }
+    if (fee.status === 'pending_verification') {
+      toast.info('Payment proof has already been submitted and is pending verification.');
+      return;
+    }
+    setSelectedFeeForPayment(fee);
+    setPaymentMode('upi');
+    setReferenceNumber('');
+    setPaymentNotes('');
+    setReceiptFile(null);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleSubmitPaymentProof = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFeeForPayment) return;
+
+    if (selectedFeeForPayment.status === 'paid') {
+      toast.error('This fee is already marked as paid.');
+      return;
+    }
+    if (selectedFeeForPayment.status === 'pending_verification') {
+      toast.error('Payment proof is already pending verification for this fee.');
+      return;
+    }
+
+    // Authenticated student ownership validation
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('You must be signed in to submit payment proof.');
+      return;
+    }
+
+    if (!studentRecord?.id || selectedFeeForPayment.student_id !== studentRecord.id) {
+      toast.error('Unauthorized: You can only submit payment proof for your own fees.');
+      return;
+    }
+
+    const trimmedRef = referenceNumber.trim();
+    if (paymentMode !== 'cash' && (!trimmedRef || trimmedRef.length < 4)) {
+      toast.error(`Please provide a valid reference / UTR number for ${paymentMode.toUpperCase()} payment (at least 4 characters).`);
+      return;
+    }
+
+    if (receiptFile) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!validTypes.includes(receiptFile.type)) {
+        toast.error('Invalid file format. Allowed formats: JPG, PNG, WEBP, PDF.');
+        return;
+      }
+      if (receiptFile.size > 5 * 1024 * 1024) {
+        toast.error('Receipt file size must be less than 5MB.');
+        return;
+      }
+    }
+
+    setIsSubmittingPayment(true);
+    try {
+      let proofUrl: string | null = null;
+
+      if (receiptFile) {
+        const fileExt = receiptFile.name.split('.').pop()?.toLowerCase() || 'png';
+        const cleanFileName = `${studentRecord.id}/${selectedFeeForPayment.id}_${Date.now()}.${fileExt}`;
+        const filePath = `receipts/${cleanFileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('payments')
+          .upload(filePath, receiptFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          throw new Error(`Receipt upload failed: ${uploadError.message}`);
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('payments')
+          .getPublicUrl(filePath);
+
+        proofUrl = urlData.publicUrl;
+      }
+
+      const formattedRef = trimmedRef
+        ? `[${paymentMode.toUpperCase()}] ${trimmedRef}`
+        : `[${paymentMode.toUpperCase()}] Offline Payment`;
+
+      // Call authoritative record_student_payment RPC
+      const { error: rpcError } = await supabase.rpc('record_student_payment', {
+        p_student_fees_id: selectedFeeForPayment.id,
+        p_reference_number: formattedRef,
+        p_proof_url: proofUrl
+      });
+
+      if (rpcError) throw rpcError;
+
+      // Dual-compatibility sync on payments table
+      await supabase
+        .from('payments')
+        .update({
+          student_fees_id: selectedFeeForPayment.id,
+          amount_paid: selectedFeeForPayment.amount,
+          payment_method: paymentMode,
+          payment_status: 'pending_verification',
+          notes: paymentNotes.trim() || null
+        })
+        .eq('fee_id', selectedFeeForPayment.id)
+        .eq('status', 'pending_verification');
+
+      toast.success('Payment proof submitted successfully! Awaiting owner verification.');
+      setIsPaymentModalOpen(false);
+      setSelectedFeeForPayment(null);
+      setReferenceNumber('');
+      setPaymentNotes('');
+      setReceiptFile(null);
+      await fetchData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to submit payment proof');
+    } finally {
+      setIsSubmittingPayment(false);
     }
   };
 
@@ -303,7 +498,7 @@ export default function StudentBillsPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      {summaryFee.billing_period}
+                      {formatBillingMonth(summaryFee.month_year, summaryFee.due_date)}
                     </p>
                     <div className="flex items-baseline gap-2">
                       <h2 className="text-3xl font-bold text-slate-900">
@@ -326,10 +521,25 @@ export default function StudentBillsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <span className={cn("px-3 py-1.5 rounded-full text-xs font-semibold", getDaysRemainingBadge(summaryFee).className)}>
                       {getDaysRemainingBadge(summaryFee).text}
                     </span>
+                    {(summaryFee.status === 'pending' || summaryFee.status === 'overdue') && (
+                      <Button
+                        onClick={() => openPaymentModal(summaryFee)}
+                        className="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1.5 h-8 shadow-sm"
+                      >
+                        <CreditCard size={14} />
+                        Submit Payment Proof
+                      </Button>
+                    )}
+                    {summaryFee.status === 'pending_verification' && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                        <Clock size={14} />
+                        Awaiting Verification
+                      </span>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -361,7 +571,7 @@ export default function StudentBillsPage() {
                               <Calendar className="h-5 w-5" />
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-900">{fee.billing_period}</p>
+                              <p className="font-semibold text-slate-900">{formatBillingMonth(fee.month_year, fee.due_date)}</p>
                               <p className="text-xs text-slate-500">Due: {new Date(fee.due_date).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -392,11 +602,28 @@ export default function StudentBillsPage() {
                               </span>
                             )}
                           </div>
-                          {fee.status === 'paid' && (
-                            <span className="text-green-600 font-bold text-xs flex items-center gap-1">
-                              <CheckCircle2 size={14} /> Verified
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {fee.status === 'paid' && (
+                              <span className="text-green-600 font-bold text-xs flex items-center gap-1">
+                                <CheckCircle2 size={14} /> Verified
+                              </span>
+                            )}
+                            {fee.status === 'pending_verification' && (
+                              <span className="text-amber-600 font-medium text-xs flex items-center gap-1">
+                                <Clock size={14} /> In Review
+                              </span>
+                            )}
+                            {(fee.status === 'pending' || fee.status === 'overdue') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openPaymentModal(fee)}
+                                className="text-xs font-semibold text-teal-700 border-teal-300 hover:bg-teal-50 h-7"
+                              >
+                                Submit Proof
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -454,7 +681,7 @@ export default function StudentBillsPage() {
                             }}
                             className="rounded-lg"
                           >
-                            <Calendar size={14} />
+                            <Copy size={14} />
                           </Button>
                         </div>
                       )}
@@ -479,7 +706,7 @@ export default function StudentBillsPage() {
                               }}
                               className="rounded-lg"
                             >
-                              <Calendar size={14} />
+                              <Copy size={14} />
                             </Button>
                           </div>
                           <div>
@@ -510,6 +737,198 @@ export default function StudentBillsPage() {
           </Card>
         </div>
       )}
+
+      {/* Payment Proof Submission Modal */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-white rounded-2xl p-6 border border-slate-200 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-teal-600" />
+              Submit Payment Proof
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 text-xs">
+              Record your offline payment details and receipt for hostel owner verification.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedFeeForPayment && (
+            <form onSubmit={handleSubmitPaymentProof} className="space-y-4 pt-2">
+              {/* Fee summary card */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-500 font-medium">Billing Period</p>
+                  <p className="font-semibold text-slate-900 text-sm">
+                    {formatBillingMonth(selectedFeeForPayment.month_year, selectedFeeForPayment.due_date)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500 font-medium">Amount Due</p>
+                  <p className="font-bold text-teal-700 text-base">₹{selectedFeeForPayment.amount}</p>
+                </div>
+              </div>
+
+              {/* Payment Mode Selector */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">Payment Mode</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('upi')}
+                    className={cn(
+                      "p-2.5 rounded-xl border text-center transition-all text-xs font-semibold flex flex-col items-center gap-1",
+                      paymentMode === 'upi'
+                        ? "border-teal-600 bg-teal-50/50 text-teal-800 ring-1 ring-teal-600"
+                        : "border-slate-200 hover:border-slate-300 text-slate-700 bg-white"
+                    )}
+                  >
+                    <CreditCard size={16} className={paymentMode === 'upi' ? "text-teal-600" : "text-slate-500"} />
+                    <span>UPI / QR</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('bank')}
+                    className={cn(
+                      "p-2.5 rounded-xl border text-center transition-all text-xs font-semibold flex flex-col items-center gap-1",
+                      paymentMode === 'bank'
+                        ? "border-teal-600 bg-teal-50/50 text-teal-800 ring-1 ring-teal-600"
+                        : "border-slate-200 hover:border-slate-300 text-slate-700 bg-white"
+                    )}
+                  >
+                    <Building2 size={16} className={paymentMode === 'bank' ? "text-teal-600" : "text-slate-500"} />
+                    <span>Bank Transfer</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('cash')}
+                    className={cn(
+                      "p-2.5 rounded-xl border text-center transition-all text-xs font-semibold flex flex-col items-center gap-1",
+                      paymentMode === 'cash'
+                        ? "border-teal-600 bg-teal-50/50 text-teal-800 ring-1 ring-teal-600"
+                        : "border-slate-200 hover:border-slate-300 text-slate-700 bg-white"
+                    )}
+                  >
+                    <IndianRupee size={16} className={paymentMode === 'cash' ? "text-teal-600" : "text-slate-500"} />
+                    <span>Cash</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Reference / UTR Number */}
+              <div className="space-y-1.5">
+                <Label htmlFor="ref-input" className="text-xs font-semibold text-slate-700">
+                  {paymentMode === 'upi' && 'UPI Reference ID / Transaction UTR *'}
+                  {paymentMode === 'bank' && 'Bank IMPS / NEFT UTR Number *'}
+                  {paymentMode === 'cash' && 'Receipt Note / Reference (Optional)'}
+                </Label>
+                <Input
+                  id="ref-input"
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  placeholder={
+                    paymentMode === 'upi'
+                      ? 'e.g. 12-digit UPI reference ID (e.g. 428172910291)'
+                      : paymentMode === 'bank'
+                      ? 'e.g. UTR / Transaction reference number'
+                      : 'e.g. Handed cash to warden / receipt #123'
+                  }
+                  required={paymentMode !== 'cash'}
+                  className="text-xs"
+                />
+                <p className="text-[11px] text-slate-400">
+                  {paymentMode === 'upi' && 'Found in your UPI app receipt details (PhonePe, GPay, Paytm).'}
+                  {paymentMode === 'bank' && 'Found on your net banking debit confirmation.'}
+                  {paymentMode === 'cash' && 'Optional note describing who you handed the cash to.'}
+                </p>
+              </div>
+
+              {/* Receipt File Upload */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-700">
+                  Payment Receipt / Screenshot {paymentMode === 'cash' ? '(Optional)' : '(Recommended)'}
+                </Label>
+                <div className="border border-dashed border-slate-300 rounded-xl p-3 text-center hover:border-teal-400 transition-colors bg-slate-50/50">
+                  {receiptFile ? (
+                    <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200">
+                      <div className="flex items-center gap-2 overflow-hidden text-left">
+                        <FileText className="h-5 w-5 text-teal-600 shrink-0" />
+                        <div className="truncate">
+                          <p className="text-xs font-semibold text-slate-800 truncate">{receiptFile.name}</p>
+                          <p className="text-[10px] text-slate-400">{(receiptFile.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setReceiptFile(null)}
+                        className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600"
+                      >
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block py-2">
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast.error('File size must be 5MB or less');
+                              return;
+                            }
+                            setReceiptFile(file);
+                          }
+                        }}
+                      />
+                      <Upload className="h-6 w-6 text-slate-400 mx-auto mb-1" />
+                      <p className="text-xs font-semibold text-slate-700">Upload screenshot or PDF receipt</p>
+                      <p className="text-[10px] text-slate-400">JPG, PNG, WEBP, or PDF up to 5MB</p>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Additional Notes */}
+              <div className="space-y-1.5">
+                <Label htmlFor="notes-input" className="text-xs font-semibold text-slate-700">
+                  Notes for Owner (Optional)
+                </Label>
+                <Textarea
+                  id="notes-input"
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  placeholder="e.g. Paid from HDFC account ending in 4102..."
+                  rows={2}
+                  className="text-xs resize-none"
+                />
+              </div>
+
+              <DialogFooter className="pt-2 flex sm:justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsPaymentModalOpen(false)}
+                  disabled={isSubmittingPayment}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPayment}
+                  className="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1.5"
+                >
+                  {isSubmittingPayment && <Loader2 size={14} className="animate-spin" />}
+                  {isSubmittingPayment ? 'Submitting...' : 'Submit Payment Proof'}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

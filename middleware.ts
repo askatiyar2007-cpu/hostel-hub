@@ -1,4 +1,4 @@
-﻿import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
@@ -69,24 +69,32 @@ export async function middleware(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // No authentication required for static routes, auth pages, or public pages
-  const publicPaths = [
+  const pathname = req.nextUrl.pathname
+
+  // Exact public paths that must only match strictly
+  const publicExactPaths = [
     '/',
     '/login',
     '/signup',
+  ]
+
+  // Prefix public paths for multi-segment public sub-routes
+  const publicPrefixPaths = [
     '/auth/login',
     '/auth/signup',
     '/auth/forgot-password',
     '/auth/reset-password',
     '/auth/callback',
     '/marketplace',
+    '/hostels',
     '/hostel',
+    '/find-hostel',
     '/invite',
   ]
 
-  const isPublicPath = publicPaths.some(path => 
-    req.nextUrl.pathname.startsWith(path)
-  )
+  const isPublicPath = 
+    publicExactPaths.includes(pathname) ||
+    publicPrefixPaths.some(path => pathname === path || pathname.startsWith(path + '/'))
 
   if (isPublicPath) {
     return NextResponse.next()

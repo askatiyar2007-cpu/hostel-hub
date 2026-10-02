@@ -34,8 +34,11 @@ export default function AdminDashboard() {
     queryKey: ["admin-revenue"],
     enabled: profile?.role === "super_admin",
     queryFn: async () => {
-      const { data } = await supabase.from("bills").select("amount").eq("status", "paid");
-      return data?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+      const { data } = await supabase
+        .from("student_fees")
+        .select("amount_due, amount")
+        .eq("status", "paid");
+      return data?.reduce((sum, item) => sum + Number(item.amount_due ?? item.amount ?? 0), 0) || 0;
     },
   });
 
@@ -135,7 +138,7 @@ export default function AdminDashboard() {
               <h3 className="font-semibold font-display">Global Revenue</h3>
            </div>
            <p className="text-4xl font-bold font-display">₹{totalRevenue?.toLocaleString() || 0}</p>
-           <p className="text-sm text-muted-foreground mt-2">Total collected from all paid bills.</p>
+           <p className="text-sm text-muted-foreground mt-2">Total collected from paid student fees.</p>
         </div>
       </div>
     </DashboardShell>

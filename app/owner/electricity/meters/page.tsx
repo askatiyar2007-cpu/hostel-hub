@@ -27,6 +27,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { IconWrapper } from '@/components/owner/icon-wrapper';
 import { cn } from '@/lib/utils';
+import { PageHeader } from "@/components/owner/page-header";
 
 interface MeterWithDetails {
   id: string;
@@ -229,34 +230,22 @@ export default function MeterManagementPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <IconWrapper color="amber" size="lg">
-            <Zap className="h-5 w-5" />
-          </IconWrapper>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Electricity Meters
-            </h1>
-            <p className="text-sm text-slate-600 mt-0.5">
-              Manage electricity submeters, monitor pending readings, and track consumption
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-3">
-          <Link href={selectedHostel && selectedHostel !== 'all' ? `/owner/electricity/meters/bulk?hostelId=${selectedHostel}` : '/owner/electricity/meters/bulk'}>
-            <Button variant="outline" className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium">
-              <Layers className="h-4 w-4" />
-              Bulk Create Meters
-            </Button>
-          </Link>
-          <Button onClick={() => setIsCreateOpen(true)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs">
-            <Plus className="h-4 w-4" />
-            Add Meter
+      <PageHeader 
+        title="Electricity Meters"
+        description="Manage electricity submeters, monitor pending readings, and track consumption"
+        icon={<Zap className="h-5 w-5" />}
+      >
+        <Link href={selectedHostel && selectedHostel !== 'all' ? `/owner/electricity/meters/bulk?hostelId=${selectedHostel}` : '/owner/electricity/meters/bulk'}>
+          <Button variant="outline" className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium">
+            <Layers className="h-4 w-4" />
+            Bulk Create Meters
           </Button>
-        </div>
-      </div>
+        </Link>
+        <Button onClick={() => setIsCreateOpen(true)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs">
+          <Plus className="h-4 w-4" />
+          Add Meter
+        </Button>
+      </PageHeader>
 
       {/* Filters */}
       <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">

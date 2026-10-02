@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient, supabaseServer } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(): Promise<NextResponse> {
-  const sessionClient = createClient();
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const sessionClient = createClient(request);
   const { data: { user }, error: userError } = await sessionClient.auth.getUser();
 
   if (userError || !user) {
