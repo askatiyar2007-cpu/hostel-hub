@@ -23,6 +23,6 @@ END $$;
 
 -- Drop obsolete public.bills table without CASCADE
 -- This will intentionally fail if any dependent database objects exist.
-DROP TABLE public.bills;
+DROP TABLE IF EXISTS public.bills;
 
 COMMIT;

@@ -38,7 +38,7 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="theme-color" content="#0d9488" />
       </head>
-      <body className="font-sans antialiased min-h-screen bg-background text-foreground">
+      <body className="font-sans antialiased min-h-screen bg-background text-foreground overflow-x-hidden">
         <QueryProvider>
           <AuthProvider>
             <div className="relative flex min-h-screen flex-col">

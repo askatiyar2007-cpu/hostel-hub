@@ -360,6 +360,36 @@ export default function RoomRequestPage() {
     }
   }, [hostelIdInput]);
 
+  // Pre-load hostel / room from URL search parameters if redirected from public page
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const hostelParam = params.get('hostel') || params.get('hostel_id');
+    const roomParam = params.get('room') || params.get('room_id');
+
+    if (hostelParam && !hostel) {
+      setHostelIdInput(hostelParam);
+      supabase
+        .from('hostels')
+        .select('*')
+        .eq('id', hostelParam)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setHostel(data as Hostel);
+            setStep('room');
+          }
+        });
+    }
+
+    if (roomParam && rooms && rooms.length > 0 && !selectedRoom) {
+      const match = rooms.find((r: any) => r.id === roomParam);
+      if (match) {
+        setSelectedRoom(match);
+      }
+    }
+  }, [hostel, rooms, selectedRoom]);
+
   // ------------------------------------------------------------
   // SEND OTP
   // ------------------------------------------------------------

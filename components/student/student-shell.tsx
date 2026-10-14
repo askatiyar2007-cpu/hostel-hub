@@ -459,14 +459,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - matching owner-shell pt-10 and responsive padding */}
       <div className={cn(
-        "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-20",
+        "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-10",
         isCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {/* Page Content */}
-        <main className="min-h-[calc(100vh-5rem)] min-w-0">
-          <div className="w-full max-w-full overflow-x-hidden">
+        <main className="min-h-[calc(100vh-5rem)] min-w-0 pb-12">
+          <div className="px-4 pt-0 pb-8 md:px-8 md:pt-0 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
             {children}
           </div>
         </main>

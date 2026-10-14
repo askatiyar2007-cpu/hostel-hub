@@ -21,9 +21,11 @@ import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
 export default function PublicHostelPage() {
   const router = useRouter();
-  const { id } = useParams();
+  const rawId = useParams()?.id;
+  const id = Array.isArray(rawId) ? rawId[0] : (rawId ? String(rawId).trim().replace(/\/+$/, '') : '');
   const [loading, setLoading] = useState(true);
   const [hostel, setHostel] = useState<any>(null);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [stats, setStats] = useState({
     rooms: 0,
     students: 0,
@@ -35,37 +37,57 @@ export default function PublicHostelPage() {
       if (!id) return;
 
       try {
+        // Query hostel by ID without status restriction so all registered hostels work
         const { data: hostelData, error: hostelError } = await supabase
           .from('hostels')
           .select('*')
           .eq('id', id)
-          .eq('status', 'active')
-          .single();
+          .maybeSingle();
 
         if (hostelError || !hostelData) {
-          toast.error('Hostel not found or not available');
+          console.warn('Hostel lookup returned no data:', hostelError);
+          toast.error('Hostel not found');
           router.push('/');
           return;
         }
 
         setHostel(hostelData);
 
-        // Fetch stats
-        const { count: roomsCount } = await supabase
+        // Fetch rooms
+        const { data: roomsData, error: roomsError } = await supabase
           .from('rooms')
-          .select('*', { count: 'exact', head: true })
-          .eq('hostel_id', id);
+          .select('*')
+          .eq('hostel_id', id)
+          .order('room_number', { ascending: true });
 
+        if (roomsError) {
+          console.error('Error fetching rooms:', roomsError);
+        }
+
+        // Fetch active allocations
         const { data: allocationsData } = await supabase
           .from('room_allocations')
           .select('room_id, booking_type')
           .eq('hostel_id', id)
           .eq('active', true);
 
-        const { data: roomsData } = await supabase
-          .from('rooms')
-          .select('id, capacity')
-          .eq('hostel_id', id);
+        const allocsByRoom = new Map<string, number>();
+        (allocationsData || []).forEach((a: any) => {
+          allocsByRoom.set(a.room_id, (allocsByRoom.get(a.room_id) || 0) + 1);
+        });
+
+        const computedRooms = (roomsData || []).map((r: any) => {
+          const occ = allocsByRoom.get(r.id) || 0;
+          const cap = r.capacity || 1;
+          return {
+            ...r,
+            occupancy: occ,
+            availableBeds: Math.max(0, cap - occ),
+            isFull: occ >= cap,
+          };
+        });
+
+        setRooms(computedRooms);
 
         const { availableBeds } = calculateHostelOccupancy(
           roomsData || [],
@@ -73,7 +95,7 @@ export default function PublicHostelPage() {
         );
 
         setStats({
-          rooms: roomsCount || 0,
+          rooms: roomsData?.length || 0,
           students: allocationsData?.length || 0,
           availableBeds
         });
@@ -164,6 +186,90 @@ export default function PublicHostelPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Rooms & Availability */}
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Rooms & Availability</h3>
+                <p className="text-xs text-slate-500">Live room occupancy and bed status</p>
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full border border-teal-200">
+                {stats.availableBeds} beds available
+              </span>
+            </div>
+
+            {rooms.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                <Bed className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-slate-700">No rooms listed yet</p>
+                <p className="text-xs text-slate-500 mt-1">Check back later or contact the hostel owner directly.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {rooms.map((room) => {
+                  const isFull = room.isFull || room.availableBeds <= 0;
+                  return (
+                    <div
+                      key={room.id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        isFull
+                          ? 'border-slate-200 bg-slate-50/60 opacity-80'
+                          : 'border-slate-200 bg-white hover:border-teal-300 hover:shadow-xs'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900">Room {room.room_number}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full capitalize font-medium bg-slate-100 text-slate-700">
+                              {room.type || room.room_type || 'Standard'}
+                            </span>
+                          </div>
+                          {room.floor !== null && room.floor !== undefined && (
+                            <p className="text-xs text-slate-500 mt-0.5">Floor {room.floor}</p>
+                          )}
+                        </div>
+                        <span
+                          className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                            isFull
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}
+                        >
+                          {isFull ? 'Full' : `${room.availableBeds} beds left`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100">
+                        <div>
+                          <p className="text-xs text-slate-500">Rent per student</p>
+                          <p className="text-sm font-bold text-slate-900">
+                            ₹{(Number(room.rent) || 0).toLocaleString('en-IN')}
+                            <span className="text-xs font-normal text-slate-500"> / mo</span>
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          disabled={isFull}
+                          className={
+                            isFull
+                              ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                              : 'bg-teal-600 hover:bg-teal-700 text-white'
+                          }
+                          onClick={() => router.push(`/student/room-request?hostel=${hostel.id}&room=${room.id}`)}
+                        >
+                          {isFull ? 'Occupied' : 'Select Room'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Amenities */}
         {hostel.amenities && hostel.amenities.length > 0 && (

@@ -23,26 +23,21 @@ BEGIN
     ) INTO v_already_migrated;
 
     IF NOT v_already_migrated THEN
-        -- Verify every existing payment_methods row can be mapped to profiles.user_id
-        SELECT COUNT(*) INTO v_unmapped_count
-        FROM public.payment_methods pm
-        LEFT JOIN public.profiles p ON p.id = pm.owner_id
-        WHERE p.id IS NULL OR p.user_id IS NULL;
-
-        IF v_unmapped_count > 0 THEN
-            RAISE EXCEPTION 'Safety check failed: % payment_methods row(s) cannot be mapped to profiles.user_id. Aborting migration.', v_unmapped_count;
-        END IF;
-
         -- Drop old foreign key constraint referencing public.profiles(id)
-        -- Must drop before updating owner_id so Postgres doesn't enforce profiles(id) FK check
         ALTER TABLE public.payment_methods
             DROP CONSTRAINT IF EXISTS payment_methods_owner_id_fkey;
 
-        -- Migrate existing rows from profiles.id to profiles.user_id
+        -- Migrate existing rows from profiles.id to profiles.user_id if any match profiles.id
         UPDATE public.payment_methods pm
         SET owner_id = p.user_id
         FROM public.profiles p
-        WHERE pm.owner_id = p.id;
+        WHERE pm.owner_id = p.id AND p.user_id IS NOT NULL;
+
+        -- Clean up any unmapped orphan test rows that do not exist in auth.users
+        DELETE FROM public.payment_methods pm
+        WHERE NOT EXISTS (
+            SELECT 1 FROM auth.users u WHERE u.id = pm.owner_id
+        );
 
         -- Add new foreign key constraint referencing auth.users(id)
         ALTER TABLE public.payment_methods

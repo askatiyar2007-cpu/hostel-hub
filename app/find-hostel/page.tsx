@@ -50,7 +50,6 @@ export default function FindHostelPage() {
         .from('hostels')
         .select('*')
         .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`)
-        .eq('status', 'active')
         .limit(10);
 
       if (error) throw error;
@@ -86,11 +85,10 @@ export default function FindHostelPage() {
         .from('hostels')
         .select('*')
         .eq('id', hostelIdInput.trim())
-        .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
-        toast.error('Hostel not found or not available');
+        toast.error('Hostel not found');
         setLoading(false);
         return;
       }
@@ -154,24 +152,21 @@ export default function FindHostelPage() {
     console.log('QR scanned:', decodedText);
     stopScanner();
 
-    // Validate QR content
+    // Validate QR content: match UUID anywhere or parse path
     let hostelId: string | null = null;
-
-    // Check if it's a full URL
-    try {
-      const url = new URL(decodedText);
-      // Check if it's a HostelHub URL
-      if (url.hostname === window.location.hostname || url.hostname.includes('hostelhub')) {
+    const uuidMatch = decodedText.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    if (uuidMatch) {
+      hostelId = uuidMatch[0].toLowerCase();
+    } else {
+      try {
+        const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');
         const hostelsIndex = pathParts.indexOf('hostels');
         if (hostelsIndex !== -1 && pathParts[hostelsIndex + 1]) {
-          hostelId = pathParts[hostelsIndex + 1];
+          hostelId = pathParts[hostelsIndex + 1].trim();
         }
-      }
-    } catch {
-      // Not a URL, check if it's a raw hostel ID
-      if (decodedText.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-        hostelId = decodedText;
+      } catch {
+        // Not a URL
       }
     }
 
@@ -180,18 +175,17 @@ export default function FindHostelPage() {
       return;
     }
 
-    // Verify hostel exists and is active
+    // Verify hostel exists
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('hostels')
         .select('*')
         .eq('id', hostelId)
-        .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
-      if (!data) {
-        toast.error('Hostel not found or not available');
+      if (error || !data) {
+        toast.error('Hostel not found');
       } else {
         router.push(`/hostels/${hostelId}`);
       }

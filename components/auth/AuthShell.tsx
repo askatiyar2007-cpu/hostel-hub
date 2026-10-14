@@ -1,9 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import React from 'react';
 import { AuthBackground } from './AuthBackground';
 import { AuthMarketing } from './AuthMarketing';
 import { HostelHubLogo } from '@/components/HostelHubLogo';
@@ -14,48 +11,7 @@ interface AuthShellProps {
   onTabChange?: (tab: 'login' | 'signup') => void;
 }
 
-function SwitchLink({
-  activeTab,
-  onTabChange,
-}: {
-  activeTab?: 'login' | 'signup';
-  onTabChange?: (tab: 'login' | 'signup') => void;
-}) {
-  const searchParams = useSearchParams();
-  const currentTab = activeTab ?? (searchParams.get('tab') === 'signup' ? 'signup' : 'login');
-  const isSignup = currentTab === 'signup';
-
-  if (onTabChange) {
-    return (
-      <button
-        type="button"
-        onClick={() => onTabChange(isSignup ? 'login' : 'signup')}
-        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-[#0F766E] transition-colors cursor-pointer group"
-      >
-        <span>{isSignup ? 'Already have an account?' : "Don't have an account?"}</span>
-        <span className="text-[#0F766E] font-semibold flex items-center gap-1 group-hover:underline underline-offset-4">
-          {isSignup ? 'Sign In' : 'Sign Up'}
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-        </span>
-      </button>
-    );
-  }
-
-  return (
-    <Link
-      href={isSignup ? '/auth/login?tab=login' : '/auth/login?tab=signup'}
-      className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-[#0F766E] transition-colors group"
-    >
-      <span>{isSignup ? 'Already have an account?' : "Don't have an account?"}</span>
-      <span className="text-[#0F766E] font-semibold flex items-center gap-1 group-hover:underline underline-offset-4">
-        {isSignup ? 'Sign In' : 'Sign Up'}
-        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </Link>
-  );
-}
-
-export function AuthShell({ children, activeTab, onTabChange }: AuthShellProps) {
+export function AuthShell({ children }: AuthShellProps) {
   return (
     <div className="min-h-screen relative isolate overflow-x-hidden flex flex-col justify-between select-none">
       {/* Calm, peaceful, morning university campus atmospheric background */}
@@ -70,13 +26,6 @@ export function AuthShell({ children, activeTab, onTabChange }: AuthShellProps) 
 
         {/* Desktop left space (logo is positioned inside AuthMarketing directly on background) */}
         <div className="hidden lg:block" />
-
-        {/* Top-Right Lightweight Switch Link (NO white card / pill) */}
-        <div className="flex items-center ml-auto">
-          <Suspense fallback={<div className="h-7 w-40" />}>
-            <SwitchLink activeTab={activeTab} onTabChange={onTabChange} />
-          </Suspense>
-        </div>
       </header>
 
       {/* Main content: Responsive two-column desktop layout / stacked mobile */}

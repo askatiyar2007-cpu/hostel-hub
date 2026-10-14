@@ -79,28 +79,22 @@ export default function PublicHomePage() {
 
   // Comparison scroll transforms
   const compareProgress = useTransform(scrollY, [800, 1500], [0, 1], { clamp: true });
-  const selectedCardScale = useTransform(compareProgress, [0, 0.5, 1], [1, 1.05, 1]);
-  const otherCardsOpacity = useTransform(compareProgress, [0.5, 1], [1, 0.3]);
+  const selectedCardScale = useTransform(compareProgress, [0, 0.5, 1], [1, 1.03, 1]);
 
   // Lifestyle scroll transforms
   const lifestyleRotation = useTransform(scrollY, [1500, 2200], [0, 360]);
+  const lifestyleCounterRotation = useTransform(lifestyleRotation, (r) => -r);
 
   // Dashboard assembly
   const dashboardProgress = useTransform(scrollY, [2200, 3000], [0, 1], { clamp: true });
   const moduleY = useTransform(dashboardProgress, [0, 1], [50, 0]);
   const moduleOpacity = useTransform(dashboardProgress, [0, 1], [0, 1]);
 
-  // Network connections
-  const networkProgress = useTransform(scrollY, [3000, 3800], [0, 1], { clamp: true });
-  const leftLineWidth = useTransform(networkProgress, [0, 0.5], [0, 1]);
-  const rightLineWidth = useTransform(networkProgress, [0.5, 1], [0, 1]);
-
   // Additional hero scroll transforms for inline elements
   const gridOpacity = useTransform(scrollY, [0, 300], [0.03, 0.08]);
   const buildingsY = useTransform(scrollY, [0, 400], [50, 0]);
   const buildingsOpacity = useTransform(scrollY, [0, 300], [0, 0.06]);
   const locationPointsOpacity = useTransform(scrollY, [100, 400], [0, 0.4]);
-  const otherCardsX = useTransform(compareProgress, [0, 0.5], [0, 30]);
 
   // Authentication redirection logic
   useEffect(() => {
@@ -165,7 +159,7 @@ export default function PublicHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFCFB] text-slate-900 selection:bg-teal-100 selection:text-teal-900">
+    <div className="min-h-screen bg-[#FAFCFB] text-slate-900 selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden">
       {/* Animated Navigation */}
       <motion.nav
         initial={{ y: -100 }}
@@ -469,81 +463,93 @@ export default function PublicHomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.8 }}
-                className="relative h-[350px] bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl overflow-hidden"
+                className="relative h-[350px] bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl overflow-hidden border border-slate-200/80 shadow-inner"
               >
-                {/* Grid Pattern */}
-                <div className="absolute inset-0 opacity-15">
-                  <svg className="w-full h-full" viewBox="0 0 600 350" fill="none">
-                    <defs>
-                      <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0F766E" strokeWidth="0.5"/>
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#mapGrid)" />
-                  </svg>
-                </div>
+                <svg className="w-full h-full" viewBox="0 0 600 350" preserveAspectRatio="xMidYMid meet">
+                  <defs>
+                    <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0F766E" strokeWidth="0.5"/>
+                    </pattern>
+                  </defs>
 
-                {/* Central HostelHub Node - pulses on scroll */}
-                <motion.div
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-xl"
-                >
-                  <Building2 className="h-7 w-7 text-white" />
-                </motion.div>
+                  {/* Grid background */}
+                  <rect width="100%" height="100%" fill="url(#mapGrid)" opacity="0.15" />
 
-                {/* Location Nodes with labels */}
-                {[
-                  { x: 80, y: 90, label: 'Koramangala', delay: 0.1 },
-                  { x: 200, y: 70, label: 'Indiranagar', delay: 0.15 },
-                  { x: 320, y: 130, label: 'HSR Layout', delay: 0.2 },
-                  { x: 450, y: 80, label: 'BTM', delay: 0.25 },
-                  { x: 120, y: 250, label: 'Jayanagar', delay: 0.3 },
-                  { x: 280, y: 270, label: 'JP Nagar', delay: 0.35 },
-                ].map((node, idx) => (
-                  <React.Fragment key={idx}>
-                    <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: node.delay }}
-                      className="absolute w-3 h-3 rounded-full bg-[#0F766E]"
-                      style={{ left: node.x, top: node.y }}
-                    />
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 0.6 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.3, delay: node.delay + 0.15 }}
-                      className="absolute text-[10px] text-slate-600 font-medium"
-                      style={{ left: node.x + 14, top: node.y - 3 }}
-                    >
-                      {node.label}
-                    </motion.span>
-                  </React.Fragment>
-                ))}
+                  {/* Concentric radar rings centered at (300, 175) */}
+                  <circle cx="300" cy="175" r="55" fill="none" stroke="#0F766E" strokeWidth="1" strokeDasharray="4 4" opacity="0.25" />
+                  <circle cx="300" cy="175" r="115" fill="none" stroke="#0F766E" strokeWidth="1" strokeDasharray="4 4" opacity="0.15" />
+                  <circle cx="300" cy="175" r="175" fill="none" stroke="#0F766E" strokeWidth="1" strokeDasharray="4 4" opacity="0.08" />
 
-                {/* Connection Lines that draw on scroll */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  {/* Connection Lines from all 6 nodes to central hub (300, 175) */}
                   {[
-                    { d: "M 80 90 L 300 175", delay: 0.4 },
-                    { d: "M 200 70 L 300 175", delay: 0.45 },
-                    { d: "M 320 130 L 300 175", delay: 0.5 },
-                    { d: "M 450 80 L 300 175", delay: 0.55 },
+                    { x: 95, y: 80, delay: 0.2 },
+                    { x: 220, y: 60, delay: 0.25 },
+                    { x: 500, y: 85, delay: 0.3 },
+                    { x: 485, y: 265, delay: 0.35 },
+                    { x: 105, y: 265, delay: 0.4 },
+                    { x: 275, y: 305, delay: 0.45 },
                   ].map((line, idx) => (
                     <motion.path
-                      key={idx}
-                      d={line.d}
+                      key={`map-line-${idx}`}
+                      d={`M ${line.x} ${line.y} L 300 175`}
                       stroke="#0F766E"
-                      strokeWidth="1.5"
+                      strokeWidth="1.75"
+                      strokeDasharray="4 4"
                       fill="none"
-                      opacity="0.3"
+                      opacity="0.4"
                       initial={{ pathLength: 0 }}
                       whileInView={{ pathLength: 1 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.8, delay: line.delay }}
                     />
                   ))}
+
+                  {/* 6 Location Nodes with interactive beacon pins */}
+                  {[
+                    { x: 95, y: 80, label: 'Koramangala', labelX: 110, labelY: 84, delay: 0.1 },
+                    { x: 220, y: 60, label: 'Indiranagar', labelX: 235, labelY: 64, delay: 0.15 },
+                    { x: 500, y: 85, label: 'HSR Layout', labelX: 410, labelY: 89, delay: 0.2 },
+                    { x: 485, y: 265, label: 'BTM Layout', labelX: 395, labelY: 269, delay: 0.25 },
+                    { x: 105, y: 265, label: 'Jayanagar', labelX: 120, labelY: 269, delay: 0.3 },
+                    { x: 275, y: 305, label: 'JP Nagar', labelX: 290, labelY: 309, delay: 0.35 },
+                  ].map((node, idx) => (
+                    <g key={`map-node-${idx}`}>
+                      <circle cx={node.x} cy={node.y} r="8" fill="#0F766E" opacity="0.15" />
+                      <circle cx={node.x} cy={node.y} r="4.5" fill="#0F766E" />
+                      <circle cx={node.x} cy={node.y} r="2" fill="#FFFFFF" />
+                      <rect
+                        x={node.labelX - 4}
+                        y={node.labelY - 11}
+                        width={node.label.length * 7 + 16}
+                        height="18"
+                        rx="9"
+                        fill="#FFFFFF"
+                        stroke="#CBD5E1"
+                        strokeWidth="0.8"
+                        opacity="0.95"
+                      />
+                      <text
+                        x={node.labelX + 4}
+                        y={node.labelY + 2}
+                        fill="#1E293B"
+                        fontSize="10"
+                        fontWeight="600"
+                        fontFamily="sans-serif"
+                      >
+                        {node.label}
+                      </text>
+                    </g>
+                  ))}
+
+                  {/* Central Hub in SVG */}
+                  <g>
+                    <circle cx="300" cy="175" r="32" fill="#0F766E" opacity="0.15" />
+                    <foreignObject x="272" y="147" width="56" height="56">
+                      <div className="w-14 h-14 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-xl ring-4 ring-teal-500/25">
+                        <Building2 className="h-7 w-7 text-white" />
+                      </div>
+                    </foreignObject>
+                  </g>
                 </svg>
               </motion.div>
 
@@ -560,7 +566,7 @@ export default function PublicHomePage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: 0.6 + idx * 0.08 }}
-                    className="bg-white rounded-lg p-3 border border-slate-200 text-center"
+                    className="bg-white rounded-lg p-3 border border-slate-200 text-center shadow-xs"
                   >
                     <p className="text-xl font-bold text-[#0F766E]">{stat.value}</p>
                     <p className="text-[10px] text-slate-500 mt-0.5">{stat.label}</p>
@@ -590,10 +596,10 @@ export default function PublicHomePage() {
                     >
                       <Link
                         href={`/hostels/${hostel.id}`}
-                        className="group block rounded-xl bg-white border border-slate-200/80 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-400 overflow-hidden"
+                        className="group block rounded-2xl bg-white border border-slate-200/90 shadow-md hover:shadow-xl hover:border-[#0F766E]/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                       >
-                        <div className="flex">
-                          <div className="relative w-40 aspect-square overflow-hidden bg-slate-100">
+                        <div className="flex flex-col sm:flex-row">
+                          <div className="relative w-full sm:w-52 md:w-56 shrink-0 aspect-[16/10] sm:aspect-auto overflow-hidden bg-slate-100">
                             {hostel.cover_image_url ? (
                               <img
                                 src={hostel.cover_image_url}
@@ -603,32 +609,46 @@ export default function PublicHomePage() {
                             ) : (
                               <HostelCardVisual name={hostel.name} city={hostel.city} variant={idx} />
                             )}
-                            <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-md px-2 py-1 rounded-full text-xs font-semibold text-[#0F766E] border border-teal-200/80 flex items-center gap-1 shadow-sm">
+                            <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold text-[#0F766E] border border-teal-200/80 flex items-center gap-1 shadow-xs">
                               <ShieldCheck className="h-3 w-3" />
                               Verified
                             </div>
                           </div>
-                          <div className="flex-1 p-4">
-                            <h3 className="text-lg font-bold text-slate-900 font-display group-hover:text-[#0F766E] transition-colors mb-1">
-                              {hostel.name}
-                            </h3>
-                            {(hostel.city || hostel.state) && (
-                              <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
-                                <MapPin className="h-3 w-3 text-[#0F766E]" />
-                                <span>{[hostel.city, hostel.state].filter(Boolean).join(', ')}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center justify-between">
-                              {hostel.starting_price ? (
-                                <span className="text-base font-bold text-[#0F766E]">
-                                  ₹{hostel.starting_price.toLocaleString('en-IN')}
-                                  <span className="text-xs font-normal text-slate-500">/mo</span>
+                          <div className="flex-1 p-5 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">
+                                  Featured Accommodation
                                 </span>
-                              ) : (
-                                <span className="text-sm font-semibold text-slate-600">Contact for Pricing</span>
+                              </div>
+                              <h3 className="text-lg sm:text-xl font-bold text-slate-900 font-display group-hover:text-[#0F766E] transition-colors line-clamp-1">
+                                {hostel.name}
+                              </h3>
+                              {(hostel.city || hostel.state) && (
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                                  <MapPin className="h-3.5 w-3.5 text-[#0F766E] shrink-0" />
+                                  <span>{[hostel.city, hostel.state].filter(Boolean).join(', ')}</span>
+                                </div>
                               )}
-                              <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 group-hover:text-[#0F766E] transition-colors">
-                                View <ArrowRight className="h-3.5 w-3.5" />
+                              <div className="flex items-center gap-2 flex-wrap mt-3">
+                                <span className="text-[10px] font-medium bg-teal-50 text-[#0F766E] px-2 py-0.5 rounded-md border border-teal-100/60">WiFi Included</span>
+                                <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">Attached Bath</span>
+                                <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">24/7 Security</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                              <div>
+                                {hostel.starting_price ? (
+                                  <span className="text-lg font-bold text-[#0F766E]">
+                                    ₹{hostel.starting_price.toLocaleString('en-IN')}
+                                    <span className="text-xs font-normal text-slate-500 ml-1">/mo</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-sm font-semibold text-slate-600">Contact for Pricing</span>
+                                )}
+                              </div>
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#0F766E] px-3.5 py-1.5 rounded-lg group-hover:bg-teal-800 transition-colors shadow-xs">
+                                View Details <ArrowRight className="h-3.5 w-3.5" />
                               </span>
                             </div>
                           </div>
@@ -638,7 +658,7 @@ export default function PublicHomePage() {
                   ))}
 
                   {/* Secondary Listings */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {hostels.slice(1, 3).map((hostel, idx) => (
                       <motion.div
                         key={hostel.id}
@@ -649,7 +669,7 @@ export default function PublicHomePage() {
                       >
                         <Link
                           href={`/hostels/${hostel.id}`}
-                          className="group block rounded-lg bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                          className="group flex flex-col h-full rounded-xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
                         >
                           <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
                             {hostel.cover_image_url ? (
@@ -661,16 +681,38 @@ export default function PublicHomePage() {
                             ) : (
                               <HostelCardVisual name={hostel.name} city={hostel.city} variant={idx + 1} />
                             )}
+                            <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#0F766E] border border-teal-200/60 flex items-center gap-1 shadow-xs">
+                              <ShieldCheck className="h-2.5 w-2.5" />
+                              Verified
+                            </div>
                           </div>
-                          <div className="p-3">
-                            <h3 className="text-sm font-bold text-slate-900 font-display group-hover:text-[#0F766E] transition-colors line-clamp-1">
-                              {hostel.name}
-                            </h3>
-                            {hostel.starting_price && (
-                              <p className="text-sm font-bold text-[#0F766E] mt-1">
-                                ₹{hostel.starting_price.toLocaleString('en-IN')}
+                          <div className="p-3.5 flex flex-col justify-between flex-1">
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-900 font-display group-hover:text-[#0F766E] transition-colors line-clamp-1">
+                                {hostel.name}
+                              </h3>
+                              {(hostel.city || hostel.state) && (
+                                <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1 line-clamp-1">
+                                  <MapPin className="h-3 w-3 text-[#0F766E] shrink-0" />
+                                  <span>{[hostel.city, hostel.state].filter(Boolean).join(', ')}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
+                              <p className="text-sm font-bold text-[#0F766E]">
+                                {hostel.starting_price ? (
+                                  <>
+                                    ₹{hostel.starting_price.toLocaleString('en-IN')}
+                                    <span className="text-[10px] font-normal text-slate-500 ml-0.5">/mo</span>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-slate-600">Explore</span>
+                                )}
                               </p>
-                            )}
+                              <span className="text-xs font-semibold text-slate-600 group-hover:text-[#0F766E] transition-colors inline-flex items-center gap-0.5">
+                                View <ArrowRight className="h-3 w-3" />
+                              </span>
+                            </div>
                           </div>
                         </Link>
                       </motion.div>
@@ -679,7 +721,7 @@ export default function PublicHomePage() {
 
                   <Link
                     href="/find-hostel"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F766E] hover:text-teal-800 transition-colors"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F766E] hover:text-teal-800 transition-colors pt-1"
                   >
                     View all hostels <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -742,107 +784,111 @@ export default function PublicHomePage() {
             </p>
           </motion.div>
 
-          {/* Scroll-driven comparison layout */}
+          {/* Comparison layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Options that move aside */}
-            <motion.div
-              style={{ opacity: otherCardsOpacity, x: otherCardsX }}
-              className="space-y-3"
-            >
+            {/* Options on the left */}
+            <div className="space-y-4">
               {[
-                { icon: Bed, title: 'Private Room', price: '₹8,000', desc: 'Attached bath, AC, WiFi' },
-                { icon: Bed, title: 'Shared Room', price: '₹5,500', desc: '2 sharing, attached bath, WiFi' },
-                { icon: Home, title: '1RK Studio', price: '₹12,000', desc: 'Kitchen, attached bath, balcony' },
+                { icon: Bed, title: 'Private Room', price: '₹8,000', period: '/month', desc: 'Attached bath, dedicated AC, high-speed WiFi' },
+                { icon: Bed, title: 'Shared Room', price: '₹5,500', period: '/month', desc: '2 sharing, attached bath, study desk, WiFi' },
+                { icon: Home, title: '1RK Studio', price: '₹12,000', period: '/month', desc: 'Private kitchenette, attached bath, balcony' },
               ].map((option, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.5, delay: idx * 0.08 }}
-                  className="group bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg p-3 border border-slate-200 hover:border-[#0F766E]/30 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="group bg-white rounded-xl p-4 sm:p-5 border border-slate-200/90 hover:border-[#0F766E]/40 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                      <option.icon className="h-5 w-5 text-[#0F766E]" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-[#0F766E] border border-teal-100/60 shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                      <option.icon className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-bold text-slate-900">{option.title}</h3>
-                      <p className="text-xs text-slate-600">{option.desc}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-[#0F766E] transition-colors">
+                        {option.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{option.desc}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-base font-bold text-[#0F766E]">{option.price}</p>
+                    <div className="text-right shrink-0">
+                      <p className="text-lg font-bold text-[#0F766E]">{option.price}</p>
+                      <p className="text-[11px] text-slate-400">{option.period}</p>
                     </div>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
 
-            {/* Dominant choice that scales up */}
+            {/* Dominant choice on the right */}
             <motion.div
               style={{ scale: selectedCardScale }}
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <div className="bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-2xl p-6 text-white shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <div className="relative bg-gradient-to-br from-[#0F766E] via-[#0D655E] to-[#042F2E] rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-teal-600/30 overflow-hidden">
+                {/* Glow accent */}
+                <div className="absolute -top-20 -right-20 w-56 h-56 bg-teal-400/10 rounded-full blur-2xl pointer-events-none" />
+
+                {/* Best Value badge cleanly placed inside top right */}
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 border border-emerald-400/30 px-3 py-1 text-xs font-semibold text-emerald-300 shadow-xs mb-4">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-300" />
+                  Best Value Choice
+                </div>
+
+                <div className="flex items-center gap-3.5 mb-5">
+                  <div className="w-12 h-12 bg-white/15 backdrop-blur-xs rounded-xl flex items-center justify-center border border-white/20 shadow-xs">
                     <Home className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold font-display">2BHK Flat</h3>
-                    <p className="text-teal-200 text-sm">Complete independence</p>
+                    <h3 className="text-2xl font-bold font-display text-white">2BHK Flat</h3>
+                    <p className="text-teal-200 text-sm">Complete independence &amp; premium comfort</p>
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-4">
-                  {['Kitchen', '2 Bathrooms', 'Balcony', 'Parking', '24/7 Security'].map((feature, idx) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+                  {['Modular Kitchen', '2 Private Bathrooms', 'Scenic Balcony', 'Dedicated Parking', '24/7 Security & CCTV', 'Power Backup'].map((feature, idx) => (
                     <motion.div
                       key={idx}
-                      initial={{ opacity: 0, x: -12 }}
+                      initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.3, delay: 0.4 + idx * 0.06 }}
+                      transition={{ duration: 0.3, delay: 0.3 + idx * 0.05 }}
                       className="flex items-center gap-2"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span className="text-sm">{feature}</span>
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span className="text-xs sm:text-sm text-teal-50">{feature}</span>
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="border-t border-white/20 pt-3">
-                  <p className="text-2xl font-bold mb-1">₹18,000</p>
-                  <p className="text-teal-200 text-sm">per month</p>
+                <div className="border-t border-white/15 pt-4 flex items-baseline justify-between">
+                  <div>
+                    <span className="text-3xl font-bold font-display text-white">₹18,000</span>
+                    <span className="text-teal-200 text-sm ml-1.5">/month total</span>
+                  </div>
+                  <span className="text-xs text-teal-300 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 font-medium">
+                    All-inclusive utilities
+                  </span>
                 </div>
               </div>
-
-              {/* Floating badge */}
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-3 -right-3 bg-white rounded-lg p-2 shadow-lg"
-              >
-                <p className="text-[9px] text-slate-500 font-semibold uppercase">Best Value</p>
-                <p className="text-base font-bold text-[#0F766E]">₹18,000</p>
-              </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* LIFESTYLE - ROTATING ORBITAL SYSTEM */}
-      <section ref={lifestyleRef} className="relative py-24 bg-gradient-to-br from-[#F2FAF9] to-[#E8F5F2]">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <section ref={lifestyleRef} className="relative py-28 bg-gradient-to-br from-[#F2FAF9] via-[#EAF6F3] to-[#E2F2EE] overflow-hidden">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
             <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] block mb-3">
               04 • LIVE
@@ -855,82 +901,94 @@ export default function PublicHomePage() {
             </p>
           </motion.div>
 
-          {/* Rotating orbital system */}
-          <motion.div
-            style={{ rotate: lifestyleRotation }}
-            className="relative h-[320px]"
-          >
-            {/* Central Hub */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-xl z-10">
-              <Building2 className="h-10 w-10 text-white" />
+          {/* Rotating orbital system with upright counter-rotated cards */}
+          <div className="relative h-[480px] sm:h-[540px] flex items-center justify-center">
+            {/* Background dashed orbit tracks */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+              <circle
+                cx="300"
+                cy="300"
+                r="185"
+                fill="none"
+                stroke="#0F766E"
+                strokeWidth="1.5"
+                strokeDasharray="6 6"
+                opacity="0.25"
+              />
+              <circle
+                cx="300"
+                cy="300"
+                r="215"
+                fill="none"
+                stroke="#0F766E"
+                strokeWidth="1"
+                strokeDasharray="4 8"
+                opacity="0.12"
+              />
+            </svg>
+
+            {/* Central Hub (Fixed upright with pulsing aura) */}
+            <div className="relative z-20 flex items-center justify-center pointer-events-none">
+              <div className="absolute w-32 h-32 rounded-full bg-teal-500/10 animate-ping" style={{ animationDuration: '4s' }} />
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-2xl ring-4 ring-teal-500/30">
+                <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-white" />
+              </div>
             </div>
 
-            {/* Orbiting Benefits */}
-            {[
-              { icon: MapPin, label: 'Prime Location', angle: 0 },
-              { icon: Wifi, label: 'High-Speed WiFi', angle: 60 },
-              { icon: Shield, label: '24/7 Security', angle: 120 },
-              { icon: Clock, label: 'Flexible Plans', angle: 180 },
-              { icon: MessageSquare, label: 'Direct Communication', angle: 240 },
-              { icon: Zap, label: 'Quick Requests', angle: 300 },
-            ].map((benefit, idx) => {
-              const angle = (benefit.angle * Math.PI) / 180;
-              const radius = 110;
-              const x = Math.cos(angle) * radius;
-              const y = Math.sin(angle) * radius;
-
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.1 + idx * 0.08 }}
-                  className="absolute"
-                  style={{
-                    left: `calc(50% + ${x}px)`,
-                    top: `calc(50% + ${y}px)`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  <div className="bg-white rounded-xl p-3 shadow-lg border border-slate-200 hover:shadow-xl transition-shadow w-32 text-center">
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <benefit.icon className="h-4 w-4 text-white" />
-                    </div>
-                    <p className="font-bold text-slate-900 text-xs">{benefit.label}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-
-            {/* Connection Lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ transform: 'translate(-50%, -50%)', left: '50%', top: '50%' }}>
-              {[0, 60, 120, 180, 240, 300].map((angle, idx) => {
-                const rad = (angle * Math.PI) / 180;
-                const x1 = Math.cos(rad) * 48;
-                const y1 = Math.sin(rad) * 48;
-                const x2 = Math.cos(rad) * 82;
-                const y2 = Math.sin(rad) * 82;
+            {/* Orbiting Layer that rotates smoothly with scroll */}
+            <motion.div
+              style={{ rotate: lifestyleRotation }}
+              className="absolute inset-0 w-full h-full pointer-events-none"
+            >
+              {[
+                { icon: MapPin, label: 'Prime Location', sub: 'Near Top Colleges', angle: 0 },
+                { icon: Wifi, label: 'High-Speed WiFi', sub: 'Unlimited 5G Fiber', angle: 60 },
+                { icon: Shield, label: '24/7 Security', sub: 'CCTV & Biometrics', angle: 120 },
+                { icon: Clock, label: 'Flexible Plans', sub: 'Monthly or Semester', angle: 180 },
+                { icon: MessageSquare, label: 'Direct Chat', sub: 'Instant Owner Support', angle: 240 },
+                { icon: Zap, label: 'Quick Requests', sub: 'Fast Maintenance', angle: 300 },
+              ].map((benefit, idx) => {
+                const angle = (benefit.angle * Math.PI) / 180;
+                const radius = 185;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
 
                 return (
-                  <motion.line
+                  <div
                     key={idx}
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke="#0F766E"
-                    strokeWidth="1.5"
-                    opacity="0.2"
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 0.2 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: 0.4 + idx * 0.06 }}
-                  />
+                    className="absolute"
+                    style={{
+                      left: `calc(50% + ${x}px)`,
+                      top: `calc(50% + ${y}px)`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    {/* The card counter-rotates so it stays ALWAYS UPRIGHT! */}
+                    <motion.div
+                      style={{ rotate: lifestyleCounterRotation }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 0.1 + idx * 0.08 }}
+                      className="pointer-events-auto"
+                    >
+                      <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 shadow-lg border border-slate-200/90 hover:border-[#0F766E]/50 hover:shadow-xl transition-all duration-300 w-36 sm:w-40 text-center group cursor-default">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm group-hover:scale-110 transition-transform">
+                          <benefit.icon className="h-5 w-5 text-white" />
+                        </div>
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm group-hover:text-[#0F766E] transition-colors leading-tight">
+                          {benefit.label}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          {benefit.sub}
+                        </p>
+                      </div>
+                    </motion.div>
+                  </div>
                 );
               })}
-            </svg>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -1102,15 +1160,18 @@ export default function PublicHomePage() {
         </div>
       </section>
 
-      {/* STUDENT ↔ HOSTELHUB ↔ OWNER NETWORK - DRAWING CONNECTIONS */}
-      <section ref={networkRef} className="relative py-24 bg-gradient-to-br from-[#071922] to-[#0A302D] text-white overflow-hidden">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      {/* STUDENT ↔ HOSTELHUB ↔ OWNER NETWORK - REAL OPERATING ECOSYSTEM */}
+      <section ref={networkRef} className="relative py-28 bg-gradient-to-br from-[#061720] via-[#082229] to-[#052E2B] text-white overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[500px] h-[350px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
             <span className="text-xs font-bold uppercase tracking-wider text-teal-400 block mb-3">
               07 • CONNECT
@@ -1119,115 +1180,170 @@ export default function PublicHomePage() {
               One Platform. Everyone Connected.
             </h2>
             <p className="text-lg text-slate-300 max-w-2xl mx-auto mt-4">
-              HostelHub connects students, parents, and hostel owners in one seamless ecosystem
+              HostelHub bridges student residents and hostel owners in one unified, real-time operating ecosystem
             </p>
           </motion.div>
 
-          {/* Network Visualization with drawing connections */}
+          {/* Network Visualization with Real Operational Features */}
           <div className="relative">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-              {/* Student Side */}
+            {/* Desktop Curved Connector Lines between each pair and the central hub */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none hidden lg:block"
+              viewBox="0 0 1000 450"
+              preserveAspectRatio="none"
+            >
+              {[35, 110, 185, 265, 340, 415].map((y, idx) => (
+                <React.Fragment key={`network-line-${idx}`}>
+                  {/* Left curve: Student card edge (x=335) into central hub (x=465, y=225) */}
+                  <motion.path
+                    d={`M 335 ${y} C 410 ${y}, 430 225, 465 225`}
+                    stroke="#0F766E"
+                    strokeWidth="1.75"
+                    strokeDasharray="4 4"
+                    fill="none"
+                    opacity="0.5"
+                    initial={{ pathLength: 0 }}
+                    whileInView={{ pathLength: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.2 + idx * 0.08 }}
+                  />
+                  {/* Right curve: Central hub (x=535, y=225) out to Owner card edge (x=665) */}
+                  <motion.path
+                    d={`M 535 225 C 570 225, 590 ${y}, 665 ${y}`}
+                    stroke="#0F766E"
+                    strokeWidth="1.75"
+                    strokeDasharray="4 4"
+                    fill="none"
+                    opacity="0.5"
+                    initial={{ pathLength: 0 }}
+                    whileInView={{ pathLength: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.3 + idx * 0.08 }}
+                  />
+                </React.Fragment>
+              ))}
+            </svg>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-center">
+              {/* Student Residents Side */}
               <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6 }}
-                className="space-y-2"
+                className="space-y-2.5"
               >
-                <h3 className="text-xl font-bold font-display mb-4 text-center">STUDENT</h3>
+                <div className="text-center lg:text-left mb-4">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/25 text-xs font-bold uppercase tracking-wider text-teal-400">
+                    <Users className="h-3.5 w-3.5" /> Student Resident
+                  </span>
+                </div>
+
                 {[
-                  { icon: Search, label: 'Find Stay' },
-                  { icon: Home, label: 'Room Requests' },
-                  { icon: Receipt, label: 'Bills' },
-                  { icon: CreditCard, label: 'Payments' },
-                  { icon: FileText, label: 'Complaints' },
-                  { icon: Bell, label: 'Notices' },
+                  { icon: Home, title: 'Room Requests', desc: 'Select room, bed & check-in' },
+                  { icon: CreditCard, title: 'Rent & Bills', desc: 'Online fee payment & receipts' },
+                  { icon: Zap, title: 'Electricity Meter', desc: 'Unit tracking & consumption' },
+                  { icon: FileText, title: 'Complaints', desc: 'Maintenance tickets & updates' },
+                  { icon: Bell, title: 'Notices & Mess', desc: 'Curfew, rules & hostel notices' },
+                  { icon: Users, title: 'My Stay & Roommates', desc: 'Room details & co-residents' },
                 ].map((item, idx) => (
                   <motion.div
                     key={idx}
-                    initial={{ opacity: 0, x: -15 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: idx * 0.06 }}
-                    className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/50 hover:bg-slate-700/50 transition-colors"
+                    className="flex items-center gap-3 bg-slate-800/70 backdrop-blur-sm rounded-xl p-3 border border-slate-700/60 hover:border-teal-500/50 hover:bg-slate-800 transition-all duration-200 group shadow-sm"
                   >
-                    <div className="w-7 h-7 bg-teal-500/20 rounded-lg flex items-center justify-center">
-                      <item.icon className="h-3.5 w-3.5 text-teal-400" />
+                    <div className="w-8 h-8 bg-teal-500/20 border border-teal-500/30 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <item.icon className="h-4 w-4 text-teal-400" />
                     </div>
-                    <span className="text-slate-200 text-xs font-medium">{item.label}</span>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-white text-xs sm:text-sm font-bold group-hover:text-teal-300 transition-colors truncate">
+                        {item.title}
+                      </h4>
+                      <p className="text-slate-400 text-[11px] truncate">
+                        {item.desc}
+                      </p>
+                    </div>
                   </motion.div>
                 ))}
               </motion.div>
 
-              {/* Center - HostelHub */}
+              {/* Center - HostelHub Sync Core */}
               <motion.div
-                initial={{ opacity: 0, scale: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="relative flex flex-col items-center"
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="relative flex flex-col items-center justify-center py-6 my-auto"
               >
-                <div className="w-24 h-24 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-xl">
-                  <Building2 className="h-12 w-12 text-white" />
+                {/* Pulsing beacon halos */}
+                <div className="absolute w-36 h-36 rounded-full bg-teal-500/10 animate-ping pointer-events-none" style={{ animationDuration: '4s' }} />
+                <div className="absolute w-44 h-44 rounded-full bg-teal-500/5 border border-teal-500/20 pointer-events-none" />
+
+                {/* Central Emblem */}
+                <div className="relative z-10 w-24 h-24 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-2xl ring-4 ring-teal-500/30">
+                  <Building2 className="h-11 w-11 text-white" />
                 </div>
-                <p className="text-center mt-3 font-bold text-lg text-teal-400">HOSTELHUB</p>
+
+                <div className="text-center mt-4 z-10">
+                  <p className="font-bold text-base tracking-widest text-teal-400 font-display">
+                    HOSTELHUB CORE
+                  </p>
+                  <p className="text-xs text-slate-300 mt-0.5">Real-Time Sync Engine</p>
+                  <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-semibold text-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Instant Synchronization
+                  </div>
+                </div>
               </motion.div>
 
-              {/* Owner Side */}
+              {/* Hostel Owner Side */}
               <motion.div
-                initial={{ opacity: 0, x: 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6 }}
-                className="space-y-2"
+                className="space-y-2.5"
               >
-                <h3 className="text-xl font-bold font-display mb-4 text-center">HOSTEL OWNER</h3>
+                <div className="text-center lg:text-right mb-4">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/25 text-xs font-bold uppercase tracking-wider text-teal-400">
+                    <Building2 className="h-3.5 w-3.5" /> Hostel Owner &amp; Admin
+                  </span>
+                </div>
+
                 {[
-                  { icon: Bed, label: 'Manage Rooms' },
-                  { icon: Users, label: 'Students' },
-                  { icon: Receipt, label: 'Bills' },
-                  { icon: CreditCard, label: 'Payments' },
-                  { icon: FileText, label: 'Requests' },
-                  { icon: Bell, label: 'Complaints' },
+                  { icon: Bed, title: 'Room & Bed Allocation', desc: 'Inventory & student assignment' },
+                  { icon: Receipt, title: 'Billing & Collection', desc: 'Automated rent & payment ledger' },
+                  { icon: Zap, title: 'Electricity Metering', desc: 'Per-room billing & calculations' },
+                  { icon: ShieldCheck, title: 'Complaint Resolution', desc: 'Maintenance dispatch & resolution' },
+                  { icon: Bell, title: 'Notice Broadcasts', desc: 'Instant announcements to residents' },
+                  { icon: Users, title: 'Resident Directory', desc: 'Tenant records, KYC & checkouts' },
                 ].map((item, idx) => (
                   <motion.div
                     key={idx}
-                    initial={{ opacity: 0, x: 15 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: idx * 0.06 + 0.3 }}
-                    className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/50 hover:bg-slate-700/50 transition-colors"
+                    transition={{ duration: 0.4, delay: idx * 0.06 + 0.2 }}
+                    className="flex items-center gap-3 bg-slate-800/70 backdrop-blur-sm rounded-xl p-3 border border-slate-700/60 hover:border-teal-500/50 hover:bg-slate-800 transition-all duration-200 group shadow-sm"
                   >
-                    <div className="w-7 h-7 bg-teal-500/20 rounded-lg flex items-center justify-center">
-                      <item.icon className="h-3.5 w-3.5 text-teal-400" />
+                    <div className="w-8 h-8 bg-teal-500/20 border border-teal-500/30 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <item.icon className="h-4 w-4 text-teal-400" />
                     </div>
-                    <span className="text-slate-200 text-xs font-medium">{item.label}</span>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-white text-xs sm:text-sm font-bold group-hover:text-teal-300 transition-colors truncate">
+                        {item.title}
+                      </h4>
+                      <p className="text-slate-400 text-[11px] truncate">
+                        {item.desc}
+                      </p>
+                    </div>
                   </motion.div>
                 ))}
               </motion.div>
             </div>
-
-            {/* Animated Connection Lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <motion.path
-                d="M 100 200 L 600 200"
-                stroke="#0F766E"
-                strokeWidth="2"
-                fill="none"
-                opacity="0.4"
-                initial={{ pathLength: 0 }}
-                style={{ pathLength: leftLineWidth }}
-              />
-              <motion.path
-                d="M 600 200 L 1100 200"
-                stroke="#0F766E"
-                strokeWidth="2"
-                fill="none"
-                opacity="0.4"
-                initial={{ pathLength: 0 }}
-                style={{ pathLength: rightLineWidth }}
-              />
-            </svg>
           </div>
         </div>
       </section>

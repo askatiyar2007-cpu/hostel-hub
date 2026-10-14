@@ -96,7 +96,6 @@ export default function StudentBillsPage() {
           hostel_id,
           active,
           start_date,
-          deposit_status,
           rooms(
             id,
             room_number,

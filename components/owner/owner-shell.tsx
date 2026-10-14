@@ -442,7 +442,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-baseline gap-2">
               <span className="font-bold text-white tracking-tight text-base leading-none">HostelHub</span>
-              <span className="hidden sm:inline-block text-[10px] font-semibold text-teal-400/90 tracking-wider uppercase">Workspace</span>
+              <span className="hidden sm:inline-block text-[10px] font-semibold text-teal-400/90 tracking-wider uppercase">Owner Workspace</span>
             </div>
           </div>
         </div>
@@ -486,7 +486,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
                       </div>
                     )}
 
-                    {/* Real owner name + "Owner" subtitle */}
+                    {/* Real owner name + subtitle */}
                     <div className="hidden sm:block leading-tight text-left">
                       <p className="text-sm font-semibold text-white leading-none truncate max-w-[140px]">
                         {profile?.full_name || user?.user_metadata?.full_name || 'Hostel Owner'}
@@ -570,14 +570,14 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main Content Area - with pt-14 to perfectly clear the h-14 fixed header and md:ml to clear sidebar */}
+        {/* Main Content Area - with pt-10 to minimize gap above header and md:ml to clear sidebar */}
         <div className={cn(
-          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-14",
+          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-10",
           isCollapsed ? "md:ml-20" : "md:ml-64"
         )}>
           {/* Page Content */}
           <main className="min-h-[calc(100vh-5rem)] min-w-0 pb-12">
-            <div className="px-4 pt-3 pb-8 md:px-8 md:pt-4 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
+            <div className="px-4 pt-0 pb-8 md:px-8 md:pt-0 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
               {children}
             </div>
           </main>

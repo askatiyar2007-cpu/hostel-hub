@@ -647,7 +647,6 @@ export default function OwnerRequestsPage() {
     return (
       <div className="space-y-6">
         <PageHeader 
-          label="Owner"
           title="Room Requests & Allocations"
           description="Processing database updates..."
         />
@@ -679,7 +678,6 @@ export default function OwnerRequestsPage() {
     return (
       <div className="space-y-6">
         <PageHeader 
-          label="Owner"
           title="Room Requests & Allocations"
           description="Error loading data"
         />
@@ -701,7 +699,6 @@ export default function OwnerRequestsPage() {
     <div className="space-y-6">
       {/* Header */}
       <PageHeader 
-        label="Owner"
         title="Room Requests"
         description="Review and manage student room requests, approve allocations, and track resident onboarding."
       />

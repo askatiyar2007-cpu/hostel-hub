@@ -138,7 +138,6 @@ export default function OwnerComplaintsPage() {
     <div className="space-y-6">
       {/* Header */}
       <PageHeader 
-        label="Maintenance"
         title="Complaints"
         description="Track and resolve issues reported by students"
       />

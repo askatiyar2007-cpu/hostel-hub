@@ -10,6 +10,17 @@ BEGIN;
 -- 1. NOTIFICATIONS RLS HARDENING
 -- ============================================================================
 
+-- Ensure table exists
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    title text NOT NULL,
+    message text NOT NULL,
+    type text NOT NULL,
+    read boolean NOT NULL DEFAULT false,
+    created_at timestamptz DEFAULT now()
+);
+
 -- Ensure table has Row Level Security enabled
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 

@@ -1,40 +1,88 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { toast } from "sonner";
 import Link from "next/link";
-import { Megaphone, Receipt, MessageSquareWarning, Plus, Building2, Bed, CreditCard, Zap, FileText, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  Building2,
+  Bed,
+  CreditCard,
+  Zap,
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Plus,
+  Phone,
+  Mail,
+  MapPin,
+  Receipt,
+  ChevronRight,
+  Calendar,
+  Wifi,
+  Wrench,
+  Trash2,
+  Home,
+  Check,
+  LogOut,
+  AlertTriangle,
+  Info
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
 import { cn } from "@/lib/utils";
 
-// Student Dashboard Container
-export default function StudentDashboardPage() {
-  return (
-    <StudentDashboard />
-  );
+// Time-of-day greeting helper
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
-function StudentDashboard() {
+// Format currency
+function formatCurrency(amount: number): string {
+  return `₹${Math.round(amount).toLocaleString('en-IN')}`;
+}
+
+// Category icons and colors for complaints
+const COMPLAINT_CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+  electrical: { label: "Electrical", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
+  plumbing: { label: "Plumbing", icon: Wrench, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
+  wifi: { label: "Wi-Fi & Internet", icon: Wifi, color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
+  cleaning: { label: "Cleaning & Hygiene", icon: Trash2, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+  furniture: { label: "Furniture & Bed", icon: Home, color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200" },
+  security: { label: "Security & Locks", icon: ShieldCheck, color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
+  other: { label: "General Issue", icon: AlertCircle, color: "text-slate-600", bg: "bg-slate-50 border-slate-200" },
+};
+
+// Root Page Entry
+export default function StudentDashboardPage() {
   const { profile, loading: isAuthLoading } = useAuth();
 
+  // 1. Fetch authenticated student record
   const { data: studentRecord, isLoading: isStudentLoading } = useQuery({
     queryKey: ["student-record", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
-      const { data: existing, error } = await supabase
+      const { data, error } = await supabase
         .from('students')
-        .select('id')
+        .select('id, profile_id, institution, status, created_at')
         .eq('profile_id', profile!.id)
         .maybeSingle();
 
@@ -42,39 +90,33 @@ function StudentDashboard() {
         console.error("[Dashboard] Error fetching student record:", error);
         throw error;
       }
-      return existing;
+      return data;
     }
   });
 
-  // Simplify the allocation query with direct fetch and subsequent room/hostel fetch
-  const fetchAllocation = async () => {
-    if (!studentRecord?.id) {
-      return null;
-    }
-
-    const { data, error } = await supabase
-      .from('room_allocations')
-      .select('*')
-      .eq('student_id', studentRecord.id)
-      .eq('active', true)
-      .maybeSingle();
-
-    if (error) {
-      console.error('[Dashboard] Error fetching allocation:', error);
-      return null;
-    }
-
-    return data;
-  };
-
+  // 2. Fetch active room allocation
   const { data: allocation, isLoading: isAllocLoading } = useQuery({
     queryKey: ['student-allocation-simple', studentRecord?.id],
     enabled: !!studentRecord?.id,
-    queryFn: fetchAllocation,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('room_allocations')
+        .select('*')
+        .eq('student_id', studentRecord!.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[Dashboard] Error fetching allocation:', error);
+        return null;
+      }
+      return data;
+    },
     staleTime: 0,
     refetchOnMount: true
   });
 
+  // 3. Fetch room and hostel details if allocation exists
   const { data: roomData, isLoading: isRoomLoading } = useQuery({
     queryKey: ['allocation-room', allocation?.room_id],
     enabled: !!allocation?.room_id,
@@ -84,6 +126,7 @@ function StudentDashboard() {
         .select('*, hostels(*)')
         .eq('id', allocation!.room_id)
         .single();
+
       if (error) {
         console.error('[Dashboard] Error fetching room details:', error);
         throw error;
@@ -92,87 +135,479 @@ function StudentDashboard() {
     }
   });
 
-  // 4. Update conditional rendering
-  // Make sure auth and studentRecord load first
+  // 4. Fetch pending room request if no active allocation exists
+  const { data: pendingRequest, isLoading: isPendingReqLoading } = useQuery({
+    queryKey: ['student-pending-request', studentRecord?.id],
+    enabled: !!studentRecord?.id && !allocation,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('room_requests')
+        .select(`
+          id,
+          status,
+          created_at,
+          booking_type,
+          rooms (
+            id,
+            room_number,
+            rent,
+            room_type,
+            floor,
+            hostels (
+              id,
+              name,
+              address,
+              city,
+              contact_number,
+              email
+            )
+          )
+        `)
+        .eq('student_id', studentRecord!.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[Dashboard] Error fetching pending room request:', error);
+        return null;
+      }
+      return data;
+    }
+  });
+
+  // Loading State
   if (isAuthLoading || isStudentLoading) {
-    console.log('[Dashboard] Student record or auth is loading...');
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-9 w-9 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   const isLoading = isAllocLoading || (!!allocation && isRoomLoading);
-
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-9 w-9 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Syncing room details...</p>
+        </div>
       </div>
     );
   }
 
+  // If no active allocation, show Onboarding / Pending Request View
   if (!allocation) {
     return (
-      <div className="space-y-6">
-        {/* Hero Section */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900 font-display">
-            {getGreeting()}, {profile?.full_name || 'Student'} 👋
-          </h1>
-          <p className="text-slate-600">Welcome to your HostelHub.</p>
-        </div>
-
-        {/* No Allocation Card */}
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mb-4">
-              <Building2 className="h-8 w-8 text-teal-600" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No Active Room Allocation</h3>
-            <p className="text-slate-600 mb-6">You haven't been assigned to any room yet.</p>
-            <Link href="/student/room-request">
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-sm">
-                Request a Room
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <NoAllocationView
+        studentRecord={studentRecord}
+        pendingRequest={pendingRequest}
+        isPendingReqLoading={isPendingReqLoading}
+        profile={profile}
+      />
     );
   }
 
+  // Main Active Resident Dashboard
   return (
-    <AllocationCard
+    <ActiveResidentDashboard
       allocation={allocation}
       hostel={roomData?.hostels}
       room={roomData}
+      studentRecord={studentRecord}
     />
   );
 }
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+// ============================================================================
+// NO ALLOCATION VIEW (Pending Request Tracker or Empty Onboarding)
+// ============================================================================
+export function NoAllocationView({
+  studentRecord: _studentRecord,
+  pendingRequest,
+  isPendingReqLoading: _isPendingReqLoading,
+  profile,
+}: {
+  studentRecord: any;
+  pendingRequest: any;
+  isPendingReqLoading: boolean;
+  profile: any;
+}) {
+  const reqRoom = pendingRequest?.rooms as any;
+  const reqHostel = reqRoom?.hostels as any;
+  const isPending = pendingRequest?.status === 'pending';
+  const isRejected = pendingRequest?.status === 'rejected';
+
+  return (
+    <div className="space-y-6 w-full">
+      {/* Welcome Greeting */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">
+            {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Student'} 👋
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Welcome to HostelHub. Manage your accommodation, rent payments, and requests in one place.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link href="/find-hostel">
+            <Button variant="outline" className="rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100 text-sm">
+              <Building2 className="mr-2 h-4 w-4 text-teal-600" />
+              Browse Hostels
+            </Button>
+          </Link>
+          <Link href="/student/room-request">
+            <Button className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-sm text-sm">
+              <Plus className="mr-1.5 h-4 w-4" />
+              Request a Room
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* If there is a pending request currently being reviewed */}
+      {isPending && (
+        <Card className="border border-teal-200 bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/40 shadow-sm overflow-hidden">
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-3 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 border border-teal-200 text-xs font-bold text-teal-800">
+                  <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
+                  Application Status: Pending Owner Approval
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Your Room Booking Request is Under Review
+                </h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Your request for <span className="font-semibold text-slate-900">{reqHostel?.name || 'the hostel'}</span> has been submitted. The owner will review your tenant details and allocate your room and bed. You will receive immediate confirmation once approved.
+                </p>
+
+                {/* Requested Details Box */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                    <p className="text-[11px] text-slate-500 font-medium">Hostel</p>
+                    <p className="text-sm font-bold text-slate-900 truncate">{reqHostel?.name || '—'}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{reqHostel?.city || ''}</p>
+                  </div>
+                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                    <p className="text-[11px] text-slate-500 font-medium">Room</p>
+                    <p className="text-sm font-bold text-slate-900">Room {reqRoom?.room_number || '—'}</p>
+                    <p className="text-[11px] text-slate-400 capitalize">{reqRoom?.room_type || 'Standard'}</p>
+                  </div>
+                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                    <p className="text-[11px] text-slate-500 font-medium">Booking Type</p>
+                    <p className="text-sm font-bold text-slate-900 capitalize">
+                      {pendingRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}
+                    </p>
+                    <p className="text-[11px] text-slate-400">Monthly Rent</p>
+                  </div>
+                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                    <p className="text-[11px] text-slate-500 font-medium">Estimated Rent</p>
+                    <p className="text-sm font-bold text-teal-700">₹{Number(reqRoom?.rent ?? 0).toLocaleString('en-IN')}/mo</p>
+                    <p className="text-[11px] text-slate-400">Excl. electricity</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stepper Indicator */}
+              <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs lg:w-72 shrink-0 space-y-4">
+                <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Onboarding Progress</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Check className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">1. Request Submitted</p>
+                      <p className="text-[10px] text-slate-500">{new Date(pendingRequest.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 rounded-full bg-teal-500 text-white flex items-center justify-center shrink-0 animate-pulse">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-teal-700">2. Owner Verification</p>
+                      <p className="text-[10px] text-teal-600 font-medium">In review by owner</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 opacity-60">
+                    <div className="h-7 w-7 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">3. Deposit & Check-In</p>
+                      <p className="text-[10px] text-slate-400">Pay deposit to move in</p>
+                    </div>
+                  </div>
+                </div>
+
+                {reqHostel?.contact_number && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <a
+                      href={`tel:${reqHostel.contact_number}`}
+                      className="text-xs font-medium text-teal-700 hover:text-teal-800 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-teal-50 hover:bg-teal-100 transition-colors"
+                    >
+                      <Phone className="h-3.5 w-3.5" /> Call Hostel Office: {reqHostel.contact_number}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* If request was rejected */}
+      {isRejected && (
+        <Card className="border border-rose-200 bg-rose-50/50 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="h-10 w-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div className="space-y-2 flex-1">
+                <h3 className="text-base font-bold text-slate-900">Previous Application Not Approved</h3>
+                <p className="text-sm text-slate-600">
+                  Your recent booking request was not accepted by the hostel management (usually due to room capacity or profile mismatch). You can request another room or discover available accommodations across our verified hostel network.
+                </p>
+                <div className="pt-2 flex gap-3">
+                  <Link href="/find-hostel">
+                    <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg">
+                      Explore Other Hostels
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step-by-Step Onboarding Guide */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">How Accommodation on HostelHub Works</h3>
+          <p className="text-sm text-slate-500">Fast, digital check-in with transparent billing and sub-metered electricity</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="h-12 w-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+              1
+            </div>
+            <h4 className="font-bold text-slate-900 text-base">Explore Hostels & Rooms</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Browse verified hostels, check genuine photos, examine room capacities, amenities, rules, and starting monthly rents.
+            </p>
+            <Link href="/find-hostel" className="inline-flex items-center text-xs font-semibold text-teal-700 hover:text-teal-800">
+              Browse Discovery Directory <ChevronRight className="h-3 w-3 ml-0.5" />
+            </Link>
+          </div>
+
+          <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="h-12 w-12 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg">
+              2
+            </div>
+            <h4 className="font-bold text-slate-900 text-base">Submit Room Booking</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Select your room number or enter your hostel’s registration code. Fill in basic tenant details and guardian emergency contact.
+            </p>
+            <Link href="/student/room-request" className="inline-flex items-center text-xs font-semibold text-teal-700 hover:text-teal-800">
+              Go to Room Request Form <ChevronRight className="h-3 w-3 ml-0.5" />
+            </Link>
+          </div>
+
+          <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div className="h-12 w-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">
+              3
+            </div>
+            <h4 className="font-bold text-slate-900 text-base">Check-In & Digital Pass</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Upon owner approval, your bed is locked. Track your itemized rent and sub-metered electricity readings with instant receipts.
+            </p>
+            <span className="inline-flex items-center text-xs font-medium text-slate-400">
+              Automatic upon approval
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// AllocationCard Component rendering the details when data exists
-interface AllocationCardProps {
+// ============================================================================
+// ACTIVE RESIDENT DASHBOARD
+// ============================================================================
+interface ActiveResidentDashboardProps {
   allocation: any;
   hostel: any;
   room: any;
+  studentRecord: any;
 }
 
-function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
+export function ActiveResidentDashboard({
+  allocation,
+  hostel,
+  room,
+  studentRecord,
+}: ActiveResidentDashboardProps) {
   const { profile } = useAuth();
-  const studentId = allocation.student_id;
+  const studentId = studentRecord?.id;
   const authUserId = profile?.user_id;
   const qc = useQueryClient();
-  const [confirmingCheckout, setConfirmingCheckout] = useState(false);
+  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
 
+  // 1. Fetch Student Fees with joined payments
+  const { data: feesData } = useQuery({
+    queryKey: ["student-fees-with-payments", studentId, allocation?.id],
+    enabled: !!studentId && !!allocation?.id,
+    queryFn: async () => {
+      const { data: fees, error } = await supabase
+        .from('student_fees')
+        .select(`
+          *,
+          payments (
+            id,
+            amount_paid,
+            amount,
+            payment_method,
+            reference_number,
+            payment_status,
+            status,
+            paid_date,
+            paid_at
+          )
+        `)
+        .eq('student_id', studentId)
+        .eq('allocation_id', allocation.id)
+        .order('due_date', { ascending: false });
+
+      if (error) {
+        console.error("[Dashboard] Error fetching fees:", error);
+        return { fees: [], total_due: 0, total_paid: 0, currentMonthFee: null, pendingFees: [] };
+      }
+
+      const formattedFees = (fees ?? []).map((fee: any) => {
+        const payment = fee.payments && fee.payments.length > 0
+          ? fee.payments.find((p: any) => p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification') || fee.payments[0]
+          : null;
+        const feeAmount = Number(fee.amount_due ?? fee.amount ?? 0);
+        return {
+          ...fee,
+          amount: feeAmount,
+          reference_number: payment?.reference_number,
+          payment_method: payment?.payment_method || fee.payment_method,
+          paid_date: payment?.paid_date || payment?.paid_at || fee.paid_date,
+          payment_status: payment?.payment_status || payment?.status || fee.status
+        };
+      });
+
+      const now = new Date();
+      const currentMonthFee = formattedFees.find((f: any) => {
+        if (!f.due_date && !f.month_year) return false;
+        if (f.month_year) {
+          const [y, m] = f.month_year.split('-').map(Number);
+          if (y === now.getFullYear() && m === (now.getMonth() + 1)) return true;
+        }
+        if (f.due_date) {
+          const d = new Date(f.due_date);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }
+        return false;
+      }) || formattedFees.find((f: any) => f.status !== 'paid') || formattedFees[0] || null;
+
+      const pendingFees = formattedFees.filter((f: any) => f.status === 'pending' || f.status === 'overdue' || f.status === 'pending_verification');
+      const total_due = formattedFees
+        .filter((f: any) => f.status === 'pending' || f.status === 'overdue')
+        .reduce((sum: number, f: any) => sum + Number(f.amount), 0);
+
+      const total_paid = formattedFees
+        .filter((f: any) => f.status === 'paid')
+        .reduce((sum: number, f: any) => sum + Number(f.amount), 0);
+
+      return {
+        fees: formattedFees,
+        total_due,
+        total_paid,
+        currentMonthFee,
+        pendingFees
+      };
+    }
+  });
+
+  // 2. Fetch deposit payments
+  const { data: depositPayments } = useQuery({
+    queryKey: ["student-deposit-payments", studentId],
+    enabled: !!studentId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('payments')
+        .select('id, amount, payment_status, status, paid_date')
+        .eq('student_id', studentId)
+        .is('student_fees_id', null)
+        .limit(1);
+      return data ?? [];
+    }
+  });
+
+  // 3. Fetch complaints
+  const { data: complaints = [] } = useQuery({
+    queryKey: ["student-complaints", authUserId],
+    enabled: !!authUserId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("complaints")
+        .select("*")
+        .eq("student_id", authUserId)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  // 4. Fetch announcements / notices
+  const { data: notices = [] } = useQuery({
+    queryKey: ["student-notices", allocation?.hostel_id],
+    enabled: !!allocation?.hostel_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notices")
+        .select("*")
+        .eq("hostel_id", allocation.hostel_id)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      return data ?? [];
+    },
+  });
+
+  // 5. Fetch current month electricity charges
+  const { data: electricitySnapshot } = useQuery({
+    queryKey: ["student-electricity-snapshot", studentId],
+    enabled: !!studentId,
+    queryFn: async () => {
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      try {
+        const res = await fetch(`/api/billing/student-charges?student_id=${studentId}&billing_month=${monthStr}`);
+        if (!res.ok) return { total_rupees: 0, consumption_units: 0, charges: [] };
+        const data = await res.json();
+        const charges = data.charges || [];
+        const consumption_units = charges.reduce((sum: number, c: any) => sum + (c.consumption_units || 0), 0);
+        const total_rupees = data.total_rupees || 0;
+        return { total_rupees, consumption_units, charges };
+      } catch (e) {
+        return { total_rupees: 0, consumption_units: 0, charges: [] };
+      }
+    }
+  });
+
+  // Checkout Mutation
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       if (!allocation) return;
@@ -180,82 +615,28 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Successfully checked out!");
-      setConfirmingCheckout(false);
+      toast.success("Successfully checked out from hostel room.");
+      setIsCheckoutDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["student-allocation-simple"] });
       qc.invalidateQueries({ queryKey: ["student-allocation"] });
       qc.invalidateQueries({ queryKey: ["allocation"] });
       qc.invalidateQueries({ queryKey: ["student-record"] });
+      setTimeout(() => {
+        window.location.reload();
+      }, 350);
     },
     onError: (e: Error) => {
-      toast.error(e.message);
+      toast.error(e.message || "Checkout failed");
     }
   });
 
-  const { data: approvedRequest } = useQuery({
-    queryKey: ["approved-request", studentId, allocation?.room_id],
-    enabled: !!studentId && !!allocation?.room_id,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("room_requests")
-        .select("booking_type")
-        .eq("student_id", studentId)
-        .eq("room_id", allocation.room_id)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  // Financial calculations
+  const hasPaidDeposit = allocation?.deposit_status === 'paid' || 
+    (depositPayments && depositPayments.some((p: any) => p.payment_status === 'completed' || p.status === 'completed'));
+  const depositStatus = hasPaidDeposit ? 'Paid' : 'Pending';
+  const depositAmount = Number(room?.security_deposit ?? allocation?.deposit_amount ?? 5000);
 
-  const { data: studentFees } = useQuery({
-    queryKey: ["student-fees", studentId, allocation?.id],
-    enabled: !!studentId && !!allocation?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("student_fees")
-        .select("*")
-        .eq("student_id", studentId)
-        .eq("allocation_id", allocation.id)
-        .order("due_date", { ascending: false });
-      if (error) {
-        console.error("[Dashboard] Error fetching student fees:", error);
-        return [];
-      }
-      return data ?? [];
-    },
-  });
-
-  const { data: complaints } = useQuery({
-    queryKey: ["student-complaints", authUserId],
-    enabled: !!authUserId,
-    queryFn: async () => {
-      const { data } = await supabase.from("complaints").select("*").eq("student_id", authUserId).order("created_at", { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  const { data: notices } = useQuery({
-    queryKey: ["student-notices", allocation?.hostel_id],
-    enabled: !!allocation?.hostel_id,
-    queryFn: async () => {
-      const { data } = await supabase.from("notices").select("*").eq("hostel_id", allocation.hostel_id).order("created_at", { ascending: false }).limit(5);
-      return data ?? [];
-    },
-  });
-
-  // Use actual deposit_status from room_allocations
-  const isDepositPaid = allocation?.deposit_status === 'paid';
-  const depositStatus = isDepositPaid ? 'Paid' : 'Pending';
-
-  // Find current month's fee, or the earliest unpaid, or most recent
-  const now = new Date();
-  const currentMonthFee = (studentFees ?? []).find((f: any) => {
-    if (!f.due_date) return false;
-    const d = new Date(f.due_date);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }) || (studentFees ?? []).find((f: any) => f.status !== 'paid') || (studentFees ?? [])[0];
-
+  const currentMonthFee = feesData?.currentMonthFee;
   const currentRentAmount = currentMonthFee
     ? Number(currentMonthFee.amount_due ?? currentMonthFee.amount ?? room?.rent ?? 0)
     : Number(room?.rent ?? 0);
@@ -270,519 +651,698 @@ function AllocationCard({ allocation, hostel, room }: AllocationCardProps) {
       : 'Pending'
     : 'Pending';
 
-  const pendingFees = (studentFees ?? []).filter((f: any) => f.status === 'pending' || f.status === 'overdue' || f.status === 'pending_verification');
-  const unpaidComplaints = (complaints ?? []).filter((c: any) => c.status !== 'resolved');
+  const totalOutstanding = (feesData?.total_due || 0);
+  const activeComplaints = complaints.filter((c: any) => c.status !== 'resolved' && c.status !== 'closed');
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900 font-display">
-          {getGreeting()}, {profile?.full_name || 'Student'} 👋
-        </h1>
-        <p className="text-sm text-slate-600">Welcome back to HostelHub.</p>
-      </div>
+    <div className="space-y-6 w-full">
+      {/* 1. Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">
+            {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Student'} 👋
+          </h1>
+          <p className="text-sm text-slate-600 mt-1 flex items-center gap-2 flex-wrap">
+            <span>Room <strong className="text-slate-900 font-bold">{room?.room_number || '—'}</strong></span>
+            <span className="text-slate-300">•</span>
+            <span className="font-semibold text-slate-800">{hostel?.name || 'Hostel'}</span>
+            {hostel?.city && (
+              <>
+                <span className="text-slate-300">•</span>
+                <span>{hostel.city}</span>
+              </>
+            )}
+          </p>
+        </div>
 
-      {/* Approved Request Confirmation Card */}
-      {approvedRequest && (
-        <Card className="border border-emerald-200 bg-gradient-to-r from-emerald-50/60 to-emerald-50/20 shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-4">
-              {/* Student Profile Photo */}
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile?.full_name || 'Student'}
-                  className="h-14 w-14 rounded-full object-cover ring-2 ring-emerald-400/30 shrink-0"
-                />
-              ) : (
-                <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-lg font-bold ring-2 ring-emerald-400/30 shrink-0">
-                  {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
-                </div>
+        {/* Right CTA cluster */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <NewComplaintDialog
+            studentId={authUserId ?? ''}
+            hostelId={allocation.hostel_id}
+            onCreated={() => qc.invalidateQueries({ queryKey: ["student-complaints"] })}
+          />
+
+          <Link href="/student/bills">
+            <Button
+              className={cn(
+                "rounded-xl shadow-xs text-xs sm:text-sm font-semibold transition-all",
+                totalOutstanding > 0
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-teal-600 hover:bg-teal-700 text-white"
               )}
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <h3 className="text-base font-bold text-emerald-900">Room Allocation Confirmed</h3>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                    Approved
-                  </span>
-                </div>
-                <p className="text-xs text-emerald-700 mb-3">Welcome to your new home, {profile?.full_name?.split(' ')[0] || 'Student'}.</p>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Hostel</p>
-                    <p className="font-semibold text-slate-900 text-xs truncate">{hostel?.name || '—'}</p>
-                  </div>
-                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Room</p>
-                    <p className="font-semibold text-slate-900 text-xs">Room {room?.room_number || '—'}</p>
-                  </div>
-                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Type</p>
-                    <p className="font-semibold text-slate-900 text-xs capitalize">{approvedRequest.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}</p>
-                  </div>
-                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100">
-                    <p className="text-[10px] text-slate-500 mb-0.5">Rent</p>
-                    <p className="font-semibold text-slate-900 text-xs">₹{Number(room?.rent ?? 0).toLocaleString()}/month</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Link href="/student/bills" className="block">
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium">
-                      View Payment Details
-                    </Button>
-                  </Link>
-                  <Link href="/student/dashboard" className="block">
-                    <Button size="sm" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-lg font-medium">
-                      View Room
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Hostel</p>
-                <p className="font-semibold text-slate-900 text-sm truncate max-w-[100px]">{hostel?.name || '—'}</p>
-              </div>
-            </div>
-            <p className="text-xs text-slate-400">{hostel?.city || ''}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
-                <Bed className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Room</p>
-                <p className="font-semibold text-slate-900 text-sm">Room {room?.room_number || '—'}</p>
-              </div>
-            </div>
-            <p className="text-xs text-slate-400">{room?.room_type || room?.type || '—'}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                <CreditCard className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Monthly Rent</p>
-                <p className="font-semibold text-slate-900 text-sm">₹{currentRentAmount.toLocaleString()}</p>
-              </div>
-            </div>
-            <p className={cn("text-xs font-medium", monthlyRentStatus === 'Paid' ? 'text-green-600' : 'text-amber-600')}>
-              {monthlyRentStatus}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Status</p>
-                <p className="font-semibold text-slate-900 text-sm">Active</p>
-              </div>
-            </div>
-            <p className="text-xs text-slate-400">Since {allocation.start_date ? new Date(allocation.start_date).toLocaleDateString() : '—'}</p>
-          </CardContent>
-        </Card>
+            >
+              <CreditCard className="mr-1.5 h-4 w-4" />
+              {totalOutstanding > 0 ? `Pay Dues (${formatCurrency(totalOutstanding)})` : 'Billing Ledger'}
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* Current Stay Card */}
-      <Card className="border border-slate-200 bg-white shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Your Current Stay</h2>
-              <p className="text-sm text-slate-500">Hostel and room information</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Active Allocation
+      {/* 2. Digital Resident Room Pass & Living Hub */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-white p-6 sm:p-7 shadow-md border border-slate-700/60">
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-10 h-48 w-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          {/* Left: Room Badge, Specs & Amenities */}
+          <div className="space-y-4 max-w-2xl flex-1">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Active Resident Pass
+              </span>
+              <span className="text-xs text-slate-300 font-medium">
+                {allocation.start_date ? `Checked In: ${new Date(allocation.start_date).toLocaleDateString()}` : 'Active Residency'}
               </span>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Hostel Info */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Building2 className="h-4 w-4 text-blue-600" />
-                Hostel Information
-              </div>
-              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div>
-                  <p className="text-xs text-slate-500 mb-1">Hostel Name</p>
-                  <p className="font-semibold text-slate-900">{hostel?.name || '—'}</p>
-                </div>
-                <div className="pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-500 mb-1">Location</p>
-                  <p className="text-sm text-slate-700">
-                    {hostel?.address && hostel?.area && hostel?.city && hostel?.state 
-                      ? `${hostel.address}, ${hostel.area}, ${hostel.city}, ${hostel.state}`
-                      : '—'}
-                  </p>
-                </div>
-              </div>
+            <div>
+              <p className="text-xs text-teal-300/90 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-teal-400 shrink-0" />
+                {hostel?.name || 'Student Residence'}
+              </p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white mt-1">
+                Room {room?.room_number || '—'}
+              </h2>
+              <p className="text-sm text-slate-300 mt-1 flex items-center gap-2 flex-wrap">
+                <span className="capitalize">{room?.room_type || room?.type || 'Standard Room'}</span>
+                <span className="text-slate-500">•</span>
+                <span>{room?.floor ? `Floor ${room.floor}` : 'Ground Floor'}</span>
+                <span className="text-slate-500">•</span>
+                <span className="inline-flex items-center gap-1">
+                  <Bed className="h-3.5 w-3.5 text-teal-300" />
+                  {allocation.booking_type === 'entire_room' ? 'Entire Room Booking' : 'Shared Bed Space'}
+                </span>
+              </p>
             </div>
 
-            {/* Room Info */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Bed className="h-4 w-4 text-purple-600" />
-                Room Information
-              </div>
-              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Room Number</p>
-                    <p className="font-semibold text-slate-900">Room {room?.room_number || '—'}</p>
-                  </div>
-                  <span className="text-xs bg-purple-100 text-purple-700 font-medium px-2 py-1 rounded-lg">
-                    {approvedRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
+            {/* Room Inclusions / Amenities Tags */}
+            <div className="pt-1 flex flex-wrap gap-2">
+              {Array.isArray(room?.facilities) && room.facilities.length > 0 ? (
+                room.facilities.map((fac: string, idx: number) => (
+                  <span key={idx} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10 backdrop-blur-xs">
+                    {fac}
                   </span>
-                </div>
-                <div className="pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-500 mb-1">Capacity</p>
-                  <p className="text-sm text-slate-700">
-                    {room?.capacity ?? 2} beds • {room?.occupied_beds ?? room?.occupancy ?? 1} occupied
-                  </p>
-                </div>
-                <div className="pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-500 mb-1">Monthly Rent</p>
-                  <p className="font-semibold text-slate-900">₹{Number(room?.rent ?? 0).toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Financial Info */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <CreditCard className="h-4 w-4 text-amber-600" />
-                Financial Status
-              </div>
-              <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center">
-                  <p className="text-xs text-slate-500">Security Deposit</p>
-                  <span className={cn("text-xs font-semibold px-2 py-1 rounded-full", 
-                    depositStatus === 'Paid' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-amber-100 text-amber-700'
-                  )}>
-                    {depositStatus}
+                ))
+              ) : (
+                <>
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                    High-Speed Wi-Fi
                   </span>
-                </div>
-                <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
-                  <p className="text-xs text-slate-500">Monthly Fees</p>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900 text-sm">₹{currentRentAmount.toLocaleString()}</span>
-                    <span className={cn("text-xs font-semibold px-2 py-1 rounded-full", 
-                      monthlyRentStatus === 'Paid'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-amber-100 text-amber-700'
-                    )}>
-                      {monthlyRentStatus}
-                    </span>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
-                  <p className="text-xs text-slate-500">Check-in Date</p>
-                  <span className="text-sm text-slate-700">
-                    {allocation.start_date ? new Date(allocation.start_date).toLocaleDateString() : '—'}
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                    Study Desk &amp; Chair
                   </span>
-                </div>
-              </div>
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                    Wardrobe Storage
+                  </span>
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                    Ceiling Fan &amp; Light
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href={`/hostels/${allocation.hostel_id}`}>
-              <Button variant="outline" className="rounded-xl">View Hostel</Button>
-            </Link>
-            <Link href="/student/documents">
-              <Button variant="outline" className="rounded-xl">Download Agreement</Button>
-            </Link>
-            <Link href="/student/bills">
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">Pay Fees</Button>
-            </Link>
-            {confirmingCheckout ? (
-              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 p-2 rounded-xl">
-                <span className="text-xs text-rose-700 font-medium">Checkout?</span>
-                <div className="flex gap-1">
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    className="rounded-lg text-xs h-7 px-3"
-                    onClick={() => checkoutMutation.mutate()}
-                    disabled={checkoutMutation.isPending}
-                  >
-                    {checkoutMutation.isPending ? '...' : 'Yes'}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="rounded-lg text-xs h-7 px-3"
-                    onClick={() => setConfirmingCheckout(false)}
-                  >
-                    No
-                  </Button>
-                </div>
+          {/* Right: Warden Desk Contact & Quick Actions */}
+          <div className="flex flex-col gap-3 lg:w-80 shrink-0">
+            {/* Warden Quick Contact Box */}
+            <div className="p-4 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-teal-300 uppercase tracking-wider">Hostel Warden Desk</span>
+                <Phone className="h-3.5 w-3.5 text-teal-400" />
               </div>
-            ) : (
-              <Button 
-                variant="outline" 
-                className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50"
-                onClick={() => setConfirmingCheckout(true)}
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Need key assistance, curfew extension, or room maintenance help?
+              </p>
+              <div className="space-y-1.5 pt-1">
+                {hostel?.contact_number && (
+                  <a
+                    href={`tel:${hostel.contact_number}`}
+                    className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-teal-600/90 hover:bg-teal-600 text-white font-semibold text-xs transition-colors shadow-sm"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    Call Warden ({hostel.contact_number})
+                  </a>
+                )}
+                {hostel?.email && (
+                  <a
+                    href={`mailto:${hostel.email}`}
+                    className="flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition-colors"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Email Hostel Office
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Public profile & Vacate buttons */}
+            <div className="flex items-center gap-2">
+              <Link href={`/hostels/${allocation.hostel_id}`} className="flex-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center rounded-xl text-xs text-slate-200 hover:text-white hover:bg-white/10 border-white/20 bg-white/5 backdrop-blur-sm"
+                >
+                  <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                  Hostel Profile
+                </Button>
+              </Link>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 justify-center rounded-xl text-xs text-rose-300 hover:text-white hover:bg-rose-600/80 border-rose-500/40 bg-rose-950/20 backdrop-blur-sm font-medium transition-all"
+                onClick={() => setIsCheckoutDialogOpen(true)}
               >
-                Check Out
+                <LogOut className="h-3.5 w-3.5 mr-1.5" />
+                Vacate Room
               </Button>
-            )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link href="/student/bills" className="block">
-          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                  <CreditCard className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">Pay Bill</p>
-                  <p className="text-xs text-slate-500">{pendingFees.length} pending</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/student/electricity" className="block">
-          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">Electricity</p>
-                  <p className="text-xs text-slate-500">View usage</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/student/complaints" className="block">
-          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-                  <MessageSquareWarning className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">Complaints</p>
-                  <p className="text-xs text-slate-500">{unpaidComplaints.length} active</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/student/documents" className="block">
-          <Card className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 text-sm">Documents</p>
-                  <p className="text-xs text-slate-500">View & download</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+        </div>
       </div>
 
-      {/* Bills & Complaints */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-amber-600" />
-                <h3 className="font-semibold text-slate-900">Recent Fees</h3>
+      {/* 3. Four Student Living Essentials Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Monthly Rent Status */}
+        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Rent</span>
+              <div className={cn(
+                "h-8 w-8 rounded-xl flex items-center justify-center",
+                totalOutstanding > 0 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
+              )}>
+                <CreditCard className="h-4 w-4" />
               </div>
-              <Link href="/student/bills" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-                View all →
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-bold font-display text-slate-900">
+                {totalOutstanding > 0 ? formatCurrency(totalOutstanding) : formatCurrency(currentRentAmount)}
+              </h3>
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className={cn(
+                  "font-semibold px-2 py-0.5 rounded-full text-[11px]",
+                  totalOutstanding === 0
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    : "bg-amber-50 text-amber-700 border border-amber-200/60"
+                )}>
+                  {totalOutstanding === 0 ? "Rent Up to Date" : `${monthlyRentStatus} (${feesData?.pendingFees?.length || 1} Due)`}
+                </span>
+                <Link href="/student/bills" className="font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-0.5">
+                  Bills <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 2: Electricity Usage */}
+        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Electricity Usage</span>
+              <div className="h-8 w-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <Zap className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-bold font-display text-slate-900">
+                {electricitySnapshot?.consumption_units ? `${electricitySnapshot.consumption_units} kWh` : 'Active'}
+              </h3>
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-slate-500 font-medium">
+                  {electricitySnapshot?.total_rupees ? `${formatCurrency(electricitySnapshot.total_rupees)} current` : 'Sub-meter linked'}
+                </span>
+                <Link href="/student/electricity" className="font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-0.5">
+                  Meter <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Room Maintenance */}
+        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Maintenance Desk</span>
+              <div className={cn(
+                "h-8 w-8 rounded-xl flex items-center justify-center",
+                activeComplaints.length > 0 ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"
+              )}>
+                <Wrench className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-bold font-display text-slate-900">
+                {activeComplaints.length > 0 ? `${activeComplaints.length} Active` : "All Good"}
+              </h3>
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className={cn(
+                  "font-semibold px-2 py-0.5 rounded-full text-[11px]",
+                  activeComplaints.length > 0
+                    ? "bg-blue-50 text-blue-700 border border-blue-200/60"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                )}>
+                  {activeComplaints.length > 0 ? "Under Repair" : "No Open Issues"}
+                </span>
+                <Link href="/student/complaints" className="font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-0.5">
+                  Tickets <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 4: Security Deposit */}
+        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Security Deposit</span>
+              <div className="h-8 w-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-bold font-display text-slate-900">
+                {formatCurrency(depositAmount)}
+              </h3>
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className={cn(
+                  "font-semibold px-2 py-0.5 rounded-full text-[11px]",
+                  depositStatus === 'Paid'
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    : "bg-amber-50 text-amber-700 border border-amber-200/60"
+                )}>
+                  {depositStatus}
+                </span>
+                <span className="text-slate-400 font-medium">Refundable</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 4. Split Two-Column Operations Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column: Recent Fee Invoices & Payment Ledger */}
+        <Card className="border border-slate-200/90 bg-white shadow-xs">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Receipt className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Recent Rent &amp; Fees</h3>
+                  <p className="text-xs text-slate-500">Monthly accommodation fees ledger</p>
+                </div>
+              </div>
+
+              <Link href="/student/bills" className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1">
+                View all <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            {studentFees && studentFees.length > 0 ? (
-              <div className="space-y-3">
-                {studentFees.slice(0, 5).map((f: any) => (
-                  <div key={f.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div>
-                      <p className="font-medium text-slate-900 capitalize text-sm">{f.month_year ? `Rent (${f.month_year})` : 'Monthly Rent'}</p>
-                      <p className="text-xs text-slate-500">Due {new Date(f.due_date).toLocaleDateString()}</p>
+
+            {feesData?.fees && feesData.fees.length > 0 ? (
+              <div className="space-y-2.5">
+                {feesData.fees.slice(0, 4).map((fee: any) => {
+                  const isPaid = fee.status === 'paid';
+                  const isOverdue = fee.status === 'overdue';
+                  const isPendingVerif = fee.status === 'pending_verification';
+
+                  return (
+                    <div
+                      key={fee.id}
+                      className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 hover:border-slate-200 transition-colors flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                            {fee.month_year ? `Monthly Rent (${fee.month_year})` : 'Monthly Rent'}
+                          </p>
+                          <span className={cn(
+                            "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0",
+                            isPaid ? "bg-emerald-100 text-emerald-800" :
+                            isOverdue ? "bg-rose-100 text-rose-800" :
+                            isPendingVerif ? "bg-blue-100 text-blue-800" :
+                            "bg-amber-100 text-amber-800"
+                          )}>
+                            {fee.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {fee.due_date ? `Due: ${new Date(fee.due_date).toLocaleDateString()}` : 'Monthly invoice'}
+                          {fee.payment_method && ` • ${fee.payment_method.toUpperCase()}`}
+                        </p>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-slate-900">
+                          {formatCurrency(fee.amount)}
+                        </p>
+                        {!isPaid ? (
+                          <Link href="/student/bills">
+                            <span className="text-[11px] font-bold text-teal-700 hover:underline">
+                              Pay Now →
+                            </span>
+                          </Link>
+                        ) : (
+                          <span className="text-[11px] font-medium text-emerald-700">
+                            Receipt available
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-slate-900">₹{Number(f.amount_due ?? f.amount ?? 0).toLocaleString()}</p>
-                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full capitalize", 
-                        f.status === 'paid' ? 'bg-green-100 text-green-700' : 
-                        f.status === 'overdue' ? 'bg-rose-100 text-rose-700' : 
-                        f.status === 'pending_verification' ? 'bg-blue-100 text-blue-700' :
-                        'bg-amber-100 text-amber-700'
-                      )}>
-                        {f.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm text-slate-500">No fee records yet</p>
+              <div className="text-center py-10">
+                <Receipt className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-slate-700">No Fee Invoices Yet</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Monthly rent invoices issued by the hostel owner will appear here.
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <MessageSquareWarning className="h-5 w-5 text-rose-600" />
-                <h3 className="font-semibold text-slate-900">Complaints</h3>
+        {/* Right Column: Maintenance & Support Tickets */}
+        <Card className="border border-slate-200/90 bg-white shadow-xs">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <Wrench className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Maintenance &amp; Complaints</h3>
+                  <p className="text-xs text-slate-500">Service requests and repair tracking</p>
+                </div>
               </div>
-              <NewComplaintDialog studentId={authUserId ?? ''} hostelId={allocation.hostel_id} onCreated={() => qc.invalidateQueries({ queryKey: ["student-complaints"] })} />
+
+              <div className="flex items-center gap-2">
+                <Link href="/student/complaints" className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1">
+                  View all <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </div>
+
             {complaints && complaints.length > 0 ? (
-              <div className="space-y-3">
-                {complaints.slice(0, 5).map((c: any) => (
-                  <div key={c.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-slate-900 text-sm">{c.title}</p>
-                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full capitalize", 
-                        c.status === 'resolved' ? 'bg-green-100 text-green-700' : 
-                        c.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 
-                        'bg-amber-100 text-amber-700'
-                      )}>
-                        {c.status.replace('_', ' ')}
-                      </span>
+              <div className="space-y-2.5">
+                {complaints.slice(0, 4).map((c: any) => {
+                  const cat = COMPLAINT_CATEGORY_CONFIG[c.category] || COMPLAINT_CATEGORY_CONFIG.other;
+                  const Icon = cat.icon;
+                  const isResolved = c.status === 'resolved' || c.status === 'closed';
+
+                  return (
+                    <div
+                      key={c.id}
+                      className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 hover:border-slate-200 transition-colors flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5", cat.bg)}>
+                          <Icon className={cn("h-4 w-4", cat.color)} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                            {c.title}
+                          </p>
+                          <p className="text-xs text-slate-500 capitalize mt-0.5">
+                            {cat.label} • {new Date(c.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <span className={cn(
+                          "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize",
+                          isResolved ? "bg-emerald-100 text-emerald-800" :
+                          c.status === 'in_progress' ? "bg-blue-100 text-blue-800" :
+                          "bg-amber-100 text-amber-800"
+                        )}>
+                          {c.status.replace('_', ' ')}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500 capitalize">{c.category}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <ShieldCheck className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm text-slate-500">No complaints yet</p>
+              <div className="text-center py-10">
+                <ShieldCheck className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-slate-700">No Support Issues Reported</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Have a maintenance or electrical issue? Raise a ticket and the warden will resolve it.
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Announcements */}
-      <Card className="border border-slate-200 bg-white shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-slate-900">Announcements</h3>
+      {/* 5. Hostel Announcements & Notices */}
+      <Card className="border border-slate-200/90 bg-white shadow-xs">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Hostel Notice Board</h3>
+                <p className="text-xs text-slate-500">Official updates, curfew, mess menu &amp; policies from management</p>
+              </div>
             </div>
-            <Link href="/student/announcements" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-              View all →
+
+            <Link href="/student/announcements" className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1">
+              All Notices <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+
           {notices && notices.length > 0 ? (
-            <div className="space-y-3">
-              {notices.map((n: any) => (
-                <div key={n.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-semibold text-slate-900">{n.title}</p>
-                    <p className="text-xs text-slate-500">{new Date(n.created_at).toLocaleDateString()}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {notices.map((n: any) => {
+                const isEmergency = n.notice_type === 'emergency';
+                return (
+                  <div
+                    key={n.id}
+                    className={cn(
+                      "p-4 rounded-xl border transition-all",
+                      isEmergency
+                        ? "bg-rose-50/60 border-rose-200"
+                        : "bg-slate-50/70 border-slate-200/80 hover:bg-slate-50"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize",
+                        isEmergency ? "bg-rose-100 text-rose-800" : "bg-teal-100 text-teal-800"
+                      )}>
+                        {n.notice_type || 'General Notice'}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {new Date(n.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-1">{n.title}</h4>
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">{n.body}</p>
                   </div>
-                  <p className="text-sm text-slate-600">{n.body}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8">
-              <Megaphone className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">No announcements right now</p>
+              <Calendar className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-medium text-slate-500">No active announcements from hostel management</p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Checkout / Vacate Room Confirmation Modal Dialog */}
+      <Dialog open={isCheckoutDialogOpen} onOpenChange={setIsCheckoutDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-white border border-slate-200 shadow-xl">
+          <DialogHeader className="space-y-3">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-bold text-slate-900 font-display">
+                Vacate Room {room?.room_number || ''}?
+              </DialogTitle>
+              <p className="text-xs text-slate-500 mt-1">
+                {hostel?.name ? `${hostel.name} • Room ${room?.room_number || '—'}` : 'Room Checkout Confirmation'}
+              </p>
+            </div>
+          </DialogHeader>
+
+          <div className="py-2 space-y-3 text-sm text-slate-600">
+            <p className="leading-relaxed">
+              Are you sure you want to vacate this room? Checking out will deactivate your active room pass, release your bed allocation, and notify hostel management.
+            </p>
+            <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200/80 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5 text-amber-800">
+                <Info className="h-3.5 w-3.5" /> Security Deposit &amp; Key Handover
+              </p>
+              <p className="text-amber-700 leading-normal">
+                Please hand over your room keys to the hostel warden. Your refundable security deposit will be settled by the owner after room inspection.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl text-xs text-slate-700 border-slate-300 w-full sm:w-auto"
+              onClick={() => setIsCheckoutDialogOpen(false)}
+              disabled={checkoutMutation.isPending}
+            >
+              Keep My Room
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white w-full sm:w-auto shadow-sm"
+              onClick={() => checkoutMutation.mutate()}
+              disabled={checkoutMutation.isPending}
+            >
+              {checkoutMutation.isPending ? "Vacating Room..." : "Confirm & Vacate Room"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function NewComplaintDialog({ studentId, hostelId, onCreated }: { studentId: string; hostelId: string; onCreated: () => void }) {
+// ============================================================================
+// RAISE COMPLAINT DIALOG
+// ============================================================================
+function NewComplaintDialog({
+  studentId,
+  hostelId,
+  onCreated,
+}: {
+  studentId: string;
+  hostelId: string;
+  onCreated: () => void;
+}) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", category: "other" });
+  const [form, setForm] = useState({ title: "", description: "", category: "electrical" });
+
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!studentId || !hostelId) {
+        throw new Error("Student or hostel details missing.");
+      }
+
       const { error } = await supabase.from("complaints").insert({
-        hostel_id: hostelId, student_id: studentId,
-        title: form.title, description: form.description,
-        category: form.category as "electrical" | "plumbing" | "wifi" | "cleaning" | "furniture" | "security" | "other",
+        hostel_id: hostelId,
+        student_id: studentId,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category as any,
+        status: "open",
+        priority: 2,
       });
+
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Complaint raised"); setOpen(false); setForm({ title: "", description: "", category: "other" }); onCreated(); },
-    onError: (e: Error) => toast.error(e.message),
+    onSuccess: () => {
+      toast.success("Complaint filed successfully. The hostel staff will attend to it shortly.");
+      setOpen(false);
+      setForm({ title: "", description: "", category: "electrical" });
+      onCreated();
+    },
+    onError: (e: Error) => {
+      toast.error(e.message || "Failed to submit complaint");
+    },
   });
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="rounded-xl"><Plus className="mr-1 h-4 w-4" /> New</Button>
+        <Button variant="outline" size="sm" className="rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100 text-xs">
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          Raise Complaint
+        </Button>
       </DialogTrigger>
-      <DialogContent className="rounded-xl">
-        <DialogHeader><DialogTitle>Raise a complaint</DialogTitle></DialogHeader>
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
-          <div><Label>Title</Label><Input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+      <DialogContent className="rounded-2xl max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-slate-900">Raise a Maintenance Issue</DialogTitle>
+        </DialogHeader>
+        <form
+          className="space-y-4 pt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate();
+          }}
+        >
           <div>
-            <Label>Category</Label>
-            <select className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-              {["electrical","plumbing","wifi","cleaning","furniture","security","other"].map((c) => <option key={c} value={c}>{c}</option>)}
+            <Label className="text-xs font-semibold text-slate-700">Category</Label>
+            <select
+              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            >
+              <option value="electrical">Electrical (Fan, Light, Sockets)</option>
+              <option value="plumbing">Plumbing (Tap, Leak, Washroom)</option>
+              <option value="wifi">Wi-Fi &amp; Internet</option>
+              <option value="cleaning">Cleaning &amp; Housekeeping</option>
+              <option value="furniture">Furniture &amp; Bedding</option>
+              <option value="security">Security &amp; Door Locks</option>
+              <option value="other">General / Other Issues</option>
             </select>
           </div>
-          <div><Label>Describe the issue</Label><Textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-          <DialogFooter><Button type="submit" disabled={mutation.isPending} className="rounded-xl">Submit</Button></DialogFooter>
+
+          <div>
+            <Label className="text-xs font-semibold text-slate-700">Issue Summary</Label>
+            <Input
+              required
+              placeholder="e.g. Washroom geyser not heating"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="mt-1 rounded-xl text-sm"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs font-semibold text-slate-700">Detailed Description</Label>
+            <Textarea
+              required
+              rows={3}
+              placeholder="Describe the issue, location in the room, and when it started..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="mt-1 rounded-xl text-sm"
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              className="rounded-xl text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold"
+            >
+              {mutation.isPending ? "Submitting..." : "Submit Complaint"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

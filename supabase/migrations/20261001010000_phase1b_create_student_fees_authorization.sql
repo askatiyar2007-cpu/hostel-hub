@@ -20,6 +20,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+#variable_conflict use_column
 DECLARE
     v_caller_id UUID;
     v_student_id UUID;
@@ -110,10 +111,10 @@ BEGIN
 
         -- If row already existed, fetch existing fee ID
         IF v_new_fee_id IS NULL THEN
-            SELECT id INTO v_new_fee_id
-            FROM public.student_fees
-            WHERE allocation_id = p_allocation_id
-              AND month_year = v_month_year;
+            SELECT sf.id INTO v_new_fee_id
+            FROM public.student_fees sf
+            WHERE sf.allocation_id = p_allocation_id
+              AND sf.month_year = v_month_year;
         END IF;
 
         fee_id := v_new_fee_id;

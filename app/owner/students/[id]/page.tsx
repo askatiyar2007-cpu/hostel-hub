@@ -185,7 +185,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     return (
       <div className="space-y-6">
         <PageHeader 
-          label="Owner"
           title="Resident Profile"
           description="Loading profile..."
         />
@@ -203,7 +202,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     return (
       <div className="space-y-6">
         <PageHeader 
-          label="Owner"
           title="Resident Profile"
           description="Error loading profile"
         />
@@ -236,7 +234,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     <div className="space-y-6">
       {/* Header */}
       <PageHeader 
-        label="Owner"
         title="Resident Profile"
         description={`Detailed resident ledger and profile card for ${studentName}.`}
       />

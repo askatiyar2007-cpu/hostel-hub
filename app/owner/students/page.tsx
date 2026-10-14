@@ -186,7 +186,6 @@ export default function OwnerStudentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <PageHeader 
-        label="Residents"
         title="Students"
         description="Manage resident students and active room allocations across your properties."
       />

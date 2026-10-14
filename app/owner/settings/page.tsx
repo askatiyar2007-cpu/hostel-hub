@@ -123,7 +123,7 @@ function SettingsRow({
 }
 
 // =========================================================================
-// Main Owner Settings Page Component
+// Main Settings Page Component
 // =========================================================================
 export default function OwnerSettingsPage() {
   const { user, profile, signOut } = useAuth();
@@ -276,15 +276,9 @@ export default function OwnerSettingsPage() {
       {/* 1. Page Title & Subtitle                                                  */}
       {/* ========================================================================= */}
       <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-            Settings
-          </h1>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/80 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-            Owner Workspace
-          </span>
-        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+          Settings
+        </h1>
         <p className="mt-1.5 text-sm md:text-base text-slate-500 leading-relaxed">
           Manage your account, business, preferences and support.
         </p>
@@ -467,7 +461,7 @@ export default function OwnerSettingsPage() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Preferences
             </h2>
-            <span className="text-[11px] font-medium text-slate-400">Workspace & System</span>
+            <span className="text-[11px] font-medium text-slate-400">Preferences</span>
           </div>
 
           <div className="bg-white rounded-2xl border border-sky-100/90 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.06),0_2px_6px_-1px_rgba(14,42,71,0.04)] divide-y divide-slate-100 overflow-hidden relative z-10">
@@ -987,7 +981,7 @@ export default function OwnerSettingsPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Current Plan</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Active</span>
               </div>
-              <h4 className="text-lg font-bold text-slate-900">HostelHub Owner Workspace</h4>
+              <h4 className="text-lg font-bold text-slate-900">HostelHub</h4>
               <p className="text-slate-600 leading-relaxed">
                 Complete platform access for property management, electricity metering, and billing workflows.
               </p>
@@ -1381,7 +1375,7 @@ export default function OwnerSettingsPage() {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Application</span>
-                <span className="font-bold text-slate-900">HostelHub Owner Workspace</span>
+                <span className="font-bold text-slate-900">HostelHub</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Version</span>
