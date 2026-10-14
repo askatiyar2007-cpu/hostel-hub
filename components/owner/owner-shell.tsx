@@ -570,14 +570,14 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main Content Area - with pt-14 to cleanly clear 56px fixed header and responsive inner spacing */}
+        {/* Main Content Area - with pt-10 to minimize gap above header and md:ml to clear sidebar */}
         <div className={cn(
-          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-14",
+          "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-10",
           isCollapsed ? "md:ml-20" : "md:ml-64"
         )}>
           {/* Page Content */}
           <main className="min-h-[calc(100vh-5rem)] min-w-0 pb-12">
-            <div className="px-4 pt-4 sm:pt-6 pb-8 md:px-8 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
+            <div className="px-4 pt-0 pb-8 md:px-8 md:pt-0 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
               {children}
             </div>
           </main>
