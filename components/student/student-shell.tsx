@@ -29,6 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
 import { getDashboardForRole } from '@/components/dashboard-layout';
 import { OwnerBackground } from '../owner/owner-background';
 import { SidebarBackground } from '../owner/sidebar-background';
@@ -56,16 +58,25 @@ const studentNavItems: NavItem[] = [
   { name: 'Settings', href: '/student/settings', icon: Settings, group: 'SYSTEM' },
 ];
 
-function NavContent({ isCollapsed, pathname }: {
+function NavContent({ isCollapsed, pathname, hasActiveAllocation }: {
   isCollapsed: boolean;
   pathname: string | null;
+  hasActiveAllocation?: boolean;
 }) {
   return (
     <nav className="space-y-1 px-3">
       {(() => {
         const groups = ['MAIN', 'SUPPORT', 'SYSTEM'];
         return groups.map(group => {
-          const groupItems = studentNavItems.filter(item => item.group === group);
+          const groupItems = studentNavItems
+            .filter(item => {
+              if (hasActiveAllocation && item.href === '/student/room-request') {
+                return false;
+              }
+              return true;
+            })
+            .filter(item => item.group === group);
+
           if (groupItems.length === 0) return null;
           
           return (
@@ -150,6 +161,45 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     }
   }, [loading, profile, accountCompletionStep, password_set, router, signOut]);
 
+  // Check whether the student already has an active room allocation
+  const { data: hasActiveAllocation } = useQuery({
+    queryKey: ['has-active-allocation', profile?.id],
+    enabled: !!profile?.id,
+    queryFn: async () => {
+      // 1. Direct check by student profile_id in students table
+      const { data: student } = await supabase
+        .from('students')
+        .select('id')
+        .eq('profile_id', profile!.id)
+        .maybeSingle();
+
+      const studentIds = [profile!.id];
+      if (student?.id) studentIds.push(student.id);
+
+      const { data: allocs } = await supabase
+        .from('room_allocations')
+        .select('id')
+        .in('student_id', studentIds)
+        .eq('active', true)
+        .limit(1);
+
+      if (allocs && allocs.length > 0) return true;
+
+      if (profile?.email) {
+        const { data: emailAllocs } = await supabase
+          .from('room_allocations')
+          .select('id')
+          .eq('student_email', profile.email)
+          .eq('active', true)
+          .limit(1);
+        if (emailAllocs && emailAllocs.length > 0) return true;
+      }
+
+      return false;
+    },
+    staleTime: 30 * 1000,
+  });
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -218,6 +268,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
             <NavContent 
               isCollapsed={isCollapsed}
               pathname={pathname}
+              hasActiveAllocation={!!hasActiveAllocation}
             />
           </div>
           
@@ -279,6 +330,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
             <NavContent 
               isCollapsed={false}
               pathname={pathname}
+              hasActiveAllocation={!!hasActiveAllocation}
             />
           </div>
           <div className="relative z-20 border-t p-4 flex-shrink-0 border-slate-800/80 bg-[#081720] shadow-lg">

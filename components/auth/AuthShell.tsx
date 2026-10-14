@@ -29,7 +29,7 @@ export function AuthShell({ children }: AuthShellProps) {
       </header>
 
       {/* Main content: Responsive two-column desktop layout / stacked mobile */}
-      <main className="relative z-10 w-full flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-8">
+      <main className="relative z-10 w-full flex-1 flex flex-col justify-center min-h-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-12 overflow-y-auto">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 xl:gap-16">
             {/* Left Column: Marketing Content directly on background (Desktop full, Mobile headline) */}

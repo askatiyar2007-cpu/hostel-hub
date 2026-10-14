@@ -80,66 +80,119 @@ export default function StudentDashboardPage() {
     queryKey: ["student-record", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
+      // Direct lookup by profile_id
       const { data, error } = await supabase
         .from('students')
-        .select('id, profile_id, institution, status, created_at')
+        .select('id, profile_id, status, created_at')
         .eq('profile_id', profile!.id)
         .maybeSingle();
 
       if (error) {
-        console.error("[Dashboard] Error fetching student record:", error);
-        throw error;
+        console.error("[Dashboard] Error fetching student record by profile_id:", error);
       }
-      return data;
+      if (data) return data;
+
+      // Fallback: lookup by student_email if student signed up with Google/email
+      if (profile?.email) {
+        const { data: emailData, error: emailErr } = await supabase
+          .from('students')
+          .select('id, profile_id, status, created_at')
+          .eq('student_email', profile.email)
+          .maybeSingle();
+
+        if (!emailErr && emailData) {
+          if (!emailData.profile_id) {
+            await supabase
+              .from('students')
+              .update({ profile_id: profile!.id })
+              .eq('id', emailData.id);
+          }
+          return emailData;
+        }
+      }
+
+      return null;
     }
   });
 
-  // 2. Fetch active room allocation
+  // 2. Fetch active room allocation with joined room and hostel
   const { data: allocation, isLoading: isAllocLoading } = useQuery({
-    queryKey: ['student-allocation-simple', studentRecord?.id],
-    enabled: !!studentRecord?.id,
+    queryKey: ['active-allocation-simple', studentRecord?.id || profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Find candidate student identifiers
+      const candidateIds = [profile!.id];
+      if (studentRecord?.id) candidateIds.push(studentRecord.id);
+
+      // Query room_allocations by candidate IDs or email
+      let alloc: any = null;
+
+      const { data: allocList, error: allocErr } = await supabase
         .from('room_allocations')
         .select('*')
-        .eq('student_id', studentRecord!.id)
+        .in('student_id', candidateIds)
         .eq('active', true)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (error) {
-        console.error('[Dashboard] Error fetching allocation:', error);
-        return null;
+      if (!allocErr && allocList && allocList.length > 0) {
+        alloc = allocList[0];
       }
-      return data;
+
+      if (!alloc && profile?.email) {
+        const { data: emailAllocs } = await supabase
+          .from('room_allocations')
+          .select('*')
+          .eq('student_email', profile.email)
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (emailAllocs && emailAllocs.length > 0) {
+          alloc = emailAllocs[0];
+        }
+      }
+
+      if (!alloc) return null;
+
+      // Join room and hostel details safely
+      if (alloc.room_id) {
+        const { data: roomData, error: roomError } = await supabase
+          .from('rooms')
+          .select('*, hostels(*)')
+          .eq('id', alloc.room_id)
+          .maybeSingle();
+
+        if (roomError) {
+          console.error('[Dashboard] Error fetching room details for allocation:', roomError);
+          return {
+            ...alloc,
+            rooms: null,
+            hostels: null,
+          };
+        }
+
+        return {
+          ...alloc,
+          rooms: roomData,
+          hostels: roomData?.hostels,
+        };
+      }
+
+      return alloc;
     },
-    staleTime: 0,
+    staleTime: 10 * 1000,
     refetchOnMount: true
   });
 
-  // 3. Fetch room and hostel details if allocation exists
-  const { data: roomData, isLoading: isRoomLoading } = useQuery({
-    queryKey: ['allocation-room', allocation?.room_id],
-    enabled: !!allocation?.room_id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('*, hostels(*)')
-        .eq('id', allocation!.room_id)
-        .single();
-
-      if (error) {
-        console.error('[Dashboard] Error fetching room details:', error);
-        throw error;
-      }
-      return data;
-    }
-  });
-
-  // 4. Fetch pending room request if no active allocation exists
+  // 3. Fetch pending room request if no active allocation exists
   const { data: pendingRequest, isLoading: isPendingReqLoading } = useQuery({
-    queryKey: ['student-pending-request', studentRecord?.id],
-    enabled: !!studentRecord?.id && !allocation,
+    queryKey: ['student-pending-request', studentRecord?.id || profile?.id],
+    enabled: (!!studentRecord?.id || !!profile?.id) && !allocation,
     queryFn: async () => {
+      const candidateIds = [profile!.id];
+      if (studentRecord?.id) candidateIds.push(studentRecord.id);
+
       const { data, error } = await supabase
         .from('room_requests')
         .select(`
@@ -163,7 +216,7 @@ export default function StudentDashboardPage() {
             )
           )
         `)
-        .eq('student_id', studentRecord!.id)
+        .in('student_id', candidateIds)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -177,24 +230,12 @@ export default function StudentDashboardPage() {
   });
 
   // Loading State
-  if (isAuthLoading || isStudentLoading) {
+  if (isAuthLoading || isStudentLoading || isAllocLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-9 w-9 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const isLoading = isAllocLoading || (!!allocation && isRoomLoading);
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-9 w-9 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Syncing room details...</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Syncing your dashboard...</p>
         </div>
       </div>
     );
@@ -216,8 +257,8 @@ export default function StudentDashboardPage() {
   return (
     <ActiveResidentDashboard
       allocation={allocation}
-      hostel={roomData?.hostels}
-      room={roomData}
+      hostel={allocation?.hostels}
+      room={allocation?.rooms}
       studentRecord={studentRecord}
     />
   );
@@ -700,39 +741,35 @@ export function ActiveResidentDashboard({
       </div>
 
       {/* 2. Digital Resident Room Pass & Living Hub */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-white p-6 sm:p-7 shadow-md border border-slate-700/60">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-10 h-48 w-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl bg-white p-6 sm:p-7 shadow-xs border border-slate-200/90 transition-all hover:border-slate-300">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           {/* Left: Room Badge, Specs & Amenities */}
           <div className="space-y-4 max-w-2xl flex-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold backdrop-blur-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Active Resident Pass
               </span>
-              <span className="text-xs text-slate-300 font-medium">
+              <span className="text-xs text-slate-500 font-medium">
                 {allocation.start_date ? `Checked In: ${new Date(allocation.start_date).toLocaleDateString()}` : 'Active Residency'}
               </span>
             </div>
 
             <div>
-              <p className="text-xs text-teal-300/90 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-teal-400 shrink-0" />
+              <p className="text-xs text-teal-700 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-teal-600 shrink-0" />
                 {hostel?.name || 'Student Residence'}
               </p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white mt-1">
+              <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-slate-900 mt-1">
                 Room {room?.room_number || '—'}
               </h2>
-              <p className="text-sm text-slate-300 mt-1 flex items-center gap-2 flex-wrap">
-                <span className="capitalize">{room?.room_type || room?.type || 'Standard Room'}</span>
-                <span className="text-slate-500">•</span>
+              <p className="text-sm text-slate-600 mt-1 flex items-center gap-2 flex-wrap">
+                <span className="capitalize font-medium text-slate-700">{room?.room_type || room?.type || 'Standard Room'}</span>
+                <span className="text-slate-300">•</span>
                 <span>{room?.floor ? `Floor ${room.floor}` : 'Ground Floor'}</span>
-                <span className="text-slate-500">•</span>
-                <span className="inline-flex items-center gap-1">
-                  <Bed className="h-3.5 w-3.5 text-teal-300" />
+                <span className="text-slate-300">•</span>
+                <span className="inline-flex items-center gap-1 text-slate-700">
+                  <Bed className="h-3.5 w-3.5 text-teal-600" />
                   {allocation.booking_type === 'entire_room' ? 'Entire Room Booking' : 'Shared Bed Space'}
                 </span>
               </p>
@@ -742,22 +779,22 @@ export function ActiveResidentDashboard({
             <div className="pt-1 flex flex-wrap gap-2">
               {Array.isArray(room?.facilities) && room.facilities.length > 0 ? (
                 room.facilities.map((fac: string, idx: number) => (
-                  <span key={idx} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10 backdrop-blur-xs">
+                  <span key={idx} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
                     {fac}
                   </span>
                 ))
               ) : (
                 <>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
                     High-Speed Wi-Fi
                   </span>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
                     Study Desk &amp; Chair
                   </span>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
                     Wardrobe Storage
                   </span>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
                     Ceiling Fan &amp; Light
                   </span>
                 </>
@@ -768,19 +805,19 @@ export function ActiveResidentDashboard({
           {/* Right: Warden Desk Contact & Quick Actions */}
           <div className="flex flex-col gap-3 lg:w-80 shrink-0">
             {/* Warden Quick Contact Box */}
-            <div className="p-4 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md space-y-2.5">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-teal-300 uppercase tracking-wider">Hostel Warden Desk</span>
-                <Phone className="h-3.5 w-3.5 text-teal-400" />
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Hostel Warden Desk</span>
+                <Phone className="h-3.5 w-3.5 text-teal-600" />
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-500 leading-relaxed">
                 Need key assistance, curfew extension, or room maintenance help?
               </p>
               <div className="space-y-1.5 pt-1">
                 {hostel?.contact_number && (
                   <a
                     href={`tel:${hostel.contact_number}`}
-                    className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-teal-600/90 hover:bg-teal-600 text-white font-semibold text-xs transition-colors shadow-sm"
+                    className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition-colors shadow-xs"
                   >
                     <Phone className="h-3.5 w-3.5" />
                     Call Warden ({hostel.contact_number})
@@ -789,9 +826,9 @@ export function ActiveResidentDashboard({
                 {hostel?.email && (
                   <a
                     href={`mailto:${hostel.email}`}
-                    className="flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs transition-colors"
+                    className="flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium transition-colors"
                   >
-                    <Mail className="h-3.5 w-3.5" />
+                    <Mail className="h-3.5 w-3.5 text-slate-500" />
                     Email Hostel Office
                   </a>
                 )}
@@ -804,9 +841,9 @@ export function ActiveResidentDashboard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full justify-center rounded-xl text-xs text-slate-200 hover:text-white hover:bg-white/10 border-white/20 bg-white/5 backdrop-blur-sm"
+                  className="w-full justify-center rounded-xl text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-50 border-slate-300 bg-white"
                 >
-                  <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                  <Building2 className="h-3.5 w-3.5 mr-1.5 text-slate-500" />
                   Hostel Profile
                 </Button>
               </Link>
@@ -814,7 +851,7 @@ export function ActiveResidentDashboard({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 justify-center rounded-xl text-xs text-rose-300 hover:text-white hover:bg-rose-600/80 border-rose-500/40 bg-rose-950/20 backdrop-blur-sm font-medium transition-all"
+                className="flex-1 justify-center rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 bg-white font-medium transition-all"
                 onClick={() => setIsCheckoutDialogOpen(true)}
               >
                 <LogOut className="h-3.5 w-3.5 mr-1.5" />

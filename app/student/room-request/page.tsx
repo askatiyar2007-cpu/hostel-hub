@@ -9,6 +9,7 @@ import {
   User, MapPin, Shield, Upload, X
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +27,7 @@ const ROOM_TYPE_COLORS: Record<string, string> = {
 };
 
 export default function RoomRequestPage() {
+  const router = useRouter();
   const { profile } = useAuth();
   const qc = useQueryClient();
 
@@ -218,6 +220,14 @@ export default function RoomRequestPage() {
       };
     },
   });
+
+  // Automatically redirect allocated student to their dashboard
+  useEffect(() => {
+    if (activeAllocation) {
+      toast.info('You already have an active room allocation. Redirecting to your living space...');
+      router.replace('/student/dashboard');
+    }
+  }, [activeAllocation, router]);
 
   // ------------------------------------------------------------
   // ROOMS

@@ -507,7 +507,7 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
           <Plus className="mr-2 h-4 w-4" /> Add Hostel
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add a new hostel</DialogTitle>
           <DialogDescription>Enter the details for the new hostel you want to add.</DialogDescription>
