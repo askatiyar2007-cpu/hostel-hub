@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -40,83 +40,97 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [passwordSet, setPasswordSet] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [skipAccountStateApi, setSkipAccountStateApi] = useState(false);
+  
+  // Resilient synchronization and in-flight deduplication refs
+  const inFlightSyncRef = React.useRef<Promise<void> | null>(null);
+  const accountStateFailureCountRef = React.useRef<number>(0);
+  const lastAccountStateFailureTimeRef = React.useRef<number>(0);
 
   const refreshAuthState = async (): Promise<void> => {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) throw sessionError;
-
-    if (!session?.user) {
-      setUser(null);
-      setProfile(null);
-      setAccountCompletionStep(null);
-      setPasswordSet(null);
-      return;
+    // If a synchronization is already in-flight, reuse it to prevent race conditions
+    if (inFlightSyncRef.current) {
+      return inFlightSyncRef.current;
     }
 
-    setUser(session.user);
+    const runSync = async (): Promise<void> => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-    // Fetch profile for UI display purposes (full_name, email, etc.)
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .maybeSingle();
+      if (sessionError) throw sessionError;
 
-    if (profileError) throw profileError;
-
-    setProfile(profileData as Profile | null);
-
-    if (!profileData) {
-      setAccountCompletionStep(null);
-      setPasswordSet(null);
-      return;
-    }
-
-    // Get canonical completion state from server (single source of truth).
-    // This replaces the previous client-side logic that duplicated the
-    // get_account_state() SQL function's completion rules. Any changes to
-    // account completion requirements now only need to update the SQL function.
-    try {
-      // Skip API call if it previously failed (service-role key missing in dev)
-      if (skipAccountStateApi) {
-        console.log('[AuthContext] Skipping account-state API due to previous failure (development mode)');
-        if (profileData) {
-          if (!profileData.role) {
-            setAccountCompletionStep('role');
-          } else if (!profileData.full_name) {
-            setAccountCompletionStep('password');
-          } else {
-            setAccountCompletionStep('complete');
-          }
-          setPasswordSet(true);
-        } else {
-          setAccountCompletionStep(null);
-          setPasswordSet(null);
-        }
+      if (!session?.user) {
+        setUser(null);
+        setProfile(null);
+        setAccountCompletionStep(null);
+        setPasswordSet(null);
         return;
       }
 
-      const response = await fetch('/api/auth/account-state');
-      if (response.ok) {
-        const state = await response.json();
-        // The API returns missing_step='complete' for completed accounts, or the
-        // actual missing step (role/password/student_onboarding) for incomplete ones
-        const step = state.missing_step === 'complete' ? 'complete' : state.missing_step;
-        setAccountCompletionStep(step as AccountCompletionStep);
-        // Extract password_set from the response - this is the authoritative flag
-        // that determines whether an account is a real HostelHub user or just an
-        // incomplete signup with temporary onboarding data
-        setPasswordSet(state.password_set ?? null);
-      } else {
-        // Fallback: if API fails, use client-side logic for development
-        console.error('Failed to fetch account state:', response.status);
-        setSkipAccountStateApi(true); // Permanently skip API on subsequent calls
-        // Development fallback: check profile for basic completion
+      setUser(session.user);
+
+      // Fetch profile for UI display purposes (full_name, email, etc.)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      setProfile(profileData as Profile | null);
+
+      if (!profileData) {
+        setAccountCompletionStep(null);
+        setPasswordSet(null);
+        return;
+      }
+
+      // Get canonical completion state from server (single source of truth).
+      // We always attempt to fetch canonical state, but if transient errors occur,
+      // we gracefully fall back without poisoning future authentications.
+      try {
+        const response = await fetch('/api/auth/account-state');
+        if (response.ok) {
+          const state = await response.json();
+          // Reset failure tracking on success
+          accountStateFailureCountRef.current = 0;
+          lastAccountStateFailureTimeRef.current = 0;
+
+          const step = state.missing_step === 'complete' ? 'complete' : state.missing_step;
+          setAccountCompletionStep(step as AccountCompletionStep);
+          setPasswordSet(state.password_set ?? null);
+        } else {
+          accountStateFailureCountRef.current += 1;
+          lastAccountStateFailureTimeRef.current = Date.now();
+          console.error('Failed to fetch account state:', response.status);
+
+          if (response.status === 401) {
+            setAccountCompletionStep(null);
+            setPasswordSet(null);
+          } else {
+            // Transient failure fallback for development or server hiccup
+            if (profileData) {
+              if (!profileData.role) {
+                setAccountCompletionStep('role');
+              } else if (!profileData.full_name) {
+                setAccountCompletionStep('password');
+              } else {
+                setAccountCompletionStep('complete');
+              }
+              setPasswordSet(profileData.password_set ?? true);
+            } else {
+              setAccountCompletionStep(null);
+              setPasswordSet(null);
+            }
+          }
+        }
+      } catch (error) {
+        accountStateFailureCountRef.current += 1;
+        lastAccountStateFailureTimeRef.current = Date.now();
+        console.error('Unable to fetch account state:', error);
+
         if (profileData) {
           if (!profileData.role) {
             setAccountCompletionStep('role');
@@ -125,30 +139,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             setAccountCompletionStep('complete');
           }
-          setPasswordSet(true); // Assume password is set if profile exists
+          setPasswordSet(profileData.password_set ?? true);
         } else {
           setAccountCompletionStep(null);
           setPasswordSet(null);
         }
       }
-    } catch (error) {
-      console.error('Unable to fetch account state:', error);
-      setSkipAccountStateApi(true); // Permanently skip API on subsequent calls
-      // Development fallback: check profile for basic completion
-      if (profileData) {
-        if (!profileData.role) {
-          setAccountCompletionStep('role');
-        } else if (!profileData.full_name) {
-          setAccountCompletionStep('password');
-        } else {
-          setAccountCompletionStep('complete');
-        }
-        setPasswordSet(true); // Assume password is set if profile exists
-      } else {
-        setAccountCompletionStep(null);
-        setPasswordSet(null);
-      }
-    }
+    };
+
+    const promise = runSync().finally(() => {
+      inFlightSyncRef.current = null;
+    });
+
+    inFlightSyncRef.current = promise;
+    return promise;
   };
 
   useEffect(() => {
@@ -168,26 +172,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      console.log('[AuthContext] Auth state changed, skipping sync if account-state previously failed');
-      // Don't auto-sync on auth state change if account-state API previously failed
-      // This prevents infinite loops when service-role key is missing
-      if (!skipAccountStateApi) {
+    } = supabase.auth.onAuthStateChange((event) => {
+      // On explicit auth events, reset failure counters so fresh sign-ins always sync cleanly
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+        accountStateFailureCountRef.current = 0;
+        lastAccountStateFailureTimeRef.current = 0;
+        void synchronize();
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        setAccountCompletionStep(null);
+        setPasswordSet(null);
+        accountStateFailureCountRef.current = 0;
+        lastAccountStateFailureTimeRef.current = 0;
+      } else {
         void synchronize();
       }
     });
 
-    // Only sync on focus/pageshow if account-state hasn't failed
-    // This prevents repeated 500 errors when service-role key is missing
+    // Only throttle passive focus/pageshow if a recent failure occurred within 15 seconds
     const refreshOnFocus = () => {
-      if (!skipAccountStateApi) {
-        void synchronize();
+      const now = Date.now();
+      if (accountStateFailureCountRef.current > 0 && now - lastAccountStateFailureTimeRef.current < 15000) {
+        return;
       }
+      void synchronize();
     };
+
     const refreshOnPageShow = () => {
-      if (!skipAccountStateApi) {
-        void synchronize();
+      const now = Date.now();
+      if (accountStateFailureCountRef.current > 0 && now - lastAccountStateFailureTimeRef.current < 15000) {
+        return;
       }
+      void synchronize();
     };
 
     window.addEventListener('focus', refreshOnFocus);
@@ -199,7 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('focus', refreshOnFocus);
       window.removeEventListener('pageshow', refreshOnPageShow);
     };
-  }, [skipAccountStateApi]);
+  }, []);
 
   const handleActualSignOut = async (): Promise<void> => {
     try {

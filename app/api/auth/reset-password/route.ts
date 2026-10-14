@@ -72,7 +72,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Invalidate/delete the reset_token cookie upon success
+    // Verify profile existence and identity binding
+    const { data: profile, error: profileFetchError } = await supabaseServer
+      .from('profiles')
+      .select('id, user_id, email, role, password_set')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (profileFetchError) {
+      console.error('[reset-password] Database error fetching profile for user %s:', userId, profileFetchError);
+      cookieStore.delete('reset_token');
+      return NextResponse.json(
+        { error: 'Password updated in auth system, but failed to verify profile status. Please try logging in or contact support.' },
+        { status: 500 }
+      );
+    }
+
+    if (!profile) {
+      console.error('[reset-password] No profile found for verified user %s', userId);
+      cookieStore.delete('reset_token');
+      return NextResponse.json(
+        { error: 'Account profile not found. Please contact support.' },
+        { status: 422 }
+      );
+    }
+
+    // Synchronize profiles.password_set if not already established
+    if (profile.password_set !== true) {
+      const { data: updatedRows, error: profileUpdateError } = await supabaseServer
+        .from('profiles')
+        .update({ password_set: true })
+        .eq('user_id', userId)
+        .select('id, password_set');
+
+      if (profileUpdateError) {
+        console.error('[reset-password] Failed to synchronize password_set for user %s:', userId, profileUpdateError);
+        cookieStore.delete('reset_token');
+        return NextResponse.json(
+          { error: 'Password updated, but profile state synchronization failed. Please try logging in.' },
+          { status: 500 }
+        );
+      }
+
+      if (!updatedRows || updatedRows.length === 0) {
+        console.error('[reset-password] Profile update affected 0 rows for user %s', userId);
+        cookieStore.delete('reset_token');
+        return NextResponse.json(
+          { error: 'Password updated, but profile record was not modified. Please try logging in.' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Invalidate/delete the reset_token cookie upon complete success
     cookieStore.delete('reset_token');
 
     return NextResponse.json({

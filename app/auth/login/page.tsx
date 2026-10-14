@@ -32,7 +32,7 @@ const onboardingDestinationForStep: Record<Exclude<CompletionNext, 'complete'>, 
 };
 
 function AuthContent() {
-  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep, password_set } = useAuth();
+  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -120,8 +120,8 @@ function AuthContent() {
   useEffect(() => {
     if (!isAuthenticated || !profile) return;
 
-    if (password_set === false) {
-      console.log('[LoginPage] Detected incomplete account (password_set=false), staying on login');
+    // Do not redirect while canonical account completion state is still resolving
+    if (accountCompletionStep === null) {
       return;
     }
 
