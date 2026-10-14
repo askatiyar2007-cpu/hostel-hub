@@ -848,21 +848,21 @@ function MarkPaidModal({ fee, ownerProfileId, onClose, onSuccess }: MarkPaidModa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain">
+      <div className="bg-card w-full max-w-md my-auto rounded-2xl border border-border shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
           <div>
             <h3 className="font-bold text-base text-foreground font-display">Mark Payment as Paid</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">Record a manual rent payment or approve receipt.</p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg text-muted-foreground transition">
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg text-muted-foreground transition cursor-pointer">
             <X size={16} />
           </button>
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs overflow-y-auto flex-1">
           {/* Read Only Stats */}
           <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-150 dark:border-zinc-800/80 rounded-xl p-3.5 grid grid-cols-2 gap-4">
             <div>
@@ -1065,21 +1065,21 @@ function VerifyPaymentModal({ fee, ownerUserId, onClose, onSuccess }: VerifyPaym
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-2xl rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain">
+      <div className="bg-card w-full max-w-2xl my-auto rounded-2xl border border-border shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
           <div>
             <h3 className="font-bold text-base text-foreground font-display">Verify Payment Receipt</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">Submitted by {fee.students?.profiles?.full_name} for {fee.billing_period} Rent.</p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg text-muted-foreground transition">
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg text-muted-foreground transition cursor-pointer">
             <X size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border overflow-y-auto flex-1">
           {/* Left panel: Receipt preview */}
           <div className="p-5 flex flex-col justify-between space-y-4">
             <div>

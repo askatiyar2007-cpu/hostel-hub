@@ -64,28 +64,32 @@ export function StatCard({
       </div>
 
       {/* 2. FULL VALUE */}
-      <div className="mb-1.5">
-        <div className="text-2xl sm:text-2xl lg:text-[26px] xl:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+      <div className="mb-1.5 min-w-0">
+        <div 
+          className="text-xl sm:text-2xl lg:text-[22px] xl:text-[26px] font-extrabold text-slate-900 tracking-tight leading-tight truncate" 
+          title={typeof value === 'string' ? value : String(value)}
+        >
           {value}
         </div>
       </div>
 
       {/* 3. SHORT SUPPORTING DESCRIPTION */}
-      <div className="flex-1 flex flex-col justify-end">
+      <div className="flex-1 flex flex-col justify-end min-w-0">
         {subtitle && (
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed truncate" title={subtitle}>
             {subtitle}
           </p>
         )}
 
         {/* 4. STATUS/SECONDARY INFORMATION */}
         {trend && (
-          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center">
+          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center min-w-0">
             <span
               className={cn(
-                "text-[11px] font-semibold leading-tight",
+                "text-[11px] font-semibold leading-tight truncate",
                 trend.isPositive ? "text-emerald-600" : "text-amber-600"
               )}
+              title={trend.value}
             >
               {trend.value}
             </span>
@@ -96,7 +100,7 @@ export function StatCard({
   );
 
   const cardClasses = cn(
-    "rounded-2xl border border-sky-100/90 bg-white p-4.5 sm:p-5 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.07),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 transition-all duration-200 flex flex-col justify-between h-full",
+    "rounded-2xl border border-sky-100/90 bg-white p-4.5 sm:p-5 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.07),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 transition-all duration-200 flex flex-col justify-between h-full min-w-0 overflow-hidden",
     isClickable
       ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-4px_rgba(14,42,71,0.12),0_4px_8px_-2px_rgba(14,42,71,0.06)] hover:border-sky-300 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
       : "cursor-default",

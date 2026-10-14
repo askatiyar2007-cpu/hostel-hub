@@ -113,9 +113,11 @@ export default function StudentElectricityPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900 font-display">Electricity</h1>
-        <p className="text-slate-600">Your electricity charges and usage</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Electricity &amp; Sub-meter</h1>
+          <p className="text-sm text-slate-500 mt-1">Track your room meter readings, monthly unit consumption, and per-head split.</p>
+        </div>
       </div>
 
       {charges.length === 0 ? (

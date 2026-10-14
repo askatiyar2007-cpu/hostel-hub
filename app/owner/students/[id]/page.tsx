@@ -435,13 +435,13 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
       {/* 1. Rental Agreement Modal */}
       {showAgreement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-xl bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-xl my-auto bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[calc(100dvh-3rem)] flex flex-col">
+            <div className="flex items-center justify-between border-b pb-4 shrink-0">
               <h3 className="text-base font-bold text-foreground font-display flex items-center gap-1.5">
                 <FileText size={16} className="text-primary" /> Rental Accommodation Agreement
               </h3>
-              <button onClick={() => setShowAgreement(false)} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setShowAgreement(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
                 <X size={18} />
               </button>
             </div>
@@ -501,13 +501,13 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
       {/* 3. Complaints Modal */}
       {showComplaints && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-2xl my-auto bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[calc(100dvh-3rem)] flex flex-col">
+            <div className="flex items-center justify-between border-b pb-4 shrink-0">
               <h3 className="text-base font-bold text-foreground font-display flex items-center gap-1.5">
                 <Activity size={16} className="text-primary" /> Resident Complaints History
               </h3>
-              <button onClick={() => setShowComplaints(false)} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setShowComplaints(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
                 <X size={18} />
               </button>
             </div>
@@ -550,9 +550,11 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
               )}
             </div>
 
-            <Button onClick={() => setShowComplaints(false)} className="w-full rounded-xl">
-              Close Complaints
-            </Button>
+            <div className="shrink-0 pt-2 border-t">
+              <Button onClick={() => setShowComplaints(false)} className="w-full rounded-xl cursor-pointer">
+                Close Complaints
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -560,7 +562,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       {/* Photo Preview Modal */}
       {previewPhoto && (
         <div 
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4 overscroll-contain"
           onClick={() => setPreviewPhoto(null)}
         >
           <div className="relative max-w-4xl max-h-full">

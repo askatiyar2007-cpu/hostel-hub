@@ -423,9 +423,11 @@ export default function StudentBillsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900 font-display">Fees & Billing</h1>
-        <p className="text-slate-600">Monitor your rents, safety deposits, and submit payment verifications.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Fees &amp; Billing</h1>
+          <p className="text-sm text-slate-500 mt-1">Monitor your rent schedules, security deposits, and submit payment verifications.</p>
+        </div>
       </div>
 
       {!allocation ? (

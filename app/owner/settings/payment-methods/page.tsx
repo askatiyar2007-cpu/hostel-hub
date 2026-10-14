@@ -460,8 +460,8 @@ export default function PaymentMethodsPage() {
 
       {/* QR Code Lightbox Modal */}
       {viewingQrUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setViewingQrUrl(null)}>
-          <div className="bg-white p-4 rounded-2xl max-w-sm w-full space-y-4 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain" onClick={() => setViewingQrUrl(null)}>
+          <div className="bg-white p-5 rounded-2xl max-w-sm w-full my-auto space-y-4 shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center border-b pb-2">
               <h3 className="font-bold text-zinc-900 text-sm">QR Code Preview</h3>
               <button onClick={() => setViewingQrUrl(null)} className="text-zinc-400 hover:text-zinc-950 font-bold text-xs border rounded-md px-2 py-0.5">Close</button>

@@ -158,15 +158,15 @@ export default function StudentComplaintsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-slate-900 font-display">Complaints</h1>
-          <p className="text-slate-600">Report and track issues in your hostel</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Complaints &amp; Maintenance</h1>
+          <p className="text-sm text-slate-500 mt-1">Report room issues and track resolution status in real time.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-xl shadow-xs font-semibold text-xs sm:text-sm">
+              <Plus className="mr-1.5 h-4 w-4" />
               New Complaint
             </Button>
           </DialogTrigger>

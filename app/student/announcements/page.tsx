@@ -103,9 +103,11 @@ export default function StudentAnnouncementsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900 font-display">Announcements</h1>
-        <p className="text-slate-600">Stay updated with latest news from your hostel</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Announcements</h1>
+          <p className="text-sm text-slate-500 mt-1">Stay updated with official notices and alerts from your hostel management.</p>
+        </div>
       </div>
 
       {announcements.length === 0 ? (

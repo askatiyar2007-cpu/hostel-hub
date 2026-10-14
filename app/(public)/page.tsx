@@ -901,8 +901,46 @@ export default function PublicHomePage() {
             </p>
           </motion.div>
 
-          {/* Rotating orbital system with upright counter-rotated cards */}
-          <div className="relative h-[480px] sm:h-[540px] flex items-center justify-center">
+          {/* Mobile view: Clean, contained grid without collision/overflow */}
+          <div className="md:hidden space-y-6 max-w-sm mx-auto">
+            <div className="flex justify-center">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute w-20 h-20 rounded-full bg-teal-500/15 animate-ping" style={{ animationDuration: '3s' }} />
+                <div className="w-16 h-16 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-2xl flex items-center justify-center shadow-xl ring-4 ring-teal-500/30">
+                  <Building2 className="h-8 w-8 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: MapPin, label: 'Prime Location', sub: 'Near Top Colleges' },
+                { icon: Wifi, label: 'High-Speed WiFi', sub: 'Unlimited 5G Fiber' },
+                { icon: Shield, label: '24/7 Security', sub: 'CCTV & Biometrics' },
+                { icon: Clock, label: 'Flexible Plans', sub: 'Monthly or Semester' },
+                { icon: MessageSquare, label: 'Direct Chat', sub: 'Instant Owner Support' },
+                { icon: Zap, label: 'Quick Requests', sub: 'Fast Maintenance' },
+              ].map((benefit, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-sm border border-slate-200/90 text-center hover:border-[#0F766E]/50 transition-colors"
+                >
+                  <div className="w-9 h-9 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-xl flex items-center justify-center mx-auto mb-2 shadow-xs">
+                    <benefit.icon className="h-4 w-4 text-white" />
+                  </div>
+                  <p className="font-bold text-slate-900 text-xs leading-tight">
+                    {benefit.label}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                    {benefit.sub}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop & Tablet Rotating orbital system with upright counter-rotated cards */}
+          <div className="relative hidden md:flex h-[480px] sm:h-[540px] items-center justify-center">
             {/* Background dashed orbit tracks */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
               <circle

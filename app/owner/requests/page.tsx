@@ -1001,7 +1001,7 @@ export default function OwnerRequestsPage() {
       {/* 10. Photo Preview Modal */}
       {previewPhoto && (
         <div 
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4 overscroll-contain"
           onClick={() => setPreviewPhoto(null)}
         >
           <div className="relative max-w-4xl max-h-full">
@@ -1619,14 +1619,14 @@ function DetailsModal({ item, onClose }: { item: any; onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-card border border-border rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain animate-fade-in">
+      <div className="relative w-full max-w-md my-auto bg-card border border-border rounded-3xl shadow-2xl overflow-hidden max-h-[calc(100dvh-3rem)] flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <h3 className="text-lg font-bold text-foreground font-display flex items-center gap-2">
             <User className="text-teal-600" /> Student Details
           </h3>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer">
             <X size={20} />
           </button>
         </div>
@@ -1713,17 +1713,17 @@ function ConfirmationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+      <div className="w-full max-w-md my-auto bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-4 max-h-[calc(100dvh-3rem)] overflow-y-auto">
         <h3 className="text-lg font-bold text-foreground font-display">{titles[action]}</h3>
         <p className="text-sm text-muted-foreground leading-relaxed">
           {descriptions[action]}
         </p>
         <div className="flex gap-2 justify-end pt-2">
-          <Button variant="ghost" onClick={onClose} disabled={loading} className="rounded-xl text-xs font-semibold">
+          <Button variant="ghost" onClick={onClose} disabled={loading} className="rounded-xl text-xs font-semibold cursor-pointer">
             Cancel
           </Button>
-          <Button onClick={onConfirm} disabled={loading} className={`rounded-xl px-4 text-xs font-bold shadow-md ${buttons[action]}`}>
+          <Button onClick={onConfirm} disabled={loading} className={`rounded-xl px-4 text-xs font-bold shadow-md cursor-pointer ${buttons[action]}`}>
             {loading ? 'Processing...' : 'Confirm Action'}
           </Button>
         </div>
@@ -1737,13 +1737,13 @@ function AgreementModal({ alloc, onClose }: { alloc: any; onClose: () => void })
   const studentName = student?.full_name || alloc.student_name || '-';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-xl bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between border-b pb-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto overscroll-contain">
+      <div className="w-full max-w-xl my-auto bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-6 max-h-[calc(100dvh-3rem)] flex flex-col">
+        <div className="flex items-center justify-between border-b pb-4 shrink-0">
           <h3 className="text-base font-bold text-foreground font-display flex items-center gap-1.5">
             <FileText size={16} className="text-teal-600" /> Rental Accommodation Agreement
           </h3>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer">
             <X size={18} />
           </button>
         </div>

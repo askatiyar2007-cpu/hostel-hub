@@ -924,8 +924,8 @@ function BulkRoomForm() {
 
       {/* Individual Room Edit Modal */}
       {editingRoomIndex !== null && editFormData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 sm:p-6 backdrop-blur-xs overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-lg my-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
             <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
@@ -1081,8 +1081,8 @@ function BulkRoomForm() {
 
       {/* Duplicate Room Numbers Confirmation Modal */}
       {duplicateWarnings && duplicateWarnings.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 sm:p-6 backdrop-blur-xs overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-xl my-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl max-h-[calc(100dvh-3rem)] overflow-y-auto">
             <div className="mb-4 flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                 <AlertTriangle size={22} />

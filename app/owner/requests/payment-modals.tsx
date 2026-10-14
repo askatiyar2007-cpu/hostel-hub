@@ -72,21 +72,21 @@ export function MarkDepositPaidModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain">
+      <div className="bg-card w-full max-w-md my-auto rounded-2xl border border-border shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
           <div>
             <h3 className="font-bold text-lg text-foreground font-display">Mark Security Deposit</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Confirm security deposit payment details</p>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground cursor-pointer">
             <X size={18} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1">
             <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Student Name</label>
             <div className="text-sm font-semibold p-3 bg-muted/30 border rounded-xl flex items-center gap-2">
@@ -228,21 +228,21 @@ export function MarkFeePaidModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain">
+      <div className="bg-card w-full max-w-md my-auto rounded-2xl border border-border shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
           <div>
             <h3 className="font-bold text-lg text-foreground font-display">Mark Fee as Paid</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Owner manual verification of student rent/bills</p>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground cursor-pointer">
             <X size={18} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1">
             <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Month / Due Fee <span className="text-red-500">*</span></label>
             <select
@@ -485,23 +485,23 @@ export function PaymentHistoryModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-card w-full max-w-2xl rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain">
+      <div className="bg-card w-full max-w-2xl my-auto rounded-2xl border border-border shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between border-b p-5 bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
           <div>
             <h3 className="font-bold text-lg text-foreground font-display">Payment History</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               Payments record for {alloc.students?.profiles?.full_name || alloc.student_name || 'Student'}
             </p>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground cursor-pointer">
             <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[450px] overflow-y-auto">
+        <div className="p-6 overflow-y-auto flex-1">
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">Loading payment records...</div>
           ) : payments.length === 0 ? (

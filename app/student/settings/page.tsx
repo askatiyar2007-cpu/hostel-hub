@@ -393,16 +393,20 @@ export default function StudentSettingsPage() {
 
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-[540px] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-2rem)]">
-            <div className="flex items-center justify-between border-b border-slate-200 p-5 pb-4 shrink-0">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-[500px] my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-200 p-5 pb-4 shrink-0 bg-slate-50/80">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
                   <Lock className="text-teal-600 h-4 w-4" />
                 </div>
                 <h4 className="font-bold text-base text-slate-900 font-display">Change Password</h4>
               </div>
-              <button onClick={() => setIsPasswordModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+              <button 
+                type="button"
+                onClick={() => setIsPasswordModalOpen(false)} 
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
                 &times;
               </button>
             </div>

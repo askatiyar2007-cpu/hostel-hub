@@ -163,33 +163,45 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   // Check whether the student already has an active room allocation
   const { data: hasActiveAllocation } = useQuery({
-    queryKey: ['has-active-allocation', profile?.id],
-    enabled: !!profile?.id,
+    queryKey: ['has-active-allocation', profile?.id, user?.id],
+    enabled: !!profile?.id || !!user?.id,
     queryFn: async () => {
+      const studentIds: string[] = [];
+      if (profile?.id) studentIds.push(profile.id);
+      if (user?.id && !studentIds.includes(user.id)) studentIds.push(user.id);
+
       // 1. Direct check by student profile_id in students table
-      const { data: student } = await supabase
-        .from('students')
-        .select('id')
-        .eq('profile_id', profile!.id)
-        .maybeSingle();
+      if (profile?.id) {
+        const { data: student } = await supabase
+          .from('students')
+          .select('id')
+          .eq('profile_id', profile.id)
+          .maybeSingle();
 
-      const studentIds = [profile!.id];
-      if (student?.id) studentIds.push(student.id);
+        if (student?.id && !studentIds.includes(student.id)) {
+          studentIds.push(student.id);
+        }
+      }
 
-      const { data: allocs } = await supabase
-        .from('room_allocations')
-        .select('id')
-        .in('student_id', studentIds)
-        .eq('active', true)
-        .limit(1);
+      // Check room_allocations by any candidate student ID
+      if (studentIds.length > 0) {
+        const { data: allocs } = await supabase
+          .from('room_allocations')
+          .select('id')
+          .in('student_id', studentIds)
+          .eq('active', true)
+          .limit(1);
 
-      if (allocs && allocs.length > 0) return true;
+        if (allocs && allocs.length > 0) return true;
+      }
 
-      if (profile?.email) {
+      // Case-insensitive email check fallback
+      const email = profile?.email || user?.email;
+      if (email) {
         const { data: emailAllocs } = await supabase
           .from('room_allocations')
           .select('id')
-          .eq('student_email', profile.email)
+          .ilike('student_email', email.trim())
           .eq('active', true)
           .limit(1);
         if (emailAllocs && emailAllocs.length > 0) return true;
@@ -197,7 +209,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
       return false;
     },
-    staleTime: 30 * 1000,
+    staleTime: 10 * 1000,
+    refetchOnMount: true
   });
 
   if (loading) {
@@ -511,14 +524,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Main Content Area - matching owner-shell pt-10 and responsive padding */}
+      {/* Main Content Area - with pt-14 to cleanly clear 56px header and snug, responsive padding */}
       <div className={cn(
-        "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-10",
+        "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-14",
         isCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {/* Page Content */}
         <main className="min-h-[calc(100vh-5rem)] min-w-0 pb-12">
-          <div className="px-4 pt-0 pb-8 md:px-8 md:pt-0 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
+          <div className="px-4 pt-4 sm:pt-6 pb-8 md:px-8 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
             {children}
           </div>
         </main>

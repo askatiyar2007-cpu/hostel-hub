@@ -2247,9 +2247,8 @@ export default function RoomRequestPage() {
       ------------------------------------------------------- */}
 
       {showOccupancyAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-border animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto overscroll-contain">
+          <div className="w-full max-w-md my-auto rounded-2xl bg-card p-6 shadow-2xl border border-border animate-in fade-in zoom-in-95 duration-200">
 
             <h3 className="text-lg font-bold font-display text-destructive mb-2">
               Entire Room Unavailable

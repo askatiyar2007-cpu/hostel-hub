@@ -26,9 +26,7 @@ import {
   Trash2,
   Home,
   Check,
-  LogOut,
-  AlertTriangle,
-  Info
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,11 +115,11 @@ export default function StudentDashboardPage() {
 
   // 2. Fetch active room allocation with joined room and hostel
   const { data: allocation, isLoading: isAllocLoading } = useQuery({
-    queryKey: ['active-allocation-simple', studentRecord?.id || profile?.id],
-    enabled: !!profile?.id,
+    queryKey: ['active-allocation-simple', studentRecord?.id, profile?.id],
+    enabled: !!profile?.id && !isStudentLoading,
     queryFn: async () => {
       // Find candidate student identifiers
-      const candidateIds = [profile!.id];
+      const candidateIds: string[] = [profile!.id];
       if (studentRecord?.id) candidateIds.push(studentRecord.id);
 
       // Query room_allocations by candidate IDs or email
@@ -143,7 +141,7 @@ export default function StudentDashboardPage() {
         const { data: emailAllocs } = await supabase
           .from('room_allocations')
           .select('*')
-          .eq('student_email', profile.email)
+          .ilike('student_email', profile.email)
           .eq('active', true)
           .order('created_at', { ascending: false })
           .limit(1);
@@ -658,13 +656,13 @@ export function ActiveResidentDashboard({
     onSuccess: () => {
       toast.success("Successfully checked out from hostel room.");
       setIsCheckoutDialogOpen(false);
-      qc.invalidateQueries({ queryKey: ["student-allocation-simple"] });
-      qc.invalidateQueries({ queryKey: ["student-allocation"] });
-      qc.invalidateQueries({ queryKey: ["allocation"] });
+      qc.invalidateQueries({ queryKey: ["active-allocation-simple"] });
+      qc.invalidateQueries({ queryKey: ["has-active-allocation"] });
       qc.invalidateQueries({ queryKey: ["student-record"] });
-      setTimeout(() => {
-        window.location.reload();
-      }, 350);
+      qc.invalidateQueries({ queryKey: ["student-fees-with-payments"] });
+      qc.invalidateQueries({ queryKey: ["student-deposit-payments"] });
+      qc.clear();
+      window.location.href = '/student/dashboard';
     },
     onError: (e: Error) => {
       toast.error(e.message || "Checkout failed");
@@ -1205,49 +1203,73 @@ export function ActiveResidentDashboard({
 
       {/* Checkout / Vacate Room Confirmation Modal Dialog */}
       <Dialog open={isCheckoutDialogOpen} onOpenChange={setIsCheckoutDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-white border border-slate-200 shadow-xl">
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-white border border-slate-200 shadow-2xl">
           <DialogHeader className="space-y-3">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-              <AlertTriangle className="h-6 w-6" />
-            </div>
-            <div>
-              <DialogTitle className="text-xl font-bold text-slate-900 font-display">
-                Vacate Room {room?.room_number || ''}?
-              </DialogTitle>
-              <p className="text-xs text-slate-500 mt-1">
-                {hostel?.name ? `${hostel.name} • Room ${room?.room_number || '—'}` : 'Room Checkout Confirmation'}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shadow-2xs shrink-0">
+                <LogOut className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 font-display">
+                  Vacate Room {room?.room_number || ''}?
+                </DialogTitle>
+                <p className="text-xs text-slate-500">
+                  {hostel?.name ? `${hostel.name}` : 'Hostel Resident Checkout'}
+                </p>
+              </div>
             </div>
           </DialogHeader>
 
-          <div className="py-2 space-y-3 text-sm text-slate-600">
-            <p className="leading-relaxed">
-              Are you sure you want to vacate this room? Checking out will deactivate your active room pass, release your bed allocation, and notify hostel management.
-            </p>
-            <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200/80 text-xs text-amber-900 space-y-1">
-              <p className="font-bold flex items-center gap-1.5 text-amber-800">
-                <Info className="h-3.5 w-3.5" /> Security Deposit &amp; Key Handover
-              </p>
-              <p className="text-amber-700 leading-normal">
-                Please hand over your room keys to the hostel warden. Your refundable security deposit will be settled by the owner after room inspection.
-              </p>
+          <div className="py-2 space-y-3.5">
+            {/* Allocation summary mini-card */}
+            <div className="rounded-xl border border-slate-200/90 bg-slate-50/80 p-3.5 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Assigned Space</span>
+                <span className="font-bold text-slate-900">
+                  Room {room?.room_number || '—'} &bull; {allocation.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Check-in Date</span>
+                <span className="font-semibold text-slate-700">
+                  {allocation.start_date ? new Date(allocation.start_date).toLocaleDateString() : 'Active Residency'}
+                </span>
+              </div>
+            </div>
+
+            {/* What vacating entails checklist */}
+            <div className="space-y-2 text-xs text-slate-600">
+              <p className="font-semibold text-slate-900 text-xs">What happens when you vacate:</p>
+              <div className="space-y-1.5 pl-1">
+                <div className="flex items-start gap-2">
+                  <div className="h-4 w-4 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5 text-[10px]">1</div>
+                  <span>Your active room pass and bed allocation will be released.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="h-4 w-4 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5 text-[10px]">2</div>
+                  <span>Please hand over physical room keys to the hostel warden.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="h-4 w-4 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5 text-[10px]">3</div>
+                  <span>Refundable deposit settlement will be initiated by the owner.</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2.5 pt-3 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
-              className="rounded-xl text-xs text-slate-700 border-slate-300 w-full sm:w-auto"
+              className="rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 border-slate-300 w-full sm:w-auto cursor-pointer"
               onClick={() => setIsCheckoutDialogOpen(false)}
               disabled={checkoutMutation.isPending}
             >
-              Keep My Room
+              Cancel &amp; Keep Stay
             </Button>
             <Button
               type="button"
-              variant="destructive"
-              className="rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white w-full sm:w-auto shadow-sm"
+              className="rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 active:scale-95 text-white w-full sm:w-auto shadow-sm cursor-pointer transition-all"
               onClick={() => checkoutMutation.mutate()}
               disabled={checkoutMutation.isPending}
             >

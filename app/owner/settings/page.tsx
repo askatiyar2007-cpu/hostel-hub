@@ -579,9 +579,9 @@ export default function OwnerSettingsPage() {
 
       {/* 1. Profile Edit Modal */}
       {activeModal === 'profile' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shadow-2xs">
                   <User size={18} />
@@ -594,13 +594,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveProfile} className="p-6 space-y-4">
+            <form onSubmit={handleSaveProfile} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-1.5">
                 <Label htmlFor="full_name" className="text-xs font-semibold text-slate-700">
                   Full Name
@@ -678,9 +678,9 @@ export default function OwnerSettingsPage() {
 
       {/* 2. Change Password Modal */}
       {activeModal === 'password' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center shadow-2xs">
                   <Lock size={18} />
@@ -693,13 +693,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+            <form onSubmit={handleChangePassword} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="old_password" className="text-xs font-semibold text-slate-700">
@@ -836,9 +836,9 @@ export default function OwnerSettingsPage() {
 
       {/* 3. Security Details Modal */}
       {activeModal === 'security' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shadow-2xs">
                   <Shield size={18} />
@@ -851,13 +851,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-slate-900">Session Status</p>
@@ -879,7 +879,7 @@ export default function OwnerSettingsPage() {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -894,9 +894,9 @@ export default function OwnerSettingsPage() {
 
       {/* 4. KYC & Verification Modal */}
       {activeModal === 'kyc' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center shadow-2xs">
                   <CheckCircle2 size={18} />
@@ -909,38 +909,40 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-200/80 flex items-start gap-3 text-xs">
-              <CheckCircle2 size={18} className="text-teal-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-teal-900">Owner Identity Verified</p>
-                <p className="text-teal-700 mt-0.5 leading-relaxed">
-                  Your owner account credentials and hostel management permissions are fully verified for direct fee collections and tenant contracts.
-                </p>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-200/80 flex items-start gap-3 text-xs">
+                <CheckCircle2 size={18} className="text-teal-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-teal-900">Owner Identity Verified</p>
+                  <p className="text-teal-700 mt-0.5 leading-relaxed">
+                    Your owner account credentials and hostel management permissions are fully verified for direct fee collections and tenant contracts.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-500">Verification Tier</span>
+                  <span className="font-bold text-slate-900">Standard Owner Partner</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-slate-500">Direct Settlement</span>
+                  <span className="font-bold text-emerald-600">Enabled</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-slate-500">Account Type</span>
+                  <span className="font-bold text-slate-900">Hostel Administrator</span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Verification Tier</span>
-                <span className="font-bold text-slate-900">Standard Owner Partner</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Direct Settlement</span>
-                <span className="font-bold text-emerald-600">Enabled</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-slate-500">Account Type</span>
-                <span className="font-bold text-slate-900">Hostel Administrator</span>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -955,9 +957,9 @@ export default function OwnerSettingsPage() {
 
       {/* 5. Subscription & Plan Modal */}
       {activeModal === 'subscription' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shadow-2xs">
                   <Sparkles size={18} />
@@ -970,39 +972,41 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/80 to-amber-100/40 border border-amber-200/80 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Current Plan</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Active</span>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/80 to-amber-100/40 border border-amber-200/80 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Current Plan</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Active</span>
+                </div>
+                <h4 className="text-lg font-bold text-slate-900">HostelHub</h4>
+                <p className="text-slate-600 leading-relaxed">
+                  Complete platform access for property management, electricity metering, and billing workflows.
+                </p>
               </div>
-              <h4 className="text-lg font-bold text-slate-900">HostelHub</h4>
-              <p className="text-slate-600 leading-relaxed">
-                Complete platform access for property management, electricity metering, and billing workflows.
-              </p>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Check size={14} className="text-teal-600" />
+                  <span>Unlimited hostel property listings</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Check size={14} className="text-teal-600" />
+                  <span>Automated room & sub-meter electricity computation</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Check size={14} className="text-teal-600" />
+                  <span>Direct UPI and Bank Transfer payout channels</span>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-700">
-                <Check size={14} className="text-teal-600" />
-                <span>Unlimited hostel property listings</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <Check size={14} className="text-teal-600" />
-                <span>Automated room & sub-meter electricity computation</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <Check size={14} className="text-teal-600" />
-                <span>Direct UPI and Bank Transfer payout channels</span>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -1017,9 +1021,9 @@ export default function OwnerSettingsPage() {
 
       {/* 6. Notifications Preferences Modal */}
       {activeModal === 'notifications' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center shadow-2xs">
                   <Bell size={18} />
@@ -1032,13 +1036,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
                 {/* Toggle 1 */}
                 <div className="flex items-center justify-between p-4 bg-white">
@@ -1094,25 +1098,25 @@ export default function OwnerSettingsPage() {
                   </button>
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setActiveModal(null)}
-                  className="h-9.5 rounded-xl border-slate-200 text-slate-700"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveNotifications}
-                  disabled={savingPrefs}
-                  className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
-                >
-                  {savingPrefs ? 'Saving...' : 'Save Preferences'}
-                </Button>
-              </div>
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-slate-100 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveModal(null)}
+                className="h-9.5 rounded-xl border-slate-200 text-slate-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveNotifications}
+                disabled={savingPrefs}
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+              >
+                {savingPrefs ? 'Saving...' : 'Save Preferences'}
+              </Button>
             </div>
           </div>
         </div>
@@ -1120,9 +1124,9 @@ export default function OwnerSettingsPage() {
 
       {/* 7. Appearance Modal */}
       {activeModal === 'appearance' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-cyan-50 text-cyan-700 border border-cyan-200 flex items-center justify-center shadow-2xs">
                   <Sun size={18} />
@@ -1135,23 +1139,25 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 rounded-xl border-2 border-teal-500 bg-teal-50/40 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-slate-900">HostelHub Daylight Architecture</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-600 text-white">Active</span>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-4 rounded-xl border-2 border-teal-500 bg-teal-50/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-slate-900">HostelHub Daylight Architecture</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-600 text-white">Active</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Carefully optimized for daytime administrative readability with high-contrast elevated white cards over a pale atmospheric architectural skyline.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Carefully optimized for daytime administrative readability with high-contrast elevated white cards over a pale atmospheric architectural skyline.
-              </p>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -1166,9 +1172,9 @@ export default function OwnerSettingsPage() {
 
       {/* 8. Language Modal */}
       {activeModal === 'language' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-violet-50 text-violet-700 border border-violet-200 flex items-center justify-center shadow-2xs">
                   <Globe size={18} />
@@ -1181,21 +1187,23 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl border border-teal-300 bg-teal-50/50 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-slate-900">English (India & International)</p>
-                <p className="text-slate-500">Standard system locale for Indian hostels</p>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-3.5 rounded-xl border border-teal-300 bg-teal-50/50 flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-slate-900">English (India & International)</p>
+                  <p className="text-slate-500">Standard system locale for Indian hostels</p>
+                </div>
+                <Check size={16} className="text-teal-600" />
               </div>
-              <Check size={16} className="text-teal-600" />
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -1210,9 +1218,9 @@ export default function OwnerSettingsPage() {
 
       {/* 9. Currency Modal */}
       {activeModal === 'currency' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shadow-2xs">
                   <Coins size={18} />
@@ -1225,21 +1233,23 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/50 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-slate-900">INR (₹) - Indian Rupee</p>
-                <p className="text-slate-500">Configured for UPI and Indian bank settlements</p>
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/50 flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-slate-900">INR (₹) - Indian Rupee</p>
+                  <p className="text-slate-500">Configured for UPI and Indian bank settlements</p>
+                </div>
+                <Check size={16} className="text-emerald-600" />
               </div>
-              <Check size={16} className="text-emerald-600" />
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -1254,9 +1264,9 @@ export default function OwnerSettingsPage() {
 
       {/* 10. Help & Support Modal */}
       {activeModal === 'help' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shadow-2xs">
                   <HelpCircle size={18} />
@@ -1269,13 +1279,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
                 <p className="font-bold text-slate-900 flex items-center gap-1.5">
                   <Mail size={13} className="text-teal-600" /> Support Email
@@ -1291,7 +1301,7 @@ export default function OwnerSettingsPage() {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -1306,9 +1316,9 @@ export default function OwnerSettingsPage() {
 
       {/* 11. Terms & Privacy Modal */}
       {activeModal === 'terms' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shadow-2xs">
                   <FileCheck size={18} />
@@ -1321,13 +1331,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed max-h-60 overflow-y-auto pr-1">
+            <div className="p-6 space-y-3 overflow-y-auto flex-1 text-xs text-slate-600 leading-relaxed">
               <p>
                 HostelHub provides property management and tenant allocation tools. By managing properties on HostelHub, owners agree to keep room pricing, availability, and electricity readings accurate and up to date.
               </p>
@@ -1336,7 +1346,7 @@ export default function OwnerSettingsPage() {
               </p>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
@@ -1351,9 +1361,9 @@ export default function OwnerSettingsPage() {
 
       {/* 12. About HostelHub Modal */}
       {activeModal === 'about' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center shadow-2xs">
                   <Info size={18} />
@@ -1366,13 +1376,13 @@ export default function OwnerSettingsPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="p-6 space-y-3 overflow-y-auto flex-1 text-xs">
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Application</span>
                 <span className="font-bold text-slate-900">HostelHub</span>
@@ -1391,7 +1401,7 @@ export default function OwnerSettingsPage() {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}

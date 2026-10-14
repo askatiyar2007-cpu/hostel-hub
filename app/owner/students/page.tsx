@@ -316,7 +316,7 @@ export default function OwnerStudentsPage() {
       {/* Photo Preview Modal */}
       {previewPhoto && (
         <div 
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-[100] p-4 overscroll-contain"
           onClick={() => setPreviewPhoto(null)}
         >
           <div className="relative max-w-4xl max-h-full">
