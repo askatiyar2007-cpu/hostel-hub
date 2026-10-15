@@ -77,6 +77,9 @@ interface RoomBillingDetails {
   student_charges: StudentCharge[];
   total_consumption: number;
   total_cost_paise: number;
+  closed_segments_count: number;
+  open_segments_count: number;
+  is_cycle_in_progress: boolean;
 }
 
 export async function GET(req: NextRequest) {
@@ -274,13 +277,19 @@ export async function GET(req: NextRequest) {
       }));
     }
 
-    // Calculate totals
-    const totalConsumption = segmentsWithReadings.reduce(
+    // Distinguish closed vs open segments
+    const closedSegments = segmentsWithReadings.filter(s => s.end_date !== null);
+    const openSegments = segmentsWithReadings.filter(s => s.end_date === null);
+    const hasOpenSegment = openSegments.length > 0;
+    const closedSegmentsCount = closedSegments.length;
+
+    // Calculate totals strictly from closed segments
+    const totalConsumption = closedSegments.reduce(
       (sum, seg) => sum + (seg.consumption_units || 0),
       0
     );
 
-    const totalCostPaise = segmentsWithReadings.reduce(
+    const totalCostPaise = closedSegments.reduce(
       (sum, seg) => sum + (seg.total_cost_paise || 0),
       0
     );
@@ -312,14 +321,14 @@ export async function GET(req: NextRequest) {
 
     // Fetch active tariff
     const { data: tariffData } = await supabaseServer
-      .from('electricity_tariffs')
-      .select('rate_per_kwh, effective_from')
+      .from('electricity_rate_history')
+      .select('rate_per_unit, effective_from')
       .eq('hostel_id', room.hostel_id)
       .order('effective_from', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    const tariffRateRupees = tariffData?.rate_per_kwh ? Number(tariffData.rate_per_kwh) : (segmentsWithReadings[0]?.rate_per_unit || 10);
+    const tariffRateRupees = tariffData?.rate_per_unit != null ? Number(tariffData.rate_per_unit) : (segmentsWithReadings[0]?.rate_per_unit || 10);
 
     // Determine status & explanation
     let status = 'billed';
@@ -347,10 +356,20 @@ export async function GET(req: NextRequest) {
         statusLabel = 'Awaiting Month-End Reading';
         statusExplanation = `The baseline or benchmark reading has been recorded, but the month-end reading for ${validated.billing_month} has not yet been submitted. Once recorded, consumption and student fee charges will be calculated.`;
       }
-    } else if (totalConsumption === 0) {
+    } else if (hasOpenSegment && closedSegmentsCount === 0) {
+      // Room has an open segment in progress and no closed segments yet
+      status = 'awaiting_month_end_reading';
+      statusLabel = 'Awaiting Month-End Reading';
+      const openStart = openSegments[0]?.start_reading_value ?? latestReadingObj?.value ?? 0;
+      statusExplanation = `An active billing cycle is in progress starting at ${openStart} kWh. A month-end reading is required to close this cycle, compute consumption, and divide electricity charges among occupants.`;
+    } else if (hasOpenSegment && closedSegmentsCount > 0) {
+      status = 'recorded_unbilled';
+      statusLabel = 'Cycle in Progress';
+      statusExplanation = `${closedSegmentsCount} segment(s) closed with ${totalConsumption.toFixed(2)} kWh. The current cycle is active awaiting the next closing reading.`;
+    } else if (closedSegmentsCount > 0 && totalConsumption === 0) {
       status = 'zero_consumption';
       statusLabel = 'Zero Measured Consumption';
-      statusExplanation = 'The meter was read with no change in cumulative units during this period (0.00 kWh consumed).';
+      statusExplanation = 'All closed segments in this period recorded 0.00 kWh delta (meter reading unchanged between start and close).';
     }
 
     const response: RoomBillingDetails = {
@@ -378,7 +397,10 @@ export async function GET(req: NextRequest) {
       segments: segmentsWithReadings,
       student_charges: studentCharges,
       total_consumption: totalConsumption,
-      total_cost_paise: totalCostPaise
+      total_cost_paise: totalCostPaise,
+      closed_segments_count: closedSegmentsCount,
+      open_segments_count: openSegments.length,
+      is_cycle_in_progress: hasOpenSegment
     };
 
     return NextResponse.json(response);

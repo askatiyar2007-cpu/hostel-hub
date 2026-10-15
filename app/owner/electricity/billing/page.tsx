@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
-import { DollarSign, Download, Zap, Users, Gauge, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { DollarSign, Download, Zap, Users, Gauge, FileText, CheckCircle2, Clock, AlertCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,9 @@ interface RoomBilling {
   meter_id?: string | null;
   meter_number?: string | null;
   segments_count: number;
+  closed_segments_count?: number;
+  open_segments_count?: number;
+  is_cycle_in_progress?: boolean;
   total_consumption: number;
   total_revenue_paise: number;
   total_revenue_rupees: number;
@@ -113,6 +117,8 @@ export default function BillingOverviewPage() {
   const [studentBilling, setStudentBilling] = useState<StudentBilling[]>([]);
   const [activeTab, setActiveTab] = useState<'students' | 'rooms'>('students');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [roomFilter, setRoomFilter] = useState<'all' | 'occupied' | 'empty' | 'awaiting' | 'billed'>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
 
@@ -249,23 +255,56 @@ export default function BillingOverviewPage() {
     }).format(rupees);
   };
 
-  // Filter students based on statusFilter
+  // Filter students based on statusFilter and searchQuery
   const filteredStudents = useMemo(() => {
-    if (statusFilter === 'all') return studentBilling;
-    if (statusFilter === 'billed') {
-      return studentBilling.filter(s => s.status === 'paid' || s.status === 'pending_verification' || s.status === 'payment_due');
+    let list = studentBilling;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'billed') {
+        list = list.filter(s => s.status === 'paid' || s.status === 'pending_verification' || s.status === 'payment_due');
+      } else if (statusFilter === 'unbilled') {
+        list = list.filter(s => s.status === 'recorded_unbilled');
+      } else if (statusFilter === 'awaiting') {
+        list = list.filter(s => s.status.startsWith('awaiting_'));
+      } else if (statusFilter === 'unmetered') {
+        list = list.filter(s => s.status === 'unmetered');
+      }
     }
-    if (statusFilter === 'unbilled') {
-      return studentBilling.filter(s => s.status === 'recorded_unbilled');
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(s => 
+        s.student_name.toLowerCase().includes(q) ||
+        s.room_number.toLowerCase().includes(q) ||
+        (s.student_email && s.student_email.toLowerCase().includes(q)) ||
+        (s.meter_number && s.meter_number.toLowerCase().includes(q))
+      );
     }
-    if (statusFilter === 'awaiting') {
-      return studentBilling.filter(s => s.status.startsWith('awaiting_'));
+    return list;
+  }, [studentBilling, statusFilter, searchQuery]);
+
+  // Filter rooms based on roomFilter and searchQuery
+  const filteredRooms = useMemo(() => {
+    let list = roomBilling;
+    if (roomFilter !== 'all') {
+      if (roomFilter === 'occupied') {
+        list = list.filter(r => (r.occupancy ?? 0) > 0);
+      } else if (roomFilter === 'empty') {
+        list = list.filter(r => (r.occupancy ?? 0) === 0);
+      } else if (roomFilter === 'awaiting') {
+        list = list.filter(r => !r.consumption_calculable || r.status === 'awaiting_reading' || r.detailed_status?.startsWith('awaiting_'));
+      } else if (roomFilter === 'billed') {
+        list = list.filter(r => r.consumption_calculable && r.detailed_status !== 'awaiting_month_end_reading');
+      }
     }
-    if (statusFilter === 'unmetered') {
-      return studentBilling.filter(s => s.status === 'unmetered');
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(r =>
+        r.room_number.toLowerCase().includes(q) ||
+        (r.meter_number && r.meter_number.toLowerCase().includes(q)) ||
+        (r.current_occupants && r.current_occupants.some(o => o.student_name.toLowerCase().includes(q)))
+      );
     }
-    return studentBilling;
-  }, [studentBilling, statusFilter]);
+    return list;
+  }, [roomBilling, roomFilter, searchQuery]);
 
   // Render Status Badge
   const renderStatusBadge = (status: ElectricityBillingStatus, label: string) => {
@@ -357,17 +396,17 @@ export default function BillingOverviewPage() {
       {/* Control Filters */}
       <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
         <CardContent className="p-4 sm:p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Hostel Selector */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">Select Hostel</Label>
               <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9">
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9 text-xs">
                   <SelectValue placeholder="Choose hostel..." />
                 </SelectTrigger>
                 <SelectContent>
                   {hostels.map(hostel => (
-                    <SelectItem key={hostel.id} value={hostel.id}>
+                    <SelectItem key={hostel.id} value={hostel.id} className="text-xs">
                       {hostel.name}
                     </SelectItem>
                   ))}
@@ -379,12 +418,12 @@ export default function BillingOverviewPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">Billing Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9">
+                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9 text-xs">
                   <SelectValue placeholder="Select month..." />
                 </SelectTrigger>
                 <SelectContent>
                   {monthOptions.map(month => (
-                    <SelectItem key={month.value} value={month.value}>
+                    <SelectItem key={month.value} value={month.value} className="text-xs">
                       {month.label}
                     </SelectItem>
                   ))}
@@ -392,21 +431,52 @@ export default function BillingOverviewPage() {
               </Select>
             </div>
 
+            {/* Search Input */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-700">Search</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input
+                  placeholder="Filter room # or student..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9 text-xs"
+                />
+              </div>
+            </div>
+
             {/* Status Filter */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Billing Filter</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Accounts ({studentBilling.length})</SelectItem>
-                  <SelectItem value="billed">Billed (Paid / Due / Pending)</SelectItem>
-                  <SelectItem value="unbilled">Recorded (Unbilled)</SelectItem>
-                  <SelectItem value="awaiting">Awaiting Readings</SelectItem>
-                  <SelectItem value="unmetered">Unmetered Rooms</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-xs font-semibold text-slate-700">
+                {activeTab === 'students' ? 'Student Status' : 'Room Status'}
+              </Label>
+              {activeTab === 'students' ? (
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9 text-xs">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">All Accounts ({studentBilling.length})</SelectItem>
+                    <SelectItem value="billed" className="text-xs">Billed (Paid / Due / Pending)</SelectItem>
+                    <SelectItem value="unbilled" className="text-xs">Recorded (Unbilled)</SelectItem>
+                    <SelectItem value="awaiting" className="text-xs">Awaiting Readings</SelectItem>
+                    <SelectItem value="unmetered" className="text-xs">Unmetered Rooms</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Select value={roomFilter} onValueChange={(v: any) => setRoomFilter(v)}>
+                  <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg h-9 text-xs">
+                    <SelectValue placeholder="All Rooms" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">All Rooms ({roomBilling.length})</SelectItem>
+                    <SelectItem value="occupied" className="text-xs">Occupied Rooms</SelectItem>
+                    <SelectItem value="empty" className="text-xs">Empty Rooms</SelectItem>
+                    <SelectItem value="awaiting" className="text-xs">Awaiting Readings</SelectItem>
+                    <SelectItem value="billed" className="text-xs">Finalized / Billed</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         </CardContent>
@@ -426,13 +496,13 @@ export default function BillingOverviewPage() {
               <p className="text-2xl font-bold text-emerald-600">
                 {formatCurrency(summary.total_revenue_paise)}
               </p>
-              <p className="text-xs text-slate-400 mt-1">Calculated electricity charges</p>
+              <p className="text-xs text-slate-400 mt-1">Calculated from closed segments</p>
             </CardContent>
           </Card>
           
           <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
             <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <CardDescription className="text-xs font-medium text-slate-500">Total Consumption</CardDescription>
+              <CardDescription className="text-xs font-medium text-slate-500">Total Billed Consumption</CardDescription>
               <IconWrapper color="amber" size="sm">
                 <Zap className="h-3.5 w-3.5" />
               </IconWrapper>
@@ -443,7 +513,7 @@ export default function BillingOverviewPage() {
               </p>
               <p className="text-xs text-slate-400 mt-1">
                 {summary.rooms_awaiting_reading && summary.rooms_awaiting_reading > 0 ? (
-                  <span className="text-amber-700 font-medium">{summary.rooms_awaiting_reading} room(s) awaiting readings</span>
+                  <span className="text-amber-700 font-medium">{summary.rooms_awaiting_reading} room(s) awaiting reading / in progress</span>
                 ) : (
                   `Occupied: ${summary.total_consumption_occupied.toFixed(2)} kWh`
                 )}
@@ -466,19 +536,17 @@ export default function BillingOverviewPage() {
           
           <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
             <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <CardDescription className="text-xs font-medium text-slate-500">Sub-meters Configured</CardDescription>
+              <CardDescription className="text-xs font-medium text-slate-500">Pending Readings</CardDescription>
               <IconWrapper color="violet" size="sm">
                 <Gauge className="h-3.5 w-3.5" />
               </IconWrapper>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-slate-700">{summary.total_metered_rooms}</p>
+              <p className="text-2xl font-bold text-slate-700">
+                {summary.rooms_awaiting_reading ?? roomBilling.filter(r => !r.consumption_calculable && r.meter_number).length}
+              </p>
               <p className="text-xs text-slate-400 mt-1">
-                {summary.rooms_with_calculable_consumption !== undefined ? (
-                  `${summary.rooms_with_calculable_consumption} finalized • ${summary.rooms_awaiting_reading || 0} pending`
-                ) : (
-                  'Active room meters'
-                )}
+                {summary.total_metered_rooms} total meters &bull; {summary.rooms_with_calculable_consumption ?? 0} finalized
               </p>
             </CardContent>
           </Card>
@@ -487,13 +555,19 @@ export default function BillingOverviewPage() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList className="bg-slate-100 p-1 rounded-xl">
-            <TabsTrigger value="students" className="rounded-lg text-xs font-semibold px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-xs">
+        <div className="flex items-center justify-between pb-1">
+          <TabsList className="bg-slate-200/80 p-1.5 rounded-xl border border-slate-200 shadow-2xs">
+            <TabsTrigger 
+              value="students" 
+              className="rounded-lg text-xs font-bold px-5 py-2 transition-all data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:text-slate-900 cursor-pointer"
+            >
               Allocated Students ({filteredStudents.length})
             </TabsTrigger>
-            <TabsTrigger value="rooms" className="rounded-lg text-xs font-semibold px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-xs">
-              Room Electricity Consumption ({roomBilling.length})
+            <TabsTrigger 
+              value="rooms" 
+              className="rounded-lg text-xs font-bold px-5 py-2 transition-all data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:text-slate-900 cursor-pointer"
+            >
+              Room Electricity Consumption ({filteredRooms.length})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -653,11 +727,11 @@ export default function BillingOverviewPage() {
                 <div className="text-center py-12">
                   <p className="text-slate-500 text-sm">Loading room billing data...</p>
                 </div>
-              ) : roomBilling.length === 0 ? (
+              ) : filteredRooms.length === 0 ? (
                 <div className="text-center py-12">
                   <Zap className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600 font-medium text-sm">No rooms found in hostel</p>
-                  <p className="text-slate-400 text-xs mt-1">Add rooms to this hostel to track electricity consumption.</p>
+                  <p className="text-slate-600 font-medium text-sm">No matching rooms found</p>
+                  <p className="text-slate-400 text-xs mt-1">Adjust search or filter criteria to see room consumption records.</p>
                 </div>
               ) : (
                 <Table>
@@ -676,7 +750,7 @@ export default function BillingOverviewPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {roomBilling.map(room => (
+                    {filteredRooms.map(room => (
                       <TableRow key={room.room_id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
                         <TableCell className="font-semibold text-slate-900 pl-6 py-3.5">
                           <div>
@@ -744,23 +818,36 @@ export default function BillingOverviewPage() {
                                 <span className="text-[10px] text-slate-400 block font-normal">(Zero Measured)</span>
                               </div>
                             )
-                          ) : (
+                          ) : room.meter_number ? (
                             <div>
-                              <span className="text-amber-700 font-semibold text-xs flex items-center gap-1">
-                                <Clock className="h-3 w-3" /> Pending Reading
-                              </span>
-                              <span className="text-slate-400 text-[10px] block">{room.status_label}</span>
+                              <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300 font-semibold text-xs flex items-center gap-1 w-fit">
+                                <Clock className="h-3 w-3" /> Cycle in Progress
+                              </Badge>
+                              <span className="text-slate-400 text-[10px] block mt-0.5">{room.status_label || 'Awaiting Reading'}</span>
                             </div>
+                          ) : (
+                            <span className="text-slate-400 text-xs">Unmetered</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-slate-600 text-xs font-medium">{room.segments_count}</TableCell>
+                        <TableCell className="text-slate-600 text-xs font-medium">
+                          {room.closed_segments_count !== undefined ? (
+                            <div>
+                              <span className="font-semibold text-slate-800">{room.closed_segments_count} closed</span>
+                              {room.is_cycle_in_progress && (
+                                <span className="text-[10px] text-amber-700 block font-medium">+ 1 active</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span>{room.segments_count}</span>
+                          )}
+                        </TableCell>
                         <TableCell className="font-bold text-slate-900">
                           {room.student_charges_paise && room.student_charges_paise > 0 ? (
                             <span className="text-emerald-600">{formatCurrency(room.student_charges_paise)}</span>
                           ) : room.consumption_calculable ? (
                             <span className="text-slate-400 text-xs font-normal">₹0.00</span>
                           ) : (
-                            <span className="text-slate-400 text-xs italic font-normal">Unbilled</span>
+                            <span className="text-amber-700 text-xs font-medium italic">Pending</span>
                           )}
                         </TableCell>
                         <TableCell>

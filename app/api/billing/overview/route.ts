@@ -77,6 +77,9 @@ export interface BillingOverviewRoom {
   }[];
   student_charges_paise: number;
   student_charges_rupees: number;
+  closed_segments_count?: number;
+  open_segments_count?: number;
+  is_cycle_in_progress?: boolean;
 }
 
 export interface BillingOverviewResponse {
@@ -402,21 +405,33 @@ export async function GET(req: NextRequest) {
         }
       } else if (roomSegments.length > 0) {
         // Room segments exist for this month but no charges generated for student yet
+        const closedSegs = roomSegments.filter(s => s.end_date !== null);
+        const openSegs = roomSegments.filter(s => s.end_date === null);
         segments_count = roomSegments.length;
-        let totalRoomUnits = 0;
-        for (const seg of roomSegments) {
-          const segUnits = parseFloat(seg.consumption_units || 0);
-          totalRoomUnits += segUnits;
-          const occupants = Math.max(1, seg.occupant_count || 1);
-          consumption_units += segUnits / occupants;
-        }
 
-        if (totalRoomUnits === 0) {
-          status = 'zero_consumption';
-          status_label = 'Zero Consumption';
+        if (closedSegs.length === 0 && openSegs.length > 0) {
+          // All segments for this month are open - active cycle in progress!
+          status = 'awaiting_month_end_reading';
+          status_label = 'Awaiting Month-End Reading';
         } else {
-          status = 'recorded_unbilled';
-          status_label = 'Recorded (Unbilled)';
+          let totalRoomUnits = 0;
+          for (const seg of closedSegs) {
+            const segUnits = parseFloat(seg.consumption_units || 0);
+            totalRoomUnits += segUnits;
+            const occupants = Math.max(1, seg.occupant_count || 1);
+            consumption_units += segUnits / occupants;
+          }
+
+          if (totalRoomUnits === 0 && openSegs.length === 0) {
+            status = 'zero_consumption';
+            status_label = 'Zero Consumption';
+          } else if (openSegs.length > 0) {
+            status = 'recorded_unbilled';
+            status_label = 'Cycle in Progress';
+          } else {
+            status = 'recorded_unbilled';
+            status_label = 'Recorded (Unbilled)';
+          }
         }
       } else {
         // No closed segments for this month yet
@@ -487,11 +502,15 @@ export async function GET(req: NextRequest) {
       const roomOccupants = occupantsByRoomId.get(room.id) || [];
       const roomAllocations = allocations.filter(a => a.room_id === room.id);
 
+      const closedRoomSegments = roomSegments.filter(s => s.end_date !== null);
+      const openRoomSegments = roomSegments.filter(s => s.end_date === null);
+      const hasOpenSegment = openRoomSegments.length > 0;
+
       let total_consumption = 0;
       let total_revenue_paise = 0;
       let empty_room_consumption = 0;
 
-      for (const seg of roomSegments) {
+      for (const seg of closedRoomSegments) {
         const consumption = parseFloat(seg.consumption_units || 0);
         total_consumption += consumption;
 
@@ -543,7 +562,7 @@ export async function GET(req: NextRequest) {
         detailedStatus = 'awaiting_initial_reading';
         statusLabel = 'Initial Reading Required';
         consumptionCalculable = false;
-      } else if (roomSegments.length === 0) {
+      } else if (closedRoomSegments.length === 0 && !hasOpenSegment) {
         consumptionCalculable = false;
         roomStatus = 'awaiting_reading';
 
@@ -557,17 +576,28 @@ export async function GET(req: NextRequest) {
           detailedStatus = 'awaiting_month_end_reading';
           statusLabel = 'Awaiting Month-End Reading';
         }
+      } else if (closedRoomSegments.length === 0 && hasOpenSegment) {
+        // Room has an open segment in progress! Consumption cannot yet be calculated!
+        consumptionCalculable = false;
+        roomStatus = 'awaiting_reading';
+        detailedStatus = 'awaiting_month_end_reading';
+        statusLabel = 'Cycle in Progress';
       } else {
+        // At least one closed segment exists
         consumptionCalculable = true;
-        if (total_consumption === 0) {
+        if (total_consumption === 0 && !hasOpenSegment) {
           roomStatus = 'zero_consumption';
           detailedStatus = 'zero_consumption';
           statusLabel = 'Zero Measured Consumption';
+        } else if (hasOpenSegment) {
+          roomStatus = 'occupied';
+          detailedStatus = 'recorded_unbilled';
+          statusLabel = 'Cycle in Progress';
         } else if (empty_room_consumption > 0 && total_consumption > empty_room_consumption) {
           roomStatus = 'mixed';
           detailedStatus = 'recorded_unbilled';
           statusLabel = 'Mixed Consumption';
-        } else if (empty_room_consumption > 0 || (room.occupancy === 0 && roomSegments.length === 0)) {
+        } else if (empty_room_consumption > 0 || (room.occupancy === 0 && closedRoomSegments.length === 0)) {
           roomStatus = 'empty';
           detailedStatus = 'zero_consumption';
           statusLabel = 'Empty Room Consumption';
@@ -589,6 +619,9 @@ export async function GET(req: NextRequest) {
         meter_id: meter?.id || null,
         meter_number: meter?.meter_number || null,
         segments_count: roomSegments.length,
+        closed_segments_count: closedRoomSegments.length,
+        open_segments_count: openRoomSegments.length,
+        is_cycle_in_progress: hasOpenSegment,
         total_consumption: Math.round(total_consumption * 100) / 100,
         total_revenue_paise,
         total_revenue_rupees: total_revenue_paise / 100,

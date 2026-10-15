@@ -260,7 +260,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
       }}
     >
       <div 
-        className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[min(90vh,620px)] overflow-hidden animate-in zoom-in-95 duration-150"
+        className="relative w-full max-w-md mx-auto my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[min(85vh,620px)] overflow-hidden animate-in zoom-in-95 duration-150"
         role="dialog"
         aria-modal="true"
         aria-labelledby="password-dialog-title"
@@ -477,9 +477,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
             {recoverStep === 'email' && (
               <>
                 <form id="recover-email-form" onSubmit={handleSendRecoveryOtp} className="p-6 space-y-4 overflow-y-auto flex-1">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      We will send a 6-digit verification code to your registered email address. Use it to securely reset your password.
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                      If this email address is registered with password access enabled, you will receive a 6-digit verification code to reset your password.
+                    </p>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Accounts created with Google Sign-In or pending onboarding should continue with Google or contact support.
                     </p>
                   </div>
 

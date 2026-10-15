@@ -409,4 +409,146 @@ describe('Billing Room Consumption & Calculation State Tests', () => {
     expect(alloc.students.profiles.full_name).toBe('Historical Resident');
     expect(alloc.rooms.room_number).toBe('101');
   });
+
+  it('room-details API accurately marks open segment as awaiting month-end reading and reports closed_segments_count as 0', async () => {
+    const { GET } = await import('@/app/api/billing/room-details/route');
+
+    const mockHostel = { id: '123e4567-e89b-12d3-a456-426614174001', name: 'Blue Sky Hostel', owner_id: 'owner-user-id' };
+    const mockRoom = { id: '123e4567-e89b-12d3-a456-426614174002', room_number: '101', hostel_id: mockHostel.id, floor: 1, capacity: 2, occupancy: 1 };
+    const mockMeter = { id: 'meter-101', meter_number: 'MTR-101', status: 'active' };
+    const mockReadings = [
+      { id: 'r2', reading_value: '2400.11', reading_timestamp: '2026-10-16T10:00:00Z', reason: 'occupancy_change' },
+      { id: 'r1', reading_value: '398.69', reading_timestamp: '2026-09-03T10:00:00Z', reason: 'initial' }
+    ];
+    // Open segment only for October
+    const mockOpenSegment = [
+      {
+        id: 'seg-oct-open',
+        room_id: mockRoom.id,
+        meter_id: mockMeter.id,
+        start_date: '2026-10-16T10:00:00Z',
+        end_date: null,
+        start_reading_id: 'r2',
+        end_reading_id: null,
+        start_reading_value: 2400.11,
+        end_reading_value: null,
+        consumption_units: null,
+        rate_per_unit: 10,
+        total_cost_paise: null,
+        occupant_count: 1,
+        segment_type: 'occupied'
+      }
+    ];
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'rooms') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: mockRoom, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'hostels') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => Promise.resolve({ data: mockHostel, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'electricity_meters') {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                maybeSingle: () => Promise.resolve({ data: mockMeter, error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'meter_readings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => Promise.resolve({ data: mockReadings, error: null }),
+              in: () => Promise.resolve({ data: mockReadings, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'room_allocations') {
+        return {
+          select: () => ({
+            eq: () => ({
+              lte: () => ({
+                or: () => Promise.resolve({ data: [{ student_id: 's1', student_name: 'Gotiya', start_date: '2026-10-01' }], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'billing_segments') {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                order: () => Promise.resolve({ data: mockOpenSegment, error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'student_electricity_charges') {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => Promise.resolve({ data: [], error: null }),
+            }),
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+        };
+      }
+      if (table === 'billing_segment_occupants') {
+        return {
+          select: () => ({
+            in: () => Promise.resolve({ data: [{ segment_id: 'seg-oct-open', student_id: 's1', student_name: 'Gotiya' }], error: null }),
+          }),
+        };
+      }
+      if (table === 'electricity_rate_history') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                limit: () => ({
+                  maybeSingle: () => Promise.resolve({ data: { rate_per_unit: 10, effective_from: '2026-01-01' }, error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: () => Promise.resolve({ data: [], error: null }),
+      };
+    });
+
+    const req = new NextRequest(`http://localhost:3000/api/billing/room-details?room_id=${mockRoom.id}&billing_month=2026-10`);
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.room_number).toBe('101');
+    expect(body.status).toBe('awaiting_month_end_reading');
+    expect(body.status_label).toBe('Awaiting Month-End Reading');
+    expect(body.closed_segments_count).toBe(0);
+    expect(body.open_segments_count).toBe(1);
+    expect(body.is_cycle_in_progress).toBe(true);
+    expect(body.total_consumption).toBe(0);
+    expect(body.total_cost_paise).toBe(0);
+  });
 });

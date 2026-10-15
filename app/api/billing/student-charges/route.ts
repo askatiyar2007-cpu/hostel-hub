@@ -24,6 +24,18 @@ interface StudentChargeDetail {
   charge_amount_rupees: number;
 }
 
+export interface ActiveCycleDetail {
+  status: string;
+  room_number: string;
+  meter_number?: string | null;
+  start_date?: string;
+  start_reading_value?: number | null;
+  rate_per_unit?: number;
+  occupant_count?: number;
+  occupants?: { student_id: string; student_name: string }[];
+  message?: string;
+}
+
 interface StudentChargesResponse {
   student_id: string;
   student_name: string;
@@ -36,6 +48,8 @@ interface StudentChargesResponse {
   fee_id?: string | null;
   fee_status?: string | null;
   fee_due_date?: string | null;
+  cycle_status?: string;
+  active_cycle?: ActiveCycleDetail | null;
 }
 
 /**
@@ -333,6 +347,137 @@ export async function GET(req: NextRequest) {
     const totalPaise = charges.reduce((sum, charge) => sum + charge.charge_amount_paise, 0);
     const totalRupees = totalPaise / 100;
 
+    // 12. Check room allocation, meter, and active open billing cycle for this student
+    const [bYear, bMonthNum] = (validated.billing_month || currentMonth).split('-').map(Number);
+    const startOfMonthStr = `${validated.billing_month || currentMonth}-01`;
+    const lastDayOfMonthVal = new Date(bYear, bMonthNum, 0).getDate();
+    const endOfMonthStr = `${validated.billing_month || currentMonth}-${String(lastDayOfMonthVal).padStart(2, '0')}`;
+
+    const { data: allocationData } = await supabaseServer
+      .from('room_allocations')
+      .select(`
+        id,
+        room_id,
+        start_date,
+        end_date,
+        active,
+        rooms (
+          id,
+          room_number,
+          hostel_id
+        )
+      `)
+      .eq('student_id', validated.student_id)
+      .lte('start_date', endOfMonthStr)
+      .or(`end_date.is.null,end_date.gte.${startOfMonthStr}`)
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let activeCycleInfo: ActiveCycleDetail | null = null;
+    let cycleStatus: string = charges.length > 0 ? (feeRecord?.status || 'payment_due') : 'no_allocation';
+
+    if (allocationData) {
+      const room = allocationData.rooms as any;
+      const roomId = allocationData.room_id;
+
+      const { data: meterData } = await supabaseServer
+        .from('electricity_meters')
+        .select('id, meter_number, status')
+        .eq('room_id', roomId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!meterData) {
+        if (charges.length === 0) {
+          cycleStatus = 'unmetered';
+          activeCycleInfo = {
+            status: 'unmetered',
+            room_number: room?.room_number || 'Unknown',
+            message: 'Room has no active sub-meter configured.'
+          };
+        }
+      } else {
+        // Check for open segment in this month
+        const { data: openSegmentData } = await supabaseServer
+          .from('billing_segments')
+          .select(`
+            id,
+            start_date,
+            rate_per_unit,
+            occupant_count,
+            start_reading_id,
+            start_reading:meter_readings!billing_segments_start_reading_id_fkey (
+              reading_value
+            ),
+            segment_occupants (
+              student_id,
+              student_name
+            )
+          `)
+          .eq('room_id', roomId)
+          .eq('billing_month', validated.billing_month || currentMonth)
+          .is('end_date', null)
+          .order('start_date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (openSegmentData) {
+          if (charges.length === 0) {
+            cycleStatus = 'awaiting_month_end_reading';
+          }
+          const startReadingRaw = Array.isArray((openSegmentData as any).start_reading) 
+            ? (openSegmentData as any).start_reading[0] 
+            : (openSegmentData as any).start_reading;
+          const startReadingVal = startReadingRaw?.reading_value;
+          activeCycleInfo = {
+            status: 'awaiting_month_end_reading',
+            room_number: room?.room_number || 'Unknown',
+            meter_number: meterData.meter_number,
+            start_date: openSegmentData.start_date,
+            start_reading_value: startReadingVal !== undefined ? Number(startReadingVal) : null,
+            rate_per_unit: Number(openSegmentData.rate_per_unit) || 10,
+            occupant_count: openSegmentData.occupant_count || 1,
+            occupants: (openSegmentData.segment_occupants || []).map((o: any) => ({
+              student_id: o.student_id,
+              student_name: o.student_name
+            }))
+          };
+        } else if (charges.length === 0) {
+          // Check if meter has any readings
+          const { data: latestReading } = await supabaseServer
+            .from('meter_readings')
+            .select('id, reading_value, reading_timestamp, reason')
+            .eq('meter_id', meterData.id)
+            .order('reading_timestamp', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (!latestReading) {
+            cycleStatus = 'awaiting_initial_reading';
+            activeCycleInfo = {
+              status: 'awaiting_initial_reading',
+              room_number: room?.room_number || 'Unknown',
+              meter_number: meterData.meter_number,
+              message: 'Room sub-meter requires an initial baseline reading.'
+            };
+          } else {
+            cycleStatus = 'awaiting_month_end_reading';
+            activeCycleInfo = {
+              status: 'awaiting_month_end_reading',
+              room_number: room?.room_number || 'Unknown',
+              meter_number: meterData.meter_number,
+              start_date: latestReading.reading_timestamp,
+              start_reading_value: Number(latestReading.reading_value),
+              rate_per_unit: 10,
+              occupant_count: 1,
+              occupants: []
+            };
+          }
+        }
+      }
+    }
+
     const response: StudentChargesResponse = {
       student_id: validated.student_id,
       student_name: studentName,
@@ -344,7 +489,9 @@ export async function GET(req: NextRequest) {
       total_rupees: totalRupees,
       fee_id: feeRecord?.id || null,
       fee_status: feeRecord?.status || null,
-      fee_due_date: feeRecord?.due_date || null
+      fee_due_date: feeRecord?.due_date || null,
+      cycle_status: cycleStatus,
+      active_cycle: activeCycleInfo
     };
 
     console.log('[Student Charges API] Success:', {

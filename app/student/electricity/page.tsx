@@ -37,6 +37,18 @@ interface ChargeData {
   charge_amount_rupees: number;
 }
 
+interface ActiveCycleData {
+  status: string;
+  room_number: string;
+  meter_number?: string | null;
+  start_date?: string;
+  start_reading_value?: number | null;
+  rate_per_unit?: number;
+  occupant_count?: number;
+  occupants?: { student_id: string; student_name: string }[];
+  message?: string;
+}
+
 interface ApiResponse {
   student_id: string;
   student_name: string;
@@ -49,6 +61,8 @@ interface ApiResponse {
   fee_id?: string | null;
   fee_status?: string | null;
   fee_due_date?: string | null;
+  cycle_status?: string;
+  active_cycle?: ActiveCycleData | null;
 }
 
 export default function StudentElectricityPage() {
@@ -58,6 +72,8 @@ export default function StudentElectricityPage() {
   const [totalStudentConsumption, setTotalStudentConsumption] = useState<number>(0);
   const [feeStatus, setFeeStatus] = useState<string | null>(null);
   const [feeDueDate, setFeeDueDate] = useState<string | null>(null);
+  const [cycleStatus, setCycleStatus] = useState<string | null>(null);
+  const [activeCycle, setActiveCycle] = useState<ActiveCycleData | null>(null);
   const [month, setMonth] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +135,8 @@ export default function StudentElectricityPage() {
       setTotalStudentConsumption(data.total_student_consumption_units ?? 0);
       setFeeStatus(data.fee_status ?? null);
       setFeeDueDate(data.fee_due_date ?? null);
+      setCycleStatus(data.cycle_status ?? null);
+      setActiveCycle(data.active_cycle ?? null);
     } catch (err: unknown) {
       console.error('Error fetching charges:', err);
       setError('Unable to load electricity data for the selected month.');
@@ -148,6 +166,22 @@ export default function StudentElectricityPage() {
   };
 
   const getStatusBadge = () => {
+    if (cycleStatus === 'awaiting_month_end_reading' || (!charges.length && activeCycle?.status === 'awaiting_month_end_reading')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+          <Clock className="w-3.5 h-3.5 text-amber-600" />
+          Awaiting Month-End Reading
+        </span>
+      );
+    }
+    if (cycleStatus === 'zero_consumption') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+          <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" />
+          Zero Measured Consumption
+        </span>
+      );
+    }
     if (!feeStatus) {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
@@ -188,6 +222,10 @@ export default function StudentElectricityPage() {
       </div>
     );
   }
+
+  const isOpenCycle = activeCycle && (activeCycle.status === 'awaiting_month_end_reading' || cycleStatus === 'awaiting_month_end_reading');
+  const isZeroMeasured = cycleStatus === 'zero_consumption';
+  const isUnmetered = cycleStatus === 'unmetered';
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -234,19 +272,189 @@ export default function StudentElectricityPage() {
           </Button>
         </div>
       ) : charges.length === 0 ? (
-        <Card className="border border-slate-200 bg-white shadow-sm rounded-2xl">
-          <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mx-auto mb-4">
-              <Zap className="h-8 w-8 text-teal-600" />
+        isOpenCycle ? (
+          /* ACTIVE BILLING CYCLE IN PROGRESS VIEW */
+          <div className="space-y-6">
+            {/* KPI Cards for Active Cycle */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="border border-amber-200/90 bg-amber-50/30 shadow-xs rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700">
+                      <IndianRupee className="h-5 w-5" />
+                    </div>
+                    {getStatusBadge()}
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Your Share</p>
+                  <p className="text-2xl font-bold text-amber-800 mt-1 font-display">Pending</p>
+                  <p className="text-[11px] text-amber-700 mt-1">Calculated upon month-end close</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200 bg-white shadow-xs rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                      <TrendingUp className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Your Consumption</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1 font-display">Active Cycle</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Sub-meter currently logging usage</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200 bg-white shadow-xs rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                      <Zap className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tariff Rate</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1 font-display">
+                    ₹{(activeCycle?.rate_per_unit || 10).toFixed(2)} <span className="text-sm font-medium text-slate-500">/ kWh</span>
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">Hostel electricity rate</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200 bg-white shadow-xs rounded-2xl">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                      <Users className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Occupancy Split</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1 font-display">
+                    {activeCycle?.occupant_count || 1} <span className="text-sm font-medium text-slate-500">{activeCycle?.occupant_count === 1 ? 'Resident' : 'Residents'}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">Room {activeCycle?.room_number}</p>
+                </CardContent>
+              </Card>
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No electricity readings recorded for {formatMonth(month)}</h3>
-            <p className="text-slate-600 max-w-md mx-auto text-sm">
-              Your hostel management has not yet finalized meter readings for this cycle. If a reading has recently been taken, it will show up here once validated.
-            </p>
-          </CardContent>
-        </Card>
+
+            {/* Active Cycle Details Card */}
+            <Card className="border border-amber-200 bg-white shadow-xs rounded-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50/50 border-b border-amber-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">
+                      Active Billing Interval &bull; Room {activeCycle?.room_number}
+                    </h3>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      Sub-meter: <span className="font-mono font-semibold">{activeCycle?.meter_number || 'Active'}</span> &bull; Cycle started on {activeCycle?.start_date ? new Date(activeCycle.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Beginning of month'}
+                    </p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-200/80 text-amber-900 border border-amber-300">
+                  <Clock className="w-3.5 h-3.5 text-amber-700" />
+                  Reading in Progress
+                </span>
+              </div>
+
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                      Cycle Start Baseline
+                    </span>
+                    <p className="text-2xl font-bold text-slate-900 font-display">
+                      {activeCycle?.start_reading_value !== null && activeCycle?.start_reading_value !== undefined 
+                        ? `${activeCycle.start_reading_value.toFixed(2)} kWh` 
+                        : 'Benchmark Recorded'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Recorded on {activeCycle?.start_date ? new Date(activeCycle.start_date).toLocaleDateString() : 'Cycle Open'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-1">
+                    <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">
+                      Cycle Closing Reading
+                    </span>
+                    <p className="text-2xl font-bold text-amber-900 font-display">
+                      Awaiting Month-End Reading
+                    </p>
+                    <p className="text-xs text-amber-700">
+                      Owner will record the ending reading at month close
+                    </p>
+                  </div>
+                </div>
+
+                {/* Transparent Formula Callout */}
+                <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 text-xs text-teal-950 space-y-1.5">
+                  <div className="flex items-center gap-2 font-bold text-sm text-teal-900">
+                    <Info className="h-4 w-4 text-teal-700" />
+                    How your charge will be calculated
+                  </div>
+                  <p className="text-teal-800 leading-relaxed">
+                    Once the month-end reading is submitted:
+                  </p>
+                  <div className="font-mono bg-white/80 p-2.5 rounded-lg border border-teal-200 text-teal-950 font-semibold text-xs">
+                    Your Share = ((Closing Reading &minus; {activeCycle?.start_reading_value !== null && activeCycle?.start_reading_value !== undefined ? activeCycle.start_reading_value.toFixed(2) : 'Start'} kWh) &divide; {activeCycle?.occupant_count || 1} Roommates) &times; ₹{(activeCycle?.rate_per_unit || 10).toFixed(2)}/kWh
+                  </div>
+                  <p className="text-teal-700 text-[11px] pt-1">
+                    You will receive a notification and itemized invoice breakdown as soon as the closing reading is verified.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : isZeroMeasured ? (
+          /* ZERO MEASURED CONSUMPTION */
+          <Card className="border border-slate-200 bg-white shadow-sm rounded-2xl">
+            <CardContent className="p-12 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-4 text-slate-700">
+                <CheckCircle2 className="h-8 w-8 text-slate-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Zero Measured Consumption for {formatMonth(month)}</h3>
+              <p className="text-slate-600 max-w-md mx-auto text-sm">
+                The sub-meter was read at the start and end of this billing cycle with no change in cumulative units (0.00 kWh consumed). No electricity charges are due for this interval.
+              </p>
+            </CardContent>
+          </Card>
+        ) : isUnmetered ? (
+          /* UNMETERED ROOM */
+          <Card className="border border-slate-200 bg-white shadow-sm rounded-2xl">
+            <CardContent className="p-12 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-4 text-slate-500">
+                <Gauge className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Room is Unmetered</h3>
+              <p className="text-slate-600 max-w-md mx-auto text-sm">
+                Your assigned room does not have an active individual sub-meter configured. Electricity charges are not billed via sub-meter for this room.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border border-slate-200 bg-white shadow-sm rounded-2xl">
+            <CardContent className="p-12 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mx-auto mb-4">
+                <Zap className="h-8 w-8 text-teal-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No electricity readings recorded for {formatMonth(month)}</h3>
+              <p className="text-slate-600 max-w-md mx-auto text-sm">
+                Your hostel management has not yet finalized meter readings for this cycle. If a reading has recently been taken, it will show up here once validated.
+              </p>
+            </CardContent>
+          </Card>
+        )
       ) : (
         <>
+          {isOpenCycle && (
+            <div className="flex items-center gap-3 p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl text-xs text-amber-900">
+              <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>
+                <strong>Ongoing Cycle:</strong> A new billing interval started on {activeCycle?.start_date ? new Date(activeCycle.start_date).toLocaleDateString() : 'recently'} at {activeCycle?.start_reading_value !== null ? `${activeCycle?.start_reading_value} kWh` : 'baseline'}. Its charges will be calculated at cycle close. Finalized segments for this month are shown below.
+              </span>
+            </div>
+          )}
+
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Charge */}
