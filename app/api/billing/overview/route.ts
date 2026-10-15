@@ -31,6 +31,7 @@ export interface BillingOverviewStudent {
   meter_id?: string | null;
   meter_number?: string | null;
   consumption_units: number;
+  consumption_calculable: boolean;
   charge_amount_paise: number;
   charge_amount_rupees: number;
   status: ElectricityBillingStatus;
@@ -53,7 +54,29 @@ export interface BillingOverviewRoom {
   total_revenue_paise: number;
   total_revenue_rupees: number;
   empty_room_consumption: number;
-  status: 'occupied' | 'empty' | 'mixed' | 'unmetered' | 'awaiting_reading';
+  consumption_calculable: boolean;
+  status: 'occupied' | 'empty' | 'mixed' | 'unmetered' | 'awaiting_reading' | 'zero_consumption';
+  detailed_status: ElectricityBillingStatus;
+  status_label: string;
+  initial_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  latest_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  current_occupants: {
+    student_id: string;
+    student_name: string;
+    student_email?: string | null;
+  }[];
+  student_charges_paise: number;
+  student_charges_rupees: number;
 }
 
 export interface BillingOverviewResponse {
@@ -69,6 +92,8 @@ export interface BillingOverviewResponse {
     total_revenue_rupees: number;
     total_students: number;
     total_metered_rooms: number;
+    rooms_awaiting_reading: number;
+    rooms_with_calculable_consumption: number;
   };
 }
 
@@ -420,6 +445,7 @@ export async function GET(req: NextRequest) {
         meter_id: meter?.id || null,
         meter_number: meter?.meter_number || null,
         consumption_units: Math.round(consumption_units * 100) / 100,
+        consumption_calculable: (status !== 'unmetered' && !status.startsWith('awaiting_')),
         charge_amount_paise,
         charge_amount_rupees: charge_amount_paise / 100,
         status,
@@ -430,6 +456,27 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Index charges and occupants by room_id
+    const chargesByRoomId = new Map<string, number>();
+    for (const c of (chargesData || [])) {
+      const current = chargesByRoomId.get(c.room_id) || 0;
+      chargesByRoomId.set(c.room_id, current + (c.charge_amount_paise || 0));
+    }
+
+    const occupantsByRoomId = new Map<string, Array<{ student_id: string; student_name: string; student_email?: string | null }>>();
+    for (const alloc of allocations) {
+      const studentProfile = (alloc.students as any)?.profiles;
+      const studentName = alloc.student_name || studentProfile?.full_name || 'Allocated Student';
+      const studentEmail = alloc.student_email || studentProfile?.email || null;
+      const arr = occupantsByRoomId.get(alloc.room_id) || [];
+      arr.push({
+        student_id: alloc.student_id,
+        student_name: studentName,
+        student_email: studentEmail
+      });
+      occupantsByRoomId.set(alloc.room_id, arr);
+    }
+
     // 13. Build room-level aggregations (including rooms without segments)
     const roomsList: BillingOverviewRoom[] = [];
 
@@ -437,6 +484,8 @@ export async function GET(req: NextRequest) {
       const meter = meterByRoomId.get(room.id);
       const roomSegments = segmentsByRoomId.get(room.id) || [];
       const meterReadings = meter ? (readingsByMeterId.get(meter.id) || []) : [];
+      const roomOccupants = occupantsByRoomId.get(room.id) || [];
+      const roomAllocations = allocations.filter(a => a.room_id === room.id);
 
       let total_consumption = 0;
       let total_revenue_paise = 0;
@@ -453,16 +502,83 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // Initial reading: reason = initial or oldest recorded reading
+      let initialReadingObj: BillingOverviewRoom['initial_reading'] = null;
+      if (meter && meterReadings.length > 0) {
+        const initR = meterReadings.slice().reverse().find(r => r.reason === 'initial') || meterReadings[meterReadings.length - 1];
+        if (initR) {
+          initialReadingObj = {
+            id: initR.id,
+            value: parseFloat(initR.reading_value || 0),
+            timestamp: initR.reading_timestamp,
+            reason: initR.reason
+          };
+        }
+      }
+
+      // Latest reading: newest recorded reading
+      let latestReadingObj: BillingOverviewRoom['latest_reading'] = null;
+      if (meter && meterReadings.length > 0) {
+        const latR = meterReadings[0];
+        latestReadingObj = {
+          id: latR.id,
+          value: parseFloat(latR.reading_value || 0),
+          timestamp: latR.reading_timestamp,
+          reason: latR.reason
+        };
+      }
+
       let roomStatus: BillingOverviewRoom['status'] = 'occupied';
+      let detailedStatus: ElectricityBillingStatus = 'recorded_unbilled';
+      let statusLabel = 'Billed';
+      let consumptionCalculable = false;
+
       if (!meter) {
         roomStatus = 'unmetered';
+        detailedStatus = 'unmetered';
+        statusLabel = 'Unmetered';
+        consumptionCalculable = false;
       } else if (meterReadings.length === 0) {
         roomStatus = 'awaiting_reading';
-      } else if (empty_room_consumption > 0 && total_consumption > empty_room_consumption) {
-        roomStatus = 'mixed';
-      } else if (empty_room_consumption > 0 || (room.occupancy === 0 && roomSegments.length === 0)) {
-        roomStatus = 'empty';
+        detailedStatus = 'awaiting_initial_reading';
+        statusLabel = 'Initial Reading Required';
+        consumptionCalculable = false;
+      } else if (roomSegments.length === 0) {
+        consumptionCalculable = false;
+        roomStatus = 'awaiting_reading';
+
+        const latestReadingTime = meterReadings.length > 0 ? new Date(meterReadings[0].reading_timestamp).getTime() : 0;
+        const hasPendingAllocation = roomAllocations.some(a => new Date(a.start_date).getTime() > latestReadingTime);
+
+        if (hasPendingAllocation) {
+          detailedStatus = 'awaiting_allocation_reading';
+          statusLabel = 'Allocation Reading Required';
+        } else {
+          detailedStatus = 'awaiting_month_end_reading';
+          statusLabel = 'Awaiting Month-End Reading';
+        }
+      } else {
+        consumptionCalculable = true;
+        if (total_consumption === 0) {
+          roomStatus = 'zero_consumption';
+          detailedStatus = 'zero_consumption';
+          statusLabel = 'Zero Measured Consumption';
+        } else if (empty_room_consumption > 0 && total_consumption > empty_room_consumption) {
+          roomStatus = 'mixed';
+          detailedStatus = 'recorded_unbilled';
+          statusLabel = 'Mixed Consumption';
+        } else if (empty_room_consumption > 0 || (room.occupancy === 0 && roomSegments.length === 0)) {
+          roomStatus = 'empty';
+          detailedStatus = 'zero_consumption';
+          statusLabel = 'Empty Room Consumption';
+        } else {
+          roomStatus = 'occupied';
+          detailedStatus = 'recorded_unbilled';
+          statusLabel = 'Billed';
+        }
       }
+
+      const studentChargesPaise = chargesByRoomId.get(room.id) || 0;
 
       roomsList.push({
         room_id: room.id,
@@ -477,15 +593,26 @@ export async function GET(req: NextRequest) {
         total_revenue_paise,
         total_revenue_rupees: total_revenue_paise / 100,
         empty_room_consumption: Math.round(empty_room_consumption * 100) / 100,
-        status: roomStatus
+        consumption_calculable: consumptionCalculable,
+        status: roomStatus,
+        detailed_status: detailedStatus,
+        status_label: statusLabel,
+        initial_reading: initialReadingObj,
+        latest_reading: latestReadingObj,
+        current_occupants: roomOccupants,
+        student_charges_paise: studentChargesPaise,
+        student_charges_rupees: studentChargesPaise / 100
       });
     }
 
     // 14. Calculate summary totals
+    const calculableRooms = roomsList.filter(r => r.consumption_calculable);
     const total_revenue_paise = roomsList.reduce((sum, r) => sum + r.total_revenue_paise, 0);
-    const total_consumption_all = roomsList.reduce((sum, r) => sum + r.total_consumption, 0);
-    const total_consumption_empty = roomsList.reduce((sum, r) => sum + r.empty_room_consumption, 0);
+    const total_consumption_all = calculableRooms.reduce((sum, r) => sum + r.total_consumption, 0);
+    const total_consumption_empty = calculableRooms.reduce((sum, r) => sum + r.empty_room_consumption, 0);
     const total_consumption_occupied = Math.max(0, total_consumption_all - total_consumption_empty);
+    const rooms_awaiting_reading = roomsList.filter(r => r.meter_id && !r.consumption_calculable).length;
+    const rooms_with_calculable_consumption = calculableRooms.length;
 
     const summary = {
       total_consumption_all: Math.round(total_consumption_all * 100) / 100,
@@ -494,7 +621,9 @@ export async function GET(req: NextRequest) {
       total_revenue_paise,
       total_revenue_rupees: total_revenue_paise / 100,
       total_students: studentsList.length,
-      total_metered_rooms: activeMeters.length
+      total_metered_rooms: activeMeters.length,
+      rooms_awaiting_reading,
+      rooms_with_calculable_consumption
     };
 
     const response: BillingOverviewResponse = {

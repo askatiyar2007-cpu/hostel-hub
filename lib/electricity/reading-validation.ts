@@ -23,12 +23,14 @@ import type { ValidationResult, ReadingReason, RecordReadingResult } from '@/typ
 export async function validateMeterReading(
   meterId: string,
   newReadingValue: number,
-  _newTimestamp: Date
+  _newTimestamp: Date,
+  authClient?: any
 ): Promise<ValidationResult> {
   const warnings: string[] = [];
+  const db = authClient || supabaseServer;
 
   // Step 1: Fetch most recent previous reading
-  const { data: previousReading, error: fetchError } = await supabaseServer
+  const { data: previousReading, error: fetchError } = await db
     .from('meter_readings')
     .select('reading_value, reading_timestamp')
     .eq('meter_id', meterId)
@@ -89,56 +91,70 @@ export async function validateMeterReading(
  * 
  * @param roomId - UUID of the room
  * @param timestamp - Timestamp to check occupancy at
+ * @param client - Optional Supabase client (e.g. authClient)
  * @returns True if room is occupied, false otherwise
  */
 async function isRoomOccupied(
   roomId: string,
-  timestamp: Date
+  timestamp: Date,
+  client?: any
 ): Promise<boolean> {
   const timestampStr = timestamp.toISOString();
+  const db = client || supabaseServer;
   
-  const { data, error } = await supabaseServer
-    .from('room_allocations')
-    .select('id')
-    .eq('room_id', roomId)
-    .eq('active', true)
-    .lte('start_date', timestampStr)
-    .or(`end_date.is.null,end_date.gte.${timestampStr}`)
-    .limit(1)
-    .maybeSingle();
+  try {
+    const { data, error } = await db
+      .from('room_allocations')
+      .select('id')
+      .eq('room_id', roomId)
+      .eq('active', true)
+      .lte('start_date', timestampStr)
+      .or(`end_date.is.null,end_date.gte.${timestampStr}`)
+      .limit(1)
+      .maybeSingle();
+      
+    if (error) {
+      console.warn(`Failed to check room occupancy: ${error.message}`);
+      return false;
+    }
     
-  if (error) {
-    throw new Error(`Failed to check room occupancy: ${error.message}`);
+    return !!data;
+  } catch (err: any) {
+    console.warn(`Exception checking room occupancy: ${err?.message || err}`);
+    return false;
   }
-  
-  return !!data;
 }
 
 /**
- * Check if a room has an open billing segment for a specific billing month
+ * Check if a room currently has an open billing segment (end_date IS NULL)
  * 
  * @param roomId - UUID of the room
- * @param billingMonth - Billing month in YYYY-MM format
+ * @param client - Optional Supabase client
  * @returns True if open segment exists, false otherwise
  */
-async function hasOpenSegmentForBillingMonth(
+async function hasOpenSegmentForRoom(
   roomId: string,
-  billingMonth: string
+  client?: any
 ): Promise<boolean> {
-  const { data, error } = await supabaseServer
-    .from('billing_segments')
-    .select('id')
-    .eq('room_id', roomId)
-    .eq('billing_month', billingMonth)
-    .is('end_date', null)
-    .limit(1)
-    .maybeSingle();
+  const db = client || supabaseServer;
+  try {
+    const { data, error } = await db
+      .from('billing_segments')
+      .select('id')
+      .eq('room_id', roomId)
+      .is('end_date', null)
+      .limit(1);
+      
+    if (error) {
+      console.warn(`Failed to check for open segment: ${error.message}`);
+      return false;
+    }
     
-  if (error) {
-    throw new Error(`Failed to check for open segment: ${error.message}`);
+    return !!(data && data.length > 0);
+  } catch (err: any) {
+    console.warn(`Exception checking for open segment: ${err?.message || err}`);
+    return false;
   }
-  
-  return !!data;
 }
 
 /**
@@ -155,6 +171,7 @@ async function hasOpenSegmentForBillingMonth(
  * @param reason - Reason for reading (occupancy_change, month_end, manual_check, initial)
  * @param recordedBy - UUID of user recording the reading
  * @param notes - Optional notes
+ * @param authClient - Optional authenticated Supabase client
  * @returns RecordReadingResult with readingId and affected segment IDs
  */
 export async function recordMeterReading(
@@ -162,11 +179,13 @@ export async function recordMeterReading(
   readingValue: number,
   reason: ReadingReason,
   recordedBy: string,
-  notes?: string
+  notes?: string,
+  authClient?: any
 ): Promise<RecordReadingResult> {
+  const db = authClient || supabaseServer;
   
   // Step 1: Get meter details
-  const { data: meter, error: meterError } = await supabaseServer
+  const { data: meter, error: meterError } = await db
     .from('electricity_meters')
     .select('id, room_id, hostel_id')
     .eq('id', meterId)
@@ -178,7 +197,7 @@ export async function recordMeterReading(
 
   // Step 2: Insert reading
   const readingTimestamp = new Date().toISOString();
-  const { data: reading, error: readingError } = await supabaseServer
+  const { data: reading, error: readingError } = await db
     .from('meter_readings')
     .insert({
       meter_id: meterId,
@@ -200,47 +219,29 @@ export async function recordMeterReading(
   const segmentsAffected: string[] = [];
 
   // Step 3: Handle automatic opening segment creation for occupied rooms
-  // This runs before the reason-based segment operations
-  const readingDate = new Date(readingTimestamp);
-  const billingMonth = readingDate.toISOString().substring(0, 7); // YYYY-MM format
-  
-  // Check if room is occupied and has no open segment for current billing month
-  const isOccupied = await isRoomOccupied(meter.room_id, readingDate);
-  const hasOpenSegment = await hasOpenSegmentForBillingMonth(meter.room_id, billingMonth);
-  
-  // For 'initial' reason, always create opening segment if room is occupied
-  // For other reasons, only create if room is occupied and no segment exists
-  if (reason === 'initial' && isOccupied && !hasOpenSegment) {
-    // Initial reading for occupied room - create opening segment
-    const { createBillingSegment } = await import('./segment-lifecycle');
+  // This ONLY runs for 'initial' baseline readings!
+  // For 'occupancy_change' and 'month_end', Step 4 handles closing and opening segments.
+  if (reason === 'initial') {
+    const readingDate = new Date(readingTimestamp);
+    const isOccupied = await isRoomOccupied(meter.room_id, readingDate, db);
+    const hasOpenSegment = await hasOpenSegmentForRoom(meter.room_id, db);
     
-    const openingSegmentId = await createBillingSegment(
-      meter.hostel_id,
-      meter.room_id,
-      meterId,
-      reading.id,
-      readingDate,
-      true // update occupants for opening segment
-    );
-    
-    segmentsAffected.push(openingSegmentId);
-    console.log(`Initial reading created opening segment ${openingSegmentId} for occupied room ${meter.room_id} in billing month ${billingMonth}`);
-  } else if (isOccupied && !hasOpenSegment && reason !== 'manual_check') {
-    // Room is occupied but has no opening segment for this billing period
-    // Create opening segment automatically for other valid reasons
-    const { createBillingSegment } = await import('./segment-lifecycle');
-    
-    const openingSegmentId = await createBillingSegment(
-      meter.hostel_id,
-      meter.room_id,
-      meterId,
-      reading.id,
-      readingDate,
-      true // update occupants for opening segment
-    );
-    
-    segmentsAffected.push(openingSegmentId);
-    console.log(`Auto-created opening segment ${openingSegmentId} for occupied room ${meter.room_id} in billing month ${billingMonth}`);
+    if (isOccupied && !hasOpenSegment) {
+      // Initial reading for occupied room - create opening segment
+      const { createBillingSegment } = await import('./segment-lifecycle');
+      
+      const openingSegmentId = await createBillingSegment(
+        meter.hostel_id,
+        meter.room_id,
+        meterId,
+        reading.id,
+        readingDate,
+        true // update occupants for opening segment
+      );
+      
+      segmentsAffected.push(openingSegmentId);
+      console.log(`Initial reading created opening segment ${openingSegmentId} for occupied room ${meter.room_id}`);
+    }
   }
 
   // Step 4: Handle segment operations based on reason (REQ-3.7, REQ-3.8, REQ-7.1, REQ-7.2)

@@ -39,8 +39,40 @@ interface StudentCharge {
 interface RoomBillingDetails {
   room_id: string;
   room_number: string;
+  hostel_id?: string;
+  hostel_name?: string;
   billing_month: string;
   meter_id: string | null;
+  meter_number?: string | null;
+  meter_status?: string | null;
+  status?: string;
+  status_label?: string;
+  status_explanation?: string;
+  initial_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  latest_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  all_readings?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  }[];
+  current_occupants?: {
+    student_id: string;
+    student_name: string;
+    student_email: string | null;
+    start_date: string;
+  }[];
+  tariff_rate_rupees?: number;
   segments: (BillingSegment & { occupants: SegmentOccupant[] })[];
   student_charges: StudentCharge[];
   total_consumption: number;
@@ -187,46 +219,158 @@ export default function RoomBillingDetailsPage() {
     return 0;
   });
 
+  const isAwaitingReading = !details.segments || details.segments.length === 0;
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6 max-w-4xl">
-      {/* Compact Header */}
-      <div className="flex items-center gap-3">
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={() => window.location.href = '/owner/electricity/billing'}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
-            Room {details.room_number}
-          </h1>
-          <p className="text-sm text-gray-600">
-            {new Date(details.billing_month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
-          </p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => window.location.href = '/owner/electricity/billing'}
+            className="border-slate-200 hover:bg-slate-50 text-slate-700 h-9 w-9 rounded-lg"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-900">
+                <FileText className="h-5 w-5 md:h-6 md:w-6 text-teal-600" />
+                Room {details.room_number} Breakdown
+              </h1>
+              {details.status_label && (
+                <Badge 
+                  variant="outline" 
+                  className={
+                    details.status === 'billed' 
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                      : details.status?.startsWith('awaiting_') 
+                        ? 'bg-amber-50 text-amber-700 border-amber-300' 
+                        : 'bg-slate-100 text-slate-600 border-slate-200'
+                  }
+                >
+                  {details.status_label}
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              {details.hostel_name ? `${details.hostel_name} • ` : ''}
+              Sub-Meter: <span className="font-mono font-semibold text-slate-700">{details.meter_number || 'None'}</span> •{' '}
+              {new Date(details.billing_month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+            </p>
+          </div>
         </div>
+
+        {details.meter_id && isAwaitingReading && (
+          <Button
+            size="sm"
+            onClick={() => {
+              const reason = details.status === 'awaiting_initial_reading' ? 'initial' : details.status === 'awaiting_allocation_reading' ? 'occupancy_change' : 'month_end';
+              window.location.href = `/owner/electricity/readings/record?meter_id=${details.meter_id}&reason=${reason}`;
+            }}
+            className="bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold h-9 shadow-xs"
+          >
+            Record Reading
+          </Button>
+        )}
       </div>
 
-      {/* Compact Summary */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-xs text-blue-700 font-medium">Consumption</p>
-          <p className="text-lg md:text-xl font-bold text-blue-900">
-            {details.total_consumption.toFixed(2)} kWh
+      {/* Awaiting Readings Notice Card */}
+      {isAwaitingReading && (
+        <Card className="border border-amber-200/90 bg-amber-50/40 shadow-xs rounded-xl overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2 bg-amber-100 rounded-lg text-amber-800 shrink-0 mt-0.5">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="space-y-3 flex-1">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    {details.status_label || 'Awaiting Meter Reading'}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    {details.status_explanation || 'No closed billing segments exist for this month yet. Consumption and student charges will be calculated once the required meter reading is recorded.'}
+                  </p>
+                </div>
+
+                {/* Meter Benchmark Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                  <div className="bg-white p-3 rounded-lg border border-amber-200/60 shadow-2xs">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Initial Baseline</p>
+                    <p className="text-base font-bold text-slate-900 mt-0.5">
+                      {details.initial_reading ? `${details.initial_reading.value} kWh` : 'Required'}
+                    </p>
+                    {details.initial_reading && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Recorded on {formatDate(details.initial_reading.timestamp)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-amber-200/60 shadow-2xs">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Latest Benchmark</p>
+                    <p className="text-base font-bold text-slate-900 mt-0.5">
+                      {details.latest_reading ? `${details.latest_reading.value} kWh` : 'None'}
+                    </p>
+                    {details.latest_reading && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Reason: {details.latest_reading.reason} ({formatDate(details.latest_reading.timestamp)})
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-amber-200/60 shadow-2xs">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Occupants</p>
+                    <p className="text-base font-bold text-slate-900 mt-0.5">
+                      {details.current_occupants?.length || 0} student(s)
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                      {details.current_occupants && details.current_occupants.length > 0 
+                        ? details.current_occupants.map(o => o.student_name).join(', ')
+                        : 'No current occupants'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 shadow-2xs">
+          <p className="text-xs text-blue-700 font-medium">Room Consumption</p>
+          <p className="text-lg md:text-xl font-bold text-blue-900 mt-0.5">
+            {isAwaitingReading ? (
+              <span className="text-sm font-semibold text-amber-700">Pending Reading</span>
+            ) : (
+              `${details.total_consumption.toFixed(2)} kWh`
+            )}
           </p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="bg-green-50 border border-green-200 rounded-xl p-3.5 shadow-2xs">
           <p className="text-xs text-green-700 font-medium">Total Cost</p>
-          <p className="text-lg md:text-xl font-bold text-green-900">
-            {formatCurrency(details.total_cost_paise)}
+          <p className="text-lg md:text-xl font-bold text-green-900 mt-0.5">
+            {isAwaitingReading ? (
+              <span className="text-sm font-semibold text-slate-500">₹0.00 (Unbilled)</span>
+            ) : (
+              formatCurrency(details.total_cost_paise)
+            )}
           </p>
         </div>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <p className="text-xs text-gray-700 font-medium">Segments</p>
-          <p className="text-lg md:text-xl font-bold text-gray-900">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-2xs">
+          <p className="text-xs text-slate-700 font-medium">Closed Segments</p>
+          <p className="text-lg md:text-xl font-bold text-slate-900 mt-0.5">
             {details.segments.length}
+          </p>
+        </div>
+        <div className="bg-violet-50 border border-violet-200 rounded-xl p-3.5 shadow-2xs">
+          <p className="text-xs text-violet-700 font-medium">Hostel Tariff</p>
+          <p className="text-lg md:text-xl font-bold text-violet-900 mt-0.5">
+            ₹{details.tariff_rate_rupees ? details.tariff_rate_rupees.toFixed(2) : '10.00'} <span className="text-xs font-normal">/ kWh</span>
           </p>
         </div>
       </div>

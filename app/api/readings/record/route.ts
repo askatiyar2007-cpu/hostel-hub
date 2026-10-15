@@ -16,7 +16,7 @@ import { z } from 'zod';
 const RecordReadingSchema = z.object({
   meter_id: z.string().uuid('Invalid meter ID format'),
   reading_value: z.number().nonnegative('Reading value must be non-negative'),
-  reason: z.enum(['occupancy_change', 'month_end', 'manual_check'], {
+  reason: z.enum(['initial', 'occupancy_change', 'month_end', 'manual_check'], {
     errorMap: () => ({ message: 'Invalid reading reason' })
   }),
   notes: z.string().optional(),
@@ -135,7 +135,8 @@ export async function POST(request: NextRequest) {
       reading_value,
       reason,
       user.id,
-      notes
+      notes,
+      supabase
     );
     
     // Calculate consumption
@@ -169,6 +170,16 @@ export async function POST(request: NextRequest) {
     console.error('Error recording meter reading:', error);
     
     // Handle specific error types
+    if (error.message?.includes('violates row-level security policy') || error.code === '42501') {
+      return NextResponse.json<ErrorResponse>(
+        {
+          error: 'Permission denied',
+          details: 'You do not have permission to record readings for this meter.'
+        },
+        { status: 403 }
+      );
+    }
+
     if (error.message?.includes('less than previous reading')) {
       return NextResponse.json<ErrorResponse>(
         {
@@ -179,13 +190,23 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (error.message?.includes('Duplicate reading')) {
+    if (error.message?.includes('Duplicate reading') || error.message?.includes('uq_reading_deduplication') || error.code === '23505') {
       return NextResponse.json<ErrorResponse>(
         {
           error: 'Duplicate reading',
-          details: 'A reading with the same value was recorded within the last 60 seconds'
+          details: 'A reading with the same value has already been recorded recently.'
         },
         { status: 409 }
+      );
+    }
+
+    if (error.message?.includes('before segment start_date') || error.message?.includes('before previous reading timestamp')) {
+      return NextResponse.json<ErrorResponse>(
+        {
+          error: 'Invalid reading timestamp',
+          details: 'Reading timestamp cannot be earlier than the previous reading.'
+        },
+        { status: 400 }
       );
     }
     

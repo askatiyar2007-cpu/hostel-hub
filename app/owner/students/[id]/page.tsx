@@ -230,6 +230,10 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   const address = latestRequest?.address || student?.address;
   const emergencyContact = latestRequest?.emergency_contact || (latestRequest?.emergency_contact_name && latestRequest?.emergency_contact_phone ? `${latestRequest?.emergency_contact_name} - ${latestRequest?.emergency_contact_phone}` : latestRequest?.emergency_contact_name);
 
+  const stayDays = allocation.start_date && allocation.end_date
+    ? Math.max(1, Math.round((new Date(allocation.end_date).getTime() - new Date(allocation.start_date).getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -249,6 +253,20 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           Back to Residents List
         </Button>
       </div>
+
+      {/* Historical Resident Notice */}
+      {!allocation.active && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 text-amber-900 dark:text-amber-200">
+          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+          <div className="text-xs space-y-1">
+            <p className="font-bold text-sm">Historical Resident Record (Checked Out)</p>
+            <p>
+              This resident vacated Room {allocation.rooms?.room_number || '-'} on {allocation.end_date ? new Date(allocation.end_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'record completion'}.
+              {stayDays ? ` Total stay duration: ${stayDays} day${stayDays === 1 ? '' : 's'}.` : ''} All historical rent records, payments, and electricity ledger remain preserved for accounting and audit purposes.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 1. Profile Header Row */}
       <div className="bg-card border border-border p-6 rounded-3xl shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -275,9 +293,15 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           <div className="text-center md:text-left space-y-1">
             <div className="flex flex-col md:flex-row items-center gap-2">
               <h2 className="text-2xl font-bold font-display text-foreground">{studentName}</h2>
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none capitalize text-xs">
-                {allocation.active ? 'Active Resident' : 'Inactive'}
-              </Badge>
+              {allocation.active ? (
+                <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-none capitalize text-xs font-semibold">
+                  Active Resident
+                </Badge>
+              ) : (
+                <Badge className="bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-none capitalize text-xs font-semibold">
+                  Checked Out
+                </Badge>
+              )}
             </div>
             <p className="text-sm font-semibold text-muted-foreground flex items-center justify-center md:justify-start gap-1">
               <Building2 size={14} />
@@ -285,6 +309,10 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             </p>
             <p className="text-xs text-muted-foreground">
               Checked in on {new Date(allocation.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+              {allocation.end_date && (
+                <> &bull; Checked out on {new Date(allocation.end_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</>
+              )}
+              {stayDays && <> ({stayDays} day{stayDays === 1 ? '' : 's'})</>}
             </p>
           </div>
         </div>
@@ -416,14 +444,20 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                 )}
               </Button>
 
-              <Button 
-                onClick={handleCheckout}
-                disabled={checkoutLoading}
-                variant="outline" 
-                className="w-full justify-start rounded-xl font-bold gap-2 py-5 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-              >
-                <X size={16} /> Checkout Student
-              </Button>
+              {allocation.active ? (
+                <Button 
+                  onClick={handleCheckout}
+                  disabled={checkoutLoading}
+                  variant="outline" 
+                  className="w-full justify-start rounded-xl font-bold gap-2 py-5 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                >
+                  <X size={16} /> Checkout Student
+                </Button>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs text-muted-foreground text-center">
+                  Resident checked out on {allocation.end_date ? new Date(allocation.end_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'record completion'}. Historical ledger is locked.
+                </div>
+              )}
             </div>
           </section>
 

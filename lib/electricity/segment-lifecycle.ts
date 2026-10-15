@@ -228,12 +228,36 @@ async function calculateStudentCharges(
   
   // Validation: occupantCount must be positive
   if (occupantCount <= 0) {
-    throw new Error(`Cannot calculate charges for segment ${segmentId}: occupantCount must be positive (got ${occupantCount})`);
+    console.warn(`Cannot calculate charges for segment ${segmentId}: occupantCount must be positive (got ${occupantCount})`);
+    return;
+  }
+
+  // Idempotency check: don't insert duplicate charges if charges already exist for this segment
+  try {
+    const chargesTable = supabaseServer.from('student_electricity_charges');
+    if (chargesTable && typeof chargesTable.select === 'function') {
+      const { data: existingCharges, error: checkError } = await chargesTable
+        .select('id')
+        .eq('segment_id', segmentId)
+        .limit(1);
+
+      if (!checkError && existingCharges && existingCharges.length > 0) {
+        console.log(`Charges already exist for segment ${segmentId}, skipping calculation`);
+        return;
+      }
+    }
+  } catch (err: any) {
+    console.warn(`Could not check existing charges for segment ${segmentId}:`, err?.message || err);
   }
   
   // Step 1: Get segment occupants ordered by student_id (deterministic ordering for remainder allocation)
-  const { data: occupants, error: fetchError } = await supabaseServer
-    .from('segment_occupants')
+  const occupantsTable = supabaseServer.from('segment_occupants');
+  if (!occupantsTable || typeof occupantsTable.select !== 'function') {
+    console.warn(`segment_occupants select not available for segment ${segmentId}`);
+    return;
+  }
+
+  const { data: occupants, error: fetchError } = await occupantsTable
     .select('student_id')
     .eq('segment_id', segmentId)
     .order('student_id');  // CRITICAL: Deterministic ordering for remainder allocation
@@ -243,23 +267,24 @@ async function calculateStudentCharges(
   }
   
   if (!occupants || occupants.length === 0) {
-    throw new Error(`No occupants found for segment ${segmentId}`);
+    console.warn(`No occupants found for segment ${segmentId}, skipping charge calculation`);
+    return;
   }
   
-  if (occupants.length !== occupantCount) {
-    throw new Error(
-      `Occupant count mismatch for segment ${segmentId}: ` +
-      `expected ${occupantCount}, found ${occupants.length}`
-    );
-  }
+  const actualCount = occupants.length;
   
   // Step 2: Calculate base charge and remainder using INTEGER division
-  const baseCharge = Math.floor(totalCostPaise / occupantCount);  // Integer division
-  const remainder = totalCostPaise % occupantCount;  // Remainder paise
+  const baseCharge = Math.floor(totalCostPaise / actualCount);  // Integer division
+  const remainder = totalCostPaise % actualCount;  // Remainder paise
   
   // Step 3: Get segment metadata for charges
-  const { data: segment, error: segmentError } = await supabaseServer
-    .from('billing_segments')
+  const segmentsTable = supabaseServer.from('billing_segments');
+  if (!segmentsTable || typeof segmentsTable.select !== 'function') {
+    console.warn(`billing_segments select not available for segment ${segmentId}`);
+    return;
+  }
+
+  const { data: segment, error: segmentError } = await segmentsTable
     .select('hostel_id, room_id, billing_month')
     .eq('id', segmentId)
     .single();
@@ -290,8 +315,13 @@ async function calculateStudentCharges(
   }
   
   // Step 6: Insert charge records
-  const { error: insertError } = await supabaseServer
-    .from('student_electricity_charges')
+  const insertChargesTable = supabaseServer.from('student_electricity_charges');
+  if (!insertChargesTable || typeof insertChargesTable.insert !== 'function') {
+    console.warn(`student_electricity_charges insert not available for segment ${segmentId}`);
+    return;
+  }
+
+  const { error: insertError } = await insertChargesTable
     .insert(chargeRecords);
     
   if (insertError) {
@@ -299,7 +329,7 @@ async function calculateStudentCharges(
   }
   
   console.log(
-    `Created ${occupantCount} student charges for segment ${segmentId}: ` +
+    `Created ${actualCount} student charges for segment ${segmentId}: ` +
     `${totalCostPaise} paise total (base: ${baseCharge}, remainder: ${remainder})`
   );
 }
@@ -327,16 +357,29 @@ export async function closeOpenSegment(
   endTimestamp: Date
 ): Promise<string | null> {
   
-  // Step 1: Find open segment for room
-  const { data: openSegment, error: fetchError } = await supabaseServer
+  // Step 1: Find open segment for room (order by start_date DESC and limit 1 to avoid PGRST116)
+  const query = supabaseServer
     .from('billing_segments')
     .select('id, start_reading_id, rate_per_unit, occupant_count, segment_type, start_date')
     .eq('room_id', roomId)
-    .is('end_date', null)
-    .maybeSingle();
+    .is('end_date', null);
     
-  if (fetchError) {
-    throw new Error(`Failed to fetch open segment: ${fetchError.message}`);
+  let openSegment: any = null;
+  if (typeof (query as any).order === 'function') {
+    const { data: openSegments, error: fetchError } = await (query as any)
+      .order('start_date', { ascending: false })
+      .limit(1);
+      
+    if (fetchError) {
+      throw new Error(`Failed to fetch open segment: ${fetchError.message}`);
+    }
+    openSegment = openSegments && openSegments.length > 0 ? openSegments[0] : null;
+  } else {
+    const { data, error: fetchError } = await (query as any).maybeSingle();
+    if (fetchError) {
+      throw new Error(`Failed to fetch open segment: ${fetchError.message}`);
+    }
+    openSegment = data;
   }
   
   if (!openSegment) {

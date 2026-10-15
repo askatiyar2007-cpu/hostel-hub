@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Zap, AlertTriangle, Info, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Zap, AlertTriangle, Info, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -231,7 +232,7 @@ function ReadingEntryContent() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to record reading');
+        throw new Error(data.details || data.error || 'Failed to record reading');
       }
       
       toast.success('Reading recorded successfully');
@@ -584,6 +585,79 @@ function ReadingEntryContent() {
               </CardContent>
             </Card>
           )}
+
+          {/* Pre-Submission Summary Card (Part 4.4) */}
+          <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
+            <CardHeader className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200/80">
+              <CardTitle className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                Pre-Submission Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-2.5 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Reading Type:</span>
+                <Badge className={
+                  reason === 'initial' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                  reason === 'occupancy_change' ? 'bg-amber-50 text-amber-800 border-amber-300' :
+                  'bg-sky-50 text-sky-700 border-sky-200'
+                }>
+                  {reason === 'initial' ? 'Initial Reading' : reason === 'occupancy_change' ? 'New Allocation' : 'Month End'}
+                </Badge>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Hostel & Room:</span>
+                <span className="font-semibold text-slate-800">{meterInfo.hostel_name} • Room {meterInfo.room_number}</span>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Sub-Meter:</span>
+                <span className="font-mono font-bold text-slate-800">{meterInfo.meter_number}</span>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Previous Benchmark:</span>
+                <span className="font-mono text-slate-700">
+                  {meterInfo.last_reading ? `${meterInfo.last_reading.value} kWh` : 'None (Baseline)'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">New Reading:</span>
+                <span className="font-mono font-bold text-slate-900">
+                  {readingValue ? `${parseFloat(readingValue) || 0} kWh` : '—'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Calculated Delta:</span>
+                <span className="font-mono font-bold text-teal-700">
+                  {reason === 'initial'
+                    ? '0.00 kWh (Opening Baseline)'
+                    : expectedConsumption !== null
+                      ? `+${expectedConsumption.toFixed(2)} kWh`
+                      : '—'}
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 space-y-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">Expected Effect</span>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  {reason === 'initial' && 'Establishes opening baseline benchmark for this meter. No billable units or student charges are generated immediately.'}
+                  {reason === 'occupancy_change' && `Closes previous interval at ${expectedConsumption !== null ? expectedConsumption.toFixed(2) : '0.00'} kWh, fairly divides charges among prior occupants, and opens a new segment with revised occupancy.`}
+                  {reason === 'month_end' && `Closes monthly billing cycle, records ${expectedConsumption !== null ? expectedConsumption.toFixed(2) : '0.00'} kWh room consumption, and enables student electricity fee invoice generation.`}
+                </p>
+              </div>
+
+              {validationError && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {validationError}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Submit Button */}
           <Button 

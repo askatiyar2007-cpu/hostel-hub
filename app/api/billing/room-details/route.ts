@@ -39,8 +39,40 @@ interface StudentCharge {
 interface RoomBillingDetails {
   room_id: string;
   room_number: string;
+  hostel_id: string;
+  hostel_name: string;
   billing_month: string;
   meter_id: string | null;
+  meter_number: string | null;
+  meter_status: string | null;
+  status: string;
+  status_label: string;
+  status_explanation: string;
+  initial_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  latest_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  all_readings?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  }[];
+  current_occupants: {
+    student_id: string;
+    student_name: string;
+    student_email: string | null;
+    start_date: string;
+  }[];
+  tariff_rate_rupees: number;
   segments: (BillingSegment & { occupants: SegmentOccupant[] })[];
   student_charges: StudentCharge[];
   total_consumption: number;
@@ -49,7 +81,7 @@ interface RoomBillingDetails {
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -72,10 +104,10 @@ export async function GET(req: NextRequest) {
       billing_month: billingMonth
     });
 
-    // Verify ownership
+    // Verify room and hostel ownership
     const { data: room, error: roomError } = await supabaseServer
       .from('rooms')
-      .select('id, room_number, hostel_id')
+      .select('id, room_number, hostel_id, floor, capacity, occupancy')
       .eq('id', validated.room_id)
       .single();
 
@@ -85,13 +117,68 @@ export async function GET(req: NextRequest) {
 
     const { data: hostel, error: hostelError } = await supabaseServer
       .from('hostels')
-      .select('owner_id')
+      .select('id, name, owner_id')
       .eq('id', room.hostel_id)
       .single();
 
     if (hostelError || !hostel || hostel.owner_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // Fetch active meter for this room
+    const { data: meter } = await supabaseServer
+      .from('electricity_meters')
+      .select('id, meter_number, status')
+      .eq('room_id', validated.room_id)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    // Fetch all readings for this meter / room
+    const { data: readingsData } = await supabaseServer
+      .from('meter_readings')
+      .select('id, reading_value, reading_timestamp, reason')
+      .eq('room_id', validated.room_id)
+      .order('reading_timestamp', { ascending: false });
+
+    const meterReadings = readingsData || [];
+
+    // Fetch room allocations overlapping this month
+    const [year, monthNum] = validated.billing_month.split('-').map(Number);
+    const startOfMonth = `${validated.billing_month}-01`;
+    const lastDayOfMonth = new Date(year, monthNum, 0).getDate();
+    const endOfMonth = `${validated.billing_month}-${String(lastDayOfMonth).padStart(2, '0')}`;
+
+    const { data: roomAllocationsData } = await supabaseServer
+      .from('room_allocations')
+      .select(`
+        id,
+        student_id,
+        student_name,
+        student_email,
+        start_date,
+        end_date,
+        active,
+        students (
+          id,
+          profiles (
+            full_name,
+            email
+          )
+        )
+      `)
+      .eq('room_id', validated.room_id)
+      .lte('start_date', endOfMonth)
+      .or(`end_date.is.null,end_date.gte.${startOfMonth}`);
+
+    const currentOccupants = (roomAllocationsData || []).map((alloc: any) => {
+      const profile = alloc.students?.profiles;
+      return {
+        student_id: alloc.student_id,
+        student_name: alloc.student_name || profile?.full_name || 'Resident Student',
+        student_email: alloc.student_email || profile?.email || null,
+        start_date: alloc.start_date
+      };
+    });
 
     // Fetch billing segments with occupants and both readings using explicit foreign keys
     const { data: segments, error: segmentsError } = await supabaseServer
@@ -160,13 +247,11 @@ export async function GET(req: NextRequest) {
 
     if (chargesError) {
       console.error('Error fetching charges:', chargesError);
-      // Continue without charges if error
     }
 
-    // Resolve student names using segment_occupants data (already has student_name)
+    // Resolve student names using segment_occupants or currentOccupants
     let studentCharges: StudentCharge[] = [];
     if (charges && charges.length > 0) {
-      // Build student name map from segment occupants
       const studentNameMap = new Map<string, string>();
       segmentsWithReadings.forEach(segment => {
         segment.occupants.forEach((occupant: any) => {
@@ -174,6 +259,11 @@ export async function GET(req: NextRequest) {
             studentNameMap.set(occupant.student_id, occupant.student_name);
           }
         });
+      });
+      currentOccupants.forEach(occ => {
+        if (!studentNameMap.has(occ.student_id)) {
+          studentNameMap.set(occ.student_id, occ.student_name);
+        }
       });
       
       studentCharges = charges.map((charge: any) => ({
@@ -195,11 +285,96 @@ export async function GET(req: NextRequest) {
       0
     );
 
+    // Initial reading and latest reading
+    let initialReadingObj = null;
+    if (meter && meterReadings.length > 0) {
+      const initR = meterReadings.slice().reverse().find(r => r.reason === 'initial') || meterReadings[meterReadings.length - 1];
+      if (initR) {
+        initialReadingObj = {
+          id: initR.id,
+          value: parseFloat(initR.reading_value || 0),
+          timestamp: initR.reading_timestamp,
+          reason: initR.reason
+        };
+      }
+    }
+
+    let latestReadingObj = null;
+    if (meter && meterReadings.length > 0) {
+      const latR = meterReadings[0];
+      latestReadingObj = {
+        id: latR.id,
+        value: parseFloat(latR.reading_value || 0),
+        timestamp: latR.reading_timestamp,
+        reason: latR.reason
+      };
+    }
+
+    // Fetch active tariff
+    const { data: tariffData } = await supabaseServer
+      .from('electricity_tariffs')
+      .select('rate_per_kwh, effective_from')
+      .eq('hostel_id', room.hostel_id)
+      .order('effective_from', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const tariffRateRupees = tariffData?.rate_per_kwh ? Number(tariffData.rate_per_kwh) : (segmentsWithReadings[0]?.rate_per_unit || 10);
+
+    // Determine status & explanation
+    let status = 'billed';
+    let statusLabel = 'Billed';
+    let statusExplanation = 'Billing cycle finalized with all segments closed.';
+
+    if (!meter) {
+      status = 'unmetered';
+      statusLabel = 'Unmetered';
+      statusExplanation = 'No active electricity sub-meter is configured for this room.';
+    } else if (meterReadings.length === 0) {
+      status = 'awaiting_initial_reading';
+      statusLabel = 'Initial Reading Required';
+      statusExplanation = 'This meter requires an initial baseline reading to begin tracking electricity consumption.';
+    } else if (segmentsWithReadings.length === 0) {
+      const latestReadingTime = meterReadings.length > 0 ? new Date(meterReadings[0].reading_timestamp).getTime() : 0;
+      const hasPendingAllocation = currentOccupants.some(a => new Date(a.start_date).getTime() > latestReadingTime);
+
+      if (hasPendingAllocation) {
+        status = 'awaiting_allocation_reading';
+        statusLabel = 'Allocation Reading Required';
+        statusExplanation = 'A student joined the room after the last recorded reading. A New Allocation reading is required to close the previous interval and begin a new segment.';
+      } else {
+        status = 'awaiting_month_end_reading';
+        statusLabel = 'Awaiting Month-End Reading';
+        statusExplanation = `The baseline or benchmark reading has been recorded, but the month-end reading for ${validated.billing_month} has not yet been submitted. Once recorded, consumption and student fee charges will be calculated.`;
+      }
+    } else if (totalConsumption === 0) {
+      status = 'zero_consumption';
+      statusLabel = 'Zero Measured Consumption';
+      statusExplanation = 'The meter was read with no change in cumulative units during this period (0.00 kWh consumed).';
+    }
+
     const response: RoomBillingDetails = {
       room_id: validated.room_id,
       room_number: room.room_number,
+      hostel_id: room.hostel_id,
+      hostel_name: hostel.name,
       billing_month: validated.billing_month,
-      meter_id: segmentsWithReadings[0]?.meter_id || null,
+      meter_id: meter?.id || segmentsWithReadings[0]?.meter_id || null,
+      meter_number: meter?.meter_number || null,
+      meter_status: meter?.status || null,
+      status,
+      status_label: statusLabel,
+      status_explanation: statusExplanation,
+      initial_reading: initialReadingObj,
+      latest_reading: latestReadingObj,
+      all_readings: meterReadings.map(r => ({
+        id: r.id,
+        value: parseFloat(r.reading_value || 0),
+        timestamp: r.reading_timestamp,
+        reason: r.reason
+      })),
+      current_occupants: currentOccupants,
+      tariff_rate_rupees: tariffRateRupees,
       segments: segmentsWithReadings,
       student_charges: studentCharges,
       total_consumption: totalConsumption,

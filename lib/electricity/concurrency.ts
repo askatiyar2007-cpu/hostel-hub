@@ -78,7 +78,8 @@ export async function recordMeterReadingWithLock(
   readingValue: number,
   reason: ReadingReason,
   recordedBy: string,
-  notes?: string
+  notes?: string,
+  authClient?: any
 ): Promise<RecordReadingResult> {
   
   // NOTE: PostgreSQL advisory locks require custom RPC functions to be set up
@@ -95,8 +96,9 @@ export async function recordMeterReadingWithLock(
   
   try {
     // Check for duplicate within 60 seconds
+    const db = authClient || supabaseServer;
     const sixtySecondsAgo = new Date(Date.now() - 60000);
-    const { data: recentReading, error: checkError } = await supabaseServer
+    const { data: recentReading, error: checkError } = await db
       .from('meter_readings')
       .select('id, reading_timestamp')
       .eq('meter_id', meterId)
@@ -121,7 +123,8 @@ export async function recordMeterReadingWithLock(
       readingValue,
       reason,
       recordedBy,
-      notes
+      notes,
+      authClient
     );
     
     return result;

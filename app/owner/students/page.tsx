@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,9 @@ const BOOKING_TYPE_LABEL: Record<string, string> = {
 export default function OwnerStudentsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const [activeCount, setActiveCount] = useState<number>(0);
+  const [historyCount, setHistoryCount] = useState<number>(0);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +50,7 @@ export default function OwnerStudentsPage() {
       setLoading(true);
       setError(null);
 
-      // Fetch room_allocations as the primary table
+      // Fetch room_allocations as the primary table for selected tab
       const { data, error: fetchError } = await supabase
         .from('room_allocations')
         .select(`
@@ -55,6 +59,7 @@ export default function OwnerStudentsPage() {
           student_id,
           hostel_id,
           start_date,
+          end_date,
           active,
           created_at,
           booking_type,
@@ -89,10 +94,28 @@ export default function OwnerStudentsPage() {
           )
         `)
         .eq('hostels.owner_id', user.id)
-        .eq('active', true);
+        .eq('active', activeTab === 'active')
+        .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
       setAssignments(data || []);
+
+      // Fetch accurate counts for both tabs
+      const [{ count: aCount }, { count: hCount }] = await Promise.all([
+        supabase
+          .from('room_allocations')
+          .select('id, hostels!inner(owner_id)', { count: 'exact', head: true })
+          .eq('hostels.owner_id', user.id)
+          .eq('active', true),
+        supabase
+          .from('room_allocations')
+          .select('id, hostels!inner(owner_id)', { count: 'exact', head: true })
+          .eq('hostels.owner_id', user.id)
+          .eq('active', false)
+      ]);
+
+      if (aCount !== null && aCount !== undefined) setActiveCount(aCount);
+      if (hCount !== null && hCount !== undefined) setHistoryCount(hCount);
 
       // Fetch photo URLs for students with room requests
       if (data && data.length > 0) {
@@ -130,7 +153,7 @@ export default function OwnerStudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, activeTab]);
 
   useEffect(() => {
     fetchStudents();
@@ -190,6 +213,18 @@ export default function OwnerStudentsPage() {
         description="Manage resident students and active room allocations across your properties."
       />
 
+      {/* View Tabs: Active vs Past Residents / History */}
+      <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
+        <TabsList className="bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="active" className="rounded-lg text-xs font-semibold px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-xs">
+            Active Residents ({activeCount})
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-lg text-xs font-semibold px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-xs">
+            Past Residents / History ({historyCount})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Top Toolbar: Search, Hostel Filter, Assign CTA */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
@@ -229,19 +264,23 @@ export default function OwnerStudentsPage() {
           </DropdownMenu>
         </div>
 
-        <Link href="/owner/students/new">
-          <Button className="h-10 gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 shadow-xs transition-colors text-sm">
-            <Plus size={18} />
-            <span>Assign Student</span>
-          </Button>
-        </Link>
+        {activeTab === 'active' && (
+          <Link href="/owner/students/new">
+            <Button className="h-10 gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 shadow-xs transition-colors text-sm">
+              <Plus size={18} />
+              <span>Assign Student</span>
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Loading State */}
       {loading ? (
         <div className="rounded-xl border border-slate-200/90 bg-white p-12 text-center text-slate-500 shadow-xs">
           <div className="animate-spin inline-block w-8 h-8 border-3 border-teal-600 border-t-transparent rounded-full mb-3" />
-          <p className="font-medium text-slate-600">Loading resident students...</p>
+          <p className="font-medium text-slate-600">
+            {activeTab === 'history' ? 'Loading past residents history...' : 'Loading resident students...'}
+          </p>
         </div>
       ) : error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-12 text-center shadow-xs">
@@ -254,11 +293,15 @@ export default function OwnerStudentsPage() {
       ) : filteredAssignments.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
           <Users className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-          <h3 className="text-base font-bold text-slate-900">No resident students found</h3>
+          <h3 className="text-base font-bold text-slate-900">
+            {activeTab === 'history' ? 'No past residents found' : 'No resident students found'}
+          </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
             {searchQuery || selectedHostel !== 'all' 
               ? 'No students match your current filter criteria.' 
-              : 'You do not have any active resident students assigned yet.'}
+              : activeTab === 'history'
+                ? 'No past resident checkout records exist for your properties.'
+                : 'You do not have any active resident students assigned yet.'}
           </p>
           {(searchQuery || selectedHostel !== 'all') ? (
             <Button 
@@ -268,13 +311,13 @@ export default function OwnerStudentsPage() {
             >
               Clear Filters
             </Button>
-          ) : (
+          ) : activeTab === 'active' ? (
             <Link href="/owner/students/new" className="inline-block mt-4">
               <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold gap-2 rounded-xl text-xs shadow-xs">
                 <Plus size={16} /> Assign First Student
               </Button>
             </Link>
-          )}
+          ) : null}
         </div>
       ) : (
         <div className="space-y-4">
@@ -290,8 +333,12 @@ export default function OwnerStudentsPage() {
     const rent = item.rooms?.rent || 0;
     const studentId = studentInfo?.id;
     const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
-    const statusLabel = item.active ? 'Active' : 'Inactive';
-    const statusColorClass = item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+    const isHistory = !item.active;
+    const statusLabel = item.active ? 'Active' : 'Checked Out';
+    const statusColorClass = item.active ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800';
+    const stayDuration = isHistory && item.start_date
+      ? `Stay: ${new Date(item.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} → ${item.end_date ? new Date(item.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Checked out'}`
+      : undefined;
 
     return (
       <StudentCard
@@ -306,8 +353,9 @@ export default function OwnerStudentsPage() {
         statusLabel={statusLabel}
         statusColorClass={statusColorClass}
         studentPhotoUrl={passportPhotoUrl}
+        stayDuration={stayDuration}
         onViewProfile={() => router.push(`/owner/students/${item.id}`)}
-        onCheckout={() => handleCheckout(item.id)}
+        onCheckout={item.active ? () => handleCheckout(item.id) : undefined}
       />
     );
   })}

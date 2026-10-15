@@ -12,11 +12,12 @@ export interface StudentCardProps {
   roomNumber?: string;
   bookingType: string;
   rent: number | string;
-  statusLabel: string; // e.g., 'Active' or 'Inactive'
-  statusColorClass: string; // e.g., 'bg-green-100 text-green-800'
+  statusLabel: string; // e.g., 'Active', 'Inactive', 'Checked Out'
+  statusColorClass: string;
   studentPhotoUrl?: string;
+  stayDuration?: string;
   onViewProfile: () => void;
-  onCheckout: () => void;
+  onCheckout?: () => void;
 }
 
 /**
@@ -35,13 +36,17 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   statusLabel,
   statusColorClass: _statusColorClass,
   studentPhotoUrl,
+  stayDuration,
   onViewProfile,
   onCheckout,
 }) => {
   const isStatusActive = statusLabel.toLowerCase() === 'active';
+  const isCheckedOut = statusLabel.toLowerCase().includes('checked out');
   const badgeClass = isStatusActive 
     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' 
-    : 'bg-rose-50 text-rose-700 border border-rose-200/80';
+    : isCheckedOut
+      ? 'bg-slate-100 text-slate-700 border border-slate-300'
+      : 'bg-rose-50 text-rose-700 border border-rose-200/80';
 
   return (
     <Card className="bg-white border border-slate-200/90 hover:border-sky-300 rounded-2xl shadow-xs hover:shadow-md p-5 flex flex-col xl:flex-row items-start xl:items-center gap-6 transition-all">
@@ -85,12 +90,19 @@ export const StudentCard: React.FC<StudentCardProps> = ({
               Room {roomNumber ?? '-'}
               <span className="text-slate-400 font-medium ml-1">({bookingType})</span>
             </p>
+            {stayDuration && (
+              <p className="text-xs text-slate-500 truncate font-normal">
+                {stayDuration}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Financial */}
         <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Monthly Rent</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+            {isStatusActive ? 'Monthly Rent' : 'Previous Rent'}
+          </p>
           <p className="text-lg font-bold text-emerald-700" title={String(rent)}>
             ₹{Number(rent).toLocaleString()}
           </p>
@@ -104,15 +116,17 @@ export const StudentCard: React.FC<StudentCardProps> = ({
           onClick={onViewProfile} 
           className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium border-slate-200 text-slate-700 hover:bg-slate-50 shadow-xs"
         >
-          <Eye size={15} /> Profile
+          <Eye size={15} /> {isStatusActive ? 'Profile' : 'Past Records'}
         </Button>
-        <Button 
-          variant="outline" 
-          onClick={onCheckout} 
-          className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium text-rose-600 border-rose-200 hover:bg-rose-50 shadow-xs"
-        >
-          <LogOut size={15} /> Checkout
-        </Button>
+        {isStatusActive && onCheckout && (
+          <Button 
+            variant="outline" 
+            onClick={onCheckout} 
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium text-rose-600 border-rose-200 hover:bg-rose-50 shadow-xs"
+          >
+            <LogOut size={15} /> Checkout
+          </Button>
+        )}
       </div>
     </Card>
   );

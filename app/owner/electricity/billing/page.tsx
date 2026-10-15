@@ -34,6 +34,8 @@ interface BillingSummary {
   total_revenue_rupees: number;
   total_students: number;
   total_metered_rooms: number;
+  rooms_awaiting_reading?: number;
+  rooms_with_calculable_consumption?: number;
 }
 
 interface RoomBilling {
@@ -49,7 +51,29 @@ interface RoomBilling {
   total_revenue_paise: number;
   total_revenue_rupees: number;
   empty_room_consumption: number;
-  status: 'occupied' | 'empty' | 'mixed' | 'unmetered' | 'awaiting_reading';
+  consumption_calculable?: boolean;
+  status: 'occupied' | 'empty' | 'mixed' | 'unmetered' | 'awaiting_reading' | 'zero_consumption';
+  detailed_status?: ElectricityBillingStatus;
+  status_label?: string;
+  initial_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  latest_reading?: {
+    id: string;
+    value: number;
+    timestamp: string;
+    reason: string;
+  } | null;
+  current_occupants?: {
+    student_id: string;
+    student_name: string;
+    student_email?: string | null;
+  }[];
+  student_charges_paise?: number;
+  student_charges_rupees?: number;
 }
 
 interface StudentBilling {
@@ -64,6 +88,7 @@ interface StudentBilling {
   meter_id?: string | null;
   meter_number?: string | null;
   consumption_units: number;
+  consumption_calculable?: boolean;
   charge_amount_paise: number;
   charge_amount_rupees: number;
   status: ElectricityBillingStatus;
@@ -416,7 +441,13 @@ export default function BillingOverviewPage() {
               <p className="text-2xl font-bold text-amber-600">
                 {summary.total_consumption_all.toFixed(2)} <span className="text-xs font-medium text-slate-500">kWh</span>
               </p>
-              <p className="text-xs text-slate-400 mt-1">Occupied: {summary.total_consumption_occupied.toFixed(2)} kWh</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {summary.rooms_awaiting_reading && summary.rooms_awaiting_reading > 0 ? (
+                  <span className="text-amber-700 font-medium">{summary.rooms_awaiting_reading} room(s) awaiting readings</span>
+                ) : (
+                  `Occupied: ${summary.total_consumption_occupied.toFixed(2)} kWh`
+                )}
+              </p>
             </CardContent>
           </Card>
           
@@ -442,7 +473,13 @@ export default function BillingOverviewPage() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-slate-700">{summary.total_metered_rooms}</p>
-              <p className="text-xs text-slate-400 mt-1">Active room meters</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {summary.rooms_with_calculable_consumption !== undefined ? (
+                  `${summary.rooms_with_calculable_consumption} finalized • ${summary.rooms_awaiting_reading || 0} pending`
+                ) : (
+                  'Active room meters'
+                )}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -456,7 +493,7 @@ export default function BillingOverviewPage() {
               Allocated Students ({filteredStudents.length})
             </TabsTrigger>
             <TabsTrigger value="rooms" className="rounded-lg text-xs font-semibold px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-xs">
-              Room Sub-meters ({roomBilling.length})
+              Room Electricity Consumption ({roomBilling.length})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -529,17 +566,31 @@ export default function BillingOverviewPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-slate-700 font-medium">
-                          {student.consumption_units > 0 ? (
-                            <span>{student.consumption_units.toFixed(2)} kWh</span>
+                          {student.consumption_calculable ? (
+                            student.consumption_units > 0 ? (
+                              <span className="font-semibold text-slate-900">{student.consumption_units.toFixed(2)} kWh</span>
+                            ) : (
+                              <div>
+                                <span className="text-slate-600 font-medium text-xs">0.00 kWh</span>
+                                <span className="text-[10px] text-slate-400 block font-normal">(Zero Measured)</span>
+                              </div>
+                            )
                           ) : (
-                            <span className="text-slate-400 text-xs">0.00 kWh</span>
+                            <div>
+                              <span className="text-amber-700 font-semibold text-xs flex items-center gap-1">
+                                <Clock className="h-3 w-3" /> Pending Reading
+                              </span>
+                              <span className="text-slate-400 text-[10px] block">{student.status_label}</span>
+                            </div>
                           )}
                         </TableCell>
                         <TableCell className="font-bold text-slate-900">
                           {student.charge_amount_paise > 0 ? (
                             <span className="text-emerald-600">{formatCurrency(student.charge_amount_paise)}</span>
-                          ) : (
+                          ) : student.consumption_calculable ? (
                             <span className="text-slate-400 text-xs font-normal">₹0.00</span>
+                          ) : (
+                            <span className="text-slate-400 text-xs italic font-normal">Unbilled</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -579,7 +630,7 @@ export default function BillingOverviewPage() {
           </Card>
         </TabsContent>
 
-        {/* Tab 2: Room Sub-meters Summary Table */}
+        {/* Tab 2: Room Electricity Consumption Table */}
         <TabsContent value="rooms" className="m-0">
           <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
             <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
@@ -589,10 +640,10 @@ export default function BillingOverviewPage() {
                 </IconWrapper>
                 <div>
                   <CardTitle className="text-sm font-semibold text-slate-900">
-                    Room-wise Sub-meter Summaries
+                    Room Electricity Consumption Overview
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
-                    Cumulative reading summaries per physical room for {selectedMonth}
+                    Complete room-by-room electricity measurement, baseline tracking, and billing states for {selectedMonth}
                   </CardDescription>
                 </div>
               </div>
@@ -614,58 +665,132 @@ export default function BillingOverviewPage() {
                     <TableRow className="bg-slate-50/70 hover:bg-slate-50/70 border-b border-slate-200/80">
                       <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider pl-6">Room</TableHead>
                       <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Sub-Meter</TableHead>
+                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Occupancy</TableHead>
+                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Initial Reading</TableHead>
+                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Latest Reading</TableHead>
+                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Room Consumption</TableHead>
                       <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Segments</TableHead>
-                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Consumption</TableHead>
-                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Total Revenue</TableHead>
-                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Room Type</TableHead>
+                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Student Charges</TableHead>
+                      <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider">Status</TableHead>
                       <TableHead className="font-semibold text-xs text-slate-600 uppercase tracking-wider text-right pr-6">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {roomBilling.map(room => (
                       <TableRow key={room.room_id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
-                        <TableCell className="font-semibold text-slate-900 pl-6">
-                          Room {room.room_number}
-                          {room.floor !== undefined && (
-                            <span className="text-xs text-slate-400 font-normal ml-2">Floor {room.floor}</span>
+                        <TableCell className="font-semibold text-slate-900 pl-6 py-3.5">
+                          <div>
+                            Room {room.room_number}
+                            {room.floor !== undefined && (
+                              <span className="text-xs text-slate-400 font-normal ml-2">Floor {room.floor}</span>
+                            )}
+                          </div>
+                          {room.capacity !== undefined && (
+                            <div className="text-[10px] text-slate-400 font-normal">Cap: {room.capacity} beds</div>
                           )}
                         </TableCell>
                         <TableCell>
                           {room.meter_number ? (
                             <span className="font-mono text-xs font-semibold text-slate-700">{room.meter_number}</span>
                           ) : (
-                            <Badge variant="outline" className="text-slate-400 border-slate-200 font-normal">Unmetered</Badge>
+                            <Badge variant="outline" className="text-slate-400 border-slate-200 font-normal text-[11px]">Unmetered</Badge>
                           )}
-                        </TableCell>
-                        <TableCell className="text-slate-600">{room.segments_count}</TableCell>
-                        <TableCell className="text-slate-700 font-medium">{room.total_consumption.toFixed(2)} kWh</TableCell>
-                        <TableCell className="font-bold text-emerald-600">
-                          {formatCurrency(room.total_revenue_paise)}
                         </TableCell>
                         <TableCell>
-                          {room.status === 'unmetered' ? (
-                            <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-300 font-normal">Unmetered</Badge>
-                          ) : room.status === 'awaiting_reading' ? (
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 font-normal">Awaiting Reading</Badge>
-                          ) : room.empty_room_consumption > 0 && room.total_consumption > room.empty_room_consumption ? (
-                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200/80 font-normal">Mixed</Badge>
-                          ) : room.empty_room_consumption > 0 || (room.occupancy === 0) ? (
-                            <Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-200 font-normal">Empty</Badge>
-                          ) : (
-                            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200/80 font-normal shadow-none hover:bg-emerald-100">Occupied</Badge>
+                          <div className="font-medium text-xs text-slate-800">
+                            {room.occupancy ?? 0} {room.occupancy === 1 ? 'resident' : 'residents'}
+                          </div>
+                          {room.current_occupants && room.current_occupants.length > 0 && (
+                            <div className="text-[10px] text-slate-400 truncate max-w-[120px]" title={room.current_occupants.map(o => o.student_name).join(', ')}>
+                              {room.current_occupants.map(o => o.student_name).join(', ')}
+                            </div>
                           )}
                         </TableCell>
+                        <TableCell>
+                          {room.initial_reading ? (
+                            <div>
+                              <span className="font-mono text-xs font-medium text-slate-800">{room.initial_reading.value} kWh</span>
+                              <div className="text-[10px] text-slate-400">
+                                {new Date(room.initial_reading.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                              </div>
+                            </div>
+                          ) : room.meter_number ? (
+                            <Badge variant="outline" className="text-amber-700 bg-amber-50 border-amber-200 text-[10px] font-medium">
+                              Required
+                            </Badge>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {room.latest_reading ? (
+                            <div>
+                              <span className="font-mono text-xs font-medium text-slate-800">{room.latest_reading.value} kWh</span>
+                              <div className="text-[10px] text-slate-400">
+                                {new Date(room.latest_reading.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} ({room.latest_reading.reason === 'initial' ? 'Initial' : room.latest_reading.reason === 'occupancy_change' ? 'Allocation' : 'Month End'})
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {room.consumption_calculable ? (
+                            room.total_consumption > 0 ? (
+                              <span className="font-bold text-slate-900">{room.total_consumption.toFixed(2)} kWh</span>
+                            ) : (
+                              <div>
+                                <span className="text-slate-600 font-medium text-xs">0.00 kWh</span>
+                                <span className="text-[10px] text-slate-400 block font-normal">(Zero Measured)</span>
+                              </div>
+                            )
+                          ) : (
+                            <div>
+                              <span className="text-amber-700 font-semibold text-xs flex items-center gap-1">
+                                <Clock className="h-3 w-3" /> Pending Reading
+                              </span>
+                              <span className="text-slate-400 text-[10px] block">{room.status_label}</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-slate-600 text-xs font-medium">{room.segments_count}</TableCell>
+                        <TableCell className="font-bold text-slate-900">
+                          {room.student_charges_paise && room.student_charges_paise > 0 ? (
+                            <span className="text-emerald-600">{formatCurrency(room.student_charges_paise)}</span>
+                          ) : room.consumption_calculable ? (
+                            <span className="text-slate-400 text-xs font-normal">₹0.00</span>
+                          ) : (
+                            <span className="text-slate-400 text-xs italic font-normal">Unbilled</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {renderStatusBadge(room.detailed_status || 'unmetered', room.status_label || room.status)}
+                        </TableCell>
                         <TableCell className="text-right pr-6">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            asChild
-                            className="h-8 text-xs border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700"
-                          >
-                            <Link href={`/owner/electricity/billing/room-details?room_id=${room.room_id}&month=${selectedMonth}`}>
-                              View Details
-                            </Link>
-                          </Button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {room.meter_id && (!room.consumption_calculable || room.status === 'awaiting_reading') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                                className="h-8 text-xs border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-amber-800 font-medium shadow-2xs"
+                              >
+                                <Link href={`/owner/electricity/readings/record?meter_id=${room.meter_id}&reason=${room.detailed_status === 'awaiting_initial_reading' ? 'initial' : room.detailed_status === 'awaiting_allocation_reading' ? 'occupancy_change' : 'month_end'}`}>
+                                  Record Reading
+                                </Link>
+                              </Button>
+                            )}
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              asChild
+                              className="h-8 text-xs border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700"
+                            >
+                              <Link href={`/owner/electricity/billing/room-details?room_id=${room.room_id}&month=${selectedMonth}`}>
+                                View Breakdown
+                              </Link>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
