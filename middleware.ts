@@ -115,7 +115,7 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith('/auth/setup-password')
   )
 
-  if (!user && isProtectedRoute) {
+  if (!user && (isProtectedRoute || isOnboardingPage)) {
     const url = req.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)

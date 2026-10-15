@@ -32,7 +32,7 @@ const onboardingDestinationForStep: Record<Exclude<CompletionNext, 'complete'>, 
 };
 
 function AuthContent() {
-  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep } = useAuth();
+  const { isAuthenticated, profile, refreshAuthState, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -116,7 +116,12 @@ function AuthContent() {
     router.replace('/auth/login?tab=login');
   };
 
-  // Auth routing based on user profile state
+  // Auth routing based on user profile state:
+  // 1. ONLY completed users with an active, complete account are redirected to their dashboard.
+  // 2. Incomplete accounts (e.g. from an abandoned Google signup) or logged-out visitors must NEVER
+  //    be automatically forwarded to /auth/select-role or /auth/setup-password on the login/signup page.
+  //    Clicking Sign Up, refreshing the page, or reopening a tab must stay cleanly on the entry UI.
+  // 3. Stale incomplete client sessions are signed out so they cannot poison registration options.
   useEffect(() => {
     if (!isAuthenticated || !profile) return;
 
@@ -125,20 +130,23 @@ function AuthContent() {
       return;
     }
 
-    if (accountCompletionStep === 'role') {
-      router.push('/auth/select-role');
+    // Incomplete account visiting login page: purge incomplete session to ensure clean visitor state
+    if (accountCompletionStep !== 'complete' || password_set === false) {
+      console.log('[AuthPage] Clearing uncompleted session on login page to present clean entry point.');
+      void supabase.auth.signOut().then(() => {
+        void refreshAuthState();
+      });
       return;
     }
 
-    if (accountCompletionStep === 'password' || accountCompletionStep === 'student_onboarding') {
-      router.push('/auth/setup-password');
-      return;
+    // Completed user: redirect directly to their dashboard
+    if (accountCompletionStep === 'complete' && password_set === true && profile.role) {
+      const destination = dashboardPathForRole(profile.role);
+      if (destination) {
+        router.push(destination);
+      }
     }
-
-    if (accountCompletionStep === 'complete') {
-      router.push(dashboardPathForRole(profile.role) || '/auth/select-role');
-    }
-  }, [isAuthenticated, profile, accountCompletionStep, router]);
+  }, [isAuthenticated, profile, accountCompletionStep, password_set, router, refreshAuthState]);
 
   // URL searchParams handling
   useEffect(() => {

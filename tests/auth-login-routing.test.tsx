@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, cleanup } from '@testing-library/react';
+import { render, cleanup, screen, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentSearch = 'tab=login';
@@ -43,6 +43,7 @@ vi.mock('@/lib/supabase/client', () => ({
     auth: {
       signInWithPassword: vi.fn(),
       signInWithOAuth: vi.fn(),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
     },
     from: vi.fn(),
   },
@@ -93,7 +94,35 @@ describe('LoginPage Routing Logic', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/student/dashboard');
   });
 
-  it('routes genuine incomplete account missing role to /auth/select-role', () => {
+  it('does NOT redirect logged-out visitor to /auth/select-role on login or signup tab', () => {
+    mockAuthState = {
+      isAuthenticated: false,
+      profile: null,
+      accountCompletionStep: null,
+      password_set: null,
+      refreshAuthState: vi.fn(),
+    };
+
+    render(<LoginPage />);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('does NOT redirect to /auth/select-role when opening /auth/login?tab=signup', () => {
+    currentSearch = 'tab=signup';
+    mockAuthState = {
+      isAuthenticated: false,
+      profile: null,
+      accountCompletionStep: null,
+      password_set: null,
+      refreshAuthState: vi.fn(),
+    };
+
+    render(<LoginPage />);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('does NOT route incomplete account to /auth/select-role on login page mount, but purges incomplete session', () => {
+
     mockAuthState = {
       isAuthenticated: true,
       profile: { role: '', full_name: 'User Without Role' },
@@ -103,10 +132,10 @@ describe('LoginPage Routing Logic', () => {
     };
 
     render(<LoginPage />);
-    expect(mockRouterPush).toHaveBeenCalledWith('/auth/select-role');
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
-  it('routes genuine incomplete account missing password to /auth/setup-password without deadlocking', () => {
+  it('does NOT route incomplete account missing password to /auth/setup-password on login page mount', () => {
     mockAuthState = {
       isAuthenticated: true,
       profile: { role: 'student', full_name: 'Student User' },
@@ -116,20 +145,7 @@ describe('LoginPage Routing Logic', () => {
     };
 
     render(<LoginPage />);
-    expect(mockRouterPush).toHaveBeenCalledWith('/auth/setup-password');
-  });
-
-  it('routes student missing onboarding record to /auth/setup-password', () => {
-    mockAuthState = {
-      isAuthenticated: true,
-      profile: { role: 'student', full_name: 'Student User' },
-      accountCompletionStep: 'student_onboarding',
-      password_set: true,
-      refreshAuthState: vi.fn(),
-    };
-
-    render(<LoginPage />);
-    expect(mockRouterPush).toHaveBeenCalledWith('/auth/setup-password');
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('waits and does not redirect prematurely when account completion state is still resolving (null)', () => {
@@ -142,6 +158,45 @@ describe('LoginPage Routing Logic', () => {
     };
 
     render(<LoginPage />);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('clicking Sign Up tab on login card switches active tab and never redirects to /auth/select-role', () => {
+    mockAuthState = {
+      isAuthenticated: false,
+      profile: null,
+      accountCompletionStep: null,
+      password_set: null,
+      refreshAuthState: vi.fn(),
+    };
+
+    render(<LoginPage />);
+    const signupTab = screen.getByRole('tab', { name: /sign up/i });
+    fireEvent.click(signupTab);
+
+    expect(mockRouterReplace).toHaveBeenCalledWith('/auth/login?tab=signup');
+    expect(mockRouterPush).not.toHaveBeenCalledWith('/auth/select-role');
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('allows toggling between Sign In and Sign Up tabs without entering redirect loops', () => {
+    mockAuthState = {
+      isAuthenticated: false,
+      profile: null,
+      accountCompletionStep: null,
+      password_set: null,
+      refreshAuthState: vi.fn(),
+    };
+
+    render(<LoginPage />);
+    const signupTab = screen.getByRole('tab', { name: /sign up/i });
+    fireEvent.click(signupTab);
+    expect(mockRouterReplace).toHaveBeenCalledWith('/auth/login?tab=signup');
+
+    const signinTab = screen.getByRole('tab', { name: /sign in/i });
+    fireEvent.click(signinTab);
+    expect(mockRouterReplace).toHaveBeenCalledWith('/auth/login?tab=login');
+
     expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
