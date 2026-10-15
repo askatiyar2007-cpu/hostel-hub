@@ -510,20 +510,7 @@ export function ActiveResidentDashboard({
     queryFn: async () => {
       const { data: fees, error } = await supabase
         .from('student_fees')
-        .select(`
-          *,
-          payments (
-            id,
-            amount_paid,
-            amount,
-            payment_method,
-            reference_number,
-            payment_status,
-            status,
-            paid_date,
-            paid_at
-          )
-        `)
+        .select('*')
         .eq('student_id', studentId)
         .eq('allocation_id', allocation.id)
         .order('due_date', { ascending: false });
@@ -533,10 +520,29 @@ export function ActiveResidentDashboard({
         return { fees: [], total_due: 0, total_paid: 0, currentMonthFee: null, pendingFees: [] };
       }
 
-      const formattedFees = (fees ?? []).map((fee: any) => {
-        const payment = fee.payments && fee.payments.length > 0
-          ? fee.payments.find((p: any) => p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification') || fee.payments[0]
-          : null;
+      const feeList = fees ?? [];
+      const feeIds = feeList.map((f: any) => f.id).filter(Boolean);
+
+      let payments: any[] = [];
+      if (feeIds.length > 0) {
+        const { data: paymentsData, error: paymentsErr } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('student_id', studentId);
+
+        if (!paymentsErr && paymentsData) {
+          payments = paymentsData;
+        }
+      }
+
+      const formattedFees = feeList.map((fee: any) => {
+        const matchingPayments = payments.filter((p: any) =>
+          p.fee_id === fee.id || p.student_fees_id === fee.id
+        );
+        const payment = matchingPayments.find((p: any) => 
+          p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification' || p.status === 'pending_verification'
+        ) || matchingPayments[0] || null;
+
         const feeAmount = Number(fee.amount_due ?? fee.amount ?? 0);
         return {
           ...fee,
@@ -637,7 +643,7 @@ export function ActiveResidentDashboard({
         if (!res.ok) return { total_rupees: 0, consumption_units: 0, charges: [] };
         const data = await res.json();
         const charges = data.charges || [];
-        const consumption_units = charges.reduce((sum: number, c: any) => sum + (c.consumption_units || 0), 0);
+        const consumption_units = data.total_student_consumption_units ?? charges.reduce((sum: number, c: any) => sum + (c.student_consumption_units || c.consumption_units || 0), 0);
         const total_rupees = data.total_rupees || 0;
         return { total_rupees, consumption_units, charges };
       } catch (e) {

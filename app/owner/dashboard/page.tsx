@@ -11,14 +11,15 @@ import {
   ArrowRight,
   Bed,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase/client";
@@ -83,18 +84,28 @@ export default function OwnerDashboard() {
     enabled: !!hostels?.length,
     queryFn: async () => {
       const ids = hostels!.map((h) => h.id);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("room_requests")
         .select(`
-          *,
-          profiles!inner (
-            full_name,
-            email
-          )
+          id,
+          student_id,
+          hostel_id,
+          room_id,
+          student_name,
+          student_email,
+          student_phone,
+          status,
+          created_at
         `)
         .in("hostel_id", ids)
+        .eq("status", "pending")
         .order("created_at", { ascending: false })
         .limit(5);
+
+      if (error) {
+        console.error("[Dashboard] Error fetching room requests:", error);
+        return [];
+      }
       return data ?? [];
     },
   });
@@ -473,26 +484,41 @@ function EmptyState({ type }: { type: 'hostels' | 'requests' }) {
 function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", city: "", area: "", state: "", pincode: "", address: "", description: "", starting_price: "" });
+  const [form, setForm] = useState({ 
+    name: "", 
+    city: "", 
+    area: "", 
+    state: "", 
+    pincode: "", 
+    address: "", 
+    description: "", 
+    starting_price: "" 
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!form.name.trim()) throw new Error("Hostel name is required");
+      if (!form.address.trim()) throw new Error("Address is required");
+      if (!form.city.trim()) throw new Error("City is required");
+      if (!form.state.trim()) throw new Error("State is required");
+      if (!form.pincode.trim()) throw new Error("Pincode is required");
+
       const { error } = await supabase.from("hostels").insert({
         owner_id: user!.id,
-        name: form.name,
-        city: form.city,
-        area: form.area || null,
-        state: form.state,
-        pincode: form.pincode,
-        address: form.address,
-        description: form.description || null,
+        name: form.name.trim(),
+        city: form.city.trim(),
+        area: form.area.trim() || null,
+        state: form.state.trim(),
+        pincode: form.pincode.trim(),
+        address: form.address.trim(),
+        description: form.description.trim() || null,
         starting_price: form.starting_price ? Number(form.starting_price) : 0,
         status: "pending",
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Hostel created — pending admin approval.");
+      toast.success("Hostel created successfully — pending admin approval.");
       setOpen(false);
       setForm({ name: "", city: "", area: "", state: "", pincode: "", address: "", description: "", starting_price: "" });
       onCreated();
@@ -507,54 +533,190 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
           <Plus className="mr-2 h-4 w-4" /> Add Hostel
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add a new hostel</DialogTitle>
-          <DialogDescription>Enter the details for the new hostel you want to add.</DialogDescription>
-        </DialogHeader>
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
-          <div>
-            <Label>Name</Label>
-            <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </div>
-          <div>
-            <Label>Full Address</Label>
-            <Input required placeholder="House No, Street, Landmark" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>City</Label>
-              <Input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+      <DialogContent className="p-0 overflow-hidden sm:max-w-2xl max-h-[min(90vh,700px)] flex flex-col rounded-2xl border-slate-200 shadow-2xl">
+        {/* Fixed Header */}
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center shadow-2xs">
+              <Building2 size={20} />
             </div>
             <div>
-              <Label>Area</Label>
-              <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+              <DialogTitle className="font-bold text-lg text-slate-900 font-display">Add a New Hostel</DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">Configure property details, address, and starting monthly rent.</DialogDescription>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>State</Label>
-              <Input required value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+        </div>
+
+        {/* Scrollable Form Body */}
+        <form 
+          id="new-hostel-form"
+          className="flex-1 overflow-y-auto px-6 py-5 space-y-6"
+          onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
+        >
+          {/* Section 1: Basic Information */}
+          <div className="space-y-3.5">
+            <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">1. Basic Information</span>
             </div>
-            <div>
-              <Label>Pincode</Label>
-              <Input required value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="hostel-name" className="text-xs font-semibold text-slate-700">
+                  Hostel Name <span className="text-rose-500">*</span>
+                </Label>
+                <Input 
+                  id="hostel-name"
+                  required 
+                  placeholder="e.g. Green Valley Student Living"
+                  value={form.name} 
+                  onChange={(e) => setForm({ ...form, name: e.target.value })} 
+                  className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="starting-price" className="text-xs font-semibold text-slate-700">
+                  Starting Rent (₹/mo)
+                </Label>
+                <Input 
+                  id="starting-price"
+                  type="number" 
+                  min="0"
+                  placeholder="e.g. 6500"
+                  value={form.starting_price} 
+                  onChange={(e) => setForm({ ...form, starting_price: e.target.value })} 
+                  className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
             </div>
           </div>
-          <div>
-            <Label>Description</Label>
-            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+
+          {/* Section 2: Location & Address */}
+          <div className="space-y-3.5">
+            <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">2. Address & Location</span>
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label htmlFor="hostel-address" className="text-xs font-semibold text-slate-700">
+                Full Street Address <span className="text-rose-500">*</span>
+              </Label>
+              <Input 
+                id="hostel-address"
+                required 
+                placeholder="Plot / House No, Street, Landmark" 
+                value={form.address} 
+                onChange={(e) => setForm({ ...form, address: e.target.value })} 
+                className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="hostel-city" className="text-xs font-semibold text-slate-700">
+                  City <span className="text-rose-500">*</span>
+                </Label>
+                <Input 
+                  id="hostel-city"
+                  required 
+                  placeholder="e.g. Bangalore, Pune"
+                  value={form.city} 
+                  onChange={(e) => setForm({ ...form, city: e.target.value })} 
+                  className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="hostel-area" className="text-xs font-semibold text-slate-700">
+                  Area / Locality
+                </Label>
+                <Input 
+                  id="hostel-area"
+                  placeholder="e.g. Koramangala, Kothrud"
+                  value={form.area} 
+                  onChange={(e) => setForm({ ...form, area: e.target.value })} 
+                  className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="hostel-state" className="text-xs font-semibold text-slate-700">
+                  State <span className="text-rose-500">*</span>
+                </Label>
+                <Input 
+                  id="hostel-state"
+                  required 
+                  placeholder="e.g. Karnataka, Maharashtra"
+                  value={form.state} 
+                  onChange={(e) => setForm({ ...form, state: e.target.value })} 
+                  className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="hostel-pincode" className="text-xs font-semibold text-slate-700">
+                  PIN Code <span className="text-rose-500">*</span>
+                </Label>
+                <Input 
+                  id="hostel-pincode"
+                  required 
+                  placeholder="6-digit PIN code"
+                  value={form.pincode} 
+                  onChange={(e) => setForm({ ...form, pincode: e.target.value })} 
+                  className="h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <Label>Starting price (₹/month)</Label>
-            <Input type="number" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
+
+          {/* Section 3: Description & Overview */}
+          <div className="space-y-3.5">
+            <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">3. Description & Amenities</span>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="hostel-description" className="text-xs font-semibold text-slate-700">
+                Property Description
+              </Label>
+              <Textarea 
+                id="hostel-description"
+                placeholder="Mention key highlights, security features, meal timings, proximity to colleges, etc."
+                rows={3}
+                value={form.description} 
+                onChange={(e) => setForm({ ...form, description: e.target.value })} 
+                className="rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm resize-none"
+              />
+            </div>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={mutation.isPending} className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-semibold rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
-              Create hostel
-            </Button>
-          </DialogFooter>
         </form>
+
+        {/* Fixed Persistent Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/80 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 h-10 px-4 text-xs font-semibold cursor-pointer"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="new-hostel-form"
+            disabled={mutation.isPending}
+            className="bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-semibold text-xs px-5 h-10 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2"
+          >
+            {mutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Creating Hostel...</span>
+              </>
+            ) : (
+              <>
+                <Building2 className="h-4 w-4" />
+                <span>Create Hostel</span>
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

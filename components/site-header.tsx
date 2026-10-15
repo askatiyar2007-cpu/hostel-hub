@@ -42,7 +42,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          <Link href="/marketplace" className="rounded-full px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-muted transition-colors">
+          <Link href="/find-hostel" className="rounded-full px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-muted transition-colors">
             Browse hostels
           </Link>
           <Link href="/#how-it-works" className="rounded-full px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-muted transition-colors">

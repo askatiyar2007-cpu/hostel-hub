@@ -22,9 +22,11 @@ const TEST_PROFILE_ID = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const OWNER_EMAIL = 'owner@example.com';
 const STUDENT_EMAIL = 'student@example.com';
 
-const EXPECTED_GENERIC_RESPONSE = {
+const NON_EXISTENT_MESSAGE = 'No HostelHub account exists with this email address. Please check the email or create an account.';
+const INELIGIBLE_ACCOUNT_MESSAGE = 'This account cannot use password recovery at this time. Please contact support for assistance.';
+const EXPECTED_SUCCESS_RESPONSE = {
   success: true,
-  message: 'If an account is associated with this email, we have sent a verification code.',
+  message: 'Verification code sent to your email.',
 };
 
 function buildRequest(body: Record<string, unknown>): NextRequest {
@@ -35,7 +37,7 @@ function buildRequest(body: Record<string, unknown>): NextRequest {
   });
 }
 
-describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
+describe('POST /api/auth/forgot-password — Account-Eligibility Gate & Nonexistent UX', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSendPasswordResetOtpEmail.mockResolvedValue({ success: true });
@@ -68,7 +70,7 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     const res = await POST(buildRequest({ email: OWNER_EMAIL }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body).toEqual(EXPECTED_SUCCESS_RESPONSE);
 
     expect(mockRpc).toHaveBeenCalledWith('get_account_state', { p_email: OWNER_EMAIL });
     expect(mockRpc).toHaveBeenCalledWith('request_otp', {
@@ -109,7 +111,7 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     const res = await POST(buildRequest({ email: STUDENT_EMAIL }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body).toEqual(EXPECTED_SUCCESS_RESPONSE);
 
     expect(mockRpc).toHaveBeenCalledWith('request_otp', {
       p_email: STUDENT_EMAIL,
@@ -149,7 +151,7 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     const res = await POST(buildRequest({ email: OWNER_EMAIL }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body).toEqual(EXPECTED_SUCCESS_RESPONSE);
 
     expect(mockRpc).toHaveBeenCalledWith('request_otp', {
       p_email: OWNER_EMAIL,
@@ -162,7 +164,7 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     });
   });
 
-  it('4. Auth identity without a profile (missing_step = profile): no OTP RPC or email dispatch', async () => {
+  it('4. Auth identity without a profile (missing_step = profile): returns 400 support error, no OTP/email', async () => {
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_account_state') {
         return Promise.resolve({
@@ -181,16 +183,16 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     });
 
     const res = await POST(buildRequest({ email: 'noprofile@example.com' }));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body.error).toBe(INELIGIBLE_ACCOUNT_MESSAGE);
 
     expect(mockRpc).toHaveBeenCalledWith('get_account_state', { p_email: 'noprofile@example.com' });
     expect(mockRpc).not.toHaveBeenCalledWith('request_otp', expect.anything());
     expect(mockSendPasswordResetOtpEmail).not.toHaveBeenCalled();
   });
 
-  it('5. Profile without a valid confirmed role: no OTP RPC or email dispatch', async () => {
+  it('5. Profile without a valid confirmed role: returns 400 support error, no OTP/email', async () => {
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_account_state') {
         return Promise.resolve({
@@ -209,18 +211,17 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     });
 
     const res = await POST(buildRequest({ email: 'norole@example.com' }));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body.error).toBe(INELIGIBLE_ACCOUNT_MESSAGE);
 
     expect(mockRpc).not.toHaveBeenCalledWith('request_otp', expect.anything());
     expect(mockSendPasswordResetOtpEmail).not.toHaveBeenCalled();
   });
 
-  it('6. Missing or conflicting role state (missing_step = role): no OTP RPC or email dispatch', async () => {
+  it('6. Missing or conflicting role state (missing_step = role): returns 400 support error', async () => {
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_account_state') {
-        // In get_account_state, role holds profile.role even when user_roles conflicts
         return Promise.resolve({
           data: {
             user_id: TEST_OWNER_ID,
@@ -237,15 +238,15 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     });
 
     const res = await POST(buildRequest({ email: 'conflictingrole@example.com' }));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body.error).toBe(INELIGIBLE_ACCOUNT_MESSAGE);
 
     expect(mockRpc).not.toHaveBeenCalledWith('request_otp', expect.anything());
     expect(mockSendPasswordResetOtpEmail).not.toHaveBeenCalled();
   });
 
-  it('7. Nonexistent email (missing_step = identity): no OTP RPC or email dispatch', async () => {
+  it('7. Nonexistent email (missing_step = identity): returns explicit 404 nonexistent account error', async () => {
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_account_state') {
         return Promise.resolve({
@@ -263,16 +264,17 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
       return Promise.resolve({ data: null, error: null });
     });
 
-    const res = await POST(buildRequest({ email: 'nonexistent@example.com' }));
-    expect(res.status).toBe(200);
+    const res = await POST(buildRequest({ email: 'unregistered@example.com' }));
+    expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body.error).toBe(NON_EXISTENT_MESSAGE);
 
+    expect(mockRpc).toHaveBeenCalledWith('get_account_state', { p_email: 'unregistered@example.com' });
     expect(mockRpc).not.toHaveBeenCalledWith('request_otp', expect.anything());
     expect(mockSendPasswordResetOtpEmail).not.toHaveBeenCalled();
   });
 
-  it('8. Account-state RPC error or malformed result: fail closed; no OTP or email dispatch', async () => {
+  it('8. Account-state RPC error: returns 500 server error; no OTP or email dispatch', async () => {
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_account_state') {
         return Promise.resolve({
@@ -284,15 +286,15 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     });
 
     const res = await POST(buildRequest({ email: 'error@example.com' }));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body.error).toBe('Failed to verify account state. Please try again.');
 
     expect(mockRpc).not.toHaveBeenCalledWith('request_otp', expect.anything());
     expect(mockSendPasswordResetOtpEmail).not.toHaveBeenCalled();
   });
 
-  it('9. Eligible request exceeding rate limit: preserves rate limit and does not dispatch email', async () => {
+  it('9. Eligible request exceeding rate limit: returns 429 rate limit error', async () => {
     mockRpc.mockImplementation((rpcName: string) => {
       if (rpcName === 'get_account_state') {
         return Promise.resolve({
@@ -308,7 +310,6 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
         });
       }
       if (rpcName === 'request_otp') {
-        // request_otp returns rate_limited=true without an otp field
         return Promise.resolve({
           data: { success: true, rate_limited: true },
           error: null,
@@ -318,53 +319,46 @@ describe('POST /api/auth/forgot-password — Account-Eligibility Gate', () => {
     });
 
     const res = await POST(buildRequest({ email: OWNER_EMAIL }));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(429);
     const body = await res.json();
-    expect(body).toEqual(EXPECTED_GENERIC_RESPONSE);
+    expect(body.error).toBe('Too many reset requests. Please wait a few minutes before trying again.');
 
     expect(mockRpc).toHaveBeenCalledWith('request_otp', expect.anything());
-    // No OTP field returned by request_otp, so email must not be dispatched
     expect(mockSendPasswordResetOtpEmail).not.toHaveBeenCalled();
   });
 
-  it('10. Generic public response remains identical for eligible and ineligible requests', async () => {
-    // 10a. Eligible account response
-    mockRpc.mockResolvedValueOnce({
-      data: {
-        user_id: TEST_OWNER_ID,
-        profile_id: TEST_PROFILE_ID,
-        role: 'hostel_owner',
-        password_set: true,
-        missing_step: 'complete',
-        is_complete: true,
-      },
-      error: null,
-    }).mockResolvedValueOnce({
-      data: { success: true, otp: '111222' },
-      error: null,
+  it('10. Email delivery failure: returns 500 error instead of false success claim', async () => {
+    mockRpc.mockImplementation((rpcName: string) => {
+      if (rpcName === 'get_account_state') {
+        return Promise.resolve({
+          data: {
+            user_id: TEST_OWNER_ID,
+            profile_id: TEST_PROFILE_ID,
+            role: 'hostel_owner',
+            password_set: true,
+            missing_step: 'complete',
+            is_complete: true,
+          },
+          error: null,
+        });
+      }
+      if (rpcName === 'request_otp') {
+        return Promise.resolve({
+          data: { success: true, otp: '111222' },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
 
-    const resEligible = await POST(buildRequest({ email: 'eligible@example.com' }));
-    const jsonEligible = await resEligible.json();
-
-    // 10b. Ineligible account response
-    mockRpc.mockResolvedValueOnce({
-      data: {
-        user_id: null,
-        profile_id: null,
-        role: null,
-        password_set: false,
-        missing_step: 'identity',
-        is_complete: false,
-      },
-      error: null,
+    mockSendPasswordResetOtpEmail.mockResolvedValueOnce({
+      success: false,
+      error: 'Brevo API rate limit exceeded',
     });
 
-    const resIneligible = await POST(buildRequest({ email: 'ineligible@example.com' }));
-    const jsonIneligible = await resIneligible.json();
-
-    // Strict equality of public response to guarantee zero email enumeration
-    expect(jsonEligible).toEqual(jsonIneligible);
-    expect(jsonEligible).toEqual(EXPECTED_GENERIC_RESPONSE);
+    const res = await POST(buildRequest({ email: OWNER_EMAIL }));
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBe('Failed to deliver verification email. Please try again later.');
   });
 });

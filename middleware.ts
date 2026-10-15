@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { dashboardPathForRole } from '@/lib/auth/dashboard'
 
 type AccountState = {
   user_id: string | null;
@@ -121,22 +122,13 @@ export async function middleware(req: NextRequest) {
   }
 
   // CRITICAL BUSINESS RULE ENFORCEMENT:
-  // password_set=false means NOT a HostelHub user, regardless of whether
-  // a profile or role data exists. The middleware must check password_set
-  // status and block access to protected routes and onboarding pages for
-  // incomplete signups. This prevents abandoned Google OAuth signups from
-  // accessing the dashboard or being restored to the password setup page.
-  //
-  // For users with password_set=false attempting to access:
-  // - Protected routes (/owner/*, /student/*, etc.) → redirect to /auth/login
-  // - Onboarding pages (/auth/setup-password, /auth/select-role) → redirect to /auth/login
-  //
-  // Rationale: Onboarding pages are for active signup flows, not abandoned
-  // signups. A fresh visit with password_set=false should start at login.
+  // 1. password_set=false or incomplete account means NOT a completed HostelHub user.
+  //    Incomplete accounts must NEVER be granted access to protected dashboards (/owner, /student, /parent, /admin).
+  // 2. However, onboarding pages (/auth/select-role, /auth/setup-password) exist specifically for incomplete accounts
+  //    to finish registration. They must NOT be blocked from onboarding pages.
+  // 3. Completed accounts visiting onboarding pages are redirected to their dashboard.
   if (user && (isProtectedRoute || isOnboardingPage)) {
     try {
-      // Use service role client to call get_account_state
-      // This client has elevated permissions and can call the RPC function
       const supabaseServer = createSupabaseClient(
         supabaseUrl,
         supabaseServiceKey || supabaseKey
@@ -149,21 +141,25 @@ export async function middleware(req: NextRequest) {
       if (!error && data) {
         const accountState = readAccountState(data);
         
-        if (accountState && accountState.password_set === false) {
-          // User has a session but password_set=false → incomplete signup
-          // Redirect to login page (treat as non-user)
-          console.log('[Middleware] Blocking access for incomplete account (password_set=false):', user.email);
+        // Block dashboard access for incomplete accounts
+        if (isProtectedRoute && (!accountState || accountState.password_set === false || !accountState.is_complete)) {
+          console.log('[Middleware] Blocking dashboard access for incomplete account:', user.email);
           const url = req.nextUrl.clone();
           url.pathname = '/auth/login';
           return NextResponse.redirect(url);
         }
+
+        // If completed account visits onboarding pages, redirect to their role dashboard
+        if (isOnboardingPage && accountState?.is_complete && accountState?.password_set) {
+          const destination = (accountState.role && dashboardPathForRole(accountState.role)) || '/auth/login';
+          const url = req.nextUrl.clone();
+          url.pathname = destination;
+          return NextResponse.redirect(url);
+        }
       } else if (error) {
-        // If account-state lookup fails, fall back to permissive behavior
-        // to prevent lockout. This is a fail-open approach for system errors.
-        console.error('[Middleware] Account state lookup failed, allowing access:', error);
+        console.error('[Middleware] Account state lookup failed:', error);
       }
     } catch (err) {
-      // Same fail-open approach for unexpected errors
       console.error('[Middleware] Unexpected error checking account state:', err);
     }
   }

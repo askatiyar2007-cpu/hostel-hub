@@ -6,26 +6,21 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   User, Lock, Bell, ShieldCheck, FileText, LogOut,
-  Building2, Calendar, CheckCircle2, ShieldAlert, ArrowRight, Home
+  Building2, Calendar, ShieldAlert, ArrowRight, Home
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
+import { AccountPasswordDialog } from '@/components/auth/AccountPasswordDialog';
 
 export default function StudentSettingsPage() {
   const { user, profile, signOut } = useAuth();
-  const router = useRouter();
 
   // Change Password Modal State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [verifyingPassword, setVerifyingPassword] = useState(false);
 
   // Preference states
   const [emailNotif, setEmailNotif] = useState(true);
@@ -92,47 +87,6 @@ export default function StudentSettingsPage() {
       toast.error(err.message || 'Failed to save preferences');
     } finally {
       setSavingPrefs(false);
-    }
-  };
-
-  // Change Password
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters long.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match.');
-      return;
-    }
-
-    setVerifyingPassword(true);
-    try {
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
-        email: user!.email!,
-        password: oldPassword
-      });
-
-      if (signInErr) {
-        throw new Error('Verification of old password failed. Please check your credentials.');
-      }
-
-      const { error: updateErr } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (updateErr) throw updateErr;
-
-      toast.success('Password updated successfully!');
-      setIsPasswordModalOpen(false);
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err: any) {
-      toast.error(err.message || 'Password update failed.');
-    } finally {
-      setVerifyingPassword(false);
     }
   };
 
@@ -391,103 +345,13 @@ export default function StudentSettingsPage() {
         </div>
       </div>
 
-      {/* Change Password Modal */}
-      {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
-          <div className="relative w-full max-w-[500px] my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-200 p-5 pb-4 shrink-0 bg-slate-50/80">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
-                  <Lock className="text-teal-600 h-4 w-4" />
-                </div>
-                <h4 className="font-bold text-base text-slate-900 font-display">Change Password</h4>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsPasswordModalOpen(false)} 
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="overflow-y-auto p-5 pt-4 flex-1">
-              <form onSubmit={handleChangePassword} className="space-y-4 text-sm">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="old-pass" className="text-xs font-medium">Current Password</Label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPasswordModalOpen(false);
-                        router.push('/auth/forgot-password');
-                      }}
-                      className="text-xs text-teal-600 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <Input
-                    id="old-pass"
-                    type="password"
-                    required
-                    placeholder="Enter current password"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="new-pass" className="text-xs font-medium">New Password</Label>
-                  <Input
-                    id="new-pass"
-                    type="password"
-                    required
-                    placeholder="Min. 8 characters"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirm-pass" className="text-xs font-medium">Confirm New Password</Label>
-                  <Input
-                    id="confirm-pass"
-                    type="password"
-                    required
-                    placeholder="Repeat new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-
-                <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 space-y-1.5 text-xs text-slate-600">
-                  <span className="font-bold text-slate-900 block uppercase text-[9px] tracking-wider font-display">Password Requirements</span>
-                  <p className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-teal-600 shrink-0" /> Minimum 8 characters
-                  </p>
-                  <p className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-teal-600 shrink-0" /> Numbers, symbols, and uppercase letters recommended
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button variant="ghost" type="button" onClick={() => setIsPasswordModalOpen(false)} className="rounded-lg h-9 px-4">
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={verifyingPassword} className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg h-9 px-5 font-semibold">
-                    {verifyingPassword ? 'Updating...' : 'Update Password'}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Change Password Dialog */}
+      <AccountPasswordDialog
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        userEmail={user?.email}
+        role="student"
+      />
     </div>
   );
 }

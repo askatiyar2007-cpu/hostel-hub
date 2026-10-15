@@ -13,6 +13,10 @@ interface StudentChargeDetail {
   room_number: string;
   start_date: string;
   end_date: string;
+  previous_reading: number | null;
+  current_reading: number | null;
+  room_consumption_units: number;
+  student_consumption_units: number;
   consumption_units: number;
   rate_per_unit: number;
   occupant_count: number;
@@ -25,8 +29,13 @@ interface StudentChargesResponse {
   student_name: string;
   billing_month: string;
   charges: StudentChargeDetail[];
+  total_room_consumption_units: number;
+  total_student_consumption_units: number;
   total_paise: number;
   total_rupees: number;
+  fee_id?: string | null;
+  fee_status?: string | null;
+  fee_due_date?: string | null;
 }
 
 /**
@@ -201,6 +210,8 @@ export async function GET(req: NextRequest) {
           rate_per_unit,
           occupant_count,
           room_id,
+          start_reading_id,
+          end_reading_id,
           rooms!inner(room_number)
         )
       `)
@@ -216,7 +227,38 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 8. Transform database response to API response format
+    // 8. Fetch meter readings for previous and current reading values
+    const readingIds = new Set<string>();
+    for (const item of (chargesData || [])) {
+      const seg = (item as any)?.billing_segments;
+      const segment = Array.isArray(seg) ? seg[0] : seg;
+      if (segment?.start_reading_id) readingIds.add(segment.start_reading_id);
+      if (segment?.end_reading_id) readingIds.add(segment.end_reading_id);
+    }
+
+    const readingsMap = new Map<string, number>();
+    if (readingIds.size > 0) {
+      const { data: readings } = await supabaseServer
+        .from('meter_readings')
+        .select('id, reading_value')
+        .in('id', Array.from(readingIds));
+
+      if (readings) {
+        for (const r of readings) {
+          readingsMap.set(r.id, Number(r.reading_value));
+        }
+      }
+    }
+
+    // 9. Fetch monthly fee record if billed
+    const { data: feeRecord } = await supabaseServer
+      .from('student_fees')
+      .select('id, status, amount, due_date')
+      .eq('student_id', validated.student_id)
+      .eq('billing_period', validated.billing_month)
+      .maybeSingle();
+
+    // 10. Transform database response to API response format
     const charges: StudentChargeDetail[] = [];
     
     for (const chargeRaw of (chargesData || [])) {
@@ -230,6 +272,8 @@ export async function GET(req: NextRequest) {
           rate_per_unit: string | number;
           occupant_count: number;
           room_id: string;
+          start_reading_id?: string | null;
+          end_reading_id?: string | null;
           rooms: {
             room_number: string;
           } | {
@@ -242,6 +286,8 @@ export async function GET(req: NextRequest) {
           rate_per_unit: string | number;
           occupant_count: number;
           room_id: string;
+          start_reading_id?: string | null;
+          end_reading_id?: string | null;
           rooms: {
             room_number: string;
           } | {
@@ -257,13 +303,23 @@ export async function GET(req: NextRequest) {
       const rawRoom = segment.rooms;
       const room = Array.isArray(rawRoom) ? rawRoom[0] : rawRoom;
       if (!room) continue;
+
+      const previousReading = segment.start_reading_id ? (readingsMap.get(segment.start_reading_id) ?? null) : null;
+      const currentReading = segment.end_reading_id ? (readingsMap.get(segment.end_reading_id) ?? null) : null;
+      const roomConsumption = parseFloat(segment.consumption_units as string) || 0;
+      const occupantCount = segment.occupant_count || 1;
+      const studentConsumption = occupantCount > 0 ? Number((roomConsumption / occupantCount).toFixed(2)) : roomConsumption;
       
       charges.push({
         segment_id: charge.segment_id,
         room_number: room.room_number,
         start_date: segment.start_date,
         end_date: segment.end_date || '',
-        consumption_units: parseFloat(segment.consumption_units as string),
+        previous_reading: previousReading,
+        current_reading: currentReading,
+        room_consumption_units: roomConsumption,
+        student_consumption_units: studentConsumption,
+        consumption_units: roomConsumption,
         rate_per_unit: parseFloat(segment.rate_per_unit as string),
         occupant_count: segment.occupant_count,
         charge_amount_paise: charge.charge_amount_paise,
@@ -271,7 +327,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 9. Calculate monthly totals (REQ-17.1, REQ-17.3)
+    // 11. Calculate monthly totals (REQ-17.1, REQ-17.3)
+    const totalRoomConsumption = Number(charges.reduce((sum, c) => sum + (c.room_consumption_units || 0), 0).toFixed(2));
+    const totalStudentConsumption = Number(charges.reduce((sum, c) => sum + (c.student_consumption_units || 0), 0).toFixed(2));
     const totalPaise = charges.reduce((sum, charge) => sum + charge.charge_amount_paise, 0);
     const totalRupees = totalPaise / 100;
 
@@ -280,8 +338,13 @@ export async function GET(req: NextRequest) {
       student_name: studentName,
       billing_month: validated.billing_month || currentMonth,
       charges,
+      total_room_consumption_units: totalRoomConsumption,
+      total_student_consumption_units: totalStudentConsumption,
       total_paise: totalPaise,
-      total_rupees: totalRupees
+      total_rupees: totalRupees,
+      fee_id: feeRecord?.id || null,
+      fee_status: feeRecord?.status || null,
+      fee_due_date: feeRecord?.due_date || null
     };
 
     console.log('[Student Charges API] Success:', {

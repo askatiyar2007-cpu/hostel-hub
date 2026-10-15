@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -71,7 +71,7 @@ export default function SetupPasswordPage() {
         throw new Error(message);
       }
 
-      let destination = '/';
+      let destination = '/owner/dashboard';
       if (passwordPayload.next === 'student_onboarding') {
         const studentResponse = await fetch('/api/auth/onboarding/student', { method: 'POST' });
         const studentPayload: OnboardingResponse | null = await studentResponse.json().catch(() => null);
@@ -110,7 +110,7 @@ export default function SetupPasswordPage() {
           <p className="text-sm text-muted-foreground">
             Please log in first to complete your account setup.
           </p>
-          <Button onClick={() => router.push('/login')} className="w-full h-11 rounded-full mt-4">
+          <Button onClick={() => router.push('/auth/login')} className="w-full h-11 rounded-full mt-4">
             Go to Login
           </Button>
         </div>

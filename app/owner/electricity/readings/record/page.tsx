@@ -405,11 +405,103 @@ function ReadingEntryContent() {
                     <SelectItem value="month_end">Month End</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-slate-400">
-                  {reason === 'initial' && 'First reading for occupied room (establishes opening billing segment)'}
-                  {reason === 'occupancy_change' && 'Student joining/leaving (closes and creates segments)'}
-                  {reason === 'month_end' && 'End of month reading (closes and creates segments)'}
-                </p>
+              </div>
+
+              {/* Comprehensive Reading Type Guide (Phase 7) */}
+              <div className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/70 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-teal-600" />
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    Reading Type Guide &amp; Billing Rules
+                  </span>
+                </div>
+
+                {reason === 'initial' && (
+                  <div className="space-y-2 text-xs">
+                    <div className="font-semibold text-teal-800 flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 rounded-full bg-teal-500"></span>
+                      Initial Reading
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-slate-600">
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">🎯 Purpose</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Establishes the opening baseline benchmark when an electricity sub-meter is newly installed or first activated for a room.
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">📋 Rules</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Must be the first reading on the meter. Reading value must be ≥ 0 kWh. Does not require a previous benchmark.
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">⚡ Billing Effect</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Opens the initial active billing segment for the room at 0 consumption. No charges are billed immediately.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {reason === 'occupancy_change' && (
+                  <div className="space-y-2 text-xs">
+                    <div className="font-semibold text-amber-800 flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
+                      New Allocation (Occupancy Change)
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-slate-600">
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">🎯 Purpose</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Recorded whenever room occupancy changes — a new student joins or an existing occupant check-outs.
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">📋 Rules</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Recorded on student check-in/out date. Value must be ≥ previous reading. Requires prior benchmark reading.
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">⚡ Billing Effect</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Closes previous segment and divides consumption fairly among prior occupants, then opens a fresh segment for incoming occupants.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {reason === 'month_end' && (
+                  <div className="space-y-2 text-xs">
+                    <div className="font-semibold text-sky-800 flex items-center gap-1.5">
+                      <span className="inline-block w-2 h-2 rounded-full bg-sky-500"></span>
+                      Month End Reading
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-slate-600">
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">🎯 Purpose</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Regular monthly reading taken on the 30th/31st or 1st to close the calendar month billing cycle.
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">📋 Rules</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Value must be ≥ previous reading. Applied across all hostel rooms to calculate final monthly consumption.
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
+                        <p className="font-semibold text-slate-800 text-[11px] mb-1">⚡ Billing Effect</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Closes active monthly segment, locks kWh consumption &amp; tariff rates, generates student electricity fee invoices, and opens the next month.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Notes */}

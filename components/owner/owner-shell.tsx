@@ -23,7 +23,6 @@ import {
   Coins,
   ChevronDown,
   ChevronUp,
-  BarChart3,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -77,8 +76,8 @@ const ownerNavItems: NavItem[] = [
   },
   { name: 'Announcements', href: '/owner/announcements', icon: Bell, group: 'OPERATIONS' },
   { name: 'Payments', href: '/owner/payments', icon: CreditCard, group: 'OPERATIONS' },
+  { name: 'Billing', href: '/owner/billing', icon: Receipt, group: 'OPERATIONS' },
   { name: 'Complaints', href: '/owner/complaints', icon: MessageSquare, group: 'OPERATIONS' },
-  { name: 'Reports', href: '/owner/reports', icon: BarChart3, group: 'OPERATIONS' },
   
   // SYSTEM
   { name: 'Settings', href: '/owner/settings', icon: Settings, group: 'SYSTEM' },

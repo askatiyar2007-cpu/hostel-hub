@@ -29,6 +29,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const databaseRole = role === 'owner' ? 'hostel_owner' : role;
+
+  // If user has not completed onboarding (password_set !== true), clear any prior
+  // incomplete user_roles or students rows so complete_onboarding_role succeeds cleanly
+  const { data: profile } = await supabaseServer
+    .from('profiles')
+    .select('id, password_set')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (profile && !profile.password_set) {
+    await supabaseServer.from('students').delete().eq('profile_id', profile.id);
+    await supabaseServer.from('user_roles').delete().eq('user_id', user.id);
+  }
+
   const { data, error } = await supabaseServer.rpc('complete_onboarding_role', {
     p_user_id: user.id,
     p_role: databaseRole,

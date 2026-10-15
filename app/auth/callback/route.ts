@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   OAUTH_CALLBACK_TRANSACTION_COOKIE,
@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 type AccountState = {
   user_id: string | null;
+  profile_id?: string | null;
   role: string | null;
   missing_step: string;
   is_complete: boolean;
@@ -39,6 +40,7 @@ function readAccountState(value: unknown): AccountState | null {
 
   return {
     user_id: record.user_id,
+    profile_id: typeof record.profile_id === 'string' ? record.profile_id : null,
     role: record.role,
     missing_step: record.missing_step,
     is_complete: record.is_complete,
@@ -115,8 +117,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return genericLoginError(request);
     }
 
-    // COMPLETED ACCOUNT trying to signup → return to signup context with existing account indicator
-    if (intent === 'signup' && accountState.is_complete) {
+    // 1. COMPLETED ACCOUNT trying to signup → return to signup context with existing account indicator
+    if (intent === 'signup' && accountState.is_complete && accountState.password_set) {
       const { error: signOutError } = await sessionClient.auth.signOut();
       if (signOutError) {
         console.error('OAuth callback could not clear rejected signup session.', signOutError);
@@ -125,7 +127,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?tab=signup&existing_account=google');
     }
 
-    // LOGIN intent but no profile exists → show "no account" message
+    // 2. COMPLETED ACCOUNT logging in → direct to role dashboard
+    if (accountState.is_complete && accountState.password_set) {
+      const destination = accountState.role ? dashboardPathForRole(accountState.role) : undefined;
+      return destination ? redirect(request, destination) : genericLoginError(request);
+    }
+
+    // 3. LOGIN intent but no profile exists → show "no account" message
     if (intent === 'login' && accountState.missing_step === 'profile') {
       const { error: signOutError } = await sessionClient.auth.signOut();
       if (signOutError) {
@@ -135,128 +143,47 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirect(request, '/auth/login?reason=no-account');
     }
 
-    // CRITICAL BUSINESS RULE: password_set=false means INCOMPLETE SIGNUP.
-    // An abandoned Google signup retried via "Create Account" must NOT:
-    // - Show "Account already exists"
-    // - Resume at the old missing_step (e.g., /auth/setup-password)
-    // - Use the previously saved role
-    // - Grant dashboard access
-    //
-    // Instead, the ENTIRE abandoned onboarding progress must be cleared and
-    // the user must start fresh at role selection. This ensures:
-    // 1. Role data from a previous abandoned signup doesn't lock the user
-    // 2. The user can select a different role on retry
-    // 3. password_set=false accounts are NEVER treated as "existing users"
-    // 4. A saved user_roles row does NOT grant active role access
-    //
-    // The condition is: intent=signup + password_set=false (regardless of missing_step).
-    // We check password_set BEFORE checking missing_step because password_set is
-    // the authoritative boundary between incomplete and complete accounts.
-    //
-    // The reset_incomplete_google_signup() SQL function clears user_roles and
-    // students table rows for Google accounts with password_set=false, while
-    // preserving the profile and auth identity. This is safe because:
-    // - Only incomplete signups (password_set=false) are reset
-    // - Completed accounts (password_set=true) are protected by the function
-    // - The profile remains intact so email/name don't need to be re-entered
-    if (
-      intent === 'signup'
-      && !accountState.is_complete
-      && accountState.password_set === false
-      && accountState.user_id
-    ) {
-      console.log('[OAuth Callback] Detected incomplete signup retry (password_set=false), resetting role data for user:', accountState.user_id);
-      console.log('[OAuth Callback] Account state before reset:', JSON.stringify(accountState));
-      
-      // DIAGNOSTIC LOGGING: Fetch complete auth.users record to diagnose reset rejection
-      const { data: adminUserData, error: adminUserError } = await supabaseServer.auth.admin.getUserById(accountState.user_id);
-      if (adminUserError) {
-        console.error('[OAuth Callback] Could not fetch admin user data for diagnostics:', adminUserError);
-      } else if (adminUserData?.user) {
-        const rawMetadata = adminUserData.user.app_metadata;
-        console.log('[OAuth Callback] Provider metadata diagnostics:');
-        console.log('  - Full raw_app_meta_data:', JSON.stringify(rawMetadata, null, 2));
-        console.log('  - provider field:', rawMetadata?.provider);
-        console.log('  - providers array:', rawMetadata?.providers);
-        console.log('  - user.app_metadata.provider type:', typeof rawMetadata?.provider);
-        console.log('  - user.app_metadata.providers type:', typeof rawMetadata?.providers);
-        console.log('  - Is providers an array?', Array.isArray(rawMetadata?.providers));
-      }
-      
-      const { data: resetData, error: resetError } = await supabaseServer
-        .rpc('reset_incomplete_google_signup', { p_user_id: accountState.user_id });
+    // 4. INCOMPLETE GOOGLE SIGNUP (password_set=false OR !accountState.is_complete)
+    // CRITICAL REQUIREMENT (Issue B):
+    // When a user selects Continue with Google, chooses a role, and leaves before finishing password setup,
+    // returning with the same Google identity (via login or signup) MUST restart the incomplete signup flow
+    // correctly: Google identity -> Role selection -> Password setup -> Account completion -> Dashboard.
+    // It must NOT skip role selection just because a role was selected in a previous incomplete attempt.
+    // An incomplete account must never enter dashboards.
+    if (!accountState.is_complete || accountState.password_set === false) {
+      console.log('[OAuth Callback] Incomplete Google signup resuming. Resetting role data to restart at Role Selection for user:', user.id);
 
-      if (resetError || !resetData?.success) {
-        console.error('[OAuth Callback] Reset failed:', {
-          error: resetError,
-          result: resetData
-        });
-        
-        // Log the specific rejection reason for diagnosis
-        if (resetData?.reason) {
-          console.error('[OAuth Callback] Reset rejection reason:', resetData.reason);
-          
-          // Provide context for each rejection type
-          switch (resetData.reason) {
-            case 'null_user_id':
-              console.error('[OAuth Callback] User ID was null');
-              break;
-            case 'user_not_found':
-              console.error('[OAuth Callback] User does not exist in auth.users');
-              break;
-            case 'not_google_provider':
-              console.error('[OAuth Callback] Account is not authenticated via Google OAuth');
-              break;
-            case 'profile_not_found':
-              console.error('[OAuth Callback] Profile does not exist in public.profiles');
-              break;
-            case 'password_already_set':
-              console.error('[OAuth Callback] Account has password_set=true (safety protection - this is a completed account)');
-              break;
-            default:
-              console.error('[OAuth Callback] Unknown rejection reason');
-          }
+      // Attempt the SQL reset RPC
+      try {
+        const { data: resetResult, error: resetErr } = await supabaseServer
+          .rpc('reset_incomplete_google_signup', { p_user_id: user.id });
+        if (resetErr) {
+          console.warn('[OAuth Callback] reset_incomplete_google_signup RPC warning:', resetErr.message);
         } else {
-          console.error('[OAuth Callback] No diagnostic reason provided by reset function');
+          console.log('[OAuth Callback] reset_incomplete_google_signup RPC result:', resetResult);
         }
-        
-        console.error('[OAuth Callback] Cannot proceed with incomplete signup retry - stale onboarding data still exists');
-        
-        // CRITICAL: Do NOT redirect to role selection with stale data.
-        // Clear the session and send user back to login with error message.
-        const { error: signOutError } = await sessionClient.auth.signOut();
-        if (signOutError) {
-          console.error('[OAuth Callback] Could not clear session after reset failure:', signOutError);
-        }
-        
-        // Return to login with specific error indicating retry is needed
-        return redirect(request, '/auth/login?error=signup-retry-failed');
+      } catch (rpcErr) {
+        console.warn('[OAuth Callback] reset_incomplete_google_signup RPC exception:', rpcErr);
       }
 
-      console.log('[OAuth Callback] Successfully reset incomplete signup:', resetData);
-      console.log('[OAuth Callback] Redirecting to role selection');
-      // Always redirect to /auth/select-role after reset, regardless of previous missing_step
+      // Defensive service-role fallback: clear incomplete user_roles and student assignments
+      // so complete_onboarding_role and get_account_state cleanly return missing_step = 'role'
+      try {
+        if (accountState.profile_id) {
+          await supabaseServer.from('students').delete().eq('profile_id', accountState.profile_id);
+        }
+        await supabaseServer.from('user_roles').delete().eq('user_id', user.id);
+      } catch (cleanErr) {
+        console.warn('[OAuth Callback] Defensive role cleanup warning:', cleanErr);
+      }
+
+      // Always restart at role selection
       return redirect(request, '/auth/select-role');
     }
 
-    // COMPLETED ACCOUNT (password_set=true) → go to dashboard
-    if (accountState.is_complete) {
-      const destination = accountState.role ? dashboardPathForRole(accountState.role) : undefined;
-      return destination ? redirect(request, destination) : genericLoginError(request);
-    }
-
-    // ACTIVE ONBOARDING (first-time signup or legitimate mid-onboarding state)
-    // This handles:
-    // - Brand new Google signup (missing_step='profile')
-    // - User who just selected role, moving to password page (missing_step='password')
-    // - User who set password, moving to student onboarding (missing_step='student_onboarding')
-    //
-    // NOTE: This fallback should NEVER be reached by an abandoned signup with
-    // password_set=false + intent=signup because that should be caught by the
-    // reset block above. If this fallback routes to /auth/setup-password for
-    // an abandoned signup, the reset conditions are too narrow.
-    const onboardingDestination = onboardingDestinationForStep[accountState.missing_step];
-    return onboardingDestination ? redirect(request, onboardingDestination) : genericLoginError(request);
+    // Fallback active onboarding destination
+    const onboardingDestination = onboardingDestinationForStep[accountState.missing_step] || '/auth/select-role';
+    return redirect(request, onboardingDestination);
   } catch (error) {
     console.error('OAuth callback failed unexpectedly.', error);
     return genericLoginError(request);

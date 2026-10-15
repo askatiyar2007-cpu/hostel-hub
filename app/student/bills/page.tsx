@@ -148,36 +148,41 @@ export default function StudentBillsPage() {
 
         const { data: fees, error: feesError } = await supabase
           .from('student_fees')
-          .select(`
-            *,
-            payments (
-              id,
-              amount_paid,
-              amount,
-              payment_method,
-              reference_number,
-              payment_status,
-              status,
-              paid_date,
-              paid_at,
-              notes
-            )
-          `)
+          .select('*')
           .eq('student_id', student.id)
           .eq('allocation_id', alloc.id)
           .order('due_date', { ascending: false });
 
         if (feesError) throw feesError;
 
-        const formattedFees = (fees ?? []).map((fee: any) => {
-          const payment = fee.payments && fee.payments.length > 0
-            ? fee.payments.find((p: any) => p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification') || fee.payments[0]
-            : null;
+        const feeList = fees ?? [];
+        const feeIds = feeList.map((f: any) => f.id).filter(Boolean);
+
+        let payments: any[] = [];
+        if (feeIds.length > 0) {
+          const { data: paymentsData, error: paymentsErr } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('student_id', student.id);
+
+          if (!paymentsErr && paymentsData) {
+            payments = paymentsData;
+          }
+        }
+
+        const formattedFees = feeList.map((fee: any) => {
+          const matchingPayments = payments.filter((p: any) => 
+            p.fee_id === fee.id || p.student_fees_id === fee.id
+          );
+          const payment = matchingPayments.find((p: any) => 
+            p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification' || p.status === 'pending_verification'
+          ) || matchingPayments[0] || null;
+
           const feeAmount = Number(fee.amount_due ?? fee.amount ?? 0);
           return {
             ...fee,
             amount: feeAmount,
-            month_year: fee.month_year,
+            month_year: fee.month_year || fee.billing_period,
             reference_number: payment?.reference_number,
             payment_method: payment?.payment_method || fee.payment_method,
             paid_date: payment?.paid_date || payment?.paid_at || fee.paid_date,

@@ -24,15 +24,13 @@ import {
   ArrowRight, 
   X, 
   Check, 
-  Eye, 
-  EyeOff, 
   Phone, 
   Mail, 
   Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { AccountPasswordDialog } from '@/components/auth/AccountPasswordDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -127,7 +125,6 @@ function SettingsRow({
 // =========================================================================
 export default function OwnerSettingsPage() {
   const { user, profile, signOut } = useAuth();
-  const router = useRouter();
 
   // Modals state
   const [activeModal, setActiveModal] = useState<
@@ -140,15 +137,6 @@ export default function OwnerSettingsPage() {
     phone_number: profile?.phone_number || ''
   });
   const [profileSaving, setProfileSaving] = useState(false);
-
-  // Password state
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [verifyingPassword, setVerifyingPassword] = useState(false);
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Notification preferences
   const [notifyRoomRequests, setNotifyRoomRequests] = useState(true);
@@ -194,48 +182,6 @@ export default function OwnerSettingsPage() {
       toast.error(message);
     } finally {
       setProfileSaving(false);
-    }
-  };
-
-  // Handle Password Update
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match.');
-      return;
-    }
-
-    setVerifyingPassword(true);
-    try {
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
-        email: profile?.email || user?.email || '',
-        password: oldPassword
-      });
-
-      if (signInErr) {
-        throw new Error('Current password verification failed. Please check your credentials.');
-      }
-
-      const { error: updateErr } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (updateErr) throw updateErr;
-
-      toast.success('Password updated successfully');
-      setActiveModal(null);
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Password update failed.';
-      toast.error(message);
-    } finally {
-      setVerifyingPassword(false);
     }
   };
 
@@ -676,163 +622,12 @@ export default function OwnerSettingsPage() {
         </div>
       )}
 
-      {/* 2. Change Password Modal */}
-      {activeModal === 'password' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center shadow-2xs">
-                  <Lock size={18} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900">Change Password</h3>
-                  <p className="text-xs text-slate-500">Update your account password securely</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleChangePassword} className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="old_password" className="text-xs font-semibold text-slate-700">
-                    Current Password
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveModal(null);
-                      router.push('/auth/forgot-password');
-                    }}
-                    className="text-xs text-teal-600 hover:text-teal-700 hover:underline font-medium p-0 cursor-pointer"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="old_password"
-                    type={showOldPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Enter current password"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowOldPassword(!showOldPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  >
-                    {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="new_password" className="text-xs font-semibold text-slate-700">
-                  New Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="new_password"
-                    type={showNewPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Minimum 8 characters"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  >
-                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="confirm_password" className="text-xs font-semibold text-slate-700">
-                  Confirm New Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirm_password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Re-enter new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-xl bg-slate-50 p-3 border border-slate-200/80 space-y-1.5 text-xs text-slate-600">
-                <p className="font-bold text-slate-800 text-[11px] uppercase tracking-wider">
-                  Password Requirements
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "h-3.5 w-3.5 rounded-full flex items-center justify-center text-[10px]",
-                    newPassword.length >= 8 ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-400"
-                  )}>
-                    <Check size={10} />
-                  </div>
-                  <span className={newPassword.length >= 8 ? "text-slate-900 font-medium" : "text-slate-500"}>
-                    At least 8 characters
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "h-3.5 w-3.5 rounded-full flex items-center justify-center text-[10px]",
-                    newPassword && newPassword === confirmPassword ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-400"
-                  )}>
-                    <Check size={10} />
-                  </div>
-                  <span className={newPassword && newPassword === confirmPassword ? "text-slate-900 font-medium" : "text-slate-500"}>
-                    Passwords match
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setActiveModal(null)}
-                  className="h-9.5 rounded-xl border-slate-200 text-slate-700"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={verifyingPassword}
-                  className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
-                >
-                  {verifyingPassword ? 'Updating...' : 'Update Password'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* 2. Change Password & Recovery Modal */}
+      <AccountPasswordDialog
+        isOpen={activeModal === 'password'}
+        onClose={() => setActiveModal(null)}
+        userEmail={profile?.email || user?.email}
+      />
 
       {/* 3. Security Details Modal */}
       {activeModal === 'security' && (

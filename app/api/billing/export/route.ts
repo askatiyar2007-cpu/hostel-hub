@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     // 3. Parse and validate query parameters
     const searchParams = req.nextUrl.searchParams;
     const hostelId = searchParams.get('hostel_id');
-    const month = searchParams.get('month');
+    const month = searchParams.get('month') || searchParams.get('billing_month');
     const format = searchParams.get('format') || 'csv';
 
     if (!hostelId) {
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
 
     if (!month) {
       return NextResponse.json(
-        { error: 'Missing required query parameter: month' },
+        { error: 'Missing required query parameter: month (or billing_month)' },
         { status: 400 }
       );
     }
