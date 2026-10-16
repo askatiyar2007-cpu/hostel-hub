@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, User, Phone, Mail, MapPin, Building2, 
   Calendar, AlertTriangle, FileText, 
-  DollarSign, Activity, Settings, UserCheck, GraduationCap, X
+  IndianRupee, Activity, Settings, UserCheck, GraduationCap, X
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -368,7 +368,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           {/* Financial Summary Ledger */}
           <section className="bg-card border border-border rounded-3xl p-6 shadow-sm space-y-5">
             <h3 className="font-bold text-base text-foreground font-display flex items-center gap-2 border-b pb-3">
-              <DollarSign className="text-primary h-5 w-5" /> Financial Information
+              <IndianRupee className="text-primary h-5 w-5" /> Financial Information
             </h3>
 
             <div className="space-y-3.5 text-sm">
@@ -426,7 +426,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                 variant="outline" 
                 className="w-full justify-start rounded-xl font-semibold gap-2 py-5"
               >
-                <DollarSign size={16} className="text-primary" /> View Payment History
+                <IndianRupee size={16} className="text-primary" /> View Payment History
               </Button>
 
               <Button 

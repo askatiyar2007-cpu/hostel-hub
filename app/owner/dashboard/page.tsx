@@ -28,6 +28,7 @@ import { calculateHostelOccupancy } from "@/lib/utils/occupancy";
 import { StatCard } from "@/components/owner/stat-card";
 import { StatusBadge } from "@/components/owner/status-badge";
 import { IconWrapper } from "@/components/owner/icon-wrapper";
+import { FacilitiesSelector } from "@/components/owner/facilities-selector";
 import { OwnerHostelCard } from "@/components/owner/owner-hostel-card";
 import { PageHeader } from "@/components/owner/page-header";
 import Link from "next/link";
@@ -492,7 +493,8 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
     pincode: "", 
     address: "", 
     description: "", 
-    starting_price: "" 
+    starting_price: "",
+    amenities: [] as string[]
   });
 
   const mutation = useMutation({
@@ -513,6 +515,7 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
         address: form.address.trim(),
         description: form.description.trim() || null,
         starting_price: form.starting_price ? Number(form.starting_price) : 0,
+        amenities: form.amenities,
         status: "pending",
       });
       if (error) throw error;
@@ -520,7 +523,7 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
     onSuccess: () => {
       toast.success("Hostel created successfully — pending admin approval.");
       setOpen(false);
-      setForm({ name: "", city: "", area: "", state: "", pincode: "", address: "", description: "", starting_price: "" });
+      setForm({ name: "", city: "", area: "", state: "", pincode: "", address: "", description: "", starting_price: "", amenities: [] });
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -683,6 +686,13 @@ function NewHostelDialog({ onCreated }: { onCreated: () => void }) {
                 value={form.description} 
                 onChange={(e) => setForm({ ...form, description: e.target.value })} 
                 className="rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm resize-none"
+              />
+            </div>
+
+            <div className="pt-2">
+              <FacilitiesSelector
+                selectedFacilities={form.amenities}
+                onChange={(amenities) => setForm({ ...form, amenities })}
               />
             </div>
           </div>

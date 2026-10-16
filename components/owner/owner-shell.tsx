@@ -19,7 +19,7 @@ import {
   Zap,
   Gauge,
   Clipboard,
-  Receipt,
+  ReceiptIndianRupee,
   Coins,
   ChevronDown,
   ChevronUp,
@@ -36,6 +36,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
 import { getDashboardForRole } from '@/components/dashboard-layout';
 import { OwnerBackground } from './owner-background';
 import { SidebarBackground } from './sidebar-background';
@@ -68,7 +70,7 @@ const ownerNavItems: NavItem[] = [
     icon: Zap,
     group: 'OPERATIONS',
     children: [
-      { name: 'Billing Overview', href: '/owner/electricity/billing', icon: Receipt },
+      { name: 'Billing Overview', href: '/owner/electricity/billing', icon: ReceiptIndianRupee },
       { name: 'Meter Management', href: '/owner/electricity/meters', icon: Gauge },
       { name: 'Record Readings', href: '/owner/electricity/readings/record', icon: Clipboard },
       { name: 'Rate Configuration', href: '/owner/electricity/rates', icon: Coins }
@@ -76,18 +78,19 @@ const ownerNavItems: NavItem[] = [
   },
   { name: 'Announcements', href: '/owner/announcements', icon: Bell, group: 'OPERATIONS' },
   { name: 'Payments', href: '/owner/payments', icon: CreditCard, group: 'OPERATIONS' },
-  { name: 'Billing', href: '/owner/billing', icon: Receipt, group: 'OPERATIONS' },
+  { name: 'Billing', href: '/owner/billing', icon: ReceiptIndianRupee, group: 'OPERATIONS' },
   { name: 'Complaints', href: '/owner/complaints', icon: MessageSquare, group: 'OPERATIONS' },
   
   // SYSTEM
   { name: 'Settings', href: '/owner/settings', icon: Settings, group: 'SYSTEM' },
 ];
 
-function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricityOpen }: {
+function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricityOpen, pendingRequestsCount = 0 }: {
   isCollapsed: boolean;
   pathname: string | null;
   isElectricityOpen: boolean;
   setIsElectricityOpen: (v: boolean) => void;
+  pendingRequestsCount?: number;
 }) {
   return (
     <nav className="space-y-1 px-3">
@@ -177,11 +180,14 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
                     );
                   }
 
+                  const isRoomRequests = item.name === 'Room Requests';
+                  const showBadge = isRoomRequests && pendingRequestsCount > 0;
+
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
-                      title={isCollapsed ? item.name : ""}
+                      title={isCollapsed ? `${item.name}${showBadge ? ` (${pendingRequestsCount} pending)` : ''}` : ""}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "group flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
@@ -190,8 +196,22 @@ function NavContent({ isCollapsed, pathname, isElectricityOpen, setIsElectricity
                           : "text-slate-300 hover:bg-slate-800/80 hover:text-white hover:translate-x-0.5"
                       )}
                     >
-                      <item.icon className={cn("h-5 w-5 shrink-0", isCollapsed ? "mx-auto" : "mr-3")} />
-                      {!isCollapsed && <span>{item.name}</span>}
+                      <div className={cn("relative shrink-0", isCollapsed ? "mx-auto" : "mr-3")}>
+                        <item.icon className="h-5 w-5" />
+                        {showBadge && isCollapsed && (
+                          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-[#081720]" />
+                        )}
+                      </div>
+                      {!isCollapsed && (
+                        <>
+                          <span className="flex-1 truncate">{item.name}</span>
+                          {showBadge && (
+                            <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-rose-500 text-white shadow-2xs leading-none">
+                              {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
+                            </span>
+                          )}
+                        </>
+                      )}
                     </Link>
                   );
                 })}
@@ -211,9 +231,38 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { profile, user, signOut, loading, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
-
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
+
+  // Real-time pending room requests count for sidebar badge indicator
+  const { data: pendingRequestsCount = 0 } = useQuery({
+    queryKey: ['owner-pending-requests-count', user?.id],
+    enabled: !!user?.id,
+    refetchInterval: 20000,
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      try {
+        const { data: hostels } = await supabase
+          .from('hostels')
+          .select('id')
+          .eq('owner_id', user.id);
+
+        if (!hostels || hostels.length === 0) return 0;
+        const hostelIds = hostels.map((h) => h.id);
+
+        const { count, error } = await supabase
+          .from('room_requests')
+          .select('*', { count: 'exact', head: true })
+          .in('hostel_id', hostelIds)
+          .eq('status', 'pending');
+
+        if (error) return 0;
+        return count || 0;
+      } catch {
+        return 0;
+      }
+    },
+  });
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -326,6 +375,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
               pathname={pathname}
               isElectricityOpen={isElectricityOpen}
               setIsElectricityOpen={setIsElectricityOpen}
+              pendingRequestsCount={pendingRequestsCount}
             />
           </div>
           
@@ -390,6 +440,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
               pathname={pathname}
               isElectricityOpen={isElectricityOpen}
               setIsElectricityOpen={setIsElectricityOpen}
+              pendingRequestsCount={pendingRequestsCount}
             />
           </div>
           <div className="relative z-20 border-t p-4 flex-shrink-0 border-slate-800/80 bg-[#081720] shadow-lg">

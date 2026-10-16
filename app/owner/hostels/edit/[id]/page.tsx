@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { FacilitiesSelector } from '@/components/owner/facilities-selector';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -25,7 +26,7 @@ export default function EditHostelPage() {
     contact_number: '',
     email: '',
     rules: '',
-    amenities: ''
+    amenities: [] as string[]
   });
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function EditHostelPage() {
         contact_number: data.contact_number || '',
         email: data.email || '',
         rules: data.rules || '',
-        amenities: data.amenities ? data.amenities.join(', ') : ''
+        amenities: Array.isArray(data.amenities) ? data.amenities : []
       });
       setLoading(false);
     }
@@ -78,7 +79,7 @@ export default function EditHostelPage() {
           contact_number: formData.contact_number,
           email: formData.email,
           rules: formData.rules,
-          amenities: formData.amenities.split(',').map(s => s.trim()).filter(s => s !== '')
+          amenities: formData.amenities
         })
         .eq('id', id);
 
@@ -215,17 +216,10 @@ export default function EditHostelPage() {
         <Card className="border-teal-200 shadow-sm">
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Amenities</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Available Amenities (comma separated)
-              </label>
-              <Input
-                placeholder="AC, WiFi, Attached Washroom, Mess, Laundry"
-                value={formData.amenities}
-                onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
-                className="bg-white border-gray-200"
-              />
-            </div>
+            <FacilitiesSelector
+              selectedFacilities={formData.amenities}
+              onChange={(amenities) => setFormData({ ...formData, amenities })}
+            />
           </CardContent>
         </Card>
 

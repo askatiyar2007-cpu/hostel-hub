@@ -140,19 +140,90 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 6. Transform database response to API response format
-    const meters: MeterListItem[] = (metersData || []).map((meter: any) => ({
-      id: meter.id,
-      room_id: meter.room_id,
-      room_number: meter.room_number,
-      meter_number: meter.meter_number,
-      status: meter.status,
-      last_reading: meter.last_reading ? {
-        value: parseFloat(meter.last_reading.value),
-        timestamp: meter.last_reading.timestamp
-      } : null,
-      open_segment_id: meter.open_segment_id,
-      pending_reading: meter.pending_reading
+    // 6. Enrich and validate pending_reading flags
+    // A meter only genuinely requires an occupancy-change reading if an occupancy change (join/leave)
+    // occurred strictly AFTER the latest recorded meter reading.
+    const meters: MeterListItem[] = await Promise.all((metersData || []).map(async (meter: any) => {
+      let isPending = Boolean(meter.pending_reading);
+
+      // If no reading exists at all, it needs an initial baseline, not an occupancy change alert
+      if (!meter.last_reading) {
+        isPending = false;
+      } else if (isPending && meter.last_reading.timestamp) {
+        const lastReadingTs = new Date(meter.last_reading.timestamp).getTime();
+
+        try {
+          // Fetch pending occupancy change events for this room
+          const { data: events } = await supabaseServer
+            .from('occupancy_change_events')
+            .select('id, change_timestamp, status')
+            .eq('room_id', meter.room_id)
+            .eq('status', 'pending_reading');
+
+          if (events && events.length > 0) {
+            // Find any event that happened strictly AFTER the last reading
+            const newerEvents = events.filter((ev: any) => {
+              const evTs = new Date(ev.change_timestamp).getTime();
+              return evTs > lastReadingTs;
+            });
+
+            // Auto-complete stale events that occurred on or before last reading
+            const staleEventIds = events
+              .filter((ev: any) => new Date(ev.change_timestamp).getTime() <= lastReadingTs)
+              .map((ev: any) => ev.id);
+
+            if (staleEventIds.length > 0) {
+              await supabaseServer
+                .from('occupancy_change_events')
+                .update({ 
+                  status: 'completed', 
+                  completed_at: new Date().toISOString() 
+                })
+                .in('id', staleEventIds);
+            }
+
+            isPending = newerEvents.length > 0;
+          } else {
+            isPending = false;
+          }
+
+          // Cross-verify with active room allocations:
+          // If all active allocations for the room were created on or before the last reading, no new allocation exists
+          if (isPending) {
+            const { data: allocations } = await supabaseServer
+              .from('room_allocations')
+              .select('id, created_at, start_date')
+              .eq('room_id', meter.room_id)
+              .eq('active', true);
+
+            if (allocations && allocations.length > 0) {
+              const hasNewAllocation = allocations.some((al: any) => {
+                const alTs = new Date(al.created_at || al.start_date).getTime();
+                return alTs > lastReadingTs;
+              });
+              if (!hasNewAllocation) {
+                isPending = false;
+              }
+            }
+          }
+        } catch (enrichErr) {
+          console.warn('[List Meters API] Non-fatal error validating pending_reading:', enrichErr);
+        }
+      }
+
+      return {
+        id: meter.id,
+        room_id: meter.room_id,
+        room_number: meter.room_number,
+        meter_number: meter.meter_number,
+        status: meter.status,
+        last_reading: meter.last_reading ? {
+          value: parseFloat(meter.last_reading.value),
+          timestamp: meter.last_reading.timestamp
+        } : null,
+        open_segment_id: meter.open_segment_id,
+        pending_reading: isPending
+      };
     }));
 
     const response: ListMetersResponse = {

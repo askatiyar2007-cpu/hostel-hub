@@ -8,7 +8,7 @@ import {
   Users, 
   Gauge, 
   AlertCircle,
-  Receipt,
+  ReceiptIndianRupee,
   Calendar,
   Info
 } from 'lucide-react';
@@ -525,7 +525,7 @@ export default function RoomBillingDetailsPage() {
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Receipt className="h-4 w-4 text-teal-600" />
+                <ReceiptIndianRupee className="h-4 w-4 text-teal-600" />
                 Billing Segment History
               </span>
               <p className="text-[11px] text-slate-400 mt-0.5">

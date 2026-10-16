@@ -9,7 +9,7 @@ import {
   MapPin,
   Users,
   Home,
-  DollarSign,
+  IndianRupee,
   AlertCircle,
   Plus,
   Copy,
@@ -200,7 +200,7 @@ export default function HostelDetailsPage() {
               {[
                 { label: 'Total Rooms', value: stats.rooms, icon: Home, color: 'text-blue-600' },
                 { label: 'Active Students', value: stats.students, icon: Users, color: 'text-indigo-600' },
-                { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-600' },
+                { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: IndianRupee, color: 'text-emerald-600' },
                 { label: 'Pending Complaints', value: stats.complaints, icon: AlertCircle, color: 'text-rose-600' },
               ].map((stat, i) => (
                 <Card key={i} className="border border-sky-100/90 bg-white shadow-xs">

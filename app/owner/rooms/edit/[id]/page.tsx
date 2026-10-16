@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
-import { ArrowLeft, MapPin, Bed, DollarSign, Users } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, IndianRupee, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -201,7 +201,7 @@ export default function EditRoomPage() {
           <span className="font-semibold text-gray-900">{occupiedCount}/{roomData?.capacity} occupied</span>
         </div>
         <div className="flex items-center gap-2">
-          <DollarSign size={18} className="text-gray-500" />
+          <IndianRupee size={18} className="text-gray-500" />
           <span className="text-sm text-gray-600">Rent:</span>
           <span className="font-semibold text-gray-900">₹{Number(formData.rent).toLocaleString()}</span>
         </div>

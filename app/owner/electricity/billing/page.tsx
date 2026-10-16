@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
-import { DollarSign, Download, Zap, Users, Gauge, Search } from 'lucide-react';
+import { IndianRupee, Download, Zap, Users, Gauge, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -494,7 +494,7 @@ export default function BillingOverviewPage() {
           <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs">
             <div className="flex items-center justify-between text-slate-500 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Total Billed Revenue</span>
-              <DollarSign className="h-4 w-4 text-emerald-600" />
+              <IndianRupee className="h-4 w-4 text-emerald-600" />
             </div>
             <p className="text-xl font-bold text-slate-900 font-mono">
               ₹{(summary.total_revenue_paise / 100).toFixed(2)}

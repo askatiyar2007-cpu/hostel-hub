@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import toast from 'react-hot-toast';
+import { FacilitiesSelector } from '@/components/owner/facilities-selector';
 
 export default function AddHostelPage() {
   const { profile } = useAuth();
@@ -21,7 +22,7 @@ export default function AddHostelPage() {
     contact_number: '',
     email: '',
     rules: '',
-    amenities: ''
+    amenities: [] as string[]
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +46,7 @@ export default function AddHostelPage() {
         contact_number: formData.contact_number,
         email: formData.email,
         rules: formData.rules,
-        amenities: formData.amenities.split(',').map(s => s.trim()).filter(s => s !== ''),
+        amenities: formData.amenities,
         rating: 0,
         total_reviews: 0,
         status: 'pending'
@@ -223,19 +224,10 @@ export default function AddHostelPage() {
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-foreground">
-            Amenities (Comma separated)
-          </label>
-          <input
-            type="text"
-            className="input w-full"
-            placeholder="WiFi, AC, Food, Laundry"
-            onChange={(e) =>
-              setFormData({ ...formData, amenities: e.target.value })
-            }
-          />
-        </div>
+        <FacilitiesSelector
+          selectedFacilities={formData.amenities}
+          onChange={(amenities) => setFormData({ ...formData, amenities })}
+        />
 
         <div>
           <label className="mb-2 block text-sm font-semibold text-foreground">

@@ -23,7 +23,7 @@ import {
   RotateCcw, 
   Check, 
   X, 
-  DollarSign, 
+  IndianRupee, 
   Trash2, 
   X as CloseIcon
 } from 'lucide-react';
@@ -1354,7 +1354,7 @@ function ApprovedAllocationCard({
             size="sm"
             className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
           >
-            <DollarSign size={13} /> History
+            <IndianRupee size={13} /> History
           </Button>
           <Button 
             onClick={onCheckout}

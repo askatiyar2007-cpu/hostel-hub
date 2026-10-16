@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { 
   X, 
   Calendar, 
-  DollarSign, 
+  IndianRupee, 
   User, 
   Download, 
   AlertCircle
@@ -98,7 +98,7 @@ export function MarkDepositPaidModal({
           <div className="space-y-1">
             <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount Paid (₹) <span className="text-red-500">*</span></label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <input
                 type="number"
                 value={amount}

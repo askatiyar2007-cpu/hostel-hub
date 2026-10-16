@@ -275,8 +275,21 @@ export async function recordMeterReading(
     segmentsAffected.push(newSegmentId);
   }
   
-  // Note: 'initial' and 'manual_check' reasons do NOT trigger additional segment operations
-  // (but automatic opening segment creation above handles the first reading case)
+  // Step 5: Mark qualifying pending occupancy change events as completed
+  try {
+    await db
+      .from('occupancy_change_events')
+      .update({
+        status: 'completed',
+        required_reading_id: reading.id,
+        completed_at: readingTimestamp
+      })
+      .eq('room_id', meter.room_id)
+      .eq('status', 'pending_reading')
+      .lte('change_timestamp', readingTimestamp);
+  } catch (eventErr: any) {
+    console.warn(`[recordMeterReading] Non-fatal: failed to update occupancy_change_events: ${eventErr?.message || eventErr}`);
+  }
 
   return {
     readingId: reading.id,
