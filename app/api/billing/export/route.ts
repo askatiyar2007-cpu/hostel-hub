@@ -11,15 +11,16 @@ const BillingExportQuerySchema = z.object({
 
 interface BillingExportRow {
   room_number: string;
+  cycle_status: string;
   segment_start: string;
   segment_end: string;
-  consumption_kwh: number;
+  consumption_kwh: number | null;
   rate_per_kwh: number;
   occupants: number;
-  total_cost_rupees: number;
+  total_cost_rupees: number | null;
   segment_type: string;
   student_name: string;
-  student_charge_rupees: number;
+  student_charge_rupees: number | null;
 }
 
 /**
@@ -39,8 +40,8 @@ interface BillingExportRow {
  */
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authenticate the user using cookie-based client
-    const supabase = createClient();
+    // 1. Authenticate the user (supports cookies and Bearer tokens)
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -108,7 +109,7 @@ export async function GET(req: NextRequest) {
     // 4. Verify hostel ownership (REQ-19.1)
     const { data: hostel, error: hostelError } = await supabaseServer
       .from('hostels')
-      .select('id, owner_id, hostel_name')
+      .select('id, owner_id, name')
       .eq('id', validated.hostel_id)
       .single();
 
@@ -141,11 +142,16 @@ export async function GET(req: NextRequest) {
         occupant_count,
         total_cost_paise,
         segment_type,
+        closed_at,
         rooms!inner(room_number),
+        segment_occupants(
+          student_id,
+          student_name,
+          student_email
+        ),
         student_electricity_charges(
           student_id,
-          charge_amount_paise,
-          profiles(full_name)
+          charge_amount_paise
         )
       `)
       .eq('hostel_id', validated.hostel_id)
@@ -160,49 +166,91 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 6. Transform data into export rows
+    // 6. Transform data into export rows with finalized vs active cycle distinction
     const exportRows: BillingExportRow[] = [];
 
     for (const segment of segmentsData || []) {
       const room = segment.rooms as any;
-      const charges = segment.student_electricity_charges as any[];
+      const charges = (segment.student_electricity_charges || []) as any[];
+      const occupants = (segment.segment_occupants || []) as any[];
+      const isClosed = segment.end_date != null && (segment.closed_at != null || segment.consumption_units != null);
+      const cycleStatus = isClosed ? 'Finalized' : 'Cycle in Progress';
+      const roomNumber = room?.room_number || 'Unknown';
+      const segmentStart = segment.start_date || '';
+      const segmentEnd = segment.end_date || (isClosed ? '' : 'Pending Reading');
+      const consumptionKwh = segment.consumption_units != null ? parseFloat(segment.consumption_units) : null;
+      const ratePerKwh = segment.rate_per_unit != null ? parseFloat(segment.rate_per_unit) : 0;
+      const totalCostRupees = segment.total_cost_paise != null ? (segment.total_cost_paise / 100) : null;
+      const segmentType = segment.segment_type || (segment.occupant_count === 0 ? 'empty' : 'occupied');
 
-      const baseData = {
-        room_number: room.room_number,
-        segment_start: segment.start_date,
-        segment_end: segment.end_date || '',
-        consumption_kwh: parseFloat(segment.consumption_units || 0),
-        rate_per_kwh: parseFloat(segment.rate_per_unit || 0),
-        occupants: segment.occupant_count,
-        total_cost_rupees: (segment.total_cost_paise || 0) / 100,
-        segment_type: segment.segment_type
-      };
+      // Map occupant names by student_id
+      const occupantMap = new Map<string, string>();
+      for (const occ of occupants) {
+        if (occ.student_id && occ.student_name) {
+          occupantMap.set(occ.student_id, occ.student_name);
+        }
+      }
 
-      // If empty room segment or no charges, create single row
-      if (!charges || charges.length === 0) {
-        exportRows.push({
-          ...baseData,
-          student_name: segment.segment_type === 'empty' ? 'Empty Room' : 'No Students',
-          student_charge_rupees: 0
-        });
-      } else {
-        // Create one row per student charge
+      // If charges exist (finalized segment with billed students)
+      if (charges && charges.length > 0) {
         for (const charge of charges) {
           const profile = charge.profiles as any;
+          const studentName = profile?.full_name || occupantMap.get(charge.student_id) || charge.student_name || 'Student';
           exportRows.push({
-            ...baseData,
-            student_name: profile?.full_name || 'Unknown',
-            student_charge_rupees: (charge.charge_amount_paise || 0) / 100
+            room_number: roomNumber,
+            cycle_status: cycleStatus,
+            segment_start: segmentStart,
+            segment_end: segmentEnd,
+            consumption_kwh: consumptionKwh,
+            rate_per_kwh: ratePerKwh,
+            occupants: segment.occupant_count ?? occupants.length,
+            total_cost_rupees: totalCostRupees,
+            segment_type: segmentType,
+            student_name: studentName,
+            student_charge_rupees: (charge.charge_amount_paise != null) ? (charge.charge_amount_paise / 100) : null
           });
         }
+      } else if (occupants && occupants.length > 0) {
+        // Occupied segment with occupants but no charges generated yet (e.g. cycle in progress)
+        for (const occ of occupants) {
+          exportRows.push({
+            room_number: roomNumber,
+            cycle_status: cycleStatus,
+            segment_start: segmentStart,
+            segment_end: segmentEnd,
+            consumption_kwh: consumptionKwh,
+            rate_per_kwh: ratePerKwh,
+            occupants: segment.occupant_count ?? occupants.length,
+            total_cost_rupees: totalCostRupees,
+            segment_type: segmentType,
+            student_name: occ.student_name || 'Student',
+            student_charge_rupees: isClosed ? 0 : null
+          });
+        }
+      } else {
+        // Empty room segment or unassigned
+        exportRows.push({
+          room_number: roomNumber,
+          cycle_status: cycleStatus,
+          segment_start: segmentStart,
+          segment_end: segmentEnd,
+          consumption_kwh: consumptionKwh,
+          rate_per_kwh: ratePerKwh,
+          occupants: segment.occupant_count ?? 0,
+          total_cost_rupees: totalCostRupees,
+          segment_type: segmentType,
+          student_name: segmentType === 'empty' ? 'Empty Room' : 'No Students',
+          student_charge_rupees: 0
+        });
       }
     }
 
     // 7. Convert to CSV format
     const csv = convertToCSV(exportRows);
 
-    // 8. Set appropriate headers for file download (Design Section 6.4.3)
-    const filename = `billing_${hostel.hostel_name || 'hostel'}_${validated.month}.csv`;
+    // 8. Set appropriate headers for file download
+    const hostelName = (hostel as any).name || (hostel as any).hostel_name || 'Hostel';
+    const filename = `billing_${hostelName}_${validated.month}.csv`;
     const headers = new Headers();
     headers.set('Content-Type', 'text/csv; charset=utf-8');
     headers.set('Content-Disposition', `attachment; filename="${filename}"`);
@@ -250,9 +298,10 @@ export async function GET(req: NextRequest) {
  * @returns CSV string with headers and data
  */
 function convertToCSV(rows: BillingExportRow[]): string {
-  // CSV header (Design Section 6.4.3)
+  // CSV header
   const headers = [
     'Room Number',
+    'Cycle Status',
     'Segment Start',
     'Segment End',
     'Consumption (kWh)',
@@ -269,15 +318,16 @@ function convertToCSV(rows: BillingExportRow[]): string {
   for (const row of rows) {
     const values = [
       escapeCsvValue(row.room_number),
+      escapeCsvValue(row.cycle_status),
       escapeCsvValue(row.segment_start),
       escapeCsvValue(row.segment_end),
-      row.consumption_kwh.toFixed(2),
+      row.consumption_kwh != null ? row.consumption_kwh.toFixed(2) : 'Pending',
       row.rate_per_kwh.toFixed(4),
       row.occupants.toString(),
-      row.total_cost_rupees.toFixed(2),
+      row.total_cost_rupees != null ? row.total_cost_rupees.toFixed(2) : 'Pending',
       escapeCsvValue(row.segment_type),
       escapeCsvValue(row.student_name),
-      row.student_charge_rupees.toFixed(2)
+      row.student_charge_rupees != null ? row.student_charge_rupees.toFixed(2) : 'Pending'
     ];
 
     csvLines.push(values.join(','));

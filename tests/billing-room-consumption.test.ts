@@ -493,23 +493,23 @@ describe('Billing Room Consumption & Calculation State Tests', () => {
       }
       if (table === 'billing_segments') {
         return {
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                order: () => Promise.resolve({ data: mockOpenSegment, error: null }),
-              }),
-            }),
-          }),
+          select: () => {
+            const queryObj: any = {};
+            queryObj.eq = () => queryObj;
+            queryObj.order = () => Promise.resolve({ data: mockOpenSegment, error: null });
+            return queryObj;
+          },
         };
       }
       if (table === 'student_electricity_charges') {
         return {
-          select: () => ({
-            eq: () => ({
-              eq: () => Promise.resolve({ data: [], error: null }),
-            }),
-            in: () => Promise.resolve({ data: [], error: null }),
-          }),
+          select: () => {
+            const queryObj: any = {};
+            queryObj.eq = () => queryObj;
+            queryObj.in = () => Promise.resolve({ data: [], error: null });
+            queryObj.then = (fn: any) => Promise.resolve({ data: [], error: null }).then(fn);
+            return queryObj;
+          },
         };
       }
       if (table === 'billing_segment_occupants') {
@@ -532,8 +532,25 @@ describe('Billing Room Consumption & Calculation State Tests', () => {
           }),
         };
       }
+      if (table === 'student_fees') {
+        return {
+          select: () => {
+            const queryObj: any = {};
+            queryObj.eq = () => Promise.resolve({ data: [], error: null });
+            queryObj.then = (fn: any) => Promise.resolve({ data: [], error: null }).then(fn);
+            return queryObj;
+          },
+        };
+      }
       return {
-        select: () => Promise.resolve({ data: [], error: null }),
+        select: () => {
+          const queryObj: any = {};
+          queryObj.eq = () => queryObj;
+          queryObj.in = () => queryObj;
+          queryObj.order = () => queryObj;
+          queryObj.then = (fn: any) => Promise.resolve({ data: [], error: null }).then(fn);
+          return queryObj;
+        },
       };
     });
 

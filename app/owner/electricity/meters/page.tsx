@@ -26,7 +26,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconWrapper } from '@/components/owner/icon-wrapper';
-import { cn } from '@/lib/utils';
 import { PageHeader } from "@/components/owner/page-header";
 
 interface MeterWithDetails {
@@ -317,14 +316,14 @@ export default function MeterManagementPage() {
       {/* Meters Grid */}
       {loading ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">Loading meters...</p>
+          <p className="text-slate-600 font-medium">Loading meters...</p>
         </div>
       ) : filteredMeters.length === 0 ? (
-        <Card>
+        <Card className="border-slate-200/90 shadow-xs">
           <CardContent className="py-12 text-center">
-            <Zap className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No meters found</p>
-            <p className="text-gray-400 text-sm mt-2">
+            <Zap className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-800 font-semibold text-lg">No meters found</p>
+            <p className="text-slate-600 text-sm mt-2">
               {selectedHostel === 'all' 
                 ? 'Select a hostel to view meters' 
                 : 'Click "Add Meter" or "Bulk Create Meters" to configure electricity meters'}
@@ -467,20 +466,20 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
     if (meter.pending_reading) {
       return {
         text: 'Reading Required',
-        color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        color: 'bg-amber-50 text-amber-800 border-amber-300 font-medium',
         icon: <AlertCircle className="h-4 w-4" />
       };
     }
     if (!meter.last_reading) {
       return {
         text: 'No Reading',
-        color: 'bg-gray-100 text-gray-800 border-gray-300',
+        color: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
         icon: null
       };
     }
     return {
       text: 'Up to Date',
-      color: 'bg-green-100 text-green-800 border-green-300',
+      color: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-medium',
       icon: <CheckCircle className="h-4 w-4" />
     };
   };
@@ -489,27 +488,27 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
     if (meter.open_segment_id) {
       return {
         text: 'Billing Active',
-        color: 'bg-blue-100 text-blue-800 border-blue-300',
+        color: 'bg-blue-50 text-blue-800 border-blue-300 font-medium',
         icon: <CheckCircle className="h-4 w-4" />
       };
     }
     if (!meter.last_reading) {
       return {
         text: 'Not Started',
-        color: 'bg-gray-100 text-gray-800 border-gray-300',
+        color: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
         icon: null
       };
     }
     if (meter.pending_reading) {
       return {
         text: 'Billing Pending',
-        color: 'bg-amber-100 text-amber-800 border-amber-300',
+        color: 'bg-amber-50 text-amber-800 border-amber-300 font-medium',
         icon: <AlertCircle className="h-4 w-4" />
       };
     }
     return {
       text: 'Not Started',
-      color: 'bg-gray-100 text-gray-800 border-gray-300',
+      color: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
       icon: null
     };
   };
@@ -528,10 +527,7 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
   const billingStatus = getBillingStatus();
 
   return (
-    <Card className={cn(
-      "border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow",
-      meter.pending_reading ? 'border-amber-400 ring-2 ring-amber-400/20' : ''
-    )}>
+    <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader className="bg-slate-50/70 px-5 py-4 border-b border-slate-100">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
@@ -540,30 +536,27 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
             </IconWrapper>
             <div>
               <CardTitle className="text-base font-bold text-slate-900">Room {meter.room_number}</CardTitle>
-              <CardDescription className="font-mono text-xs text-slate-500 mt-0.5">
+              <CardDescription className="font-mono text-xs text-slate-600 font-medium mt-0.5">
                 {meter.meter_number}
               </CardDescription>
             </div>
           </div>
-          <Badge className={meter.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-normal shadow-none" : "bg-slate-100 text-slate-600 border-slate-200 font-normal"}>
-            {meter.status === 'active' ? 'Active' : 'Inactive'}
-          </Badge>
         </div>
       </CardHeader>
       
       <CardContent className="p-5 space-y-4">
         {/* Meter Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-500 text-xs">Meter Status</span>
-          <Badge className={meter.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-normal text-xs" : "bg-slate-100 text-slate-600 border-slate-200 font-normal text-xs"} variant="outline">
+          <span className="text-slate-600 font-medium text-xs">Meter Status</span>
+          <Badge className={meter.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-medium text-xs" : "bg-slate-100 text-slate-600 border-slate-200 font-medium text-xs"} variant="outline">
             {meter.status === 'active' ? 'Active' : 'Inactive'}
           </Badge>
         </div>
 
         {/* Reading Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-500 text-xs">Reading Status</span>
-          <Badge className={`${readingStatus.color} border text-xs font-normal`} variant="outline">
+          <span className="text-slate-600 font-medium text-xs">Reading Status</span>
+          <Badge className={`${readingStatus.color} border text-xs`} variant="outline">
             {readingStatus.icon}
             <span className="ml-1">{readingStatus.text}</span>
           </Badge>
@@ -571,8 +564,8 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
 
         {/* Billing Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-500 text-xs">Billing Status</span>
-          <Badge className={`${billingStatus.color} border text-xs font-normal`} variant="outline">
+          <span className="text-slate-600 font-medium text-xs">Billing Status</span>
+          <Badge className={`${billingStatus.color} border text-xs`} variant="outline">
             {billingStatus.icon}
             <span className="ml-1">{billingStatus.text}</span>
           </Badge>
@@ -581,16 +574,16 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
         {/* Last Reading */}
         {meter.last_reading ? (
           <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-            <p className="text-xs text-slate-500 font-medium">Last Reading</p>
-            <p className="text-xl font-bold text-slate-900">{meter.last_reading.value} <span className="text-xs font-normal text-slate-500">kWh</span></p>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-600 font-medium">Last Reading</p>
+            <p className="text-xl font-bold text-slate-900">{meter.last_reading.value} <span className="text-xs font-normal text-slate-600">kWh</span></p>
+            <p className="text-[11px] text-slate-600 font-medium">
               {formatDate(meter.last_reading.timestamp)}
             </p>
           </div>
         ) : (
           <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-            <p className="text-xs text-slate-500 font-medium">No readings yet</p>
-            <p className="text-xs text-slate-400">Record initial reading to start tracking</p>
+            <p className="text-xs text-slate-600 font-medium">No readings yet</p>
+            <p className="text-xs text-slate-600">Record initial reading to start tracking</p>
           </div>
         )}
         

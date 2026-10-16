@@ -214,22 +214,25 @@ export default function BillingOverviewPage() {
       });
       
       const response = await fetch(`/api/billing/export?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to export billing data');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to export billing data');
+      }
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `electricity-billing-${selectedMonth}.csv`;
+      a.download = `hostelhub-electricity-${selectedMonth}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
       toast.success('Billing data exported successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting billing data:', error);
-      toast.error('Failed to export billing data');
+      toast.error(error.message || 'Failed to export billing data');
     } finally {
       setExportLoading(false);
     }
@@ -376,14 +379,20 @@ export default function BillingOverviewPage() {
         <CardContent className="p-3.5 sm:p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Select Hostel</Label>
+              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Select Hostel</Label>
               <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg h-8 text-xs">
+                <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                   <SelectValue placeholder="Choose hostel..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent 
+                  position="popper" 
+                  side="bottom" 
+                  align="start" 
+                  sideOffset={4} 
+                  className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                >
                   {hostels.map(hostel => (
-                    <SelectItem key={hostel.id} value={hostel.id} className="text-xs">
+                    <SelectItem key={hostel.id} value={hostel.id} className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">
                       {hostel.name}
                     </SelectItem>
                   ))}
@@ -392,14 +401,20 @@ export default function BillingOverviewPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Billing Month</Label>
+              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Billing Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg h-8 text-xs">
+                <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                   <SelectValue placeholder="Select month..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent 
+                  position="popper" 
+                  side="bottom" 
+                  align="start" 
+                  sideOffset={4} 
+                  className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                >
                   {monthOptions.map(month => (
-                    <SelectItem key={month.value} value={month.value} className="text-xs">
+                    <SelectItem key={month.value} value={month.value} className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">
                       {month.label}
                     </SelectItem>
                   ))}
@@ -408,46 +423,58 @@ export default function BillingOverviewPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Search</Label>
+              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Search</Label>
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                 <Input
                   placeholder="Room # or student name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 bg-slate-50 border-slate-200 rounded-lg h-8 text-xs"
+                  className="pl-8 bg-white border-slate-300 hover:border-slate-400 text-slate-900 placeholder:text-slate-400 rounded-lg h-8 text-xs focus-visible:ring-teal-500 shadow-2xs font-medium"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
                 {activeTab === 'students' ? 'Student Status' : 'Room Filter'}
               </Label>
               {activeTab === 'students' ? (
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg h-8 text-xs">
+                  <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Students ({studentBilling.length})</SelectItem>
-                    <SelectItem value="billed" className="text-xs">Billed</SelectItem>
-                    <SelectItem value="unbilled" className="text-xs">Unbilled</SelectItem>
-                    <SelectItem value="awaiting" className="text-xs">Awaiting Reading</SelectItem>
-                    <SelectItem value="unmetered" className="text-xs">Unmetered</SelectItem>
+                  <SelectContent 
+                    position="popper" 
+                    side="bottom" 
+                    align="start" 
+                    sideOffset={4} 
+                    className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                  >
+                    <SelectItem value="all" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">All Students ({studentBilling.length})</SelectItem>
+                    <SelectItem value="billed" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Billed</SelectItem>
+                    <SelectItem value="unbilled" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Unbilled</SelectItem>
+                    <SelectItem value="awaiting" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Awaiting Reading</SelectItem>
+                    <SelectItem value="unmetered" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Unmetered</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
                 <Select value={roomFilter} onValueChange={(v: any) => setRoomFilter(v)}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg h-8 text-xs">
+                  <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                     <SelectValue placeholder="All Rooms" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Rooms ({roomBilling.length})</SelectItem>
-                    <SelectItem value="occupied" className="text-xs">Occupied</SelectItem>
-                    <SelectItem value="empty" className="text-xs">Empty</SelectItem>
-                    <SelectItem value="awaiting" className="text-xs">Awaiting Reading</SelectItem>
-                    <SelectItem value="billed" className="text-xs">Billed</SelectItem>
+                  <SelectContent 
+                    position="popper" 
+                    side="bottom" 
+                    align="start" 
+                    sideOffset={4} 
+                    className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                  >
+                    <SelectItem value="all" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">All Rooms ({roomBilling.length})</SelectItem>
+                    <SelectItem value="occupied" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Occupied</SelectItem>
+                    <SelectItem value="empty" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Empty</SelectItem>
+                    <SelectItem value="awaiting" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Awaiting Reading</SelectItem>
+                    <SelectItem value="billed" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Billed</SelectItem>
                   </SelectContent>
                 </Select>
               )}
