@@ -220,7 +220,8 @@ export default function BillingOverviewPage() {
       }
       
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const csvBlob = new Blob([blob], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(csvBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `hostelhub-electricity-${selectedMonth}.csv`;
@@ -389,7 +390,8 @@ export default function BillingOverviewPage() {
                   side="bottom" 
                   align="start" 
                   sideOffset={4} 
-                  className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                  avoidCollisions={false}
+                  className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
                 >
                   {hostels.map(hostel => (
                     <SelectItem key={hostel.id} value={hostel.id} className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">
@@ -411,7 +413,8 @@ export default function BillingOverviewPage() {
                   side="bottom" 
                   align="start" 
                   sideOffset={4} 
-                  className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                  avoidCollisions={false}
+                  className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
                 >
                   {monthOptions.map(month => (
                     <SelectItem key={month.value} value={month.value} className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">
@@ -449,7 +452,8 @@ export default function BillingOverviewPage() {
                     side="bottom" 
                     align="start" 
                     sideOffset={4} 
-                    className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                    avoidCollisions={false}
+                    className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
                   >
                     <SelectItem value="all" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">All Students ({studentBilling.length})</SelectItem>
                     <SelectItem value="billed" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Billed</SelectItem>
@@ -468,7 +472,8 @@ export default function BillingOverviewPage() {
                     side="bottom" 
                     align="start" 
                     sideOffset={4} 
-                    className="z-50 max-h-72 bg-white border-slate-200 shadow-lg text-slate-900"
+                    avoidCollisions={false}
+                    className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
                   >
                     <SelectItem value="all" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">All Rooms ({roomBilling.length})</SelectItem>
                     <SelectItem value="occupied" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Occupied</SelectItem>

@@ -9,7 +9,7 @@ const BillingExportQuerySchema = z.object({
   format: z.enum(['csv']).default('csv')
 });
 
-interface BillingExportRow {
+export interface BillingExportRow {
   room_number: string;
   cycle_status: string;
   segment_start: string;
@@ -170,12 +170,17 @@ export async function GET(req: NextRequest) {
     const exportRows: BillingExportRow[] = [];
 
     for (const segment of segmentsData || []) {
+      if (!segment) continue;
       const room = segment.rooms as any;
+      const roomNumber = (Array.isArray(room) ? room[0]?.room_number : room?.room_number) || '';
+      
+      // Skip orphaned segment with no room identifier
+      if (!roomNumber) continue;
+
       const charges = (segment.student_electricity_charges || []) as any[];
       const occupants = (segment.segment_occupants || []) as any[];
       const isClosed = segment.end_date != null && (segment.closed_at != null || segment.consumption_units != null);
       const cycleStatus = isClosed ? 'Finalized' : 'Cycle in Progress';
-      const roomNumber = room?.room_number || 'Unknown';
       const segmentStart = segment.start_date || '';
       const segmentEnd = segment.end_date || (isClosed ? '' : 'Pending Reading');
       const consumptionKwh = segment.consumption_units != null ? parseFloat(segment.consumption_units) : null;
@@ -186,7 +191,7 @@ export async function GET(req: NextRequest) {
       // Map occupant names by student_id
       const occupantMap = new Map<string, string>();
       for (const occ of occupants) {
-        if (occ.student_id && occ.student_name) {
+        if (occ?.student_id && occ?.student_name) {
           occupantMap.set(occ.student_id, occ.student_name);
         }
       }
@@ -194,6 +199,7 @@ export async function GET(req: NextRequest) {
       // If charges exist (finalized segment with billed students)
       if (charges && charges.length > 0) {
         for (const charge of charges) {
+          if (!charge) continue;
           const profile = charge.profiles as any;
           const studentName = profile?.full_name || occupantMap.get(charge.student_id) || charge.student_name || 'Student';
           exportRows.push({
@@ -213,6 +219,7 @@ export async function GET(req: NextRequest) {
       } else if (occupants && occupants.length > 0) {
         // Occupied segment with occupants but no charges generated yet (e.g. cycle in progress)
         for (const occ of occupants) {
+          if (!occ) continue;
           exportRows.push({
             room_number: roomNumber,
             cycle_status: cycleStatus,
@@ -240,17 +247,18 @@ export async function GET(req: NextRequest) {
           total_cost_rupees: totalCostRupees,
           segment_type: segmentType,
           student_name: segmentType === 'empty' ? 'Empty Room' : 'No Students',
-          student_charge_rupees: 0
+          student_charge_rupees: isClosed ? 0 : null
         });
       }
     }
 
-    // 7. Convert to CSV format
+    // 7. Convert to CSV format with UTF-8 BOM for Excel compatibility
     const csv = convertToCSV(exportRows);
 
     // 8. Set appropriate headers for file download
     const hostelName = (hostel as any).name || (hostel as any).hostel_name || 'Hostel';
-    const filename = `billing_${hostelName}_${validated.month}.csv`;
+    const sanitizedHostelName = hostelName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `billing_${sanitizedHostelName}_${validated.month}.csv`;
     const headers = new Headers();
     headers.set('Content-Type', 'text/csv; charset=utf-8');
     headers.set('Content-Disposition', `attachment; filename="${filename}"`);
@@ -261,7 +269,9 @@ export async function GET(req: NextRequest) {
       rows_exported: exportRows.length
     });
 
-    return new NextResponse(csv, {
+    // Prepend UTF-8 BOM (\uFEFF) so Excel on Windows properly displays Rupee symbols (₹)
+    const UTF8_BOM = '\uFEFF';
+    return new NextResponse(UTF8_BOM + csv, {
       status: 200,
       headers: headers
     });
@@ -292,65 +302,102 @@ export async function GET(req: NextRequest) {
 }
 
 /**
+ * Authoritative CSV headers for electricity billing export
+ * Exactly 11 columns matching data rows 1:1
+ */
+export const CSV_HEADERS = [
+  'Room Number',
+  'Cycle Status',
+  'Segment Start',
+  'Segment End',
+  'Consumption (kWh)',
+  'Rate (₹/kWh)',
+  'Occupants',
+  'Total Cost (₹)',
+  'Segment Type',
+  'Student Name',
+  'Student Charge (₹)'
+] as const;
+
+/**
  * Convert billing export rows to CSV format
  * 
+ * Guarantees:
+ * 1. Strict 1:1 field mapping with CSV_HEADERS (no trailing or unnamed columns).
+ * 2. RFC 4180 CRLF (\r\n) line terminators.
+ * 3. Sanitized entries (no trailing blank rows or empty orphaned records).
+ * 4. Preservation of 'Pending Reading' and 'Pending' for in-progress cycles.
+ * 
  * @param rows - Array of billing export rows
- * @returns CSV string with headers and data
+ * @returns CSV string with headers and data joined by CRLF
  */
-function convertToCSV(rows: BillingExportRow[]): string {
-  // CSV header
-  const headers = [
-    'Room Number',
-    'Cycle Status',
-    'Segment Start',
-    'Segment End',
-    'Consumption (kWh)',
-    'Rate (₹/kWh)',
-    'Occupants',
-    'Total Cost (₹)',
-    'Segment Type',
-    'Student Name',
-    'Student Charge (₹)'
-  ];
-
-  const csvLines = [headers.join(',')];
+export function convertToCSV(rows: BillingExportRow[]): string {
+  const headerLine = CSV_HEADERS.map(escapeCsvValue).join(',');
+  const lines: string[] = [headerLine];
 
   for (const row of rows) {
+    if (!row || !row.room_number || row.room_number.trim() === '') {
+      continue;
+    }
+
+    const consumptionStr = row.consumption_kwh != null
+      ? Number(row.consumption_kwh).toFixed(2)
+      : 'Pending';
+    const rateStr = row.rate_per_kwh != null
+      ? Number(row.rate_per_kwh).toFixed(4)
+      : '0.0000';
+    const occupantsStr = (row.occupants ?? 0).toString();
+    const totalCostStr = row.total_cost_rupees != null
+      ? Number(row.total_cost_rupees).toFixed(2)
+      : 'Pending';
+    const studentChargeStr = row.student_charge_rupees != null
+      ? Number(row.student_charge_rupees).toFixed(2)
+      : (row.cycle_status === 'Finalized' ? '0.00' : 'Pending');
+
     const values = [
       escapeCsvValue(row.room_number),
       escapeCsvValue(row.cycle_status),
       escapeCsvValue(row.segment_start),
       escapeCsvValue(row.segment_end),
-      row.consumption_kwh != null ? row.consumption_kwh.toFixed(2) : 'Pending',
-      row.rate_per_kwh.toFixed(4),
-      row.occupants.toString(),
-      row.total_cost_rupees != null ? row.total_cost_rupees.toFixed(2) : 'Pending',
+      consumptionStr,
+      rateStr,
+      occupantsStr,
+      totalCostStr,
       escapeCsvValue(row.segment_type),
       escapeCsvValue(row.student_name),
-      row.student_charge_rupees != null ? row.student_charge_rupees.toFixed(2) : 'Pending'
+      studentChargeStr
     ];
 
-    csvLines.push(values.join(','));
+    // Enforce 1:1 correspondence between headers and row values
+    if (values.length !== CSV_HEADERS.length) {
+      throw new Error(`CSV generation error: expected ${CSV_HEADERS.length} columns, got ${values.length}`);
+    }
+
+    lines.push(values.join(','));
   }
 
-  return csvLines.join('\n');
+  // Join lines with RFC 4180 standard CRLF without any trailing blank line
+  return lines.filter(l => l.trim().length > 0).join('\r\n');
 }
 
 /**
- * Escape CSV value to handle special characters
+ * Escape CSV value to handle special characters and line breaks
  * 
  * @param value - Value to escape
  * @returns Escaped CSV value
  */
-function escapeCsvValue(value: string): string {
-  if (value == null) {
+export function escapeCsvValue(value: unknown): string {
+  if (value === null || value === undefined) {
     return '';
   }
 
-  const stringValue = String(value);
+  let stringValue = String(value)
+    .replace(/\r\n/g, ' ')
+    .replace(/[\r\n]/g, ' ')
+    .trim();
 
-  // If value contains comma, quote, or newline, wrap in quotes and escape quotes
-  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+  // If value contains comma, quote, or semicolon, wrap in quotes and escape internal quotes
+  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes(';')) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
 

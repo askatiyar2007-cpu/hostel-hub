@@ -125,26 +125,28 @@ export function LoginForm({
             {/* Remember Me */}
             <label 
               htmlFor="login-remember-me"
-              className="flex items-center gap-2 cursor-pointer select-none group focus-within:ring-2 focus-within:ring-[#0D9488] rounded px-0.5"
+              className="flex items-center gap-2.5 cursor-pointer select-none group py-0.5"
             >
-              <input
-                type="checkbox"
-                id="login-remember-me"
-                name="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="sr-only"
-              />
-              <span
-                aria-hidden="true"
-                className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
-                  rememberMe
-                    ? 'bg-[#0D9488] border-[#0D9488] text-white shadow-xs'
-                    : 'border-teal-400/60 bg-[#022320] group-hover:border-teal-300 group-hover:bg-[#032E29]'
-                }`}
-              >
-                {rememberMe && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-              </span>
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  id="login-remember-me"
+                  name="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div
+                  aria-hidden="true"
+                  className={`h-4 w-4 shrink-0 rounded border flex items-center justify-center transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-teal-400 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-[#07534C] cursor-pointer ${
+                    rememberMe
+                      ? 'bg-[#0D9488] border-[#0D9488] text-white shadow-xs'
+                      : 'border-teal-400/70 bg-[#022320] group-hover:border-teal-300 group-hover:bg-[#032E29]'
+                  }`}
+                >
+                  {rememberMe && <Check className="h-3 w-3 stroke-[3]" />}
+                </div>
+              </div>
               <span className="text-teal-100/90 group-hover:text-white transition-colors font-medium">
                 Remember me
               </span>
