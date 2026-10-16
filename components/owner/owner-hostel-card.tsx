@@ -48,14 +48,13 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
   const occupancyRate = hostel.occupancy ?? (totalBeds > 0 ? Math.round((hostel.occupiedBeds / totalBeds) * 100) : 0);
 
   const locationText = [hostel.city, hostel.area || hostel.state].filter(Boolean).join(', ');
-  const hostelInitials = hostel.name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'HH';
 
   return (
     <div className="group relative z-10 flex flex-col overflow-hidden rounded-2xl border border-sky-200/80 bg-white shadow-[0_8px_30px_-4px_rgba(14,42,71,0.12),0_4px_12px_-2px_rgba(14,42,71,0.08)] hover:shadow-[0_16px_40px_-6px_rgba(14,42,71,0.16),0_6px_16px_-3px_rgba(14,42,71,0.1)] hover:border-sky-300 transition-all duration-200">
       {/* ========================================================================= */}
-      {/* 1. MEDIA / IMAGE REGION                                                   */}
+      {/* 1. MEDIA / IMAGE REGION (Strictly Bounded, Never Bleeds Outside)          */}
       {/* ========================================================================= */}
-      <div className="relative h-36 sm:h-38 w-full overflow-hidden shrink-0 border-b border-sky-100/90 bg-slate-900 select-none">
+      <div className="relative h-36 sm:h-38 w-full overflow-hidden shrink-0 border-b border-sky-100/90 bg-slate-50 select-none">
         {hostel.cover_image_url ? (
           <Link
             href={`/owner/hostels/${hostel.id}`}
@@ -70,36 +69,94 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
         ) : (
           <Link
             href={`/owner/hostels/${hostel.id}`}
-            className="relative block w-full h-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 group/img bg-gradient-to-br from-slate-900 via-[#0d2a38] to-slate-800"
+            className="relative block w-full h-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 group/img"
           >
-            {/* Subtle architectural grid pattern */}
-            <div 
-              className="absolute inset-0 opacity-15 pointer-events-none"
-              style={{
-                backgroundImage: 'radial-gradient(#38bdf8 1px, transparent 1px)',
-                backgroundSize: '16px 16px'
-              }}
-            />
-            {/* Ambient decorative glow */}
-            <div className="absolute -top-12 -right-12 w-36 h-36 bg-teal-500/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-sky-500/20 rounded-full blur-2xl pointer-events-none" />
+            {/* Architectural SVG Illustration strictly bounded inside this container */}
+            <svg
+              viewBox="0 0 400 180"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              preserveAspectRatio="xMidYMax slice"
+              className="w-full h-full absolute inset-0 pointer-events-none"
+            >
+              <defs>
+                <linearGradient id={`hostelSky-${hostel.id}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#dbeafe" />
+                  <stop offset="55%" stopColor="#eff6ff" />
+                  <stop offset="100%" stopColor="#f8fafc" />
+                </linearGradient>
+                <linearGradient id={`hostelFacade-${hostel.id}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f8fafc" />
+                  <stop offset="100%" stopColor="#e2e8f0" />
+                </linearGradient>
+              </defs>
 
-            {/* Elegant Monogram & Property Type Badge */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-2">
-              <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg flex items-center justify-center text-white transition-transform group-hover/img:scale-110">
-                <span className="font-bold text-base tracking-wider font-display text-teal-300">
-                  {hostelInitials}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-slate-300 text-[11px] font-medium tracking-wide">
-                <Building2 className="h-3 w-3 text-teal-400" />
-                <span>Hostel Property</span>
+              {/* Soft daylight sky */}
+              <rect width="400" height="180" fill={`url(#hostelSky-${hostel.id})`} />
+
+              {/* Soft drifting clouds */}
+              <path d="M40 50 Q55 35 75 42 Q90 30 115 40 Q135 32 145 50 Z" fill="#ffffff" fillOpacity="0.75" />
+              <path d="M260 40 Q275 28 295 35 Q315 25 335 34 Q350 28 360 42 Z" fill="#ffffff" fillOpacity="0.7" />
+
+              {/* Distant background skyline silhouettes */}
+              <path d="M80 180 V95 H125 V180 Z" fill="#cbd5e1" fillOpacity="0.4" />
+              <path d="M280 180 V105 H325 V180 Z" fill="#cbd5e1" fillOpacity="0.4" />
+
+              {/* Central Architectural Hostel Facade */}
+              <path d="M120 180 V70 H280 V180 Z" fill={`url(#hostelFacade-${hostel.id})`} stroke="#cbd5e1" strokeWidth="1" />
+              {/* Roof overhang & cornice */}
+              <rect x="114" y="66" width="172" height="7" rx="2" fill="#0f766e" />
+              
+              {/* Entrance Canopy */}
+              <rect x="180" y="148" width="40" height="32" rx="2" fill="#0f766e" fillOpacity="0.15" stroke="#0f766e" strokeWidth="0.8" />
+              <rect x="192" y="156" width="16" height="24" rx="1" fill="#0f766e" />
+
+              {/* Window Grid */}
+              <g fill="#0284c7" fillOpacity="0.18" stroke="#38bdf8" strokeWidth="0.6">
+                {/* Upper Floor */}
+                <rect x="136" y="84" width="20" height="16" rx="2" />
+                <rect x="168" y="84" width="20" height="16" rx="2" />
+                <rect x="212" y="84" width="20" height="16" rx="2" />
+                <rect x="244" y="84" width="20" height="16" rx="2" />
+
+                {/* Middle Floor */}
+                <rect x="136" y="112" width="20" height="16" rx="2" />
+                <rect x="168" y="112" width="20" height="16" rx="2" />
+                <rect x="212" y="112" width="20" height="16" rx="2" />
+                <rect x="244" y="112" width="20" height="16" rx="2" />
+              </g>
+
+              {/* Left & Right Hostel Wing Silhouettes */}
+              <path d="M60 180 V115 H120 V180 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1" />
+              <rect x="56" y="112" width="68" height="5" rx="1.5" fill="#0284c7" />
+              <g fill="#0284c7" fillOpacity="0.15" stroke="#38bdf8" strokeWidth="0.5">
+                <rect x="74" y="126" width="16" height="14" rx="2" />
+                <rect x="96" y="126" width="16" height="14" rx="2" />
+              </g>
+
+              <path d="M280 180 V115 H340 V180 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1" />
+              <rect x="276" y="112" width="68" height="5" rx="1.5" fill="#0284c7" />
+              <g fill="#0284c7" fillOpacity="0.15" stroke="#38bdf8" strokeWidth="0.5">
+                <rect x="288" y="126" width="16" height="14" rx="2" />
+                <rect x="310" y="126" width="16" height="14" rx="2" />
+              </g>
+
+              {/* Landscaping shrub silhouettes */}
+              <circle cx="50" cy="180" r="16" fill="#10b981" fillOpacity="0.22" />
+              <circle cx="350" cy="180" r="16" fill="#10b981" fillOpacity="0.22" />
+            </svg>
+
+            {/* Restrained Center Badge */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/95 backdrop-blur-xs border border-sky-200/80 shadow-xs text-slate-700 transition-transform group-hover/img:scale-105">
+                <Building2 className="h-4 w-4 text-teal-600" />
+                <span className="text-xs font-semibold tracking-wide">Hostel Property</span>
               </div>
             </div>
           </Link>
         )}
 
-        {/* Status Badge in the top-right corner of the media region */}
+        {/* Status Badge in the top-right corner of the media region (never collides with text) */}
         {hostel.status && hostel.status.toLowerCase() !== 'pending' && hostel.status.toLowerCase() !== 'approval pending' && (
           <div className="absolute top-3 right-3 z-20 drop-shadow-xs">
             <StatusBadge status={hostel.status} />
@@ -108,22 +165,25 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. BODY CONTENT                                                           */}
+      {/* 2. INFORMATION REGION (Solid White, 100% Isolated, Zero Overlap)           */}
       {/* ========================================================================= */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col">
-        {/* Title & Location Header */}
-        <div className="mb-2">
+      <div className="relative z-10 flex flex-col flex-1 p-4 sm:p-5 bg-white">
+        {/* Hostel Name & Location */}
+        <div className="mb-3 min-w-0">
           <Link
             href={`/owner/hostels/${hostel.id}`}
-            className="block text-slate-900 hover:text-teal-700 transition-colors cursor-pointer"
+            className="group/title block cursor-pointer focus-visible:outline-none focus-visible:underline"
           >
-            <h3 className="font-bold text-lg font-display tracking-tight line-clamp-1">
+            <h3 
+              className="text-lg sm:text-xl font-bold text-slate-900 leading-snug truncate group-hover/title:text-teal-700 transition-colors" 
+              title={hostel.name}
+            >
               {hostel.name}
             </h3>
           </Link>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-teal-600" />
-            <span className="truncate">{locationText || 'Location not specified'}</span>
+            <span className="truncate font-medium">{locationText || 'Location not specified'}</span>
           </div>
         </div>
 
@@ -138,7 +198,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
           </p>
         )}
 
-        {/* Room & Bed Statistics Row */}
+        {/* Room & Bed Statistics Row - Ultra Compact Row */}
         <div className="flex items-center justify-between mb-3.5 border-y border-slate-100 py-2.5">
           <div className="flex flex-col min-w-0 text-left">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Rooms</span>
