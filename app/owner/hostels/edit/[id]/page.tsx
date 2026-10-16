@@ -106,16 +106,16 @@ export default function EditHostelPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
+      <div>
         <div className="flex items-center gap-4 mb-2">
           <Link href="/owner/hostels" className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Hostel</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Edit Hostel</h1>
         </div>
-        <p className="text-gray-600 ml-10">Update hostel details and configuration.</p>
+        <p className="text-gray-600 ml-12 text-sm">Update hostel details and configuration.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

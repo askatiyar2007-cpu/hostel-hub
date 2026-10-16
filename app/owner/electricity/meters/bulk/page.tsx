@@ -330,7 +330,7 @@ function BulkMeterCreationContent() {
   const selectedHostelName = hostels.find(h => h.id === selectedHostelId)?.name || 'Selected Hostel';
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Header with Back button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

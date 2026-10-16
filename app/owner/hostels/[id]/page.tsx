@@ -152,9 +152,8 @@ export default function HostelDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent p-4 sm:p-6 md:p-8 lg:p-10">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Back Button */}
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Back Button */}
         <Link href="/owner/hostels" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors mb-4">
           <ArrowLeft size={18} />
           <span className="text-sm font-medium">Back to Hostels</span>
@@ -319,6 +318,5 @@ export default function HostelDetailsPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

@@ -123,21 +123,29 @@ export function LoginForm({
           {/* 16–20px spacing between password input and remember/forgot row */}
           <div className="flex items-center justify-between pt-4 text-xs sm:text-[13px]">
             {/* Remember Me */}
-            <label className="flex items-center gap-2 cursor-pointer select-none group">
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={rememberMe}
-                onClick={() => setRememberMe(!rememberMe)}
-                className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded transition-colors ${
+            <label 
+              htmlFor="login-remember-me"
+              className="flex items-center gap-2 cursor-pointer select-none group focus-within:ring-2 focus-within:ring-[#0D9488] rounded px-0.5"
+            >
+              <input
+                type="checkbox"
+                id="login-remember-me"
+                name="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
                   rememberMe
-                    ? 'bg-[#0D9488] border border-[#0D9488] text-white'
-                    : 'border border-teal-400/30 bg-[#032B28] group-hover:border-teal-300'
-                } focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D9488] cursor-pointer`}
+                    ? 'bg-[#0D9488] border-[#0D9488] text-white shadow-xs'
+                    : 'border-teal-400/60 bg-[#022320] group-hover:border-teal-300 group-hover:bg-[#032E29]'
+                }`}
               >
                 {rememberMe && <Check className="h-3.5 w-3.5 stroke-[3]" />}
-              </button>
-              <span className="text-teal-100/80 group-hover:text-white transition-colors font-medium">
+              </span>
+              <span className="text-teal-100/90 group-hover:text-white transition-colors font-medium">
                 Remember me
               </span>
             </label>

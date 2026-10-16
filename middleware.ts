@@ -20,7 +20,7 @@ function readAccountState(value: unknown): AccountState | null {
     || (typeof record.role !== 'string' && record.role !== null)
     || typeof record.missing_step !== 'string'
     || typeof record.is_complete !== 'boolean'
-    || typeof record.password_set !== 'boolean') {
+    || (typeof record.password_set !== 'boolean' && record.password_set !== undefined)) {
     return null;
   }
 
@@ -29,7 +29,7 @@ function readAccountState(value: unknown): AccountState | null {
     role: record.role,
     missing_step: record.missing_step,
     is_complete: record.is_complete,
-    password_set: record.password_set,
+    password_set: typeof record.password_set === 'boolean' ? record.password_set : false,
   };
 }
 
@@ -138,15 +138,53 @@ export async function middleware(req: NextRequest) {
         p_email: user.email,
       });
 
-      if (!error && data) {
+      if (error || !data) {
+        console.error('[Middleware] Account state lookup failed for:', user.email, error);
+        if (isProtectedRoute) {
+          const url = req.nextUrl.clone();
+          url.pathname = '/auth/login';
+          return NextResponse.redirect(url);
+        }
+      } else {
         const accountState = readAccountState(data);
         
+        // Fail closed if state is malformed or does not match authenticated user
+        if (isProtectedRoute && (!accountState || accountState.user_id !== user.id)) {
+          console.log('[Middleware] Failing closed: account state identity mismatch or invalid for:', user.email);
+          const url = req.nextUrl.clone();
+          url.pathname = '/auth/login';
+          return NextResponse.redirect(url);
+        }
+
         // Block dashboard access for incomplete accounts
-        if (isProtectedRoute && (!accountState || accountState.password_set === false || !accountState.is_complete)) {
+        if (isProtectedRoute && (!accountState?.is_complete || accountState?.password_set === false)) {
           console.log('[Middleware] Blocking dashboard access for incomplete account:', user.email);
           const url = req.nextUrl.clone();
           url.pathname = '/auth/login';
           return NextResponse.redirect(url);
+        }
+
+        // Strict role authorization: prevent cross-role dashboard access
+        if (isProtectedRoute && accountState && accountState.is_complete) {
+          const role = accountState.role;
+          const isOwnerRoute = pathname.startsWith('/owner');
+          const isStudentRoute = pathname.startsWith('/student');
+          const isAdminRoute = pathname.startsWith('/admin');
+          const isParentRoute = pathname.startsWith('/parent');
+
+          const isAuthorized =
+            (isOwnerRoute && (role === 'owner' || role === 'hostel_owner')) ||
+            (isStudentRoute && role === 'student') ||
+            (isAdminRoute && (role === 'admin' || role === 'super_admin')) ||
+            (isParentRoute && role === 'parent');
+
+          if (!isAuthorized) {
+            console.log(`[Middleware] Role mismatch: ${role} denied access to ${pathname}`);
+            const destination = (role && dashboardPathForRole(role)) || '/auth/login';
+            const url = req.nextUrl.clone();
+            url.pathname = destination;
+            return NextResponse.redirect(url);
+          }
         }
 
         // If completed account visits onboarding pages, redirect to their role dashboard
@@ -156,11 +194,14 @@ export async function middleware(req: NextRequest) {
           url.pathname = destination;
           return NextResponse.redirect(url);
         }
-      } else if (error) {
-        console.error('[Middleware] Account state lookup failed:', error);
       }
     } catch (err) {
       console.error('[Middleware] Unexpected error checking account state:', err);
+      if (isProtectedRoute) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/auth/login';
+        return NextResponse.redirect(url);
+      }
     }
   }
 

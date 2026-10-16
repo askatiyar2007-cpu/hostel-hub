@@ -250,7 +250,7 @@ function ReadingEntryContent() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="max-w-2xl mx-auto py-12">
         <p className="text-center text-gray-500">Loading...</p>
       </div>
     );
@@ -259,7 +259,7 @@ function ReadingEntryContent() {
   // Show meter selector if no meter selected yet
   if (!selectedMeterId) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Select Meter</CardTitle>

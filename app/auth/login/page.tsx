@@ -163,10 +163,10 @@ function AuthContent() {
     if (reason === 'no-account') {
       setAuthMessage({
         variant: 'error',
-        title: 'Account not found',
-        description: 'No HostelHub account exists with this Google email. Please create an account first.',
+        title: 'Account Not Found',
+        description: 'This Google account is not associated with a HostelHub account. Please create an account from the Sign Up tab first.',
         action: {
-          label: 'Create account',
+          label: 'Go to Sign Up',
           onClick: () => {
             setAuthMessage(null);
             setActiveTab('signup');
@@ -194,10 +194,13 @@ function AuthContent() {
   }, [searchParams, router]);
 
   // Handle Login submission
-  const handleLoginSubmit = async (email: string, pass: string, _rememberMe: boolean) => {
+  const handleLoginSubmit = async (email: string, pass: string, rememberMe: boolean) => {
     setAuthMessage(null);
     setLoading(true);
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('hostelhub_remember_me', rememberMe ? 'true' : 'false');
+      }
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password: pass,

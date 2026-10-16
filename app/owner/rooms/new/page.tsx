@@ -106,10 +106,10 @@ function AddRoomForm() {
   };
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-display text-foreground mb-2">Create Room</h1>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground mb-1">Create Room</h1>
         <p className="text-sm text-muted-foreground">Add a room and generate bed records for one of your hostels.</p>
       </div>
 

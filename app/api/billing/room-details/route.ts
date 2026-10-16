@@ -11,22 +11,35 @@ interface BillingSegment {
   id: string;
   start_date: string;
   end_date: string | null;
+  billing_month: string;
+  created_at?: string;
+  closed_at?: string | null;
   start_reading_id: string | null;
   end_reading_id: string | null;
   meter_id: string | null;
   start_reading_value: number | null;
+  start_reading_timestamp: string | null;
+  start_reading_reason: string | null;
   end_reading_value: number | null;
+  end_reading_timestamp: string | null;
+  end_reading_reason: string | null;
   consumption_units: number | null;
   rate_per_unit: number;
   total_cost_paise: number | null;
   occupant_count: number;
   segment_type: 'occupied' | 'empty';
+  is_current_month?: boolean;
 }
 
 interface SegmentOccupant {
   student_id: string;
   student_name: string;
   student_email: string | null;
+  allocation_id?: string;
+  charge_amount_paise?: number | null;
+  fee_id?: string | null;
+  fee_status?: string | null;
+  fee_due_date?: string | null;
 }
 
 interface StudentCharge {
@@ -184,6 +197,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Fetch billing segments with occupants and both readings using explicit foreign keys
+    // Query all segments for this room ordered by start_date DESC to display full historical timeline
     const { data: segments, error: segmentsError } = await supabaseServer
       .from('billing_segments')
       .select(`
@@ -198,61 +212,125 @@ export async function GET(req: NextRequest) {
         start_reading_id,
         end_reading_id,
         meter_id,
+        billing_month,
+        created_at,
+        closed_at,
         start_reading:meter_readings!billing_segments_start_reading_id_fkey(
-          reading_value
+          id,
+          reading_value,
+          reading_timestamp,
+          reason
         ),
         end_reading:meter_readings!billing_segments_end_reading_id_fkey(
-          reading_value
+          id,
+          reading_value,
+          reading_timestamp,
+          reason
         ),
         segment_occupants (
           student_id,
           student_name,
-          student_email
+          student_email,
+          allocation_id
         )
       `)
       .eq('room_id', validated.room_id)
-      .eq('billing_month', validated.billing_month)
-      .order('start_date', { ascending: true });
+      .order('start_date', { ascending: false });
 
     if (segmentsError) {
       console.error('Error fetching segments:', segmentsError);
       return NextResponse.json({ error: 'Failed to fetch billing segments' }, { status: 500 });
     }
 
-    // Transform segments to clean structure
-    const segmentsWithReadings = (segments || []).map((segment: any) => ({
-      id: segment.id,
-      start_date: segment.start_date,
-      end_date: segment.end_date,
-      start_reading_id: segment.start_reading_id,
-      end_reading_id: segment.end_reading_id,
-      meter_id: segment.meter_id,
-      start_reading_value: segment.start_reading?.reading_value || null,
-      end_reading_value: segment.end_reading?.reading_value || null,
-      consumption_units: segment.consumption_units,
-      rate_per_unit: segment.rate_per_unit,
-      total_cost_paise: segment.total_cost_paise,
-      occupant_count: segment.occupant_count,
-      segment_type: segment.segment_type,
-      occupants: segment.segment_occupants || []
-    }));
-
-    // Fetch student charges for this room and month
+    // Fetch all student electricity charges for this room
     const { data: charges, error: chargesError } = await supabaseServer
       .from('student_electricity_charges')
       .select(`
+        id,
         student_id,
         charge_amount_paise,
-        segment_id
+        segment_id,
+        billing_month
       `)
-      .eq('room_id', validated.room_id)
-      .eq('billing_month', validated.billing_month);
+      .eq('room_id', validated.room_id);
 
     if (chargesError) {
       console.error('Error fetching charges:', chargesError);
     }
 
-    // Resolve student names using segment_occupants or currentOccupants
+    // Fetch student fees for this hostel to resolve fee/payment status
+    const { data: studentFees } = await supabaseServer
+      .from('student_fees')
+      .select('id, student_id, billing_period, status, due_date')
+      .eq('hostel_id', room.hostel_id);
+
+    const feeMap = new Map<string, { id: string; status: string; due_date: string }>();
+    if (studentFees) {
+      for (const fee of studentFees) {
+        feeMap.set(`${fee.student_id}:${fee.billing_period}`, {
+          id: fee.id,
+          status: fee.status,
+          due_date: fee.due_date
+        });
+      }
+    }
+
+    // Map charges by segment_id + student_id
+    const chargeMap = new Map<string, number>();
+    if (charges) {
+      for (const c of charges) {
+        chargeMap.set(`${c.segment_id}:${c.student_id}`, c.charge_amount_paise);
+      }
+    }
+
+    // Transform segments to comprehensive structure
+    const segmentsWithReadings = (segments || []).map((segment: any) => {
+      const startR = Array.isArray(segment.start_reading) ? segment.start_reading[0] : segment.start_reading;
+      const endR = Array.isArray(segment.end_reading) ? segment.end_reading[0] : segment.end_reading;
+
+      const occupantsWithCharges = (segment.segment_occupants || []).map((occ: any) => {
+        const chargePaise = chargeMap.get(`${segment.id}:${occ.student_id}`);
+        const feeInfo = feeMap.get(`${occ.student_id}:${segment.billing_month}`);
+
+        return {
+          student_id: occ.student_id,
+          student_name: occ.student_name,
+          student_email: occ.student_email,
+          allocation_id: occ.allocation_id,
+          charge_amount_paise: chargePaise !== undefined ? chargePaise : null,
+          fee_id: feeInfo?.id || null,
+          fee_status: feeInfo?.status || (chargePaise !== undefined ? 'billed' : 'pending'),
+          fee_due_date: feeInfo?.due_date || null
+        };
+      });
+
+      return {
+        id: segment.id,
+        start_date: segment.start_date,
+        end_date: segment.end_date,
+        billing_month: segment.billing_month,
+        created_at: segment.created_at,
+        closed_at: segment.closed_at,
+        start_reading_id: segment.start_reading_id,
+        end_reading_id: segment.end_reading_id,
+        meter_id: segment.meter_id,
+        start_reading_value: startR?.reading_value != null ? parseFloat(startR.reading_value) : null,
+        start_reading_timestamp: startR?.reading_timestamp || null,
+        start_reading_reason: startR?.reason || null,
+        end_reading_value: endR?.reading_value != null ? parseFloat(endR.reading_value) : null,
+        end_reading_timestamp: endR?.reading_timestamp || null,
+        end_reading_reason: endR?.reason || null,
+        consumption_units: segment.consumption_units != null ? parseFloat(segment.consumption_units) : null,
+        rate_per_unit: parseFloat(segment.rate_per_unit),
+        total_cost_paise: segment.total_cost_paise,
+        occupant_count: segment.occupant_count,
+        segment_type: segment.segment_type,
+        occupants: occupantsWithCharges,
+        is_current_month: segment.billing_month === validated.billing_month
+      };
+    });
+
+    // Resolve student charges list for backward compatibility
     let studentCharges: StudentCharge[] = [];
     if (charges && charges.length > 0) {
       const studentNameMap = new Map<string, string>();

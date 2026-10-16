@@ -152,9 +152,9 @@ export default function EditRoomPage() {
   const availableBeds = roomData?.capacity ? roomData.capacity - occupiedCount : 0;
 
   return (
-    <div className="p-6 md:p-8 lg:p-10 max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="flex items-start gap-4">
           <Link href="/owner/rooms" className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors mt-1">
             <ArrowLeft size={20} />

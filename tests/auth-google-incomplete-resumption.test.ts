@@ -46,7 +46,7 @@ describe('Google OAuth Incomplete Account Resumption (Issue B)', () => {
     vi.clearAllMocks();
   });
 
-  it('restarts incomplete Google signup at /auth/select-role when intent is login', async () => {
+  it('rejects incomplete or unassociated Google account at /auth/login?reason=no-account when intent is login', async () => {
     const { GET } = await import('@/app/auth/callback/route');
 
     // Mock account state returning incomplete with password_set=false
@@ -64,20 +64,7 @@ describe('Google OAuth Incomplete Account Resumption (Issue B)', () => {
           error: null,
         });
       }
-      if (name === 'reset_incomplete_google_signup') {
-        return Promise.resolve({
-          data: { success: true },
-          error: null,
-        });
-      }
       return Promise.resolve({ data: null, error: null });
-    });
-
-    const mockDelete = vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    });
-    mockFrom.mockReturnValue({
-      delete: mockDelete,
     });
 
     const req = new NextRequest(
@@ -92,10 +79,45 @@ describe('Google OAuth Incomplete Account Resumption (Issue B)', () => {
     const res = await GET(req);
     expect(res.status).toBe(307);
     const location = res.headers.get('location') || '';
+    expect(location).toContain('/auth/login?reason=no-account');
+  });
+
+  it('restarts incomplete Google signup at /auth/select-role when intent is signup and role is missing', async () => {
+    const { GET } = await import('@/app/auth/callback/route');
+
+    mockRpc.mockImplementation((name, _params) => {
+      if (name === 'get_account_state') {
+        return Promise.resolve({
+          data: {
+            user_id: 'test-user-id',
+            profile_id: 'profile-uuid',
+            role: null,
+            missing_step: 'role',
+            is_complete: false,
+            password_set: false,
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const req = new NextRequest(
+      'https://localhost:3000/auth/callback?code=mock-code&transaction=valid-signup-tx',
+      {
+        headers: {
+          cookie: 'hh_oauth_cb_tx=valid-signup-tx',
+        },
+      }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location') || '';
     expect(location).toContain('/auth/select-role');
   });
 
-  it('restarts incomplete Google signup at /auth/select-role when intent is signup', async () => {
+  it('routes incomplete Google signup to /auth/setup-password when intent is signup and password is missing', async () => {
     const { GET } = await import('@/app/auth/callback/route');
 
     mockRpc.mockImplementation((name, _params) => {
@@ -112,20 +134,7 @@ describe('Google OAuth Incomplete Account Resumption (Issue B)', () => {
           error: null,
         });
       }
-      if (name === 'reset_incomplete_google_signup') {
-        return Promise.resolve({
-          data: { success: true },
-          error: null,
-        });
-      }
       return Promise.resolve({ data: null, error: null });
-    });
-
-    const mockDelete = vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    });
-    mockFrom.mockReturnValue({
-      delete: mockDelete,
     });
 
     const req = new NextRequest(

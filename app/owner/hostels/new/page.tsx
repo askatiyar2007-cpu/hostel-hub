@@ -68,8 +68,8 @@ export default function AddHostelPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <h1 className="mb-8 text-3xl font-semibold tracking-tight md:text-4xl font-display text-foreground">
+    <div className="mx-auto max-w-3xl space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight font-display text-foreground">
         Add New Hostel
       </h1>
 

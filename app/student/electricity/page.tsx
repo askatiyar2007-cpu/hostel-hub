@@ -165,7 +165,7 @@ export default function StudentElectricityPage() {
   const tariffRate = activeCycle?.rate_per_unit || charges[0]?.rate_per_unit || 10.0;
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-4 max-w-4xl">
+    <div className="max-w-4xl mx-auto space-y-4">
       {/* Header & Month Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-100">
         <div>
