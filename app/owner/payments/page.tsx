@@ -76,7 +76,7 @@ export default function OwnerPaymentsDashboard() {
       // 3. Fetch Student Fees for these hostels
       const { data: feesData, error: feesError } = await supabase
         .from('student_fees')
-        .select('id, amount_due, due_date, status, student_id, hostel_id, billing_period, allocation_id')
+        .select('id, amount, amount_due, due_date, status, student_id, hostel_id, month_year, allocation_id')
         .in('hostel_id', hostelIds)
         .order('due_date', { ascending: false });
 
@@ -89,6 +89,7 @@ export default function OwnerPaymentsDashboard() {
 
       // 4. Batch Fetch Students & Profiles
       let studentsData: any[] = [];
+      let directProfilesData: any[] = [];
       if (studentIds.length > 0) {
         const { data, error } = await supabase
           .from('students')
@@ -107,8 +108,15 @@ export default function OwnerPaymentsDashboard() {
             )
           `)
           .in('id', studentIds);
-        if (error) throw error;
+        if (error) console.warn('[Payments] students query warning:', error);
         studentsData = data ?? [];
+
+        // Also fetch from profiles directly in case student_id is a profile_id
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, user_id, full_name, email, phone_number')
+          .in('id', studentIds);
+        directProfilesData = profs ?? [];
       }
 
       // 5. Batch Fetch Room Allocations & Rooms
@@ -145,11 +153,13 @@ export default function OwnerPaymentsDashboard() {
       // Create maps for fast O(1) lookups
       const hostelsMap = new Map(hostelsData.map((h) => [h.id, h]));
       const studentsMap = new Map(studentsData.map((s) => [s.id, s]));
+      const directProfilesMap = new Map(directProfilesData.map((p) => [p.id, p]));
       const allocationsMap = new Map(allocationsData.map((a) => [a.id, a]));
 
       // Map backend fields to local format with frontend joins
       const formattedFees = (feesData ?? []).map((fee: any) => {
         const student = studentsMap.get(fee.student_id) || null;
+        const directProfile = directProfilesMap.get(fee.student_id) || null;
         const allocation = allocationsMap.get(fee.allocation_id) || null;
         const hostel = hostelsMap.get(fee.hostel_id) || null;
         const feePayments = paymentsData.filter((p: any) => p.fee_id === fee.id);
@@ -159,11 +169,40 @@ export default function OwnerPaymentsDashboard() {
           ? feePayments.find((p: any) => p.payment_status === 'pending_verification') || feePayments[0]
           : null;
 
+        // Resolve student profile robustly
+        const studentProfile = student?.profiles || (directProfile ? {
+          id: directProfile.id,
+          user_id: directProfile.user_id,
+          full_name: directProfile.full_name || allocation?.student_name || 'Student',
+          email: directProfile.email || allocation?.student_email || '—',
+          phone_number: directProfile.phone_number || allocation?.student_phone || '—'
+        } : (allocation?.student_name ? {
+          id: fee.student_id,
+          user_id: fee.student_id,
+          full_name: allocation.student_name,
+          email: allocation.student_email || '—',
+          phone_number: allocation.student_phone || '—'
+        } : null));
+
+        const resolvedStudent = student ? {
+          ...student,
+          profiles: student.profiles || studentProfile
+        } : (studentProfile ? {
+          id: fee.student_id,
+          profile_id: studentProfile.id,
+          college: null,
+          course: null,
+          year: null,
+          profiles: studentProfile
+        } : null);
+
+        const period = fee.month_year || (fee.due_date ? new Date(fee.due_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Monthly Rent');
+
         return {
           ...fee,
-          amount: fee.amount_due,
-          billing_period: fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-          students: student,
+          amount: fee.amount_due ?? fee.amount,
+          billing_period: period,
+          students: resolvedStudent,
           room_allocations: allocation,
           hostels: hostel,
           payments: feePayments,

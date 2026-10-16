@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import { 
@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   FileText, 
   CreditCard, 
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,9 +40,23 @@ export function OwnerNotifications() {
   const qc = useQueryClient();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+
+  // Initialize dismissed IDs from localStorage once user is known
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem(`hostelhub_dismissed_owner_notifs_${user.id}`);
+      if (stored) {
+        setDismissedIds(JSON.parse(stored));
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, [user?.id]);
 
   // Fetch real actionable notifications for owner
-  const { data: notifications = [], isLoading } = useQuery<ActionNotification[]>({
+  const { data: rawNotifications = [], isLoading } = useQuery<ActionNotification[]>({
     queryKey: ['owner-actionable-notifications', user?.id],
     enabled: !!user?.id,
     refetchInterval: 20000, // Refresh every 20s
@@ -130,35 +145,32 @@ export function OwnerNotifications() {
           console.warn('[OwnerNotifications] Error querying payments:', err);
         }
 
-        // 4. Fetch pending complaints
+        // 4. Fetch open/active complaints (without invalid rooms join)
         try {
-          const { data: complaints } = await supabase
+          const { data: complaints, error: compErr } = await supabase
             .from('complaints')
-            .select(`
-              id,
-              title,
-              created_at,
-              status,
-              hostel_id,
-              room:rooms(room_number)
-            `)
+            .select('id, title, created_at, status, hostel_id')
             .in('hostel_id', hostelIds)
-            .eq('status', 'pending')
+            .in('status', ['open', 'in_progress'])
             .order('created_at', { ascending: false })
             .limit(5);
 
-          (complaints || []).forEach((c: any) => {
-            const hName = hostelMap.get(c.hostel_id) || 'Hostel';
-            items.push({
-              id: `comp-${c.id}`,
-              title: 'New Student Complaint',
-              message: `"${c.title}" reported at ${hName}.`,
-              type: 'complaint',
-              link: '/owner/complaints',
-              created_at: c.created_at || new Date().toISOString(),
-              read: false,
+          if (compErr) {
+            console.warn('[OwnerNotifications] Complaints query error:', compErr);
+          } else {
+            (complaints || []).forEach((c: any) => {
+              const hName = hostelMap.get(c.hostel_id) || 'Hostel';
+              items.push({
+                id: `comp-${c.id}`,
+                title: 'Active Student Complaint',
+                message: `"${c.title}" reported at ${hName}.`,
+                type: 'complaint',
+                link: '/owner/complaints',
+                created_at: c.created_at || new Date().toISOString(),
+                read: false,
+              });
             });
-          });
+          }
         } catch (err) {
           console.warn('[OwnerNotifications] Error querying complaints:', err);
         }
@@ -195,24 +207,57 @@ export function OwnerNotifications() {
     },
   });
 
+  // Filter out any dismissed IDs
+  const notifications = rawNotifications.filter((n) => !dismissedIds.includes(n.id));
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAllAsRead = useMutation({
-    mutationFn: async () => {
+  // Dismiss a single notification
+  const handleDismiss = useCallback(
+    (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      setDismissedIds((prev) => {
+        const next = Array.from(new Set([...prev, id]));
+        if (user?.id && typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(`hostelhub_dismissed_owner_notifs_${user.id}`, JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
+
+      // If it's a real record in notifications table, mark read in DB as well
+      if (id.startsWith('notif-')) {
+        const rawId = id.replace('notif-', '');
+        supabase.from('notifications').update({ read: true }).eq('id', rawId).then(() => {});
+      }
+    },
+    [user?.id]
+  );
+
+  // Clear all notifications
+  const handleClearAll = useCallback(async () => {
+    const allIds = rawNotifications.map((n) => n.id);
+    const updated = Array.from(new Set([...dismissedIds, ...allIds]));
+    setDismissedIds(updated);
+
+    if (user?.id && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`hostelhub_dismissed_owner_notifs_${user.id}`, JSON.stringify(updated));
+      } catch {}
+
       try {
         await supabase
           .from('notifications')
           .update({ read: true })
-          .eq('user_id', user!.id)
+          .eq('user_id', user.id)
           .eq('read', false);
       } catch (err) {
         // Non-critical
       }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['owner-actionable-notifications', user?.id] });
-    },
-  });
+    }
+
+    qc.invalidateQueries({ queryKey: ['owner-actionable-notifications', user?.id] });
+  }, [rawNotifications, dismissedIds, user?.id, qc]);
 
   const getIcon = (type: ActionNotification['type']) => {
     switch (type) {
@@ -275,10 +320,10 @@ export function OwnerNotifications() {
               </span>
             )}
           </div>
-          {unreadCount > 0 && (
+          {notifications.length > 0 && (
             <button 
-              onClick={() => markAllAsRead.mutate()}
-              className="text-xs text-teal-600 hover:text-teal-700 font-semibold cursor-pointer transition-colors"
+              onClick={handleClearAll}
+              className="text-xs text-teal-600 hover:text-teal-700 font-semibold cursor-pointer transition-colors hover:underline"
             >
               Clear all
             </button>
@@ -304,13 +349,13 @@ export function OwnerNotifications() {
               <div 
                 key={notif.id} 
                 className={cn(
-                  "p-3.5 flex gap-3 hover:bg-slate-50 transition-colors cursor-pointer group",
+                  "p-3.5 flex items-start gap-3 hover:bg-slate-50 transition-colors cursor-pointer group relative",
                   !notif.read ? "bg-teal-50/20" : "opacity-80"
                 )}
                 onClick={() => handleItemClick(notif)}
               >
                 {getIcon(notif.type)}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-6">
                   <div className="flex items-center justify-between gap-1">
                     <p className={cn("text-xs text-slate-900 mb-0.5 truncate", !notif.read && "font-bold text-slate-900")}>
                       {notif.title}
@@ -324,6 +369,17 @@ export function OwnerNotifications() {
                     {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                   </p>
                 </div>
+
+                {/* Individual dismiss button */}
+                <button
+                  type="button"
+                  onClick={(e) => handleDismiss(e, notif.id)}
+                  title="Dismiss notification"
+                  className="absolute top-3 right-3 h-6 w-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer opacity-70 group-hover:opacity-100"
+                  aria-label="Dismiss notification"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             ))
           )}

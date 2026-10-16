@@ -22,6 +22,17 @@ interface FeeWithDetails {
   student_name: string;
   student_email: string;
   hostel_name: string;
+  room_number?: string;
+}
+
+function formatFeeMonth(my: string) {
+  if (!my || my === '—') return 'Monthly Rent';
+  if (/^\d{4}-\d{2}$/.test(my)) {
+    const [year, month] = my.split('-');
+    const date = new Date(Number(year), Number(month) - 1, 1);
+    return `${date.toLocaleString('en-US', { month: 'short' })} ${year} Rent`;
+  }
+  return `Rent (${my})`;
 }
 
 export default function OwnerBillingPage() {
@@ -64,10 +75,46 @@ export default function OwnerBillingPage() {
 
       if (feesError) throw feesError;
 
-      // 3. Batch fetch students to get profile names
+      // 3. Batch fetch allocations, profiles, and students
       const studentIds = Array.from(new Set((feesData || []).map(f => f.student_id).filter(Boolean)));
-      const studentsMap = new Map<string, { full_name: string; email: string }>();
+      const allocationIds = Array.from(new Set((feesData || []).map(f => f.allocation_id).filter(Boolean)));
 
+      const allocationsMap = new Map<string, { student_name?: string; student_email?: string; room_number?: string }>();
+      if (allocationIds.length > 0) {
+        const { data: allocationsData } = await supabase
+          .from('room_allocations')
+          .select('id, student_name, student_email, room:rooms(room_number)')
+          .in('id', allocationIds);
+
+        if (allocationsData) {
+          allocationsData.forEach((a: any) => {
+            allocationsMap.set(a.id, {
+              student_name: a.student_name,
+              student_email: a.student_email,
+              room_number: a.room?.room_number,
+            });
+          });
+        }
+      }
+
+      const profilesMap = new Map<string, { full_name: string; email: string }>();
+      if (studentIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, user_id, full_name, email')
+          .in('id', studentIds);
+
+        if (profilesData) {
+          profilesData.forEach((p: any) => {
+            profilesMap.set(p.id, { full_name: p.full_name, email: p.email });
+            if (p.user_id) {
+              profilesMap.set(p.user_id, { full_name: p.full_name, email: p.email });
+            }
+          });
+        }
+      }
+
+      const studentsMap = new Map<string, { full_name: string; email: string }>();
       if (studentIds.length > 0) {
         const { data: studentsData } = await supabase
           .from('students')
@@ -85,7 +132,22 @@ export default function OwnerBillingPage() {
       }
 
       const formatted: FeeWithDetails[] = (feesData || []).map((f: any) => {
+        const allocInfo = allocationsMap.get(f.allocation_id);
+        const profileInfo = profilesMap.get(f.student_id);
         const studentInfo = studentsMap.get(f.student_id);
+
+        const studentName =
+          allocInfo?.student_name ||
+          profileInfo?.full_name ||
+          studentInfo?.full_name ||
+          (allocInfo?.room_number ? `Resident (Room ${allocInfo.room_number})` : 'Student');
+
+        const studentEmail =
+          allocInfo?.student_email ||
+          profileInfo?.email ||
+          studentInfo?.email ||
+          '—';
+
         return {
           id: f.id,
           month_year: f.month_year || '—',
@@ -98,9 +160,10 @@ export default function OwnerBillingPage() {
           payment_method: f.payment_method,
           hostel_id: f.hostel_id,
           student_id: f.student_id,
-          student_name: studentInfo?.full_name || 'Student',
-          student_email: studentInfo?.email || '—',
+          student_name: studentName,
+          student_email: studentEmail,
           hostel_name: hostelsMap.get(f.hostel_id) || 'Hostel',
+          room_number: allocInfo?.room_number,
         };
       });
 
@@ -232,13 +295,15 @@ export default function OwnerBillingPage() {
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-bold text-slate-900">{fee.student_name}</p>
-                      <p className="text-[11px] text-slate-500">{fee.hostel_name}</p>
+                      <p className="text-[11px] text-slate-500">
+                        {fee.room_number ? `Room ${fee.room_number} • ${fee.hostel_name}` : fee.hostel_name}
+                      </p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-slate-700 font-medium">Rent ({fee.month_year})</span>
+                    <span className="text-slate-700 font-medium">{formatFeeMonth(fee.month_year)}</span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-slate-900">₹{fee.amount_due}</td>
+                  <td className="px-6 py-4 font-bold text-slate-900">₹{Number(fee.amount_due).toLocaleString('en-IN')}</td>
                   <td className="px-6 py-4 text-slate-600">
                     {new Date(fee.due_date).toLocaleDateString()}
                   </td>

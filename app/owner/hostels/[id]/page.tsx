@@ -198,14 +198,16 @@ export default function HostelDetailsPage() {
             {/* Statistics Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'Total Rooms', value: stats.rooms, icon: Home, color: 'text-blue-600' },
-                { label: 'Active Students', value: stats.students, icon: Users, color: 'text-indigo-600' },
-                { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, icon: IndianRupee, color: 'text-emerald-600' },
-                { label: 'Pending Complaints', value: stats.complaints, icon: AlertCircle, color: 'text-rose-600' },
+                { label: 'Total Rooms', value: stats.rooms, icon: Home, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
+                { label: 'Active Students', value: stats.students, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
+                { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
+                { label: 'Pending Complaints', value: stats.complaints, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-100' },
               ].map((stat, i) => (
-                <Card key={i} className="border border-sky-100/90 bg-white shadow-xs">
+                <Card key={i} className="border border-sky-100/90 bg-white shadow-xs hover:border-sky-200 transition-colors">
                   <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <stat.icon className={`w-6 h-6 mb-2 opacity-30 ${stat.color}`} />
+                    <div className={`w-10 h-10 rounded-xl ${stat.bg} border flex items-center justify-center mb-2.5 shadow-2xs`}>
+                      <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                    </div>
                     <p className="text-xs text-slate-500 font-medium">{stat.label}</p>
                     <p className="text-xl font-bold mt-1 text-slate-900">{stat.value}</p>
                   </CardContent>

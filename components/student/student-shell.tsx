@@ -34,6 +34,7 @@ import { supabase } from '@/lib/supabase/client';
 import { getDashboardForRole } from '@/components/dashboard-layout';
 import { OwnerBackground } from '../owner/owner-background';
 import { SidebarBackground } from '../owner/sidebar-background';
+import { StudentNotifications } from './student-notifications';
 
 interface NavItem {
   name: string;
@@ -406,14 +407,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         {/* Right Side Actions */}
         <div className="flex items-center gap-3 md:gap-4">
           {/* Notifications */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative h-9 w-9 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 active:scale-95"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4.5 w-4.5" />
-          </Button>
+          <StudentNotifications />
 
           {/* Subtle vertical separator */}
           <div className="h-5 w-px bg-slate-700/80" aria-hidden="true" />
