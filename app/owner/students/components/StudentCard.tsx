@@ -40,6 +40,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   onViewProfile,
   onCheckout,
 }) => {
+  const [imageError, setImageError] = React.useState(false);
   const isStatusActive = statusLabel.toLowerCase() === 'active';
   const isCheckedOut = statusLabel.toLowerCase().includes('checked out');
   const badgeClass = isStatusActive 
@@ -48,15 +49,38 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
       : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800';
 
+  // Distinct deterministic avatar gradients based on student's name
+  const avatarGradientClass = React.useMemo(() => {
+    const palettes = [
+      'bg-gradient-to-br from-teal-500 to-emerald-600 text-white border-teal-200 dark:border-teal-700',
+      'bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-blue-200 dark:border-blue-700',
+      'bg-gradient-to-br from-violet-500 to-purple-600 text-white border-purple-200 dark:border-purple-700',
+      'bg-gradient-to-br from-amber-500 to-orange-600 text-white border-amber-200 dark:border-amber-700',
+      'bg-gradient-to-br from-rose-500 to-pink-600 text-white border-rose-200 dark:border-rose-700',
+      'bg-gradient-to-br from-sky-500 to-cyan-600 text-white border-sky-200 dark:border-sky-700',
+    ];
+    let hash = 0;
+    const str = studentName || 'Student';
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return palettes[Math.abs(hash) % palettes.length];
+  }, [studentName]);
+
   return (
     <Card className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-sky-300 dark:hover:border-teal-700 rounded-2xl shadow-xs hover:shadow-md p-5 flex flex-col xl:flex-row items-start xl:items-center gap-6 transition-all">
       {/* Student (Primary) */}
       <div className="flex items-center gap-4 min-w-0 flex-1 w-full border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-[#1a3d52] pb-4 xl:pb-0 xl:pr-6">
-        {studentPhotoUrl ? (
-          <img src={studentPhotoUrl} alt={studentName} className="h-14 w-14 rounded-full object-cover border-2 border-slate-100 dark:border-[#1a3d52] shadow-xs shrink-0" />
+        {studentPhotoUrl && !imageError ? (
+          <img 
+            src={studentPhotoUrl} 
+            alt={studentName} 
+            onError={() => setImageError(true)}
+            className="h-14 w-14 rounded-full object-cover border-2 border-slate-100 dark:border-[#1a3d52] shadow-xs shrink-0" 
+          />
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-fuchsia-50 dark:from-violet-950/50 dark:to-fuchsia-950/50 text-violet-700 dark:text-violet-300 font-bold text-lg border border-violet-100 dark:border-violet-800 shadow-xs">
-            {studentName.charAt(0)}
+          <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-bold text-xl border shadow-xs select-none", avatarGradientClass)}>
+            {(studentName || 'S').trim().charAt(0).toUpperCase()}
           </div>
         )}
         <div className="flex flex-col min-w-0">

@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth/context';
 import { Search, Plus, Users, Building2, AlertTriangle, X } from 'lucide-react';
 import { StudentCard } from './components/StudentCard';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,26 @@ const BOOKING_TYPE_LABEL: Record<string, string> = {
 export default function OwnerStudentsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
+  const [activeTab, setActiveTab] = useState<'active' | 'history'>(() => {
+    return tabParam === 'history' || tabParam === 'past' ? 'history' : 'active';
+  });
+
+  useEffect(() => {
+    if (tabParam === 'history' || tabParam === 'past') {
+      setActiveTab('history');
+    } else if (tabParam === 'active') {
+      setActiveTab('active');
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (val: 'active' | 'history') => {
+    setActiveTab(val);
+    router.replace(`/owner/students?tab=${val}`, { scroll: false });
+  };
+
   const [activeCount, setActiveCount] = useState<number>(0);
   const [historyCount, setHistoryCount] = useState<number>(0);
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -49,6 +68,7 @@ export default function OwnerStudentsPage() {
     try {
       setLoading(true);
       setError(null);
+      setPhotoUrls({});
 
       // Fetch room_allocations as the primary table for selected tab
       const { data, error: fetchError } = await supabase
@@ -214,7 +234,7 @@ export default function OwnerStudentsPage() {
       />
 
       {/* View Tabs: Active vs Past Residents / History */}
-      <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
+      <Tabs value={activeTab} onValueChange={(val: any) => handleTabChange(val)} className="w-full">
         <TabsList className="bg-slate-100 dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] p-1 rounded-xl">
           <TabsTrigger 
             value="active" 
@@ -338,7 +358,7 @@ export default function OwnerStudentsPage() {
     const bookingType = BOOKING_TYPE_LABEL[item.booking_type] || BOOKING_TYPE_LABEL.shared_bed;
     const rent = item.rooms?.rent || 0;
     const studentId = studentInfo?.id;
-    const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+    const passportPhotoUrl = (studentId && photoUrls[studentId]) || profile?.avatar_url || undefined;
     const isHistory = !item.active;
     const statusLabel = item.active ? 'Active' : 'Checked Out';
     const statusColorClass = item.active ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800';
@@ -360,7 +380,7 @@ export default function OwnerStudentsPage() {
         statusColorClass={statusColorClass}
         studentPhotoUrl={passportPhotoUrl}
         stayDuration={stayDuration}
-        onViewProfile={() => router.push(`/owner/students/${item.id}`)}
+        onViewProfile={() => router.push(`/owner/students/${item.id}?from=${activeTab}`)}
         onCheckout={item.active ? () => handleCheckout(item.id) : undefined}
       />
     );

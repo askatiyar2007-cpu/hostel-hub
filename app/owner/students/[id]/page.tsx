@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   ArrowLeft, User, Phone, Mail, MapPin, Building2, 
   Calendar, AlertTriangle, FileText, 
@@ -19,6 +19,8 @@ import { PageHeader } from "@/components/owner/page-header";
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromParam = searchParams.get('from');
   const allocationId = params.id;
 
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,16 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     fetchAllData();
   }, [fetchAllData]);
 
+  const isPastResident = fromParam === 'history' || fromParam === 'past' || (allocation && !allocation.active);
+
+  const handleBack = () => {
+    if (isPastResident) {
+      router.push('/owner/students?tab=history');
+    } else {
+      router.push('/owner/students');
+    }
+  };
+
   const handleCheckout = async () => {
     if (!window.confirm('Are you sure you want to check out this student? This will deactivate their room allocation immediately.')) return;
     setCheckoutLoading(true);
@@ -145,7 +157,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       const { error: checkoutErr } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocationId });
       if (checkoutErr) throw checkoutErr;
       toast.success('Student checked out successfully!');
-      router.push('/owner/students');
+      router.push('/owner/students?tab=history');
     } catch (err: any) {
       console.error('Error checking out student:', err);
       toast.error(err.message || 'Failed to check out student');
@@ -209,8 +221,8 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           <div className="flex flex-col items-center gap-3 text-red-500 max-w-md text-center">
             <AlertTriangle size={40} />
             <p className="text-sm font-semibold">Error: {error || 'Student profile not found'}</p>
-            <Button onClick={() => router.push('/owner/students')} variant="outline" className="mt-2">
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Students
+            <Button onClick={handleBack} variant="outline" className="mt-2">
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> {isPastResident ? 'Back to Past Residents / History' : 'Back to Students'}
             </Button>
           </div>
         </div>
@@ -245,12 +257,12 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       {/* Back to list button */}
       <div className="mb-6">
         <Button 
-          onClick={() => router.push('/owner/students')} 
+          onClick={handleBack} 
           variant="ghost" 
           className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1.5 rounded-xl border p-3 hover:bg-muted"
         >
           <ArrowLeft size={14} />
-          Back to Residents List
+          {isPastResident ? 'Back to Past Residents / History' : 'Back to Residents List'}
         </Button>
       </div>
 

@@ -116,6 +116,32 @@ export default function AssignStudentPage() {
 
   const selectedRoomObj = rooms.find(r => r.id === formData.room_id);
 
+  const handleRoomChange = (newRoomId: string) => {
+    const room = rooms.find(r => r.id === newRoomId);
+    const occupied = room?.occupied_count || 0;
+    if (formData.booking_type === 'entire_room' && occupied > 0) {
+      toast.error('Entire room is unavailable because this room already has an occupant. Choose Shared Room or another room.');
+      setFormData(prev => ({ ...prev, room_id: newRoomId, booking_type: 'shared_bed' }));
+    } else {
+      setFormData(prev => ({ ...prev, room_id: newRoomId }));
+    }
+  };
+
+  const handleSelectEntireRoom = () => {
+    const selectedRoom = rooms.find(r => r.id === formData.room_id);
+    const occupied = selectedRoom?.occupied_count || 0;
+    if (occupied > 0) {
+      toast.error('Entire room is unavailable because this room already has an occupant. Choose Shared Room or another room.');
+      setFormData(prev => ({ ...prev, booking_type: 'shared_bed' }));
+      return;
+    }
+    setFormData(prev => ({ ...prev, booking_type: 'entire_room' }));
+  };
+
+  const handleSelectSharedBed = () => {
+    setFormData(prev => ({ ...prev, booking_type: 'shared_bed' }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -277,49 +303,49 @@ export default function AssignStudentPage() {
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-800 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 px-3 py-1 text-xs font-semibold text-teal-800 dark:text-teal-300 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-600 dark:bg-teal-400" />
             Owner
           </span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Assign Student</h1>
-        <p className="text-sm text-slate-500">Complete student registration, choose an available room, and generate an allocation invitation.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl">Assign Student</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Complete student registration, choose an available room, and generate an allocation invitation.</p>
       </div>
 
       <div className="mb-6">
-        <Link href="/owner/students" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+        <Link href="/owner/students" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
           <ArrowLeft size={16} className="mr-2" /> Back to Student List
         </Link>
       </div>
 
       {/* Workflow Stepper Guide */}
       <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-teal-200/80 rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-bold text-xs border border-teal-100">1</span>
+        <div className="bg-white dark:bg-[#0e222e] border border-teal-200/80 dark:border-[#1a3d52] rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 font-bold text-xs border border-teal-100 dark:border-teal-800/60">1</span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">Student Profile</p>
-            <p className="text-[11px] text-gray-500 truncate">Name, email & phone</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Student Profile</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">Name, email & phone</p>
           </div>
         </div>
-        <div className="bg-white border border-teal-200/80 rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-bold text-xs border border-teal-100">2</span>
+        <div className="bg-white dark:bg-[#0e222e] border border-teal-200/80 dark:border-[#1a3d52] rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 font-bold text-xs border border-teal-100 dark:border-teal-800/60">2</span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">Parent & Address</p>
-            <p className="text-[11px] text-gray-500 truncate">Emergency details</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Parent & Address</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">Emergency details</p>
           </div>
         </div>
-        <div className="bg-white border border-teal-200/80 rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-bold text-xs border border-teal-100">3</span>
+        <div className="bg-white dark:bg-[#0e222e] border border-teal-200/80 dark:border-[#1a3d52] rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 font-bold text-xs border border-teal-100 dark:border-teal-800/60">3</span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">Select Room</p>
-            <p className="text-[11px] text-gray-500 truncate">Live availability</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Select Room</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">Live availability</p>
           </div>
         </div>
-        <div className="bg-white border border-teal-200/80 rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-bold text-xs border border-teal-100">4</span>
+        <div className="bg-white dark:bg-[#0e222e] border border-teal-200/80 dark:border-[#1a3d52] rounded-xl p-3.5 flex items-center gap-3 shadow-xs">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 font-bold text-xs border border-teal-100 dark:border-teal-800/60">4</span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">Confirm & Assign</p>
-            <p className="text-[11px] text-gray-500 truncate">Create allocation</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">Confirm & Assign</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">Create allocation</p>
           </div>
         </div>
       </div>
@@ -328,50 +354,50 @@ export default function AssignStudentPage() {
         {/* Left Column - Information Fields */}
         <div className="lg:col-span-8 space-y-6">
           {/* Card 1: Student Information */}
-          <div className="rounded-2xl border border-teal-200/80 bg-white p-6 shadow-xs">
-            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 bg-teal-50 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100">1</span>
+          <div className="rounded-2xl border border-teal-200/80 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 shadow-xs">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100 dark:border-teal-800/60">1</span>
               Student Personal Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Student Full Name *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Student Full Name *</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                   <input
                     required
                     type="text"
                     placeholder="e.g. John Doe"
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                     value={formData.student_name}
                     onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Student Email Address *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Student Email Address *</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                   <input
                     required
                     type="email"
                     placeholder="student@example.com"
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                     value={formData.student_email}
                     onChange={(e) => setFormData({ ...formData, student_email: e.target.value })}
                   />
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Student Mobile Number (10 Digits) *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Student Mobile Number (10 Digits) *</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                   <input
                     required
                     type="tel"
                     placeholder="9876543210"
                     maxLength={10}
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                     value={formData.student_phone}
                     onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
                   />
@@ -381,50 +407,50 @@ export default function AssignStudentPage() {
           </div>
 
           {/* Card 2: Parent/Guardian Details */}
-          <div className="rounded-2xl border border-teal-200/80 bg-white p-6 shadow-xs">
-            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 bg-teal-50 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100">2</span>
+          <div className="rounded-2xl border border-teal-200/80 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 shadow-xs">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100 dark:border-teal-800/60">2</span>
               Parent / Guardian Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Parent / Guardian Name *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Parent / Guardian Name *</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                   <input
                     required
                     type="text"
                     placeholder="Parent's Name"
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                     value={formData.parent_name}
                     onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Parent Email *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Parent Email *</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                   <input
                     required
                     type="email"
                     placeholder="parent@example.com"
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                     value={formData.parent_email}
                     onChange={(e) => setFormData({ ...formData, parent_email: e.target.value })}
                   />
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Parent Phone Number (10 Digits) *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Parent Phone Number (10 Digits) *</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                   <input
                     required
                     type="tel"
                     placeholder="10-digit parent phone"
                     maxLength={10}
-                    className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                     value={formData.parent_phone}
                     onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
                   />
@@ -434,20 +460,20 @@ export default function AssignStudentPage() {
           </div>
 
           {/* Card 3: Address & Emergency Contact */}
-          <div className="rounded-2xl border border-teal-200/80 bg-white p-6 shadow-xs">
-            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 bg-teal-50 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100">3</span>
+          <div className="rounded-2xl border border-teal-200/80 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 shadow-xs">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100 dark:border-teal-800/60">3</span>
               Permanent Address & Emergency Contact
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1.5">Full Permanent Address *</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Full Permanent Address *</label>
                 <div className="relative">
                   <textarea
                     required
                     rows={3}
                     placeholder="House No, Street, City, State, PIN code"
-                    className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 resize-none transition-all"
+                    className="w-full p-3 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 resize-none transition-all"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   />
@@ -455,29 +481,29 @@ export default function AssignStudentPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-1.5">Emergency Contact Person *</label>
+                  <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Emergency Contact Person *</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                     <input
                       required
                       type="text"
                       placeholder="Emergency contact name"
-                      className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                      className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                       value={formData.emergency_name}
                       onChange={(e) => setFormData({ ...formData, emergency_name: e.target.value })}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-1.5">Emergency Contact Phone *</label>
+                  <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Emergency Contact Phone *</label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={15} />
                     <input
                       required
                       type="tel"
                       placeholder="10-digit phone"
                       maxLength={10}
-                      className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                      className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white dark:placeholder:text-slate-500 transition-all"
                       value={formData.emergency_phone}
                       onChange={(e) => setFormData({ ...formData, emergency_phone: e.target.value })}
                     />
@@ -490,26 +516,26 @@ export default function AssignStudentPage() {
 
         {/* Right Column - Room & Review Sidebar */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-2xl border border-teal-200/80 bg-white p-6 shadow-xs sticky top-6 space-y-5">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <span className="w-6 h-6 bg-teal-50 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100">4</span>
+          <div className="rounded-2xl border border-teal-200/80 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 shadow-xs sticky top-6 space-y-5">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="w-6 h-6 bg-teal-50 dark:bg-[#122b3b] text-teal-700 dark:text-teal-300 rounded-full flex items-center justify-center text-xs font-bold border border-teal-100 dark:border-teal-800/60">4</span>
               Room Assignment
             </h3>
 
             {/* Hostel Selection */}
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1.5">Select Hostel *</label>
+              <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Select Hostel *</label>
               <div className="relative">
-                <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-600" />
+                <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-600 dark:text-teal-400" />
                 <select
                   required
-                  className="w-full h-11 pl-10 pr-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm font-medium text-gray-900 transition-all"
+                  className="w-full h-11 pl-10 pr-3 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm font-medium text-gray-900 dark:text-white transition-all cursor-pointer"
                   value={formData.hostel_id}
                   onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
                 >
-                  <option value="">Select Hostel Property</option>
+                  <option value="" className="dark:bg-[#0e222e] dark:text-white">Select Hostel Property</option>
                   {hostels.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
+                    <option key={h.id} value={h.id} className="dark:bg-[#0e222e] dark:text-white">{h.name}</option>
                   ))}
                 </select>
               </div>
@@ -517,23 +543,23 @@ export default function AssignStudentPage() {
 
             {/* Room Selection with Availability */}
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1.5">Select Room & View Availability *</label>
+              <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Select Room & View Availability *</label>
               <div className="relative">
-                <Home className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Home className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
                 <select
                   required
                   disabled={!formData.hostel_id}
-                  className="w-full h-11 pl-10 pr-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                  className="w-full h-11 pl-10 pr-3 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all cursor-pointer"
                   value={formData.room_id}
-                  onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
+                  onChange={(e) => handleRoomChange(e.target.value)}
                 >
-                  <option value="">Select Room</option>
+                  <option value="" className="dark:bg-[#0e222e] dark:text-white">Select Room</option>
                   {rooms.map(r => {
                     const capacity = r.capacity || 0;
                     const occupied = r.occupied_count || 0;
                     const available = Math.max(0, capacity - occupied);
                     return (
-                      <option key={r.id} value={r.id} disabled={available <= 0}>
+                      <option key={r.id} value={r.id} disabled={available <= 0} className="dark:bg-[#0e222e] dark:text-white">
                         Room {r.room_number} ({capacity} sharing) &bull; {available > 0 ? `${available} bed${available > 1 ? 's' : ''} free` : 'Full'} &bull; ₹{Number(r.rent).toLocaleString()}/mo
                       </option>
                     );
@@ -544,13 +570,13 @@ export default function AssignStudentPage() {
 
             {/* Check-in Date */}
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1.5">Check-in Date *</label>
+              <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-1.5">Check-in Date *</label>
               <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
                 <input
                   required
                   type="date"
-                  className="w-full h-11 pl-10 pr-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 transition-all"
+                  className="w-full h-11 pl-10 pr-3 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm text-gray-900 dark:text-white transition-all"
                   value={formData.start_date}
                   onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 />
@@ -559,34 +585,34 @@ export default function AssignStudentPage() {
 
             {/* Booking Option */}
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-2">Booking Option *</label>
+              <label className="text-xs font-semibold text-gray-700 dark:text-slate-200 block mb-2">Booking Option *</label>
               <div className="grid grid-cols-2 gap-2">
                 <label className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer select-none transition-all ${
                   formData.booking_type === 'entire_room' 
-                    ? 'border-teal-500 bg-teal-50/50 text-teal-900 font-semibold ring-1 ring-teal-500' 
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200 font-semibold ring-1 ring-teal-500' 
+                    : 'border-gray-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#16364a]'
                 }`}>
                   <input
                     type="radio"
                     name="booking_type"
                     value="entire_room"
                     checked={formData.booking_type === 'entire_room'}
-                    onChange={() => setFormData(prev => ({ ...prev, booking_type: 'entire_room' }))}
+                    onChange={handleSelectEntireRoom}
                     className="sr-only"
                   />
                   <span className="text-xs">{BOOKING_TYPE_LABEL.entire_room}</span>
                 </label>
                 <label className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer select-none transition-all ${
                   formData.booking_type === 'shared_bed' 
-                    ? 'border-teal-500 bg-teal-50/50 text-teal-900 font-semibold ring-1 ring-teal-500' 
-                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200 font-semibold ring-1 ring-teal-500' 
+                    : 'border-gray-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#16364a]'
                 }`}>
                   <input
                     type="radio"
                     name="booking_type"
                     value="shared_bed"
                     checked={formData.booking_type === 'shared_bed'}
-                    onChange={() => setFormData(prev => ({ ...prev, booking_type: 'shared_bed' }))}
+                    onChange={handleSelectSharedBed}
                     className="sr-only"
                   />
                   <span className="text-xs">{BOOKING_TYPE_LABEL.shared_bed}</span>
@@ -596,34 +622,34 @@ export default function AssignStudentPage() {
 
             {/* Assignment Review Details */}
             {selectedRoomObj && (
-              <div className="rounded-xl bg-slate-50 p-4 border border-teal-200/70 space-y-2.5 text-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-200/60">
-                  <span className="font-semibold text-gray-900">Room {selectedRoomObj.room_number} Details</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              <div className="rounded-xl bg-slate-50 dark:bg-[#122b3b] p-4 border border-teal-200/70 dark:border-[#1a3d52] space-y-2.5 text-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-200/60 dark:border-[#1a3d52]">
+                  <span className="font-semibold text-gray-900 dark:text-white">Room {selectedRoomObj.room_number} Details</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                     (selectedRoomObj.capacity - selectedRoomObj.occupied_count) > 0 
-                      ? 'bg-emerald-100 text-emerald-800' 
-                      : 'bg-rose-100 text-rose-800'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800' 
+                      : 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800'
                   }`}>
                     {(selectedRoomObj.capacity - selectedRoomObj.occupied_count) > 0 
                       ? `${selectedRoomObj.capacity - selectedRoomObj.occupied_count} available` 
                       : 'Full'}
                   </span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 dark:text-slate-400">
                   <span>Room Capacity:</span>
-                  <span className="font-medium text-gray-900">{selectedRoomObj.capacity} sharing</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{selectedRoomObj.capacity} sharing</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 dark:text-slate-400">
                   <span>Current Occupancy:</span>
-                  <span className="font-medium text-gray-900">{selectedRoomObj.occupied_count} beds occupied</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{selectedRoomObj.occupied_count} beds occupied</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 dark:text-slate-400">
                   <span>Booking Type:</span>
-                  <span className="font-medium text-gray-900">{BOOKING_TYPE_LABEL[formData.booking_type]}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{BOOKING_TYPE_LABEL[formData.booking_type]}</span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200/60">
-                  <span className="font-semibold text-gray-700">Monthly Rent:</span>
-                  <span className="font-bold text-teal-700 text-sm">₹{Number(selectedRoomObj.rent || 0).toLocaleString()}/mo</span>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 dark:border-[#1a3d52]">
+                  <span className="font-semibold text-gray-700 dark:text-slate-300">Monthly Rent:</span>
+                  <span className="font-bold text-teal-700 dark:text-teal-400 text-sm">₹{Number(selectedRoomObj.rent || 0).toLocaleString()}/mo</span>
                 </div>
               </div>
             )}
@@ -649,13 +675,13 @@ export default function AssignStudentPage() {
 
       {/* Success Dialog with Invitation Link */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="sm:max-w-md bg-white border border-teal-200">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-[#0e222e] border border-teal-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-gray-900 font-bold">
-              <CheckCircle2 className="h-5 w-5 text-teal-600" />
+            <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+              <CheckCircle2 className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               Student Assigned Successfully!
             </DialogTitle>
-            <DialogDescription className="text-gray-500 text-xs">
+            <DialogDescription className="text-gray-500 dark:text-slate-400 text-xs">
               The student has been assigned to the selected room. Share the invitation link with them to complete onboarding.
             </DialogDescription>
           </DialogHeader>
@@ -663,50 +689,50 @@ export default function AssignStudentPage() {
           {invitationData && (
             <div className="space-y-4 py-3">
               {invitationData.email_sent !== undefined && (
-                <div className={`flex items-center gap-2 p-3 rounded-xl text-xs font-medium ${invitationData.email_sent ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>
+                <div className={`flex items-center gap-2 p-3 rounded-xl text-xs font-medium ${invitationData.email_sent ? 'bg-green-50 dark:bg-emerald-950/50 border border-green-200 dark:border-emerald-800 text-green-800 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'}`}>
                   {invitationData.email_sent ? (
                     <>
-                      <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-emerald-400 shrink-0" />
                       <span>Invitation email sent successfully</span>
                     </>
                   ) : (
                     <>
-                      <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                      <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                       <span>Email delivery failed. Please copy and share the link manually.</span>
                     </>
                   )}
                 </div>
               )}
-              <div className="rounded-xl bg-slate-50 p-4 border border-gray-200 space-y-2.5 text-xs">
+              <div className="rounded-xl bg-slate-50 dark:bg-[#122b3b] p-4 border border-gray-200 dark:border-[#1a3d52] space-y-2.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Student:</span>
-                  <span className="font-semibold text-gray-900">{invitationData.student_name}</span>
+                  <span className="text-gray-500 dark:text-slate-400">Student:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{invitationData.student_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Email:</span>
-                  <span className="font-semibold text-gray-900">{invitationData.email}</span>
+                  <span className="text-gray-500 dark:text-slate-400">Email:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{invitationData.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Hostel:</span>
-                  <span className="font-semibold text-gray-900">{invitationData.hostel_name}</span>
+                  <span className="text-gray-500 dark:text-slate-400">Hostel:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{invitationData.hostel_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Room:</span>
-                  <span className="font-semibold text-gray-900">Room {invitationData.room_number}</span>
+                  <span className="text-gray-500 dark:text-slate-400">Room:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">Room {invitationData.room_number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Booking Type:</span>
-                  <span className="font-semibold text-gray-900">{BOOKING_TYPE_LABEL[invitationData.booking_type]}</span>
+                  <span className="text-gray-500 dark:text-slate-400">Booking Type:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{BOOKING_TYPE_LABEL[invitationData.booking_type]}</span>
                 </div>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1.5">Direct Invitation Link</p>
+                <p className="text-xs font-semibold text-gray-700 dark:text-slate-200 mb-1.5">Direct Invitation Link</p>
                 <div className="flex gap-2">
                   <input
                     readOnly
                     value={invitationData.invitation_url}
-                    className="flex-1 px-3 py-2 bg-slate-100 border border-gray-200 rounded-lg text-xs text-gray-700 outline-none select-all"
+                    className="flex-1 px-3 py-2 bg-slate-100 dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] rounded-lg text-xs text-gray-700 dark:text-slate-200 outline-none select-all"
                   />
                   <button
                     onClick={handleCopyLink}
@@ -717,7 +743,7 @@ export default function AssignStudentPage() {
                   </button>
                   <button
                     onClick={handleOpenLink}
-                    className="px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium text-xs transition-colors flex items-center gap-1 shrink-0"
+                    className="px-3 py-2 border border-gray-200 dark:border-[#1a3d52] hover:bg-gray-50 dark:hover:bg-[#16364a] text-gray-700 dark:text-slate-200 rounded-lg font-medium text-xs transition-colors flex items-center gap-1 shrink-0"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                     Open
@@ -732,7 +758,7 @@ export default function AssignStudentPage() {
               <div className="flex gap-2 w-full">
                 <button
                   onClick={handleRetryEmail}
-                  className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 px-4 rounded-xl font-medium text-xs transition-colors"
+                  className="flex-1 border border-gray-200 dark:border-[#1a3d52] hover:bg-gray-50 dark:hover:bg-[#16364a] text-gray-700 dark:text-slate-200 py-2.5 px-4 rounded-xl font-medium text-xs transition-colors"
                 >
                   Retry Email
                 </button>

@@ -139,6 +139,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify room exists in this hostel and check occupancy against booking type
+    const { data: room, error: roomError } = await supabaseServer
+      .from('rooms')
+      .select('id, room_number, capacity, occupied_count')
+      .eq('id', room_id)
+      .eq('hostel_id', hostel_id)
+      .single();
+
+    if (roomError || !room) {
+      return NextResponse.json({ error: 'Room not found in this hostel' }, { status: 404 });
+    }
+
+    const occupiedBeds = room.occupied_count || 0;
+    const roomCapacity = room.capacity || 0;
+
+    if (booking_type === 'entire_room' && occupiedBeds > 0) {
+      return NextResponse.json(
+        { error: 'Entire room is unavailable because this room already has an occupant. Choose Shared Room or another room.' },
+        { status: 400 }
+      );
+    }
+
+    if (booking_type === 'shared_bed' && occupiedBeds >= roomCapacity) {
+      return NextResponse.json(
+        { error: 'This room is already full. Please choose another room.' },
+        { status: 400 }
+      );
+    }
+
     // 5. Generate cryptographically secure random token & its SHA-256 hash
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');

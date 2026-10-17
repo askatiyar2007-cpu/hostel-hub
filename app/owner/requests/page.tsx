@@ -49,6 +49,23 @@ export default function OwnerRequestsPage() {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'alpha'>('newest');
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        refetchRequests(),
+        refetchAllocations()
+      ]);
+      toast.success('Requests and allocations refreshed successfully!');
+    } catch (err) {
+      console.error('Refresh error:', err);
+      toast.error('Failed to refresh data. Please try again.');
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const timestamp = new Date().toISOString();
@@ -67,7 +84,7 @@ export default function OwnerRequestsPage() {
   const [selectedHistoryAlloc, setSelectedHistoryAlloc] = useState<any | null>(null);
 
   // 1. Fetch Room Requests
-  const { data: requests, isLoading: isRequestsLoading } = useQuery({
+  const { data: requests, isLoading: isRequestsLoading, refetch: refetchRequests, isFetching: isRequestsFetching } = useQuery({
     queryKey: ['owner-room-requests', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -176,7 +193,7 @@ export default function OwnerRequestsPage() {
   });
 
   // 2. Fetch Active Room Allocations
-  const { data: allocations, isLoading: isAllocationsLoading, error: allocationsError, refetch: refetchAllocations } = useQuery({
+  const { data: allocations, isLoading: isAllocationsLoading, error: allocationsError, refetch: refetchAllocations, isFetching: isAllocationsFetching } = useQuery({
     queryKey: ['owner-room-allocations', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -728,19 +745,14 @@ export default function OwnerRequestsPage() {
         </div>
         <div className="pb-2 md:pb-0">
           <Button 
-            onClick={() => {
-              const timestamp = new Date().toISOString();
-              console.log(`[${timestamp}] [RefreshButton] Manually invalidating queries...`);
-              qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
-              qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
-              toast.success('Data refreshed successfully!');
-            }}
+            onClick={handleManualRefresh}
+            disabled={isManualRefreshing || isRequestsFetching || isAllocationsFetching}
             variant="outline"
             size="sm"
-            className="flex items-center gap-1.5 h-9 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all shadow-2xs font-semibold text-xs"
+            className="flex items-center gap-1.5 h-9 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] text-slate-700 dark:text-slate-200 transition-all shadow-2xs font-semibold text-xs cursor-pointer disabled:opacity-60"
           >
-            <RotateCcw size={14} className={isRequestsLoading || isAllocationsLoading ? 'animate-spin text-teal-600' : ''} />
-            Refresh
+            <RotateCcw size={14} className={isManualRefreshing || isRequestsFetching || isAllocationsFetching ? 'animate-spin text-teal-600 dark:text-teal-400' : ''} />
+            <span>{isManualRefreshing || isRequestsFetching || isAllocationsFetching ? 'Refreshing...' : 'Refresh'}</span>
           </Button>
         </div>
       </div>
