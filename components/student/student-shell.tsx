@@ -518,14 +518,14 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Main Content Area - with pt-10 to minimize gap above header and md:ml to clear sidebar */}
+      {/* Main Content Area - pt-14 clears the fixed 56px header bar; md:ml clears sidebar */}
       <div className={cn(
-        "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-10",
+        "relative z-10 flex-1 min-w-0 ml-0 transition-all duration-300 pt-14",
         isCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {/* Page Content */}
-        <main className="min-h-[calc(100vh-5rem)] min-w-0 pb-12">
-          <div className="px-4 pt-0 pb-8 md:px-8 md:pt-0 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
+        <main className="min-h-[calc(100vh-3.5rem)] min-w-0 pb-12">
+          <div className="px-4 pt-6 pb-8 md:px-8 md:pt-8 md:pb-10 lg:px-10 max-w-[1800px] mx-auto w-full">
             {children}
           </div>
         </main>
