@@ -550,69 +550,69 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
                     <ChevronDown size={14} className="text-slate-400 group-hover:text-white transition-transform duration-200 group-data-[state=open]:rotate-180 ml-0.5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-68 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                <DropdownMenuContent align="end" className="w-68 p-2 bg-white dark:bg-[#0e222e] border border-slate-200 dark:border-[#1a3d52] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 text-slate-800 dark:text-slate-100">
                   {/* Account Header Card */}
-                  <div className="p-3 bg-gradient-to-r from-slate-50 to-teal-50/40 rounded-lg border border-slate-200/80 mb-1.5">
+                  <div className="p-3 bg-gradient-to-r from-slate-50 to-teal-50/40 dark:from-[#122b3b] dark:to-[#0e222e] rounded-lg border border-slate-200/80 dark:border-[#1a3d52] mb-1.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 text-white flex items-center justify-center text-sm font-bold shadow-xs ring-2 ring-white">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 text-white flex items-center justify-center text-sm font-bold shadow-xs ring-2 ring-white dark:ring-[#1a3d52]">
                         {profile?.full_name?.charAt(0)?.toUpperCase() || 'O'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900 truncate">
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                           {profile?.full_name || 'Hostel Owner'}
                         </p>
-                        <p className="text-xs text-slate-500 truncate" title={profile?.email || user?.email || ''}>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate" title={profile?.email || user?.email || ''}>
                           {profile?.email || user?.email || 'No email registered'}
                         </p>
                       </div>
                     </div>
-                    <div className="mt-2.5 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[11px]">
-                      <span className="font-semibold text-teal-800 bg-teal-100/70 border border-teal-200 px-2 py-0.5 rounded-full">
+                    <div className="mt-2.5 flex items-center justify-between border-t border-slate-200/70 dark:border-[#1a3d52] pt-2 text-[11px]">
+                      <span className="font-semibold text-teal-800 dark:text-teal-300 bg-teal-100/70 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800 px-2 py-0.5 rounded-full">
                         Hostel Owner
                       </span>
-                      <span className="text-emerald-700 font-medium flex items-center gap-1 bg-emerald-50 border border-emerald-200/70 px-2 py-0.5 rounded-full">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800 px-2 py-0.5 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                         Active
                       </span>
                     </div>
                   </div>
 
-                  <DropdownMenuSeparator className="my-1 border-slate-100" />
+                  <DropdownMenuSeparator className="my-1 border-slate-100 dark:border-[#1a3d52]" />
 
-                  <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100">
+                  <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a] focus:bg-slate-100 dark:focus:bg-[#16364a]">
                     <Link href="/owner/settings" className="flex items-center gap-2.5 w-full">
-                      <div className="p-1 rounded-md bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                      <div className="p-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 shrink-0">
                         <Settings size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium text-slate-800">Account Settings</span>
-                        <span className="text-[10px] text-slate-400">Profile & preferences</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">Account Settings</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">Profile & preferences</span>
                       </div>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100">
+                  <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a] focus:bg-slate-100 dark:focus:bg-[#16364a]">
                     <Link href="/owner/settings/payment-methods" className="flex items-center gap-2.5 w-full">
-                      <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+                      <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 shrink-0">
                         <CreditCard size={14} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium text-slate-800">Payment Methods</span>
-                        <span className="text-[10px] text-slate-400">UPI, Bank accounts & QR</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">Payment Methods</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">UPI, Bank accounts & QR</span>
                       </div>
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuSeparator className="my-1 border-slate-100" />
+                  <DropdownMenuSeparator className="my-1 border-slate-100 dark:border-[#1a3d52]" />
 
                   <DropdownMenuItem 
                     onClick={() => signOut()} 
-                    className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 focus:bg-rose-50 focus:text-rose-700 flex items-center gap-2.5"
+                    className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 focus:bg-rose-50 dark:focus:bg-rose-950/30 focus:text-rose-700 dark:focus:text-rose-300 flex items-center gap-2.5"
                   >
-                    <div className="p-1 rounded-md bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+                    <div className="p-1 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900 shrink-0">
                       <LogOut size={14} />
                     </div>
-                    <span className="font-semibold text-rose-600">Log out</span>
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

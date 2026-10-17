@@ -273,31 +273,31 @@ export function StudentNotifications() {
     switch (type) {
       case 'bill':
         return (
-          <div className="h-8 w-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
             <ReceiptIndianRupee className="h-4 w-4" />
           </div>
         );
       case 'request':
         return (
-          <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-800 flex items-center justify-center shrink-0">
             <DoorOpen className="h-4 w-4" />
           </div>
         );
       case 'notice':
         return (
-          <div className="h-8 w-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-200 flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center justify-center shrink-0">
             <Megaphone className="h-4 w-4" />
           </div>
         );
       case 'complaint':
         return (
-          <div className="h-8 w-8 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 flex items-center justify-center shrink-0">
             <AlertTriangle className="h-4 w-4" />
           </div>
         );
       default:
         return (
-          <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0">
             <Info className="h-4 w-4" />
           </div>
         );
@@ -326,12 +326,12 @@ export function StudentNotifications() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-88 p-0 border-slate-200 shadow-2xl rounded-2xl bg-white overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 bg-slate-50/80">
+      <PopoverContent align="end" className="w-88 p-0 border border-slate-200 dark:border-[#1a3d52] shadow-2xl rounded-2xl bg-white dark:bg-[#0e222e] overflow-hidden text-slate-800 dark:text-slate-100">
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25]">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-sm text-slate-900 font-display">Student Alerts</h3>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 font-display">Student Alerts</h3>
             {unreadCount > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
                 {unreadCount} new
               </span>
             )}
@@ -339,49 +339,49 @@ export function StudentNotifications() {
           {notifications.length > 0 && (
             <button 
               onClick={handleClearAll}
-              className="text-xs text-teal-600 hover:text-teal-700 font-semibold cursor-pointer transition-colors hover:underline"
+              className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-semibold cursor-pointer transition-colors hover:underline"
             >
               Clear all
             </button>
           )}
         </div>
         
-        <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
+        <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-[#1a3d52]">
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-slate-500 flex flex-col items-center">
+            <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center">
               <div className="h-6 w-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin mb-2" />
               Checking notifications...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 space-y-2">
-              <div className="h-10 w-10 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+            <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
+              <div className="h-10 w-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center">
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
-              <p className="font-semibold text-slate-700 text-sm">All caught up!</p>
-              <p className="text-slate-400">No overdue fees, pending requests, or unread notices.</p>
+              <p className="font-semibold text-slate-700 dark:text-slate-200 text-sm">All caught up!</p>
+              <p className="text-slate-400 dark:text-slate-500">No overdue fees, pending requests, or unread notices.</p>
             </div>
           ) : (
             notifications.map((notif) => (
               <div 
                 key={notif.id} 
                 className={cn(
-                  "p-3.5 flex items-start gap-3 hover:bg-slate-50 transition-colors cursor-pointer group relative",
-                  !notif.read ? "bg-teal-50/20" : "opacity-80"
+                  "p-3.5 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-[#122b3b] transition-colors cursor-pointer group relative",
+                  !notif.read ? "bg-teal-50/20 dark:bg-teal-950/30" : "opacity-80"
                 )}
                 onClick={() => handleItemClick(notif)}
               >
                 {getIcon(notif.type)}
                 <div className="flex-1 min-w-0 pr-6">
                   <div className="flex items-center justify-between gap-1">
-                    <p className={cn("text-xs text-slate-900 mb-0.5 truncate", !notif.read && "font-bold text-slate-900")}>
+                    <p className={cn("text-xs text-slate-900 dark:text-slate-100 mb-0.5 truncate", !notif.read && "font-bold text-slate-900 dark:text-white")}>
                       {notif.title}
                     </p>
-                    <ArrowRight className="h-3 w-3 text-slate-300 opacity-0 group-hover:opacity-100 group-hover:text-teal-600 transition-all shrink-0" />
+                    <ArrowRight className="h-3 w-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-all shrink-0" />
                   </div>
-                  <p className="text-xs text-slate-600 leading-snug line-clamp-2 mb-1">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2 mb-1">
                     {notif.message}
                   </p>
-                  <p className="text-[10px] text-slate-400 font-medium">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                     {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                   </p>
                 </div>
@@ -391,7 +391,7 @@ export function StudentNotifications() {
                   type="button"
                   onClick={(e) => handleDismiss(e, notif.id)}
                   title="Dismiss notification"
-                  className="absolute top-3 right-3 h-6 w-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer opacity-70 group-hover:opacity-100"
+                  className="absolute top-3 right-3 h-6 w-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-[#16364a] transition-all cursor-pointer opacity-70 group-hover:opacity-100"
                   aria-label="Dismiss notification"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -402,18 +402,18 @@ export function StudentNotifications() {
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs">
+        <div className="px-4 py-2.5 border-t border-slate-100 dark:border-[#1a3d52] bg-slate-50/60 dark:bg-[#0b1b25] flex items-center justify-between text-xs">
           <Link
             href="/student/bills"
             onClick={() => setOpen(false)}
-            className="text-teal-600 hover:text-teal-700 font-semibold inline-flex items-center gap-1 cursor-pointer"
+            className="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-semibold inline-flex items-center gap-1 cursor-pointer"
           >
             My Bills <ArrowRight size={12} />
           </Link>
           <Link
             href="/student/room"
             onClick={() => setOpen(false)}
-            className="text-slate-500 hover:text-slate-700 font-medium inline-flex items-center gap-1 cursor-pointer"
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium inline-flex items-center gap-1 cursor-pointer"
           >
             Room Details <ArrowRight size={12} />
           </Link>

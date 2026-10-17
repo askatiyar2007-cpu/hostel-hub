@@ -25,6 +25,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
       if (stored && (stored === 'light' || stored === 'dark' || stored === 'system')) {
         setThemeState(stored);
+      } else {
+        setThemeState('system');
+      }
+      if (document.documentElement.classList.contains('dark')) {
+        setResolvedTheme('dark');
+      } else {
+        setResolvedTheme('light');
       }
     } catch {
       // Ignore localStorage errors

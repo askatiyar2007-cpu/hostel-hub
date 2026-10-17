@@ -20,8 +20,15 @@ export function SiteHeader() {
   const dashboardPath = dashboardPathForRole(profile?.role) ?? '/auth/select-role';
   const pathname = usePathname();
   
-  // Do not render on the public homepage or dedicated auth routes
-  if (pathname === '/' || pathname?.startsWith('/auth')) {
+  // Do not render on the public homepage, dedicated auth routes, or authenticated workspace shells
+  if (
+    pathname === '/' ||
+    pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/owner') ||
+    pathname?.startsWith('/student') ||
+    pathname?.startsWith('/parent') ||
+    pathname?.startsWith('/admin')
+  ) {
     return null;
   }
 

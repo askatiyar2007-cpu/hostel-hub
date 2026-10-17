@@ -60,16 +60,23 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
     }
   }, [userEmail]);
 
-  // Handle escape key to close
+  // Lock body scroll and handle escape key to close
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen]);
 
   // Resend countdown timer
@@ -254,28 +261,28 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm overflow-y-auto overscroll-contain animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div 
-        className="relative w-full max-w-md mx-auto my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[min(85vh,620px)] overflow-hidden animate-in zoom-in-95 duration-150"
+        className="relative w-full max-w-md mx-auto my-auto bg-white dark:bg-[#0e222e] border border-slate-200 dark:border-[#1a3d52] rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[min(90vh,720px)] overflow-hidden animate-in zoom-in-95 duration-150"
         role="dialog"
         aria-modal="true"
         aria-labelledby="password-dialog-title"
       >
         {/* Fixed Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center shadow-2xs shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 flex items-center justify-center shadow-2xs shrink-0">
               {mode === 'recover' ? <KeyRound size={18} /> : <Lock size={18} />}
             </div>
             <div>
-              <h3 id="password-dialog-title" className="font-bold text-base text-slate-900 font-display">
+              <h3 id="password-dialog-title" className="font-bold text-base text-slate-900 dark:text-slate-100 font-display">
                 {mode === 'recover' ? 'Password Recovery' : 'Change Password'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {mode === 'recover'
                   ? 'Verify your identity via email OTP to set a new password'
                   : 'Update your account password securely'}
@@ -285,7 +292,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
           <button
             type="button"
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <X size={18} />
@@ -303,7 +310,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
               {/* Current Password Field */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="current_password" className="text-xs font-semibold text-slate-700">
+                  <Label htmlFor="current_password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Current Password <span className="text-rose-500">*</span>
                   </Label>
                   <button
@@ -312,7 +319,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                       setMode('recover');
                       setRecoverStep('email');
                     }}
-                    className="text-xs text-teal-600 hover:text-teal-700 hover:underline font-semibold p-0 cursor-pointer"
+                    className="text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 hover:underline font-semibold p-0 cursor-pointer"
                   >
                     Forgot current password?
                   </button>
@@ -325,12 +332,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                     placeholder="Enter current password"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
+                    className="pr-10 h-10 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0e222e] focus:border-teal-500 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowOldPassword(!showOldPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                     aria-label={showOldPassword ? 'Hide password' : 'Show password'}
                   >
                     {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -340,7 +347,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
 
               {/* New Password Field */}
               <div className="space-y-1.5">
-                <Label htmlFor="new_password" className="text-xs font-semibold text-slate-700">
+                <Label htmlFor="new_password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   New Password <span className="text-rose-500">*</span>
                 </Label>
                 <div className="relative">
@@ -351,12 +358,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                     placeholder="Minimum 8 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
+                    className="pr-10 h-10 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0e222e] focus:border-teal-500 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                     aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                   >
                     {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -366,7 +373,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
 
               {/* Confirm New Password Field */}
               <div className="space-y-1.5">
-                <Label htmlFor="confirm_password" className="text-xs font-semibold text-slate-700">
+                <Label htmlFor="confirm_password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Confirm New Password <span className="text-rose-500">*</span>
                 </Label>
                 <div className="relative">
@@ -377,12 +384,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                     placeholder="Re-enter new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
+                    className="pr-10 h-10 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0e222e] focus:border-teal-500 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
                     {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -391,29 +398,29 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
               </div>
 
               {/* Password Requirements Checklist */}
-              <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/80 space-y-2 text-xs text-slate-600">
-                <p className="font-bold text-slate-800 text-[11px] uppercase tracking-wider font-display">
+              <div className="rounded-xl bg-slate-50 dark:bg-[#122b3b]/60 p-3.5 border border-slate-200/80 dark:border-[#1a3d52] space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                <p className="font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider font-display">
                   Password Requirements
                 </p>
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "h-4 w-4 rounded-full flex items-center justify-center text-[10px] transition-colors shrink-0",
-                    newPassword.length >= 8 ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-400"
+                    newPassword.length >= 8 ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
                   )}>
                     <Check size={10} />
                   </div>
-                  <span className={newPassword.length >= 8 ? "text-slate-900 font-semibold" : "text-slate-500"}>
+                  <span className={newPassword.length >= 8 ? "text-slate-900 dark:text-slate-100 font-semibold" : "text-slate-500 dark:text-slate-400"}>
                     At least 8 characters
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "h-4 w-4 rounded-full flex items-center justify-center text-[10px] transition-colors shrink-0",
-                    newPassword && newPassword === confirmPassword ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-400"
+                    newPassword && newPassword === confirmPassword ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
                   )}>
                     <Check size={10} />
                   </div>
-                  <span className={newPassword && newPassword === confirmPassword ? "text-slate-900 font-semibold" : "text-slate-500"}>
+                  <span className={newPassword && newPassword === confirmPassword ? "text-slate-900 dark:text-slate-100 font-semibold" : "text-slate-500 dark:text-slate-400"}>
                     Passwords match
                   </span>
                 </div>
@@ -421,12 +428,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
             </form>
 
             {/* Fixed Persistent Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50/80 shrink-0">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25] shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleClose}
-                className="h-10 rounded-xl border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                className="h-10 rounded-xl border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </Button>
@@ -454,7 +461,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Navigation back bar */}
             {recoverStep !== 'success' && (
-              <div className="px-6 py-2 bg-teal-50/60 border-b border-teal-100 flex items-center justify-between text-xs shrink-0">
+              <div className="px-6 py-2.5 bg-teal-50/60 dark:bg-teal-950/40 border-b border-teal-100 dark:border-teal-900/60 flex items-center justify-between text-xs shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -462,12 +469,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                     else if (recoverStep === 'new_password') setRecoverStep('otp');
                     else setMode('change');
                   }}
-                  className="inline-flex items-center gap-1.5 text-teal-700 font-semibold hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-teal-700 dark:text-teal-400 font-semibold hover:underline cursor-pointer"
                 >
                   <ArrowLeft size={14} />
                   {recoverStep === 'email' ? 'Back to Change Password' : 'Back'}
                 </button>
-                <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider">
                   Step {recoverStep === 'email' ? '1 of 3' : recoverStep === 'otp' ? '2 of 3' : '3 of 3'}
                 </span>
               </div>
@@ -477,17 +484,17 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
             {recoverStep === 'email' && (
               <>
                 <form id="recover-email-form" onSubmit={handleSendRecoveryOtp} className="p-6 space-y-4 overflow-y-auto flex-1">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#122b3b] border border-slate-200/80 dark:border-[#1a3d52] space-y-1.5">
+                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                       If this email address is registered with password access enabled, you will receive a 6-digit verification code to reset your password.
                     </p>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                       Accounts created with Google Sign-In or pending onboarding should continue with Google or contact support.
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="recovery_email" className="text-xs font-semibold text-slate-700">
+                    <Label htmlFor="recovery_email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Registered Email Address <span className="text-rose-500">*</span>
                     </Label>
                     <div className="relative">
@@ -497,7 +504,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                         required
                         value={recoveryEmail}
                         onChange={(e) => setRecoveryEmail(e.target.value)}
-                        className="pl-9 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white text-sm"
+                        className="pl-9 h-10 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0e222e] text-sm"
                         placeholder="you@example.com"
                       />
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
@@ -505,12 +512,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                   </div>
                 </form>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50/80 shrink-0">
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25] shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setMode('change')}
-                    className="h-10 rounded-xl border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                    className="h-10 rounded-xl border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] text-xs font-semibold cursor-pointer"
                   >
                     Cancel
                   </Button>
@@ -537,12 +544,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
             {recoverStep === 'otp' && (
               <>
                 <form id="recover-otp-form" onSubmit={handleVerifyOtp} className="p-6 space-y-4 overflow-y-auto flex-1">
-                  <div className="p-3.5 rounded-xl bg-teal-50/60 border border-teal-100 text-xs text-teal-900 leading-relaxed">
-                    A 6-digit code was sent to <strong className="font-semibold">{recoveryEmail}</strong>. Please enter it below.
+                  <div className="p-3.5 rounded-xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-900/50 text-xs text-teal-900 dark:text-teal-200 leading-relaxed">
+                    A 6-digit code was sent to <strong className="font-semibold text-teal-950 dark:text-white">{recoveryEmail}</strong>. Please enter it below.
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="otp-input" className="text-xs font-semibold text-slate-700">
+                    <Label htmlFor="otp-input" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Verification Code <span className="text-rose-500">*</span>
                     </Label>
                     <Input
@@ -554,20 +561,20 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                       placeholder="123456"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="text-center font-mono text-xl tracking-[0.4em] font-bold h-12 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white"
+                      className="text-center font-mono text-xl tracking-[0.4em] font-bold h-12 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#0e222e]"
                     />
                   </div>
 
                   <div className="flex items-center justify-between text-xs pt-1">
-                    <span className="text-slate-500">Didn't get the code?</span>
+                    <span className="text-slate-500 dark:text-slate-400">Didn't get the code?</span>
                     {resendCountdown > 0 ? (
-                      <span className="text-slate-400 font-medium">Resend in {resendCountdown}s</span>
+                      <span className="text-slate-400 dark:text-slate-500 font-medium">Resend in {resendCountdown}s</span>
                     ) : (
                       <button
                         type="button"
                         onClick={handleSendRecoveryOtp}
                         disabled={isRequestingOtp}
-                        className="text-teal-600 font-bold hover:underline cursor-pointer"
+                        className="text-teal-600 dark:text-teal-400 font-bold hover:underline cursor-pointer"
                       >
                         Resend Code
                       </button>
@@ -575,12 +582,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                   </div>
                 </form>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50/80 shrink-0">
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25] shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setRecoverStep('email')}
-                    className="h-10 rounded-xl border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                    className="h-10 rounded-xl border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] text-xs font-semibold cursor-pointer"
                   >
                     Back
                   </Button>
@@ -608,7 +615,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
               <>
                 <form id="recover-reset-form" onSubmit={handleResetPassword} className="p-6 space-y-4 overflow-y-auto flex-1">
                   <div className="space-y-1.5">
-                    <Label htmlFor="recover_new_pass" className="text-xs font-semibold text-slate-700">
+                    <Label htmlFor="recover_new_pass" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       New Password <span className="text-rose-500">*</span>
                     </Label>
                     <div className="relative">
@@ -619,12 +626,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                         placeholder="Minimum 8 characters"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
+                        className="pr-10 h-10 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0e222e] focus:border-teal-500 text-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                       >
                         {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -632,7 +639,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="recover_confirm_pass" className="text-xs font-semibold text-slate-700">
+                    <Label htmlFor="recover_confirm_pass" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Confirm New Password <span className="text-rose-500">*</span>
                     </Label>
                     <div className="relative">
@@ -643,12 +650,12 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                         placeholder="Re-enter new password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pr-10 h-10 rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white focus:border-teal-500 text-sm"
+                        className="pr-10 h-10 rounded-xl bg-slate-50/70 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#0e222e] focus:border-teal-500 text-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                       >
                         {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -656,41 +663,41 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                   </div>
 
                   {/* Requirements Checklist */}
-                  <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/80 space-y-2 text-xs text-slate-600">
-                    <p className="font-bold text-slate-800 text-[11px] uppercase tracking-wider font-display">
+                  <div className="rounded-xl bg-slate-50 dark:bg-[#122b3b]/60 p-3.5 border border-slate-200/80 dark:border-[#1a3d52] space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                    <p className="font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider font-display">
                       Password Requirements
                     </p>
                     <div className="flex items-center gap-2">
                       <div className={cn(
                         "h-4 w-4 rounded-full flex items-center justify-center text-[10px] transition-colors shrink-0",
-                        newPassword.length >= 8 ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-400"
+                        newPassword.length >= 8 ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
                       )}>
                         <Check size={10} />
                       </div>
-                      <span className={newPassword.length >= 8 ? "text-slate-900 font-semibold" : "text-slate-500"}>
+                      <span className={newPassword.length >= 8 ? "text-slate-900 dark:text-slate-100 font-semibold" : "text-slate-500 dark:text-slate-400"}>
                         At least 8 characters
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className={cn(
                         "h-4 w-4 rounded-full flex items-center justify-center text-[10px] transition-colors shrink-0",
-                        newPassword && newPassword === confirmPassword ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-400"
+                        newPassword && newPassword === confirmPassword ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
                       )}>
                         <Check size={10} />
                       </div>
-                      <span className={newPassword && newPassword === confirmPassword ? "text-slate-900 font-semibold" : "text-slate-500"}>
+                      <span className={newPassword && newPassword === confirmPassword ? "text-slate-900 dark:text-slate-100 font-semibold" : "text-slate-500 dark:text-slate-400"}>
                         Passwords match
                       </span>
                     </div>
                   </div>
                 </form>
 
-                <div className="flex items-center justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50/80 shrink-0">
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25] shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setRecoverStep('otp')}
-                    className="h-10 rounded-xl border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                    className="h-10 rounded-xl border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] text-xs font-semibold cursor-pointer"
                   >
                     Back
                   </Button>
@@ -716,19 +723,19 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
             {/* Step 4: Success State */}
             {recoverStep === 'success' && (
               <div className="p-8 text-center flex-1 flex flex-col items-center justify-center space-y-4">
-                <div className="h-14 w-14 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shadow-xs">
+                <div className="h-14 w-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
                   <CheckCircle2 size={32} />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-lg font-bold text-slate-900 font-display">Password Updated!</h4>
-                  <p className="text-xs text-slate-500 max-w-sm">
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display">Password Updated!</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
                     Your password has been reset successfully. You can now use your new password across all HostelHub services.
                   </p>
                 </div>
                 <Button
                   type="button"
                   onClick={handleClose}
-                  className="h-10 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs px-6 shadow-xs mt-2"
+                  className="h-10 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs px-6 shadow-xs mt-2 cursor-pointer"
                 >
                   Done
                 </Button>
