@@ -17,7 +17,7 @@ export function OwnerBackground() {
   return (
     <div 
       aria-hidden="true" 
-      className="pointer-events-none fixed inset-0 overflow-hidden select-none z-0"
+      className="owner-bg-container pointer-events-none fixed inset-0 overflow-hidden select-none z-0"
       style={{
         backgroundColor: '#F5F9FD',
         backgroundImage: `

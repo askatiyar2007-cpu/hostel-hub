@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
+import { useTheme } from '@/lib/theme-context';
 import { supabase } from '@/lib/supabase/client';
 import { 
   User, 
@@ -14,6 +15,8 @@ import {
   Sparkles, 
   Bell, 
   Sun, 
+  Moon,
+  Monitor,
   Globe, 
   Coins, 
   HelpCircle, 
@@ -26,7 +29,9 @@ import {
   Check, 
   Phone, 
   Mail, 
-  Calendar
+  Calendar,
+  ExternalLink,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -124,7 +129,8 @@ function SettingsRow({
 // Main Settings Page Component
 // =========================================================================
 export default function OwnerSettingsPage() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshAuthState } = useAuth();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   // Modals state
   const [activeModal, setActiveModal] = useState<
@@ -138,18 +144,30 @@ export default function OwnerSettingsPage() {
   });
   const [profileSaving, setProfileSaving] = useState(false);
 
+  // Security session state
+  const [sessionExpiry, setSessionExpiry] = useState<string | null>(null);
+  const [signingOutOthers, setSigningOutOthers] = useState(false);
+
+  // Real database metadata for business & KYC
+  const [hostels, setHostels] = useState<Array<{ id: string; name: string; status: string }>>([]);
+  const [paymentMethodsCount, setPaymentMethodsCount] = useState<number>(0);
+
   // Notification preferences
   const [notifyRoomRequests, setNotifyRoomRequests] = useState(true);
   const [notifyComplaints, setNotifyComplaints] = useState(true);
+  const [notifyElectricity, setNotifyElectricity] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
 
+  // Load user metadata for preferences
   useEffect(() => {
     if (user?.user_metadata) {
       setNotifyRoomRequests(user.user_metadata.notify_room_requests !== false);
       setNotifyComplaints(user.user_metadata.notify_complaints !== false);
+      setNotifyElectricity(user.user_metadata.notify_electricity !== false);
     }
   }, [user]);
 
+  // Sync profile form when profile changes
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -159,10 +177,58 @@ export default function OwnerSettingsPage() {
     }
   }, [profile]);
 
-  // Handle Profile Update
+  // Load real business data (hostels and payment methods) from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    let isCancelled = false;
+
+    async function fetchOwnerBusinessData() {
+      try {
+        // Fetch hostels
+        const { data: hostelData } = await supabase
+          .from('hostels')
+          .select('id, name, status')
+          .eq('owner_id', user!.id);
+
+        if (!isCancelled && hostelData) {
+          setHostels(hostelData);
+        }
+
+        // Fetch payment methods count
+        const { count: pmCount } = await supabase
+          .from('payment_methods')
+          .select('id', { count: 'exact', head: true })
+          .eq('owner_id', user!.id);
+
+        if (!isCancelled && typeof pmCount === 'number') {
+          setPaymentMethodsCount(pmCount);
+        }
+
+        // Fetch session expiry
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!isCancelled && sessionData?.session?.expires_at) {
+          const expDate = new Date(sessionData.session.expires_at * 1000);
+          setSessionExpiry(expDate.toLocaleString('en-IN', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching business settings data:', err);
+      }
+    }
+
+    fetchOwnerBusinessData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user?.id]);
+
+  // Handle Profile Update with immediate refresh
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.id) return;
+    if (!user?.id) return;
     setProfileSaving(true);
     try {
       const { error } = await supabase
@@ -172,9 +238,12 @@ export default function OwnerSettingsPage() {
           phone_number: formData.phone_number.trim(),
           updated_at: new Date().toISOString()
         })
-        .eq('id', profile.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
+      
+      // Immediately synchronize auth state so profile card and header update
+      await refreshAuthState();
       toast.success('Profile updated successfully');
       setActiveModal(null);
     } catch (error: unknown) {
@@ -185,6 +254,21 @@ export default function OwnerSettingsPage() {
     }
   };
 
+  // Handle Sign Out Other Devices
+  const handleSignOutOtherDevices = async () => {
+    setSigningOutOthers(true);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'others' });
+      if (error) throw error;
+      toast.success('Successfully signed out of all other devices');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to sign out other devices';
+      toast.error(message);
+    } finally {
+      setSigningOutOthers(false);
+    }
+  };
+
   // Handle Notification Preferences Save
   const handleSaveNotifications = async () => {
     setSavingPrefs(true);
@@ -192,10 +276,12 @@ export default function OwnerSettingsPage() {
       const { error } = await supabase.auth.updateUser({
         data: {
           notify_room_requests: notifyRoomRequests,
-          notify_complaints: notifyComplaints
+          notify_complaints: notifyComplaints,
+          notify_electricity: notifyElectricity
         }
       });
       if (error) throw error;
+      await refreshAuthState();
       toast.success('Notification preferences saved successfully');
       setActiveModal(null);
     } catch (err: unknown) {
@@ -215,6 +301,25 @@ export default function OwnerSettingsPage() {
 
   const ownerName = profile?.full_name || user?.user_metadata?.full_name || 'Hostel Owner';
   const ownerEmail = profile?.email || user?.email || 'owner@hostelhub.in';
+  const ownerPhone = profile?.phone_number || '';
+  const isEmailVerified = Boolean(user?.email_confirmed_at);
+  const hasApprovedHostel = hostels.some(h => h.status === 'approved');
+  const hasPendingHostel = hostels.some(h => h.status === 'pending');
+
+  // Dynamic KYC Status calculation
+  const kycStatusBadge = hasApprovedHostel ? (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
+      <CheckCircle2 size={10} /> Property Verified
+    </span>
+  ) : hasPendingHostel ? (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
+      <Clock size={10} /> In Review
+    </span>
+  ) : (
+    <span className="inline-flex items-center text-[10px] font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+      No Property
+    </span>
+  );
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 min-w-0">
@@ -257,12 +362,25 @@ export default function OwnerSettingsPage() {
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200/80 uppercase tracking-wider">
                   Owner
                 </span>
+                {isEmailVerified && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                    <CheckCircle2 size={10} /> Verified Email
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-slate-500 font-medium truncate mt-1">
-                {ownerEmail}
-              </p>
+              <div className="flex items-center gap-2.5 mt-1 flex-wrap text-xs text-slate-500 font-medium">
+                <span className="truncate">{ownerEmail}</span>
+                {ownerPhone && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span className="flex items-center gap-1">
+                      <Phone size={11} className="text-slate-400" /> {ownerPhone}
+                    </span>
+                  </>
+                )}
+              </div>
               {memberSince && (
-                <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
                   <Calendar size={11} /> Member since {memberSince}
                 </p>
               )}
@@ -309,7 +427,7 @@ export default function OwnerSettingsPage() {
               icon={<Lock size={20} />}
               iconBg="bg-indigo-50 text-indigo-700 border border-indigo-200/80"
               title="Change Password"
-              description="Update your password securely"
+              description="Update your password or request recovery OTP"
               onClick={() => setActiveModal('password')}
             />
 
@@ -318,7 +436,7 @@ export default function OwnerSettingsPage() {
               icon={<Shield size={20} />}
               iconBg="bg-blue-50 text-blue-700 border border-blue-200/80"
               title="Security"
-              description="Login sessions and security preferences"
+              description="Login sessions, provider info and sign-out controls"
               badge={
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
                   <CheckCircle2 size={10} /> Protected
@@ -332,12 +450,8 @@ export default function OwnerSettingsPage() {
               icon={<CheckCircle2 size={20} />}
               iconBg="bg-teal-50 text-teal-700 border border-teal-200/80"
               title="KYC & Verification"
-              description="Verification status and owner information"
-              badge={
-                <span className="inline-flex items-center text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Verified
-                </span>
-              }
+              description="Hostel verification status and direct payout readiness"
+              badge={kycStatusBadge}
               onClick={() => setActiveModal('kyc')}
             />
           </div>
@@ -357,8 +471,13 @@ export default function OwnerSettingsPage() {
             <SettingsRow
               icon={<Building2 size={20} />}
               iconBg="bg-teal-50 text-teal-700 border border-teal-200/80"
-              title="Business Information"
-              description="Hostel business details and property portfolio"
+              title="Business & Properties"
+              description="Hostel property portfolio, room inventory & addresses"
+              badge={
+                <span className="inline-flex items-center text-[10px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                  {hostels.length} {hostels.length === 1 ? 'Hostel' : 'Hostels'}
+                </span>
+              }
               href="/owner/hostels"
             />
 
@@ -366,8 +485,19 @@ export default function OwnerSettingsPage() {
             <SettingsRow
               icon={<CreditCard size={20} />}
               iconBg="bg-emerald-50 text-emerald-700 border border-emerald-200/80"
-              title="Bank Accounts"
-              description="Manage accounts used for settlements/payouts"
+              title="Bank & Payout Methods"
+              description="Configure UPI ID, Bank Transfer & QR Code for fee collections"
+              badge={
+                paymentMethodsCount > 0 ? (
+                  <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                    {paymentMethodsCount} Configured
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full">
+                    Setup Needed
+                  </span>
+                )
+              }
               href="/owner/settings/payment-methods"
             />
 
@@ -375,8 +505,13 @@ export default function OwnerSettingsPage() {
             <SettingsRow
               icon={<FileText size={20} />}
               iconBg="bg-sky-50 text-sky-700 border border-sky-200/80"
-              title="Billing & Invoices"
-              description="Billing history, invoices and fee tracking"
+              title="Student Billing & Dues"
+              description="Manage resident fee schedules, collection cycles & dues"
+              badge={
+                <span className="inline-flex items-center text-[10px] font-semibold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full">
+                  Student Fees
+                </span>
+              }
               href="/owner/billing"
             />
 
@@ -385,10 +520,10 @@ export default function OwnerSettingsPage() {
               icon={<Sparkles size={20} />}
               iconBg="bg-amber-50 text-amber-700 border border-amber-200/80"
               title="Subscription & Plan"
-              description="Current plan and subscription information"
+              description="Complimentary owner access & included features"
               badge={
                 <span className="inline-flex items-center text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Owner Tier
+                  Standard (Complimentary)
                 </span>
               }
               onClick={() => setActiveModal('subscription')}
@@ -407,7 +542,7 @@ export default function OwnerSettingsPage() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Preferences
             </h2>
-            <span className="text-[11px] font-medium text-slate-400">Preferences</span>
+            <span className="text-[11px] font-medium text-slate-400">Workspace Customization</span>
           </div>
 
           <div className="bg-white rounded-2xl border border-sky-100/90 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.06),0_2px_6px_-1px_rgba(14,42,71,0.04)] divide-y divide-slate-100 overflow-hidden relative z-10">
@@ -416,19 +551,32 @@ export default function OwnerSettingsPage() {
               icon={<Bell size={20} />}
               iconBg="bg-purple-50 text-purple-700 border border-purple-200/80"
               title="Notifications"
-              description="Push/email/SMS notification preferences"
+              description="Email alerts for bookings, maintenance & electricity"
+              badge={
+                <span className="inline-flex items-center text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-200/80 px-2 py-0.5 rounded-full">
+                  Email Active
+                </span>
+              }
               onClick={() => setActiveModal('notifications')}
             />
 
             {/* Appearance */}
             <SettingsRow
-              icon={<Sun size={20} />}
+              icon={
+                resolvedTheme === 'dark' ? (
+                  <Moon size={20} />
+                ) : theme === 'system' ? (
+                  <Monitor size={20} />
+                ) : (
+                  <Sun size={20} />
+                )
+              }
               iconBg="bg-cyan-50 text-cyan-700 border border-cyan-200/80"
               title="Appearance"
-              description="Theme and visual preferences"
+              description="Select Light, Dark, or System visual workspace"
               badge={
-                <span className="inline-flex items-center text-[10px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                  Light Theme
+                <span className="inline-flex items-center text-[10px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full capitalize">
+                  {theme === 'system' ? 'System Theme' : `${theme} Theme`}
                 </span>
               }
               onClick={() => setActiveModal('appearance')}
@@ -439,7 +587,7 @@ export default function OwnerSettingsPage() {
               icon={<Globe size={20} />}
               iconBg="bg-violet-50 text-violet-700 border border-violet-200/80"
               title="Language"
-              description="Preferred language"
+              description="Standard locale & number format"
               badge={
                 <span className="inline-flex items-center text-[10px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
                   English (India)
@@ -453,7 +601,7 @@ export default function OwnerSettingsPage() {
               icon={<Coins size={20} />}
               iconBg="bg-emerald-50 text-emerald-700 border border-emerald-200/80"
               title="Currency"
-              description="Preferred currency"
+              description="Authoritative accounting & UPI settlement currency"
               badge={
                 <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
                   INR (₹)
@@ -479,7 +627,7 @@ export default function OwnerSettingsPage() {
               icon={<HelpCircle size={20} />}
               iconBg="bg-blue-50 text-blue-700 border border-blue-200/80"
               title="Help & Support"
-              description="Get help with HostelHub"
+              description="Direct email support, helpline & documentation"
               onClick={() => setActiveModal('help')}
             />
 
@@ -488,7 +636,7 @@ export default function OwnerSettingsPage() {
               icon={<FileCheck size={20} />}
               iconBg="bg-slate-100 text-slate-700 border border-slate-200/80"
               title="Terms & Privacy"
-              description="Terms of service and privacy information"
+              description="Owner partner standards & student data privacy"
               onClick={() => setActiveModal('terms')}
             />
 
@@ -497,7 +645,7 @@ export default function OwnerSettingsPage() {
               icon={<Info size={20} />}
               iconBg="bg-teal-50 text-teal-700 border border-teal-200/80"
               title="About HostelHub"
-              description="App version and application information"
+              description="Application version, framework & database architecture"
               badge={
                 <span className="inline-flex items-center text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full">
                   v1.0.0
@@ -567,9 +715,15 @@ export default function OwnerSettingsPage() {
                   <Label htmlFor="email" className="text-xs font-semibold text-slate-700">
                     Email Address
                   </Label>
-                  <span className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1">
-                    <CheckCircle2 size={11} /> Verified
-                  </span>
+                  {isEmailVerified ? (
+                    <span className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 size={11} /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-semibold text-amber-600 flex items-center gap-1">
+                      <Clock size={11} /> Pending Verification
+                    </span>
+                  )}
                 </div>
                 <Input
                   id="email"
@@ -612,7 +766,7 @@ export default function OwnerSettingsPage() {
                 <Button
                   type="submit"
                   disabled={profileSaving}
-                  className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                  className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
                 >
                   {profileSaving ? 'Saving Changes...' : 'Save Changes'}
                 </Button>
@@ -640,7 +794,95 @@ export default function OwnerSettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900">Security Details</h3>
-                  <p className="text-xs text-slate-500">Active authentication status</p>
+                  <p className="text-xs text-slate-500">Active authentication & session status</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-3.5 overflow-y-auto flex-1 text-xs">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-slate-900">Session Status</p>
+                  <p className="text-slate-500">Authenticated via Supabase Auth</p>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  <CheckCircle2 size={11} /> Active
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">Authentication Method</p>
+                <p className="text-slate-600 capitalize">
+                  {user?.app_metadata?.provider || 'Email & Secure Password'}
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">Signed-in Email</p>
+                <p className="text-slate-600 break-all">{ownerEmail}</p>
+              </div>
+
+              {sessionExpiry && (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                  <p className="font-bold text-slate-900">Session Valid Until</p>
+                  <p className="text-slate-600">{sessionExpiry}</p>
+                </div>
+              )}
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">Access Level</p>
+                <p className="text-slate-600">Owner Workspace & Hostel Property Administrator</p>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSignOutOtherDevices}
+                  disabled={signingOutOthers}
+                  className="w-full h-9 rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <LogOut size={13} />
+                  <span>{signingOutOthers ? 'Signing Out Other Devices...' : 'Sign Out of Other Devices'}</span>
+                </Button>
+                <p className="text-[10px] text-slate-400 text-center mt-1.5">
+                  Revokes all active sessions on other phones and computers.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
+              <Button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. KYC & Verification Modal (Honest, Real Status) */}
+      {activeModal === 'kyc' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center shadow-2xs">
+                  <CheckCircle2 size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">Verification & Compliance</h3>
+                  <p className="text-xs text-slate-500">Property approvals & settlement status</p>
                 </div>
               </div>
               <button
@@ -653,87 +895,83 @@ export default function OwnerSettingsPage() {
             </div>
 
             <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+              {/* Email Status */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-slate-900">Session Status</p>
-                  <p className="text-slate-500">Authenticated via Supabase Auth</p>
+                  <p className="font-bold text-slate-900">Account Email Verification</p>
+                  <p className="text-slate-500">{ownerEmail}</p>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                  <CheckCircle2 size={11} /> Active
-                </span>
+                {isEmailVerified ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <CheckCircle2 size={11} /> Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                    <Clock size={11} /> Pending
+                  </span>
+                )}
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">Signed-in Email</p>
-                <p className="text-slate-600 break-all">{ownerEmail}</p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">Access Level</p>
-                <p className="text-slate-600">Owner Workspace & Hostels Administrator</p>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
-              <Button
-                type="button"
-                onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. KYC & Verification Modal */}
-      {activeModal === 'kyc' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center shadow-2xs">
-                  <CheckCircle2 size={18} />
+              {/* Property Approval Status */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-slate-900">Hostel Properties Status</p>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    {hostels.length} {hostels.length === 1 ? 'Property' : 'Properties'}
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900">KYC & Verification</h3>
-                  <p className="text-xs text-slate-500">HostelHub verified partner</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-200/80 flex items-start gap-3 text-xs">
-                <CheckCircle2 size={18} className="text-teal-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-teal-900">Owner Identity Verified</p>
-                  <p className="text-teal-700 mt-0.5 leading-relaxed">
-                    Your owner account credentials and hostel management permissions are fully verified for direct fee collections and tenant contracts.
+                {hostels.length === 0 ? (
+                  <p className="text-slate-500 text-[11px]">
+                    No hostel properties registered yet. Create your first hostel from{' '}
+                    <Link href="/owner/hostels" onClick={() => setActiveModal(null)} className="text-teal-600 underline">
+                      Hostels Management
+                    </Link>.
                   </p>
-                </div>
+                ) : (
+                  <div className="space-y-1.5 pt-1">
+                    {hostels.map(hostel => (
+                      <div key={hostel.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
+                        <span className="font-medium text-slate-800 truncate pr-2">{hostel.name}</span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                          hostel.status === 'approved' 
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                            : hostel.status === 'pending'
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : "bg-slate-100 text-slate-700 border border-slate-200"
+                        )}>
+                          {hostel.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-2.5 text-xs">
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-500">Verification Tier</span>
-                  <span className="font-bold text-slate-900">Standard Owner Partner</span>
+              {/* Direct UPI / Bank Settlement Readiness */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-slate-900">Direct Fee Collections</p>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold",
+                    paymentMethodsCount > 0 
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  )}>
+                    {paymentMethodsCount > 0 ? `${paymentMethodsCount} Channels Active` : 'Action Required'}
+                  </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-slate-500">Direct Settlement</span>
-                  <span className="font-bold text-emerald-600">Enabled</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-slate-500">Account Type</span>
-                  <span className="font-bold text-slate-900">Hostel Administrator</span>
-                </div>
+                <p className="text-slate-600 leading-relaxed text-[11px]">
+                  HostelHub enables direct peer-to-peer student collections to your own UPI ID, QR code, or Bank Account. Payments go directly to you without platform escrow.
+                </p>
+              </div>
+
+              {/* Regulatory KYC Notice */}
+              <div className="p-3.5 rounded-xl bg-teal-50/60 border border-teal-200/80 text-[11px] text-teal-800 space-y-1">
+                <p className="font-bold text-teal-900">Banking & KYC Standards</p>
+                <p className="leading-relaxed">
+                  Additional business documents (PAN, GSTIN, Trade License) are not required for direct owner UPI/Cash fee collections. Document submission will only be required if activating optional automated third-party payment gateway disbursements.
+                </p>
               </div>
             </div>
 
@@ -741,7 +979,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Done
               </Button>
@@ -750,7 +988,7 @@ export default function OwnerSettingsPage() {
         </div>
       )}
 
-      {/* 5. Subscription & Plan Modal */}
+      {/* 5. Subscription & Plan Modal (Truthful & Honest) */}
       {activeModal === 'subscription' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
           <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
@@ -773,31 +1011,39 @@ export default function OwnerSettingsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/80 to-amber-100/40 border border-amber-200/80 text-xs space-y-2">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/80 to-amber-100/40 border border-amber-200/80 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Current Plan</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Active</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Complimentary Active</span>
                 </div>
-                <h4 className="text-lg font-bold text-slate-900">HostelHub</h4>
+                <h4 className="text-lg font-bold text-slate-900">Standard Owner Tier</h4>
                 <p className="text-slate-600 leading-relaxed">
-                  Complete platform access for property management, electricity metering, and billing workflows.
+                  Full SaaS platform access for property operations, sub-meter electricity computation, and direct student fee collections with zero platform commission.
                 </p>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Check size={14} className="text-teal-600" />
-                  <span>Unlimited hostel property listings</span>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Subscription Cost</span>
+                  <span className="font-bold text-emerald-600">₹0 / Free (Complimentary)</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Check size={14} className="text-teal-600" />
-                  <span>Automated room & sub-meter electricity computation</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Next Billing Renewal</span>
+                  <span className="font-semibold text-slate-800">No charges scheduled</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Check size={14} className="text-teal-600" />
-                  <span>Direct UPI and Bank Transfer payout channels</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Hostel Property Limit</span>
+                  <span className="font-semibold text-slate-800">Unlimited</span>
                 </div>
+                <div className="flex items-center justify-between py-1.5">
+                  <span className="text-slate-500">Electricity Sub-Meters</span>
+                  <span className="font-semibold text-slate-800">Unlimited Multi-occupant</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 leading-relaxed">
+                Platform software access is provided complimentary to verified property managers. No credit card or recurring payment mandate is attached.
               </div>
             </div>
 
@@ -805,7 +1051,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Close
               </Button>
@@ -825,7 +1071,7 @@ export default function OwnerSettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900">Notification Preferences</h3>
-                  <p className="text-xs text-slate-500">Configure operational alerts and updates</p>
+                  <p className="text-xs text-slate-500">Configure email alerts & operational updates</p>
                 </div>
               </div>
               <button
@@ -838,13 +1084,18 @@ export default function OwnerSettingsPage() {
             </div>
 
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Alerts (Active via Brevo)</h4>
+                <p className="text-[11px] text-slate-400">Delivered directly to {ownerEmail}</p>
+              </div>
+
               <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
-                {/* Toggle 1 */}
+                {/* Toggle 1: Room Requests */}
                 <div className="flex items-center justify-between p-4 bg-white">
                   <div className="pr-4">
                     <p className="text-sm font-bold text-slate-900">Room Booking & Allocations</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Receive alerts when students apply for rooms or bed allocations.
+                      Receive email alerts when students submit new room booking requests.
                     </p>
                   </div>
                   <button
@@ -866,12 +1117,12 @@ export default function OwnerSettingsPage() {
                   </button>
                 </div>
 
-                {/* Toggle 2 */}
+                {/* Toggle 2: Complaints */}
                 <div className="flex items-center justify-between p-4 bg-white">
                   <div className="pr-4">
                     <p className="text-sm font-bold text-slate-900">Complaints & Maintenance</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Receive alerts when a resident logs an urgent hostel complaint.
+                      Receive email alerts when a resident logs an urgent hostel maintenance issue.
                     </p>
                   </div>
                   <button
@@ -892,6 +1143,46 @@ export default function OwnerSettingsPage() {
                     />
                   </button>
                 </div>
+
+                {/* Toggle 3: Electricity Billing Reminders */}
+                <div className="flex items-center justify-between p-4 bg-white">
+                  <div className="pr-4">
+                    <p className="text-sm font-bold text-slate-900">Electricity Reading Reminders</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Receive monthly cycle reminders to record sub-meter readings before cycle finalization.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notifyElectricity}
+                    onClick={() => setNotifyElectricity(!notifyElectricity)}
+                    className={cn(
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500",
+                      notifyElectricity ? "bg-teal-600" : "bg-slate-200"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out",
+                        notifyElectricity ? "translate-x-5" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* SMS & Push Notification Channels Status */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800">SMS & Push Notification Gateways</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full">
+                    Not Configured / Coming Soon
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  SMS OTP and mobile push services require dedicated DLT registration under TRAI guidelines. All transactional notifications are currently dispatched via Brevo Email.
+                </p>
               </div>
             </div>
 
@@ -908,7 +1199,7 @@ export default function OwnerSettingsPage() {
                 type="button"
                 onClick={handleSaveNotifications}
                 disabled={savingPrefs}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 {savingPrefs ? 'Saving...' : 'Save Preferences'}
               </Button>
@@ -917,10 +1208,10 @@ export default function OwnerSettingsPage() {
         </div>
       )}
 
-      {/* 7. Appearance Modal */}
+      {/* 7. Appearance Modal (Real Light, Dark & System Theme Switching) */}
       {activeModal === 'appearance' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-cyan-50 text-cyan-700 border border-cyan-200 flex items-center justify-center shadow-2xs">
@@ -928,7 +1219,7 @@ export default function OwnerSettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900">Appearance & Theme</h3>
-                  <p className="text-xs text-slate-500">Visual workspace environment</p>
+                  <p className="text-xs text-slate-500">Choose your workspace display mode</p>
                 </div>
               </div>
               <button
@@ -941,14 +1232,94 @@ export default function OwnerSettingsPage() {
             </div>
 
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="p-4 rounded-xl border-2 border-teal-500 bg-teal-50/40 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900">HostelHub Daylight Architecture</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-600 text-white">Active</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Carefully optimized for daytime administrative readability with high-contrast elevated white cards over a pale atmospheric architectural skyline.
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Light Mode */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme('light');
+                    toast.success('Switched to Light theme');
+                  }}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-4 rounded-xl border text-center transition-all cursor-pointer relative",
+                    theme === 'light'
+                      ? "border-teal-500 bg-teal-50/60 ring-2 ring-teal-500/30 text-teal-950 font-bold"
+                      : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <div className="h-11 w-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/80 shadow-2xs">
+                    <Sun size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Light</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Daylight crisp</p>
+                  </div>
+                  {theme === 'light' && (
+                    <span className="absolute top-2 right-2 h-4 w-4 rounded-full bg-teal-600 text-white flex items-center justify-center">
+                      <Check size={10} />
+                    </span>
+                  )}
+                </button>
+
+                {/* Dark Mode */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme('dark');
+                    toast.success('Switched to Dark theme');
+                  }}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-4 rounded-xl border text-center transition-all cursor-pointer relative",
+                    theme === 'dark'
+                      ? "border-teal-500 bg-teal-50/60 ring-2 ring-teal-500/30 text-teal-950 font-bold"
+                      : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <div className="h-11 w-11 rounded-xl bg-slate-900 text-teal-400 flex items-center justify-center border border-slate-700 shadow-2xs">
+                    <Moon size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Dark</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Night navy</p>
+                  </div>
+                  {theme === 'dark' && (
+                    <span className="absolute top-2 right-2 h-4 w-4 rounded-full bg-teal-600 text-white flex items-center justify-center">
+                      <Check size={10} />
+                    </span>
+                  )}
+                </button>
+
+                {/* System Mode */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme('system');
+                    toast.success('Theme set to match device system preference');
+                  }}
+                  className={cn(
+                    "flex flex-col items-center gap-3 p-4 rounded-xl border text-center transition-all cursor-pointer relative",
+                    theme === 'system'
+                      ? "border-teal-500 bg-teal-50/60 ring-2 ring-teal-500/30 text-teal-950 font-bold"
+                      : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/80 shadow-2xs">
+                    <Monitor size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">System</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Match device</p>
+                  </div>
+                  {theme === 'system' && (
+                    <span className="absolute top-2 right-2 h-4 w-4 rounded-full bg-teal-600 text-white flex items-center justify-center">
+                      <Check size={10} />
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+                Theme changes apply immediately across the entire owner workspace and persist across browser sessions.
               </div>
             </div>
 
@@ -956,7 +1327,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Done
               </Button>
@@ -988,13 +1359,29 @@ export default function OwnerSettingsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+            <div className="p-6 space-y-3 overflow-y-auto flex-1">
+              {/* Active language */}
               <div className="p-3.5 rounded-xl border border-teal-300 bg-teal-50/50 flex items-center justify-between text-xs">
                 <div>
                   <p className="font-bold text-slate-900">English (India & International)</p>
-                  <p className="text-slate-500">Standard system locale for Indian hostels</p>
+                  <p className="text-slate-500 mt-0.5">Indian numbering system (Lakhs/Crores) & DD/MM/YYYY formats</p>
                 </div>
-                <Check size={16} className="text-teal-600" />
+                <Check size={16} className="text-teal-600 shrink-0 ml-2" />
+              </div>
+
+              {/* Upcoming languages */}
+              <div className="pt-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">Coming Soon</p>
+                <div className="space-y-1.5 opacity-70">
+                  {['Hindi (हिंदी)', 'Kannada (ಕನ್ನಡ)', 'Telugu (తెలుగు)', 'Tamil (தமிழ்)'].map(lang => (
+                    <div key={lang} className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-700">{lang}</span>
+                      <span className="text-[10px] font-semibold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full">
+                        Coming Soon
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1002,7 +1389,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Close
               </Button>
@@ -1022,7 +1409,7 @@ export default function OwnerSettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900">Billing Currency</h3>
-                  <p className="text-xs text-slate-500">Default rent and electricity unit</p>
+                  <p className="text-xs text-slate-500">Authoritative currency for calculations</p>
                 </div>
               </div>
               <button
@@ -1034,13 +1421,17 @@ export default function OwnerSettingsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/50 flex items-center justify-between text-xs">
+            <div className="p-6 space-y-3.5 overflow-y-auto flex-1 text-xs">
+              <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/50 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-slate-900">INR (₹) - Indian Rupee</p>
-                  <p className="text-slate-500">Configured for UPI and Indian bank settlements</p>
+                  <p className="text-slate-500 mt-0.5">Authoritative currency for all hostel rents, electricity meters, and UPI QR codes.</p>
                 </div>
-                <Check size={16} className="text-emerald-600" />
+                <Check size={16} className="text-emerald-600 shrink-0 ml-2" />
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 leading-relaxed text-[11px]">
+                To maintain 100% calculation accuracy and regulatory compliance with Indian banking rails, all room dues, sub-meter tariffs, and student payment receipts are fixed in INR.
               </div>
             </div>
 
@@ -1048,7 +1439,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Close
               </Button>
@@ -1080,19 +1471,37 @@ export default function OwnerSettingsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+            <div className="p-6 space-y-3.5 overflow-y-auto flex-1 text-xs">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
                 <p className="font-bold text-slate-900 flex items-center gap-1.5">
                   <Mail size={13} className="text-teal-600" /> Support Email
                 </p>
                 <p className="text-slate-600 select-all font-medium">support@hostelhub.in</p>
+                <a
+                  href="mailto:support@hostelhub.in?subject=HostelHub%20Owner%20Support%20Request"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-600 hover:text-teal-700 pt-1"
+                >
+                  <span>Open Mail App</span>
+                  <ExternalLink size={12} />
+                </a>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
                 <p className="font-bold text-slate-900 flex items-center gap-1.5">
                   <Phone size={13} className="text-teal-600" /> Owner Operations Helpline
                 </p>
-                <p className="text-slate-600 font-medium">+91 (080) 4567-8900 (Mon - Sat, 9 AM - 7 PM)</p>
+                <p className="text-slate-600 font-medium">+91 (080) 4567-8900</p>
+                <p className="text-[11px] text-slate-400">Available Mon - Sat, 9:00 AM - 7:00 PM IST</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">Electricity Sub-Meter Guidelines</p>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Need help recording meter readings or allocating shared bills? Visit{' '}
+                  <Link href="/owner/electricity/billing" onClick={() => setActiveModal(null)} className="text-teal-600 font-semibold underline">
+                    Electricity Billing Overview
+                  </Link>.
+                </p>
               </div>
             </div>
 
@@ -1100,7 +1509,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Close
               </Button>
@@ -1112,7 +1521,7 @@ export default function OwnerSettingsPage() {
       {/* 11. Terms & Privacy Modal */}
       {activeModal === 'terms' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto overscroll-contain animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-3rem)] overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shadow-2xs">
@@ -1132,20 +1541,38 @@ export default function OwnerSettingsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-3 overflow-y-auto flex-1 text-xs text-slate-600 leading-relaxed">
-              <p>
-                HostelHub provides property management and tenant allocation tools. By managing properties on HostelHub, owners agree to keep room pricing, availability, and electricity readings accurate and up to date.
-              </p>
-              <p>
-                All student tenant data is protected by strict Row-Level Security (RLS) policies. PII (phone numbers, IDs) is confidential and solely intended for tenancy administration.
-              </p>
+            <div className="p-6 space-y-3.5 overflow-y-auto flex-1 text-xs text-slate-600 leading-relaxed">
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900">1. Property & Pricing Integrity</p>
+                <p>
+                  HostelHub provides property management and tenant allocation tools. By listing properties, owners agree to keep room pricing, availability, and electricity meter readings accurate and up to date.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900">2. Student Data Protection & Privacy</p>
+                <p>
+                  All resident tenant records (names, phone numbers, parent details) are protected by strict Supabase Row-Level Security (RLS) policies. Owner access is strictly limited to tenants allocated to their own authorized hostels.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900">3. Direct Payment Settlements</p>
+                <p>
+                  Payment transactions initiated via owner UPI IDs or bank accounts settle directly between student and owner. HostelHub does not escrow funds or charge commission on standard fee collections.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900">4. Electricity Tariff Regulations</p>
+                <p>
+                  Owners agree to configure electricity rates in compliance with state electricity regulatory commission (SERC) limits without unlawful commercial markups.
+                </p>
+              </div>
             </div>
 
             <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Understood
               </Button>
@@ -1184,15 +1611,25 @@ export default function OwnerSettingsPage() {
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Version</span>
-                <span className="font-bold text-teal-700">1.0.0 (Production)</span>
+                <span className="font-bold text-teal-700">1.0.0 (Production Release)</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Framework</span>
                 <span className="font-semibold text-slate-800">Next.js 14 App Router</span>
               </div>
+              <div className="flex justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-500">Database & Security</span>
+                <span className="font-semibold text-slate-800">Supabase Cloud + PostgreSQL RLS</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-500">Notification Engine</span>
+                <span className="font-semibold text-slate-800">Brevo Transactional SMTP</span>
+              </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-500">Database & Auth</span>
-                <span className="font-semibold text-slate-800">Supabase Cloud</span>
+                <span className="text-slate-500">System Status</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> All Services Operational
+                </span>
               </div>
             </div>
 
@@ -1200,7 +1637,7 @@ export default function OwnerSettingsPage() {
               <Button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5"
+                className="h-9.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 cursor-pointer"
               >
                 Close
               </Button>

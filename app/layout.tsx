@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Fraunces } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/context';
 import { QueryProvider } from '@/lib/query-provider';
+import { ThemeProvider } from '@/lib/theme-context';
 
 import { SiteHeader } from '@/components/site-header'; // Added import for SiteHeader
 import { Toaster } from '@/components/ui/sonner';
@@ -40,13 +41,15 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground overflow-x-hidden">
         <QueryProvider>
-          <AuthProvider>
-            <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <main className="flex-1">{children}</main>
-            </div>
-            <Toaster position="top-right" />
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <SiteHeader />
+                <main className="flex-1">{children}</main>
+              </div>
+              <Toaster position="top-right" />
+            </AuthProvider>
+          </ThemeProvider>
         </QueryProvider>
       </body>
     </html>

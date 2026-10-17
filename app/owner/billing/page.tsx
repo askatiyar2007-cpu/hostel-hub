@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
-import { Search, Download, Filter, Plus, ArrowUpRight } from 'lucide-react';
+import { Search, Download, Filter, Plus, ArrowUpRight, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -35,12 +35,23 @@ function formatFeeMonth(my: string) {
   return `Rent (${my})`;
 }
 
+function formatBillingMonthLabel(my: string) {
+  if (!my || my === '—') return 'Unspecified Month';
+  if (/^\d{4}-\d{2}$/.test(my)) {
+    const [year, month] = my.split('-');
+    const date = new Date(Number(year), Number(month) - 1, 1);
+    return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  }
+  return my;
+}
+
 export default function OwnerBillingPage() {
   const { user, profile } = useAuth();
   const [fees, setFees] = useState<FeeWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid' | 'overdue' | 'pending_verification'>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('all');
 
   const fetchFees = useCallback(async () => {
     const ownerId = user?.id || profile?.user_id;
@@ -179,6 +190,14 @@ export default function OwnerBillingPage() {
     fetchFees();
   }, [fetchFees]);
 
+  // Available billing months sorted chronologically (e.g. 2026-10 before 2027-08)
+  const availableMonths = useMemo(() => {
+    const rawMonths = Array.from(
+      new Set(fees.map((f) => f.month_year).filter((m) => Boolean(m) && m !== '—'))
+    );
+    return rawMonths.sort((a, b) => a.localeCompare(b));
+  }, [fees]);
+
   const filteredFees = useMemo(() => {
     return fees.filter((f) => {
       const matchesSearch =
@@ -187,9 +206,10 @@ export default function OwnerBillingPage() {
         f.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         f.month_year.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || f.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesMonth = monthFilter === 'all' || f.month_year === monthFilter;
+      return matchesSearch && matchesStatus && matchesMonth;
     });
-  }, [fees, searchTerm, statusFilter]);
+  }, [fees, searchTerm, statusFilter, monthFilter]);
 
   const handleExportCSV = () => {
     if (filteredFees.length === 0) return;
@@ -226,7 +246,7 @@ export default function OwnerBillingPage() {
           <button 
             onClick={handleExportCSV}
             disabled={filteredFees.length === 0}
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-2xs disabled:opacity-50"
+            className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
           >
             <Download size={16} />
             <span>Export CSV</span>
@@ -250,19 +270,41 @@ export default function OwnerBillingPage() {
               className="w-full pl-9 pr-4 py-2 bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter size={14} className="text-slate-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="border border-slate-200 bg-white text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-            >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="pending_verification">Pending Verification</option>
-              <option value="paid">Paid</option>
-              <option value="overdue">Overdue</option>
-            </select>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Billing Month Filter */}
+            <div className="flex items-center gap-1.5">
+              <Calendar size={14} className="text-slate-400 shrink-0" />
+              <select
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+                className="border border-slate-200 bg-white text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+                aria-label="Filter by billing month"
+              >
+                <option value="all">All Months</option>
+                {availableMonths.map((m) => (
+                  <option key={m} value={m}>
+                    {formatBillingMonthLabel(m)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-1.5">
+              <Filter size={14} className="text-slate-400 shrink-0" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="border border-slate-200 bg-white text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+                aria-label="Filter by fee status"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="pending_verification">Pending Verification</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -284,8 +326,19 @@ export default function OwnerBillingPage() {
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading fees...</td></tr>
               ) : filteredFees.length === 0 ? (
                 <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                  No fees found. 
-                  <Link href="/owner/billing/new" className="text-teal-600 font-bold ml-1 hover:underline">Create your first bill →</Link>
+                  No fees found matching your filters.
+                  {(searchTerm || statusFilter !== 'all' || monthFilter !== 'all') ? (
+                    <button 
+                      onClick={() => { setSearchTerm(''); setStatusFilter('all'); setMonthFilter('all'); }} 
+                      className="text-teal-600 font-bold ml-1.5 hover:underline cursor-pointer"
+                    >
+                      Clear filters
+                    </button>
+                  ) : (
+                    <Link href="/owner/billing/new" className="text-teal-600 font-bold ml-1 hover:underline">
+                      Create your first bill →
+                    </Link>
+                  )}
                 </td></tr>
               ) : filteredFees.map((fee) => (
                 <tr key={fee.id} className="hover:bg-slate-50/60 transition-colors">
