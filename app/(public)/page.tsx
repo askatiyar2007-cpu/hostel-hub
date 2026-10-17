@@ -159,45 +159,45 @@ export default function PublicHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFCFB] text-slate-900 selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100 selection:bg-teal-100 dark:selection:bg-teal-900 selection:text-teal-900 dark:selection:text-teal-100 overflow-x-hidden">
       {/* Animated Navigation */}
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60"
+        className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#07131d]/90 backdrop-blur-md border-b border-slate-200/60 dark:border-[#1a3d52]/60"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
               <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F766E] to-[#042F2E] text-white shadow-lg">
                 <Building2 className="h-6 w-6" />
-                <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white">
+                <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white dark:ring-[#07131d]">
                   <Sparkles className="h-2.5 w-2.5 fill-current" />
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight text-slate-900 font-display leading-tight">
-                  Hostel<span className="text-[#0F766E]">Hub</span>
+                <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display leading-tight">
+                  Hostel<span className="text-[#0F766E] dark:text-teal-400">Hub</span>
                 </span>
-                <span className="text-[10px] font-medium tracking-wider text-[#0F766E]/80 uppercase">
+                <span className="text-[10px] font-medium tracking-wider text-[#0F766E]/80 dark:text-teal-300/80 uppercase">
                   Your Stay, Simplified
                 </span>
               </div>
             </Link>
 
             <nav className="hidden items-center gap-1 md:flex">
-              <Link href="/find-hostel" className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200">
+              <Link href="/find-hostel" className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:hover:text-white transition-all duration-200">
                 Browse Hostels
               </Link>
-              <Link href="/#how-it-works" className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200">
+              <Link href="/#how-it-works" className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:hover:text-white transition-all duration-200">
                 How it Works
               </Link>
             </nav>
 
             <div className="flex items-center gap-3">
               <Link href="/login" className="hidden sm:block">
-                <button className="rounded-full px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+                <button className="rounded-full px-6 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:hover:text-white transition-colors">
                   Sign in
                 </button>
               </Link>
@@ -206,8 +206,8 @@ export default function PublicHomePage() {
                   Get started
                 </button>
               </Link>
-              <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-slate-100">
-                <Menu className="h-6 w-6 text-slate-600" />
+              <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#122b3b]">
+                <Menu className="h-6 w-6 text-slate-600 dark:text-slate-300" />
               </button>
             </div>
           </div>
@@ -229,24 +229,24 @@ export default function PublicHomePage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-72 bg-white shadow-2xl p-6"
+              className="fixed right-0 top-0 h-full w-72 bg-white dark:bg-[#0e222e] border-l border-slate-200 dark:border-[#1a3d52] shadow-2xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <button onClick={() => setMobileMenuOpen(false)} className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-100">
-                <X className="h-6 w-6 text-slate-600" />
+              <button onClick={() => setMobileMenuOpen(false)} className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#122b3b]">
+                <X className="h-6 w-6 text-slate-600 dark:text-slate-300" />
               </button>
               <nav className="mt-16 space-y-2">
-                <Link href="/find-hostel" className="block py-3 px-4 text-lg font-medium text-slate-700 hover:bg-slate-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/find-hostel" className="block py-3 px-4 text-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                   Browse Hostels
                 </Link>
-                <Link href="/#how-it-works" className="block py-3 px-4 text-lg font-medium text-slate-700 hover:bg-slate-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/#how-it-works" className="block py-3 px-4 text-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                   How it Works
                 </Link>
-                <div className="pt-4 border-t border-slate-200 mt-4">
-                  <Link href="/login" className="block py-3 px-4 text-lg font-medium text-slate-700 hover:bg-slate-100 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                <div className="pt-4 border-t border-slate-200 dark:border-[#1a3d52] mt-4">
+                  <Link href="/login" className="block py-3 px-4 text-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                     Sign in
                   </Link>
-                  <Link href="/signup" className="block py-3 px-4 text-lg font-medium text-[#0F766E] hover:bg-teal-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href="/signup" className="block py-3 px-4 text-lg font-medium text-[#0F766E] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                     Get started
                   </Link>
                 </div>
@@ -257,13 +257,13 @@ export default function PublicHomePage() {
       </AnimatePresence>
 
       {/* CINEMATIC HERO WITH SCROLL TRANSFORMATION */}
-      <section ref={heroRef} className="relative h-screen overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[90vh] sm:h-screen overflow-hidden">
         <motion.div
           style={{ scale: heroScale, opacity: heroOpacity, y: heroY, rotate: heroRotate }}
           className="absolute inset-0"
         >
           {/* Cinematic Background with scroll-reactive elements */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#F5FBFF] via-[#EFF8FF] to-[#F8FCFD]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#F5FBFF] via-[#EFF8FF] to-[#F8FCFD] dark:from-[#07131d] dark:via-[#0c202d] dark:to-[#07131d]" />
           
           {/* Architectural grid - becomes more visible on scroll */}
           <motion.div
@@ -330,10 +330,10 @@ export default function PublicHomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="inline-flex items-center gap-2 rounded-full border border-teal-300/80 bg-white/90 px-4 py-1.5 shadow-sm backdrop-blur-xs mb-6"
+                className="inline-flex items-center gap-2 rounded-full border border-teal-300/80 dark:border-teal-700/80 bg-white/90 dark:bg-[#0e222e]/90 px-4 py-1.5 shadow-sm backdrop-blur-xs mb-6"
               >
                 <span className="flex h-2 w-2 rounded-full bg-[#0F766E] animate-pulse" />
-                <span className="text-xs font-semibold tracking-wider text-teal-950 uppercase">
+                <span className="text-xs font-semibold tracking-wider text-teal-950 dark:text-teal-200 uppercase">
                   Verified Student Accommodation
                 </span>
               </motion.div>
@@ -342,14 +342,14 @@ export default function PublicHomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-slate-900 font-display leading-[1.1] tracking-tight"
+                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-slate-900 dark:text-white font-display leading-[1.1] tracking-tight"
               >
                 Find a place
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.3 }}
-                  className="text-[#0F766E] block"
+                  className="text-[#0F766E] dark:text-teal-400 block"
                 >
                   you'll love to call
                 </motion.span>
@@ -357,7 +357,7 @@ export default function PublicHomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                  className="relative inline-block text-[#0F766E]"
+                  className="relative inline-block text-[#0F766E] dark:text-teal-400"
                 >
                   home.
                   <motion.svg
@@ -378,7 +378,7 @@ export default function PublicHomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className="text-lg sm:text-xl text-slate-600 font-medium mt-6 max-w-xl mx-auto"
+                className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 font-medium mt-6 max-w-xl mx-auto"
               >
                 Discover hostels, compare rooms, and manage your stay — all in one place.
               </motion.p>
@@ -404,7 +404,7 @@ export default function PublicHomePage() {
 
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/90 px-8 py-3.5 text-base font-semibold text-slate-700 hover:bg-white hover:border-slate-400 transition-all duration-300 shadow-sm"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-[#0e222e]/90 px-8 py-3.5 text-base font-semibold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-[#122b3b] hover:border-slate-400 dark:hover:border-slate-600 transition-all duration-300 shadow-sm"
                 >
                   I'm a Hostel Owner
                 </Link>
@@ -432,7 +432,7 @@ export default function PublicHomePage() {
       </section>
 
       {/* DISCOVERY - TRANSFORMS FROM HERO */}
-      <section ref={discoveryRef} className="relative py-24 bg-gradient-to-b from-[#F5FBFF] to-[#FAFCFB]">
+      <section ref={discoveryRef} className="relative py-24 bg-gradient-to-b from-[#F5FBFF] to-[#FAFCFB] dark:from-[#07131d] dark:to-[#091823]">
         <motion.div
           style={{ y: discoveryY, scale: discoveryScale, opacity: discoveryOpacity }}
           className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
@@ -444,13 +444,13 @@ export default function PublicHomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-12"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] block mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-3">
               02 • DISCOVER
             </span>
-            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 font-display tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Find Your Perfect Stay
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-4">
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-4">
               Explore verified accommodation options near your college
             </p>
           </motion.div>
@@ -463,7 +463,7 @@ export default function PublicHomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.8 }}
-                className="relative h-[350px] bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl overflow-hidden border border-slate-200/80 shadow-inner"
+                className="relative h-[350px] bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#0d212e] dark:to-[#081722] rounded-2xl overflow-hidden border border-slate-200/80 dark:border-[#1a3d52]/80 shadow-inner"
               >
                 <svg className="w-full h-full" viewBox="0 0 600 350" preserveAspectRatio="xMidYMid meet">
                   <defs>
@@ -566,10 +566,10 @@ export default function PublicHomePage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: 0.6 + idx * 0.08 }}
-                    className="bg-white rounded-lg p-3 border border-slate-200 text-center shadow-xs"
+                    className="bg-white dark:bg-[#0e222e] rounded-lg p-3 border border-slate-200 dark:border-[#1a3d52] text-center shadow-xs"
                   >
-                    <p className="text-xl font-bold text-[#0F766E]">{stat.value}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{stat.label}</p>
+                    <p className="text-xl font-bold text-[#0F766E] dark:text-teal-400">{stat.value}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{stat.label}</p>
                   </motion.div>
                 ))}
               </div>
@@ -580,7 +580,7 @@ export default function PublicHomePage() {
               {loadingHostels ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-28 rounded-xl bg-slate-100 animate-pulse" />
+                    <div key={i} className="h-28 rounded-xl bg-slate-100 dark:bg-[#0e222e] animate-pulse" />
                   ))}
                 </div>
               ) : hostels.length > 0 ? (
@@ -596,10 +596,10 @@ export default function PublicHomePage() {
                     >
                       <Link
                         href={`/hostels/${hostel.id}`}
-                        className="group block rounded-2xl bg-white border border-slate-200/90 shadow-md hover:shadow-xl hover:border-[#0F766E]/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                        className="group block rounded-2xl bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52]/90 shadow-md hover:shadow-xl hover:border-[#0F766E]/40 dark:hover:border-teal-500/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                       >
                         <div className="flex flex-col sm:flex-row">
-                          <div className="relative w-full sm:w-52 md:w-56 shrink-0 aspect-[16/10] sm:aspect-auto overflow-hidden bg-slate-100">
+                          <div className="relative w-full sm:w-52 md:w-56 shrink-0 aspect-[16/10] sm:aspect-auto overflow-hidden bg-slate-100 dark:bg-slate-800">
                             {hostel.cover_image_url ? (
                               <img
                                 src={hostel.cover_image_url}
@@ -609,7 +609,7 @@ export default function PublicHomePage() {
                             ) : (
                               <HostelCardVisual name={hostel.name} city={hostel.city} variant={idx} />
                             )}
-                            <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold text-[#0F766E] border border-teal-200/80 flex items-center gap-1 shadow-xs">
+                            <div className="absolute top-2.5 left-2.5 bg-white/95 dark:bg-[#0e222e]/95 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold text-[#0F766E] dark:text-teal-300 border border-teal-200/80 dark:border-teal-700/80 flex items-center gap-1 shadow-xs">
                               <ShieldCheck className="h-3 w-3" />
                               Verified
                             </div>
@@ -617,34 +617,34 @@ export default function PublicHomePage() {
                           <div className="flex-1 p-5 flex flex-col justify-between">
                             <div>
                               <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E]">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400">
                                   Featured Accommodation
                                 </span>
                               </div>
-                              <h3 className="text-lg sm:text-xl font-bold text-slate-900 font-display group-hover:text-[#0F766E] transition-colors line-clamp-1">
+                              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-display group-hover:text-[#0F766E] dark:group-hover:text-teal-300 transition-colors line-clamp-1">
                                 {hostel.name}
                               </h3>
                               {(hostel.city || hostel.state) && (
-                                <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                                  <MapPin className="h-3.5 w-3.5 text-[#0F766E] shrink-0" />
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                  <MapPin className="h-3.5 w-3.5 text-[#0F766E] dark:text-teal-400 shrink-0" />
                                   <span>{[hostel.city, hostel.state].filter(Boolean).join(', ')}</span>
                                 </div>
                               )}
                               <div className="flex items-center gap-2 flex-wrap mt-3">
-                                <span className="text-[10px] font-medium bg-teal-50 text-[#0F766E] px-2 py-0.5 rounded-md border border-teal-100/60">WiFi Included</span>
-                                <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">Attached Bath</span>
-                                <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">24/7 Security</span>
+                                <span className="text-[10px] font-medium bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-300 px-2 py-0.5 rounded-md border border-teal-100/60 dark:border-teal-800/60">WiFi Included</span>
+                                <span className="text-[10px] font-medium bg-slate-100 dark:bg-[#122b3b] text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">Attached Bath</span>
+                                <span className="text-[10px] font-medium bg-slate-100 dark:bg-[#122b3b] text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">24/7 Security</span>
                               </div>
                             </div>
-                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-[#1a3d52]">
                               <div>
                                 {hostel.starting_price ? (
-                                  <span className="text-lg font-bold text-[#0F766E]">
+                                  <span className="text-lg font-bold text-[#0F766E] dark:text-teal-400">
                                     ₹{hostel.starting_price.toLocaleString('en-IN')}
-                                    <span className="text-xs font-normal text-slate-500 ml-1">/mo</span>
+                                    <span className="text-xs font-normal text-slate-500 dark:text-slate-400 ml-1">/mo</span>
                                   </span>
                                 ) : (
-                                  <span className="text-sm font-semibold text-slate-600">Contact for Pricing</span>
+                                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Contact for Pricing</span>
                                 )}
                               </div>
                               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#0F766E] px-3.5 py-1.5 rounded-lg group-hover:bg-teal-800 transition-colors shadow-xs">
@@ -669,9 +669,9 @@ export default function PublicHomePage() {
                       >
                         <Link
                           href={`/hostels/${hostel.id}`}
-                          className="group flex flex-col h-full rounded-xl bg-white border border-slate-200/90 shadow-sm hover:shadow-md hover:border-[#0F766E]/40 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                          className="group flex flex-col h-full rounded-xl bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52]/90 shadow-sm hover:shadow-md hover:border-[#0F766E]/40 dark:hover:border-teal-500/40 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
                         >
-                          <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                          <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                             {hostel.cover_image_url ? (
                               <img
                                 src={hostel.cover_image_url}
@@ -681,35 +681,35 @@ export default function PublicHomePage() {
                             ) : (
                               <HostelCardVisual name={hostel.name} city={hostel.city} variant={idx + 1} />
                             )}
-                            <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#0F766E] border border-teal-200/60 flex items-center gap-1 shadow-xs">
+                            <div className="absolute top-2 left-2 bg-white/90 dark:bg-[#0e222e]/90 backdrop-blur-xs px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#0F766E] dark:text-teal-300 border border-teal-200/60 dark:border-teal-700/60 flex items-center gap-1 shadow-xs">
                               <ShieldCheck className="h-2.5 w-2.5" />
                               Verified
                             </div>
                           </div>
                           <div className="p-3.5 flex flex-col justify-between flex-1">
                             <div>
-                              <h3 className="text-sm font-bold text-slate-900 font-display group-hover:text-[#0F766E] transition-colors line-clamp-1">
+                              <h3 className="text-sm font-bold text-slate-900 dark:text-white font-display group-hover:text-[#0F766E] dark:group-hover:text-teal-300 transition-colors line-clamp-1">
                                 {hostel.name}
                               </h3>
                               {(hostel.city || hostel.state) && (
-                                <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1 line-clamp-1">
-                                  <MapPin className="h-3 w-3 text-[#0F766E] shrink-0" />
+                                <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                                  <MapPin className="h-3 w-3 text-[#0F766E] dark:text-teal-400 shrink-0" />
                                   <span>{[hostel.city, hostel.state].filter(Boolean).join(', ')}</span>
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
-                              <p className="text-sm font-bold text-[#0F766E]">
+                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-[#1a3d52]">
+                              <p className="text-sm font-bold text-[#0F766E] dark:text-teal-400">
                                 {hostel.starting_price ? (
                                   <>
                                     ₹{hostel.starting_price.toLocaleString('en-IN')}
-                                    <span className="text-[10px] font-normal text-slate-500 ml-0.5">/mo</span>
+                                    <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">/mo</span>
                                   </>
                                 ) : (
-                                  <span className="text-xs text-slate-600">Explore</span>
+                                  <span className="text-xs text-slate-600 dark:text-slate-300">Explore</span>
                                 )}
                               </p>
-                              <span className="text-xs font-semibold text-slate-600 group-hover:text-[#0F766E] transition-colors inline-flex items-center gap-0.5">
+                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 group-hover:text-[#0F766E] dark:group-hover:text-teal-300 transition-colors inline-flex items-center gap-0.5">
                                 View <ArrowRight className="h-3 w-3" />
                               </span>
                             </div>
@@ -721,7 +721,7 @@ export default function PublicHomePage() {
 
                   <Link
                     href="/find-hostel"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F766E] hover:text-teal-800 transition-colors pt-1"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#0F766E] dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors pt-1"
                   >
                     View all hostels <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -731,15 +731,15 @@ export default function PublicHomePage() {
                   initial={{ opacity: 0, y: 15 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className="rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center"
+                  className="rounded-xl border-2 border-dashed border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 text-center"
                 >
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-[#0F766E] mb-3">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#0F766E] dark:text-teal-300 mb-3">
                     <Compass className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 font-display mb-1">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white font-display mb-1">
                     No hostels in your area yet
                   </h3>
-                  <p className="text-sm text-slate-600 mb-3">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
                     Hostels are being verified daily. Search by location or list your property.
                   </p>
                   <div className="flex gap-2 justify-center">
@@ -751,7 +751,7 @@ export default function PublicHomePage() {
                     </Link>
                     <Link
                       href="/signup"
-                      className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                      className="rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#122b3b] px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1a3d52] transition-colors"
                     >
                       List Hostel
                     </Link>
@@ -764,7 +764,7 @@ export default function PublicHomePage() {
       </section>
 
       {/* COMPARISON - SCROLL-DRIVEN CARD MOVEMENT */}
-      <section ref={compareRef} className="relative py-24 bg-white">
+      <section ref={compareRef} className="relative py-24 bg-white dark:bg-[#07131d]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -773,13 +773,13 @@ export default function PublicHomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-12"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] block mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-3">
               03 • CHOOSE
             </span>
-            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 font-display tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Choose What Fits Your Life
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-4">
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-4">
               Compare rooms, amenities, locations, and prices
             </p>
           </motion.div>
@@ -799,21 +799,21 @@ export default function PublicHomePage() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="group bg-white rounded-xl p-4 sm:p-5 border border-slate-200/90 hover:border-[#0F766E]/40 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+                  className="group bg-white dark:bg-[#0e222e] rounded-xl p-4 sm:p-5 border border-slate-200/90 dark:border-[#1a3d52]/90 hover:border-[#0F766E]/40 dark:hover:border-teal-500/40 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-[#0F766E] border border-teal-100/60 shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                    <div className="w-12 h-12 bg-teal-50 dark:bg-teal-950/60 rounded-xl flex items-center justify-center text-[#0F766E] dark:text-teal-300 border border-teal-100/60 dark:border-teal-800/60 shadow-xs group-hover:scale-105 transition-transform shrink-0">
                       <option.icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-slate-900 group-hover:text-[#0F766E] transition-colors">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[#0F766E] dark:group-hover:text-teal-300 transition-colors">
                         {option.title}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{option.desc}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{option.desc}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-lg font-bold text-[#0F766E]">{option.price}</p>
-                      <p className="text-[11px] text-slate-400">{option.period}</p>
+                      <p className="text-lg font-bold text-[#0F766E] dark:text-teal-400">{option.price}</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">{option.period}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -881,7 +881,7 @@ export default function PublicHomePage() {
       </section>
 
       {/* LIFESTYLE - ROTATING ORBITAL SYSTEM */}
-      <section ref={lifestyleRef} className="relative py-28 bg-gradient-to-br from-[#F2FAF9] via-[#EAF6F3] to-[#E2F2EE] overflow-hidden">
+      <section ref={lifestyleRef} className="relative py-28 bg-gradient-to-br from-[#F2FAF9] via-[#EAF6F3] to-[#E2F2EE] dark:from-[#07131d] dark:via-[#0c2328] dark:to-[#07131d] overflow-hidden">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -890,13 +890,13 @@ export default function PublicHomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] block mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-3">
               04 • LIVE
             </span>
-            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 font-display tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               More Than Just A Room
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-4">
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-4">
               Experience student living with convenience, security, and community
             </p>
           </motion.div>
@@ -923,15 +923,15 @@ export default function PublicHomePage() {
               ].map((benefit, idx) => (
                 <div
                   key={idx}
-                  className="bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-sm border border-slate-200/90 text-center hover:border-[#0F766E]/50 transition-colors"
+                  className="bg-white/95 dark:bg-[#0e222e]/95 backdrop-blur-md rounded-2xl p-3.5 shadow-sm border border-slate-200/90 dark:border-[#1a3d52]/90 text-center hover:border-[#0F766E]/50 dark:hover:border-teal-500/50 transition-colors"
                 >
                   <div className="w-9 h-9 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-xl flex items-center justify-center mx-auto mb-2 shadow-xs">
                     <benefit.icon className="h-4 w-4 text-white" />
                   </div>
-                  <p className="font-bold text-slate-900 text-xs leading-tight">
+                  <p className="font-bold text-slate-900 dark:text-white text-xs leading-tight">
                     {benefit.label}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                     {benefit.sub}
                   </p>
                 </div>
@@ -1010,14 +1010,14 @@ export default function PublicHomePage() {
                       transition={{ duration: 0.5, delay: 0.1 + idx * 0.08 }}
                       className="pointer-events-auto"
                     >
-                      <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 shadow-lg border border-slate-200/90 hover:border-[#0F766E]/50 hover:shadow-xl transition-all duration-300 w-36 sm:w-40 text-center group cursor-default">
+                      <div className="bg-white/95 dark:bg-[#0e222e]/95 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 shadow-lg border border-slate-200/90 dark:border-[#1a3d52]/90 hover:border-[#0F766E]/50 dark:hover:border-teal-500/50 hover:shadow-xl transition-all duration-300 w-36 sm:w-40 text-center group cursor-default">
                         <div className="w-10 h-10 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm group-hover:scale-110 transition-transform">
                           <benefit.icon className="h-5 w-5 text-white" />
                         </div>
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm group-hover:text-[#0F766E] transition-colors leading-tight">
+                        <p className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm group-hover:text-[#0F766E] dark:group-hover:text-teal-300 transition-colors leading-tight">
                           {benefit.label}
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                           {benefit.sub}
                         </p>
                       </div>
@@ -1113,7 +1113,7 @@ export default function PublicHomePage() {
       </section>
 
       {/* BILLING - CINEMATIC UI SEQUENCE */}
-      <section ref={billingRef} className="relative py-24 bg-white">
+      <section ref={billingRef} className="relative py-24 bg-white dark:bg-[#07131d]">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -1122,13 +1122,13 @@ export default function PublicHomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-12"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] block mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-3">
               06 • PAY
             </span>
-            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 font-display tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Transparent Billing
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-4">
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-4">
               Itemized bills for rent, electricity, and maintenance with instant digital receipts
             </p>
           </motion.div>
@@ -1139,16 +1139,16 @@ export default function PublicHomePage() {
             whileInView={{ opacity: 1, y: 0, rotate: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.7 }}
-            className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-6 border border-slate-200 shadow-xl"
+            className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0e222e] dark:to-[#122b3b] rounded-2xl p-6 border border-slate-200 dark:border-[#1a3d52] shadow-xl"
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Monthly Stay</h3>
-                <p className="text-slate-500 text-sm">Monthly Rent</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Monthly Stay</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Monthly Rent</p>
               </div>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-[#0F766E]" />
-                <span className="text-sm font-semibold text-[#0F766E]">Verified</span>
+                <ShieldCheck className="h-4 w-4 text-[#0F766E] dark:text-teal-400" />
+                <span className="text-sm font-semibold text-[#0F766E] dark:text-teal-400">Verified</span>
               </div>
             </div>
 
@@ -1164,10 +1164,10 @@ export default function PublicHomePage() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: item.delay }}
-                  className="flex justify-between items-center py-2 border-b border-slate-200"
+                  className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-[#1a3d52]"
                 >
-                  <span className="text-sm text-slate-600 font-medium">{item.label}</span>
-                  <AnimatedCounter value={item.value} prefix="₹" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{item.label}</span>
+                  <AnimatedCounter value={item.value} prefix="₹" className="dark:text-slate-200 font-semibold" />
                 </motion.div>
               ))}
 
@@ -1176,10 +1176,10 @@ export default function PublicHomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.28 }}
-                className="flex justify-between items-center py-3 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg px-4"
+                className="flex justify-between items-center py-3 bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/40 rounded-lg px-4 border border-teal-100/50 dark:border-teal-800/40"
               >
-                <span className="font-bold text-base text-slate-900">Total</span>
-                <AnimatedCounter value={9140} prefix="₹" className="text-xl font-bold text-[#0F766E]" />
+                <span className="font-bold text-base text-slate-900 dark:text-white">Total</span>
+                <AnimatedCounter value={9140} prefix="₹" className="text-xl font-bold text-[#0F766E] dark:text-teal-400" />
               </motion.div>
             </div>
 
@@ -1387,7 +1387,7 @@ export default function PublicHomePage() {
       </section>
 
       {/* HOW IT WORKS - EDITORIAL TIMELINE */}
-      <section ref={howItWorksRef} className="relative py-24 bg-white">
+      <section ref={howItWorksRef} className="relative py-24 bg-white dark:bg-[#07131d]">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -1396,13 +1396,13 @@ export default function PublicHomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-12"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] block mb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-3">
               08 • PROCESS
             </span>
-            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 font-display tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               How HostelHub Works
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-4">
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-4">
               Get started in 4 simple steps
             </p>
           </motion.div>
@@ -1410,7 +1410,7 @@ export default function PublicHomePage() {
           {/* Editorial Timeline */}
           <div className="relative max-w-3xl mx-auto">
             {/* Horizontal Line */}
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-slate-200 via-[#0F766E] to-slate-200 transform -translate-y-1/2" />
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-slate-200 via-[#0F766E] to-slate-200 dark:from-[#1a3d52] dark:via-[#0F766E] dark:to-[#1a3d52] transform -translate-y-1/2" />
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
               {[
@@ -1441,12 +1441,12 @@ export default function PublicHomePage() {
                     whileInView={{ scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: idx * 0.1 + 0.3 }}
-                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto -mt-4 shadow-lg border-4 border-slate-100"
+                    className="w-10 h-10 bg-white dark:bg-[#0e222e] rounded-full flex items-center justify-center mx-auto -mt-4 shadow-lg border-4 border-slate-100 dark:border-[#122b3b]"
                   >
-                    <item.icon className="h-5 w-5 text-[#0F766E]" />
+                    <item.icon className="h-5 w-5 text-[#0F766E] dark:text-teal-400" />
                   </motion.div>
-                  <h3 className="font-bold text-base text-slate-900 mt-3 mb-1">{item.title}</h3>
-                  <p className="text-slate-600 text-xs">{item.desc}</p>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white mt-3 mb-1">{item.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -1455,7 +1455,7 @@ export default function PublicHomePage() {
       </section>
 
       {/* TRUST - MINIMAL */}
-      <section className="relative py-16 bg-slate-50">
+      <section className="relative py-16 bg-slate-50 dark:bg-[#091823]">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1464,7 +1464,7 @@ export default function PublicHomePage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 font-display tracking-tight mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white font-display tracking-tight mb-8">
               Why Students Choose HostelHub
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1481,11 +1481,11 @@ export default function PublicHomePage() {
                   transition={{ duration: 0.4, delay: idx * 0.1 }}
                   className="text-center"
                 >
-                  <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <trust.icon className="h-6 w-6 text-[#0F766E]" />
+                  <div className="w-12 h-12 bg-teal-50 dark:bg-teal-950/60 rounded-xl flex items-center justify-center mx-auto mb-3 text-[#0F766E] dark:text-teal-300">
+                    <trust.icon className="h-6 w-6 text-[#0F766E] dark:text-teal-400" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 mb-1">{trust.title}</h3>
-                  <p className="text-slate-600 text-sm">{trust.desc}</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">{trust.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">{trust.desc}</p>
                 </motion.div>
               ))}
             </div>

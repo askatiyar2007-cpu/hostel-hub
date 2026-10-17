@@ -14,27 +14,43 @@ export function AuthBackground() {
   return (
     <div
       aria-hidden="true"
-      className="fixed inset-0 pointer-events-none select-none z-0 overflow-hidden"
-      style={{
-        backgroundColor: '#F8FAFC',
-        backgroundImage: `
-          radial-gradient(ellipse 65% 55% at 78% 42%, rgba(15, 118, 110, 0.08) 0%, rgba(20, 184, 166, 0.03) 50%, transparent 75%),
-          radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.7) 65%, rgba(241, 245, 249, 0.3) 100%),
-          linear-gradient(180deg, #F8FAFC 0%, #F3F7FA 40%, #EDF3F7 100%)
-        `,
-      }}
+      className="fixed inset-0 pointer-events-none select-none z-0 overflow-hidden bg-[#F8FAFC] dark:bg-[#07131d]"
     >
+      {/* Light Gradient Overlay */}
+      <div
+        className="absolute inset-0 dark:hidden"
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse 65% 55% at 78% 42%, rgba(15, 118, 110, 0.08) 0%, rgba(20, 184, 166, 0.03) 50%, transparent 75%),
+            radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.7) 65%, rgba(241, 245, 249, 0.3) 100%),
+            linear-gradient(180deg, #F8FAFC 0%, #F3F7FA 40%, #EDF3F7 100%)
+          `,
+        }}
+      />
+
+      {/* Dark Gradient Overlay */}
+      <div
+        className="absolute inset-0 hidden dark:block"
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse 65% 55% at 78% 42%, rgba(20, 184, 166, 0.12) 0%, rgba(15, 118, 110, 0.04) 50%, transparent 75%),
+            radial-gradient(circle at 20% 25%, rgba(18, 43, 59, 0.5) 0%, rgba(11, 27, 38, 0.7) 65%, rgba(7, 19, 29, 0.95) 100%),
+            linear-gradient(180deg, #07131d 0%, #0a1f2e 40%, #07131d 100%)
+          `,
+        }}
+      />
+
       <svg
         viewBox="0 0 1920 1080"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="xMidYMid slice"
-        className="w-full h-full"
+        className="w-full h-full relative z-10"
       >
         <defs>
           {/* Subtle architectural grid pattern */}
           <pattern id="authArchGrid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#0F766E" strokeWidth="0.6" strokeOpacity="0.04" />
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#0F766E" strokeWidth="0.6" strokeOpacity="0.05" />
           </pattern>
 
           {/* Distant skyline gradient */}

@@ -247,13 +247,13 @@ export default function MeterManagementPage() {
       </PageHeader>
 
       {/* Filters */}
-      <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
-        <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
+      <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50/80 dark:bg-[#122b3b] px-6 py-4 border-b border-slate-200/80 dark:border-[#1a3d52]">
           <div className="flex items-center gap-2.5">
             <IconWrapper color="teal" size="sm">
               <Filter className="h-3.5 w-3.5" />
             </IconWrapper>
-            <CardTitle className="text-sm font-semibold text-slate-900">
+            <CardTitle className="text-sm font-semibold text-slate-900 dark:text-white">
               Filter Meter Records
             </CardTitle>
           </div>
@@ -262,9 +262,9 @@ export default function MeterManagementPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Hostel Filter */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Hostel</Label>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Hostel</Label>
               <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
+                <SelectTrigger className="bg-slate-50/60 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] hover:border-slate-300 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 rounded-lg">
                   <SelectValue placeholder="Select hostel" />
                 </SelectTrigger>
                 <SelectContent>
@@ -280,9 +280,9 @@ export default function MeterManagementPage() {
             
             {/* Status Filter */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Status</Label>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
+                <SelectTrigger className="bg-slate-50/60 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] hover:border-slate-300 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 rounded-lg">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -295,12 +295,12 @@ export default function MeterManagementPage() {
             
             {/* Pending Reading Filter */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700">Readings</Label>
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Readings</Label>
               <Select 
                 value={pendingFilter ? 'pending' : 'all'} 
                 onValueChange={(v) => setPendingFilter(v === 'pending')}
               >
-                <SelectTrigger className="bg-slate-50/60 border-slate-200 hover:border-slate-300 rounded-lg">
+                <SelectTrigger className="bg-slate-50/60 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] hover:border-slate-300 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 rounded-lg">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -466,20 +466,20 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
     if (meter.pending_reading) {
       return {
         text: 'Reading Required',
-        color: 'bg-amber-50 text-amber-800 border-amber-300 font-medium',
+        color: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-medium',
         icon: <AlertCircle className="h-4 w-4" />
       };
     }
     if (!meter.last_reading) {
       return {
         text: 'No Reading',
-        color: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
+        color: 'bg-slate-100 dark:bg-[#122b3b] text-slate-700 dark:text-slate-300 border-slate-300 dark:border-[#1a3d52] font-medium',
         icon: null
       };
     }
     return {
       text: 'Up to Date',
-      color: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-medium',
+      color: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-medium',
       icon: <CheckCircle className="h-4 w-4" />
     };
   };
@@ -488,27 +488,27 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
     if (meter.open_segment_id) {
       return {
         text: 'Billing Active',
-        color: 'bg-blue-50 text-blue-800 border-blue-300 font-medium',
+        color: 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-medium',
         icon: <CheckCircle className="h-4 w-4" />
       };
     }
     if (!meter.last_reading) {
       return {
         text: 'Not Started',
-        color: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
+        color: 'bg-slate-100 dark:bg-[#122b3b] text-slate-700 dark:text-slate-300 border-slate-300 dark:border-[#1a3d52] font-medium',
         icon: null
       };
     }
     if (meter.pending_reading) {
       return {
         text: 'Billing Pending',
-        color: 'bg-amber-50 text-amber-800 border-amber-300 font-medium',
+        color: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-medium',
         icon: <AlertCircle className="h-4 w-4" />
       };
     }
     return {
       text: 'Not Started',
-      color: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
+      color: 'bg-slate-100 dark:bg-[#122b3b] text-slate-700 dark:text-slate-300 border-slate-300 dark:border-[#1a3d52] font-medium',
       icon: null
     };
   };
@@ -527,16 +527,16 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
   const billingStatus = getBillingStatus();
 
   return (
-    <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader className="bg-slate-50/70 px-5 py-4 border-b border-slate-100">
+    <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+      <CardHeader className="bg-slate-50/70 dark:bg-[#122b3b] px-5 py-4 border-b border-slate-100 dark:border-[#1a3d52]">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <IconWrapper color={meter.status === 'active' ? "blue" : "indigo"} size="md">
               <Zap className="h-4 w-4" />
             </IconWrapper>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">Room {meter.room_number}</CardTitle>
-              <CardDescription className="font-mono text-xs text-slate-600 font-medium mt-0.5">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">Room {meter.room_number}</CardTitle>
+              <CardDescription className="font-mono text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
                 {meter.meter_number}
               </CardDescription>
             </div>
@@ -547,15 +547,15 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
       <CardContent className="p-5 space-y-4">
         {/* Meter Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600 font-medium text-xs">Meter Status</span>
-          <Badge className={meter.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-medium text-xs" : "bg-slate-100 text-slate-600 border-slate-200 font-medium text-xs"} variant="outline">
+          <span className="text-slate-600 dark:text-slate-400 font-medium text-xs">Meter Status</span>
+          <Badge className={meter.status === 'active' ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800 font-medium text-xs" : "bg-slate-100 dark:bg-[#122b3b] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#1a3d52] font-medium text-xs"} variant="outline">
             {meter.status === 'active' ? 'Active' : 'Inactive'}
           </Badge>
         </div>
 
         {/* Reading Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600 font-medium text-xs">Reading Status</span>
+          <span className="text-slate-600 dark:text-slate-400 font-medium text-xs">Reading Status</span>
           <Badge className={`${readingStatus.color} border text-xs`} variant="outline">
             {readingStatus.icon}
             <span className="ml-1">{readingStatus.text}</span>
@@ -564,7 +564,7 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
 
         {/* Billing Status */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600 font-medium text-xs">Billing Status</span>
+          <span className="text-slate-600 dark:text-slate-400 font-medium text-xs">Billing Status</span>
           <Badge className={`${billingStatus.color} border text-xs`} variant="outline">
             {billingStatus.icon}
             <span className="ml-1">{billingStatus.text}</span>
@@ -573,29 +573,29 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
 
         {/* Last Reading */}
         {meter.last_reading ? (
-          <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-            <p className="text-xs text-slate-600 font-medium">Last Reading</p>
-            <p className="text-xl font-bold text-slate-900">{meter.last_reading.value} <span className="text-xs font-normal text-slate-600">kWh</span></p>
-            <p className="text-[11px] text-slate-600 font-medium">
+          <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 dark:bg-[#122b3b] border border-slate-100 dark:border-[#1a3d52]">
+            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Last Reading</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{meter.last_reading.value} <span className="text-xs font-normal text-slate-600 dark:text-slate-400">kWh</span></p>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
               {formatDate(meter.last_reading.timestamp)}
             </p>
           </div>
         ) : (
-          <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 border border-slate-100">
-            <p className="text-xs text-slate-600 font-medium">No readings yet</p>
-            <p className="text-xs text-slate-600">Record initial reading to start tracking</p>
+          <div className="space-y-1 p-3 rounded-lg bg-slate-50/70 dark:bg-[#122b3b] border border-slate-100 dark:border-[#1a3d52]">
+            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">No readings yet</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Record initial reading to start tracking</p>
           </div>
         )}
         
         {/* Reading Required Message */}
         {meter.pending_reading && (
-          <div className="flex items-start gap-2.5 p-3 bg-amber-50/80 border border-amber-200/80 rounded-lg">
-            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-2.5 p-3 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-700/60 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-amber-900 font-semibold">
+              <p className="text-xs text-amber-900 dark:text-amber-300 font-semibold">
                 Reading Required
               </p>
-              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+              <p className="text-xs text-amber-700 dark:text-amber-200/90 mt-0.5 leading-relaxed">
                 New student allocation detected. Record a reading to start the new billing segment.
               </p>
             </div>
@@ -607,7 +607,7 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
           <Button 
             size="sm" 
             variant="outline" 
-            className="flex-1 text-xs border-slate-200 hover:bg-slate-50 text-slate-700"
+            className="flex-1 text-xs border-slate-200 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#122b3b] text-slate-700 dark:text-slate-200"
             onClick={() => window.location.href = `/owner/electricity/readings/history?meter_id=${meter.id}`}
           >
             History

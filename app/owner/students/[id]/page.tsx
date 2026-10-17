@@ -290,7 +290,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
               className="h-20 w-20 rounded-full object-cover border-2 border-primary shadow-sm cursor-pointer hover:ring-2 hover:ring-primary transition-all"
               onClick={() => setPreviewPhoto(passportPhotoUrl)}
             />
-          ) : profile?.avatar_url ? (
+          ) : (profile?.avatar_url && ((!allocation.student_email && !allocation.student_name) || (allocation.student_email && profile.email && allocation.student_email.trim().toLowerCase() === profile.email.trim().toLowerCase()) || (allocation.student_name && profile.full_name && allocation.student_name.trim().toLowerCase() === profile.full_name.trim().toLowerCase()))) ? (
             <img 
               src={profile.avatar_url} 
               alt={studentName} 

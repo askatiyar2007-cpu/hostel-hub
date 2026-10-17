@@ -59,15 +59,15 @@ export function HostelHubLogo({
       <div className="flex flex-col">
         <span
           className={`font-bold tracking-tight font-display ${textSizes[size]} ${
-            isLight ? 'text-white' : 'text-slate-900'
+            isLight ? 'text-white' : 'text-slate-900 dark:text-white'
           }`}
         >
-          Hostel<span className={isLight ? 'text-teal-300' : 'text-[#0F766E]'}>Hub</span>
+          Hostel<span className={isLight ? 'text-teal-300' : 'text-[#0F766E] dark:text-teal-400'}>Hub</span>
         </span>
         {showTagline && (
           <span
             className={`font-semibold tracking-wider uppercase leading-none mt-0.5 ${tagSizes[size]} ${
-              isLight ? 'text-teal-200/80' : 'text-teal-800/80'
+              isLight ? 'text-teal-200/80' : 'text-teal-800/80 dark:text-teal-300/80'
             }`}
           >
             Your Stay, Simplified

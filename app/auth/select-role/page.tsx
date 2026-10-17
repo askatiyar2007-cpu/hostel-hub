@@ -79,13 +79,13 @@ export default function SelectRolePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#EFF8FF]/60 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-6 text-center bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-[#0F766E] ring-1 ring-teal-600/15">
+      <div className="min-h-screen bg-[#EFF8FF]/60 dark:bg-[#07131d] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-6 text-center bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] p-8 rounded-3xl shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#0F766E] dark:text-teal-300 ring-1 ring-teal-600/15">
             <Building2 className="h-6 w-6" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-display">Access Denied</h2>
-          <p className="text-sm text-slate-600">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-display">Access Denied</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Please log in first to select your account role.
           </p>
           <Button onClick={() => router.push('/auth/login')} className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#0B5F59] mt-2">
@@ -97,29 +97,29 @@ export default function SelectRolePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EFF8FF] via-[#F8FAFC] to-[#ECFDF5] flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#EFF8FF] via-[#F8FAFC] to-[#ECFDF5] dark:from-[#07131d] dark:via-[#091b27] dark:to-[#07131d] flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full space-y-8">
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-3 mb-2">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-700 via-emerald-600 to-teal-800 text-white shadow-md shadow-teal-900/15 ring-1 ring-teal-500/20">
               <Building2 className="h-5 w-5 text-white" />
-              <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white">
+              <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white dark:ring-[#0e222e]">
                 <span className="text-[8px] font-bold">✦</span>
               </div>
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-xl font-bold tracking-tight text-slate-900 font-display leading-tight">
-                Hostel<span className="text-[#0F766E]">Hub</span>
+              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display leading-tight">
+                Hostel<span className="text-[#0F766E] dark:text-teal-400">Hub</span>
               </span>
-              <span className="text-[9px] font-semibold tracking-wider text-teal-800/80 uppercase leading-none">
+              <span className="text-[9px] font-semibold tracking-wider text-teal-800/80 dark:text-teal-300/80 uppercase leading-none">
                 Your Stay, Simplified
               </span>
             </div>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight font-display text-slate-900">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight font-display text-slate-900 dark:text-white">
             What is your role?
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-lg mx-auto">
             Are you a Hostel Owner or Student? Choose your profile role to unlock the specialized dashboards, permissions, and management tools.
           </p>
         </div>
@@ -135,8 +135,8 @@ export default function SelectRolePage() {
                 type="button"
                 onClick={() => setSelectedRole(role.id)}
                 disabled={loading}
-                className={`relative flex flex-col items-center text-center p-8 bg-card border rounded-3xl transition-all duration-300 shadow-sm ${role.hoverColor} ${
-                  isSelected ? role.activeColor : 'border-border hover:shadow-md hover:-translate-y-1'
+                className={`relative flex flex-col items-center text-center p-8 bg-card dark:bg-[#0e222e] border border-border dark:border-[#1a3d52] rounded-3xl transition-all duration-300 shadow-sm ${role.hoverColor} ${
+                  isSelected ? role.activeColor : 'hover:shadow-md hover:-translate-y-1'
                 }`}
               >
                 <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${role.color} mb-6 shadow-sm`}>

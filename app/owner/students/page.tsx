@@ -147,8 +147,8 @@ export default function OwnerStudentsPage() {
           try {
             const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
             if (response.ok) {
-              const data = await response.json();
-              return { studentId, url: data.signedUrl };
+              const resData = await response.json();
+              return { studentId, allocId: assignment.id, url: resData.signedUrl };
             }
             return null;
           } catch (error) {
@@ -160,8 +160,11 @@ export default function OwnerStudentsPage() {
         const photoResults = await Promise.all(photoUrlPromises);
         const urlMap: Record<string, string> = {};
         photoResults.forEach(result => {
-          if (result) {
+          if (result && result.url) {
             urlMap[result.studentId] = result.url;
+            if (result.allocId) {
+              urlMap[result.allocId] = result.url;
+            }
           }
         });
         setPhotoUrls(urlMap);
@@ -224,6 +227,56 @@ export default function OwnerStudentsPage() {
       return matchesSearch && matchesHostel;
     });
   }, [assignments, searchQuery, selectedHostel]);
+
+  // Compute resolved, deduplicated photos per allocation ID to guarantee no duplicate avatars across distinct residents
+  const resolvedPhotos = useMemo(() => {
+    const photoMap: Record<string, string | undefined> = {};
+    const seenUrls = new Set<string>();
+    const seenStudentIds = new Set<string>();
+
+    for (const item of filteredAssignments) {
+      const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
+      const profile = studentInfo?.profiles;
+      const allocName = (item.student_name || '').trim().toLowerCase();
+      const allocEmail = (item.student_email || '').trim().toLowerCase();
+      const profName = (profile?.full_name || '').trim().toLowerCase();
+      const profEmail = (profile?.email || '').trim().toLowerCase();
+
+      // Only trust profile avatar if the profile identity corresponds to this allocation
+      const isIdentityMatch = (!allocEmail && !allocName) ? true :
+        ((allocEmail && profEmail && allocEmail === profEmail) ||
+         (allocName && profName && allocName === profName));
+
+      const studentId = studentInfo?.id;
+      let candidatePhoto: string | undefined = undefined;
+
+      if (isIdentityMatch) {
+        if (studentId && photoUrls[studentId]) {
+          candidatePhoto = photoUrls[studentId];
+        } else if (photoUrls[item.id]) {
+          candidatePhoto = photoUrls[item.id];
+        } else if (profile?.avatar_url) {
+          candidatePhoto = profile.avatar_url;
+        }
+      }
+
+      if (candidatePhoto) {
+        const urlKey = candidatePhoto.split('?')[0].toLowerCase();
+        if (seenUrls.has(urlKey) || (studentId && seenStudentIds.has(studentId))) {
+          // Photo already used by another resident card on this page. Suppress duplicate so student gets their distinct deterministic initials badge.
+          photoMap[item.id] = undefined;
+        } else {
+          seenUrls.add(urlKey);
+          if (studentId) seenStudentIds.add(studentId);
+          photoMap[item.id] = candidatePhoto;
+        }
+      } else {
+        photoMap[item.id] = undefined;
+      }
+    }
+
+    return photoMap;
+  }, [filteredAssignments, photoUrls]);
 
   return (
     <div className="space-y-6">
@@ -357,8 +410,7 @@ export default function OwnerStudentsPage() {
     const roomNum = item.rooms?.room_number || '-';
     const bookingType = BOOKING_TYPE_LABEL[item.booking_type] || BOOKING_TYPE_LABEL.shared_bed;
     const rent = item.rooms?.rent || 0;
-    const studentId = studentInfo?.id;
-    const passportPhotoUrl = (studentId && photoUrls[studentId]) || profile?.avatar_url || undefined;
+    const passportPhotoUrl = resolvedPhotos[item.id];
     const isHistory = !item.active;
     const statusLabel = item.active ? 'Active' : 'Checked Out';
     const statusColorClass = item.active ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800';

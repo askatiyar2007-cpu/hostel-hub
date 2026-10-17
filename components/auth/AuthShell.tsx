@@ -44,11 +44,11 @@ export function AuthShell({ children }: AuthShellProps) {
 
               {/* Mobile Compact View (Directly on background, NO white card) */}
               <div className="lg:hidden text-center sm:text-left space-y-2 py-1 max-w-md mx-auto sm:mx-0 animate-auth-marketing-enter">
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#102033] tracking-tight leading-tight font-display">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#102033] dark:text-white tracking-tight leading-tight font-display">
                   Find Your Perfect{' '}
-                  <span className="text-[#0F766E]">Stay at HostelHub</span>
+                  <span className="text-[#0F766E] dark:text-teal-400">Stay at HostelHub</span>
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                   Manage your stay, pay your bills, and stay connected — all in one place.
                 </p>
               </div>
@@ -66,7 +66,7 @@ export function AuthShell({ children }: AuthShellProps) {
       </main>
 
       {/* Subtle bottom footer bar */}
-      <footer className="relative z-10 w-full py-3 text-center text-xs text-slate-500/80">
+      <footer className="relative z-10 w-full py-3 text-center text-xs text-slate-500/80 dark:text-slate-400">
         <span>© {new Date().getFullYear()} HostelHub. All rights reserved.</span>
       </footer>
     </div>

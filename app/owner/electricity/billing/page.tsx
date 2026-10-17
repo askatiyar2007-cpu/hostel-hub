@@ -302,26 +302,26 @@ export default function BillingOverviewPage() {
     switch (status) {
       case 'paid':
         return (
-          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge className="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[11px] font-semibold py-0 px-2 h-5">
             Paid
           </Badge>
         );
       case 'pending_verification':
         return (
-          <Badge className="bg-violet-50 text-violet-700 border-violet-200 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge className="bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800 text-[11px] font-semibold py-0 px-2 h-5">
             Pending Verification
           </Badge>
         );
       case 'payment_due':
         return (
-          <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge className="bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[11px] font-semibold py-0 px-2 h-5">
             Payment Due
           </Badge>
         );
       case 'recorded_unbilled':
       case 'billed':
         return (
-          <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge className="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[11px] font-semibold py-0 px-2 h-5">
             Billed
           </Badge>
         );
@@ -329,26 +329,26 @@ export default function BillingOverviewPage() {
       case 'awaiting_allocation_reading':
       case 'awaiting_reading':
         return (
-          <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge className="bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[11px] font-semibold py-0 px-2 h-5">
             Awaiting Reading
           </Badge>
         );
       case 'awaiting_month_end_reading':
         return (
-          <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge className="bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[11px] font-semibold py-0 px-2 h-5">
             Cycle in Progress
           </Badge>
         );
       case 'zero_consumption':
         return (
-          <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 text-[11px] font-semibold py-0 px-2 h-5">
+          <Badge variant="outline" className="bg-slate-50 dark:bg-[#122b3b] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#1a3d52] text-[11px] font-semibold py-0 px-2 h-5">
             Zero Consumption
           </Badge>
         );
       case 'unmetered':
       default:
         return (
-          <Badge variant="outline" className="bg-slate-50 text-slate-400 border-slate-200 text-[11px] font-normal py-0 px-2 h-5">
+          <Badge variant="outline" className="bg-slate-50 dark:bg-[#122b3b] text-slate-400 dark:text-slate-400 border-slate-200 dark:border-[#1a3d52] text-[11px] font-normal py-0 px-2 h-5">
             {fallbackLabel || 'Unmetered'}
           </Badge>
         );
@@ -376,13 +376,13 @@ export default function BillingOverviewPage() {
       </PageHeader>
 
       {/* Control Filters */}
-      <Card className="border border-slate-200/90 bg-white shadow-2xs rounded-xl">
+      <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-2xs rounded-xl">
         <CardContent className="p-3.5 sm:p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Select Hostel</Label>
+              <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Select Hostel</Label>
               <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
+                <SelectTrigger className="bg-white dark:bg-[#122b3b] border-slate-300 dark:border-[#1a3d52] hover:border-slate-400 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                   <SelectValue placeholder="Choose hostel..." />
                 </SelectTrigger>
                 <SelectContent 
@@ -391,10 +391,10 @@ export default function BillingOverviewPage() {
                   align="start" 
                   sideOffset={4} 
                   avoidCollisions={false}
-                  className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
+                  className="z-50 max-h-52 bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52] shadow-xl text-slate-900 dark:text-slate-100 rounded-xl overflow-y-auto"
                 >
                   {hostels.map(hostel => (
-                    <SelectItem key={hostel.id} value={hostel.id} className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">
+                    <SelectItem key={hostel.id} value={hostel.id} className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">
                       {hostel.name}
                     </SelectItem>
                   ))}
@@ -403,9 +403,9 @@ export default function BillingOverviewPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Billing Month</Label>
+              <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Billing Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
+                <SelectTrigger className="bg-white dark:bg-[#122b3b] border-slate-300 dark:border-[#1a3d52] hover:border-slate-400 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                   <SelectValue placeholder="Select month..." />
                 </SelectTrigger>
                 <SelectContent 
@@ -414,10 +414,10 @@ export default function BillingOverviewPage() {
                   align="start" 
                   sideOffset={4} 
                   avoidCollisions={false}
-                  className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
+                  className="z-50 max-h-52 bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52] shadow-xl text-slate-900 dark:text-slate-100 rounded-xl overflow-y-auto"
                 >
                   {monthOptions.map(month => (
-                    <SelectItem key={month.value} value={month.value} className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">
+                    <SelectItem key={month.value} value={month.value} className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">
                       {month.label}
                     </SelectItem>
                   ))}
@@ -426,25 +426,25 @@ export default function BillingOverviewPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">Search</Label>
+              <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Search</Label>
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 <Input
                   placeholder="Room # or student name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 bg-white border-slate-300 hover:border-slate-400 text-slate-900 placeholder:text-slate-400 rounded-lg h-8 text-xs focus-visible:ring-teal-500 shadow-2xs font-medium"
+                  className="pl-8 bg-white dark:bg-[#122b3b] border-slate-300 dark:border-[#1a3d52] hover:border-slate-400 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg h-8 text-xs focus-visible:ring-teal-500 shadow-2xs font-medium"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide">
+              <Label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                 {activeTab === 'students' ? 'Student Status' : 'Room Filter'}
               </Label>
               {activeTab === 'students' ? (
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
+                  <SelectTrigger className="bg-white dark:bg-[#122b3b] border-slate-300 dark:border-[#1a3d52] hover:border-slate-400 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent 
@@ -453,18 +453,18 @@ export default function BillingOverviewPage() {
                     align="start" 
                     sideOffset={4} 
                     avoidCollisions={false}
-                    className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
+                    className="z-50 max-h-52 bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52] shadow-xl text-slate-900 dark:text-slate-100 rounded-xl overflow-y-auto"
                   >
-                    <SelectItem value="all" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">All Students ({studentBilling.length})</SelectItem>
-                    <SelectItem value="billed" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Billed</SelectItem>
-                    <SelectItem value="unbilled" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Unbilled</SelectItem>
-                    <SelectItem value="awaiting" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Awaiting Reading</SelectItem>
-                    <SelectItem value="unmetered" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Unmetered</SelectItem>
+                    <SelectItem value="all" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">All Students ({studentBilling.length})</SelectItem>
+                    <SelectItem value="billed" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Billed</SelectItem>
+                    <SelectItem value="unbilled" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Unbilled</SelectItem>
+                    <SelectItem value="awaiting" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Awaiting Reading</SelectItem>
+                    <SelectItem value="unmetered" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Unmetered</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
                 <Select value={roomFilter} onValueChange={(v: any) => setRoomFilter(v)}>
-                  <SelectTrigger className="bg-white border-slate-300 hover:border-slate-400 text-slate-900 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
+                  <SelectTrigger className="bg-white dark:bg-[#122b3b] border-slate-300 dark:border-[#1a3d52] hover:border-slate-400 dark:hover:border-teal-600 text-slate-900 dark:text-slate-100 font-medium rounded-lg h-8 text-xs focus:ring-teal-500 focus:border-teal-500 shadow-2xs">
                     <SelectValue placeholder="All Rooms" />
                   </SelectTrigger>
                   <SelectContent 
@@ -473,13 +473,13 @@ export default function BillingOverviewPage() {
                     align="start" 
                     sideOffset={4} 
                     avoidCollisions={false}
-                    className="z-50 max-h-52 bg-white border-slate-200 shadow-xl text-slate-900 rounded-xl overflow-y-auto"
+                    className="z-50 max-h-52 bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52] shadow-xl text-slate-900 dark:text-slate-100 rounded-xl overflow-y-auto"
                   >
-                    <SelectItem value="all" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">All Rooms ({roomBilling.length})</SelectItem>
-                    <SelectItem value="occupied" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Occupied</SelectItem>
-                    <SelectItem value="empty" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Empty</SelectItem>
-                    <SelectItem value="awaiting" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Awaiting Reading</SelectItem>
-                    <SelectItem value="billed" className="text-xs text-slate-800 font-medium focus:bg-teal-50 focus:text-teal-900 cursor-pointer">Billed</SelectItem>
+                    <SelectItem value="all" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">All Rooms ({roomBilling.length})</SelectItem>
+                    <SelectItem value="occupied" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Occupied</SelectItem>
+                    <SelectItem value="empty" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Empty</SelectItem>
+                    <SelectItem value="awaiting" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Awaiting Reading</SelectItem>
+                    <SelectItem value="billed" className="text-xs text-slate-800 dark:text-slate-200 font-medium focus:bg-teal-100 dark:focus:bg-teal-900/60 focus:text-teal-950 dark:focus:text-teal-100 cursor-pointer">Billed</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -491,58 +491,58 @@ export default function BillingOverviewPage() {
       {/* Summary KPI Cards - Compact */}
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 mb-1">
+          <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3.5 shadow-2xs">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Total Billed Revenue</span>
-              <IndianRupee className="h-4 w-4 text-emerald-600" />
+              <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <p className="text-xl font-bold text-slate-900 font-mono">
+            <p className="text-xl font-bold text-slate-900 dark:text-white font-mono">
               ₹{(summary.total_revenue_paise / 100).toFixed(2)}
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
               From {summary.rooms_with_calculable_consumption ?? 0} finalized rooms
             </p>
           </div>
           
-          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 mb-1">
+          <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3.5 shadow-2xs">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Billed Consumption</span>
-              <Zap className="h-4 w-4 text-amber-500" />
+              <Zap className="h-4 w-4 text-amber-500 dark:text-amber-400" />
             </div>
-            <p className="text-xl font-bold text-slate-900 font-mono">
-              {summary.total_consumption_all.toFixed(2)} <span className="text-xs font-normal text-slate-500">kWh</span>
+            <p className="text-xl font-bold text-slate-900 dark:text-white font-mono">
+              {summary.total_consumption_all.toFixed(2)} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">kWh</span>
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
               {summary.rooms_awaiting_reading && summary.rooms_awaiting_reading > 0 ? (
-                <span className="text-amber-700 font-medium">{summary.rooms_awaiting_reading} room(s) in progress</span>
+                <span className="text-amber-700 dark:text-amber-400 font-medium">{summary.rooms_awaiting_reading} room(s) in progress</span>
               ) : (
                 `Occupied: ${summary.total_consumption_occupied.toFixed(2)} kWh`
               )}
             </p>
           </div>
           
-          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 mb-1">
+          <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3.5 shadow-2xs">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Allocated Students</span>
-              <Users className="h-4 w-4 text-blue-500" />
+              <Users className="h-4 w-4 text-blue-500 dark:text-blue-400" />
             </div>
-            <p className="text-xl font-bold text-slate-900">
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
               {studentBilling.length}
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
               In {roomBilling.filter(r => (r.occupancy ?? 0) > 0).length} occupied rooms
             </p>
           </div>
           
-          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500 mb-1">
+          <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3.5 shadow-2xs">
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Pending Readings</span>
-              <Gauge className="h-4 w-4 text-violet-500" />
+              <Gauge className="h-4 w-4 text-violet-500 dark:text-violet-400" />
             </div>
-            <p className="text-xl font-bold text-slate-900">
+            <p className="text-xl font-bold text-slate-900 dark:text-white font-mono">
               {summary.rooms_awaiting_reading ?? roomBilling.filter(r => !r.consumption_calculable && r.meter_number).length}
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
               {summary.total_metered_rooms} total meters &bull; {summary.rooms_with_calculable_consumption ?? 0} finalized
             </p>
           </div>
@@ -570,55 +570,55 @@ export default function BillingOverviewPage() {
 
         {/* Tab 1: Allocated Students Table */}
         <TabsContent value="students" className="m-0">
-          <Card className="border border-slate-200/90 bg-white shadow-2xs rounded-xl overflow-hidden">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-2xs rounded-xl overflow-hidden">
             <div className="w-full overflow-x-auto">
               {loading ? (
                 <div className="text-center py-10">
-                  <p className="text-slate-500 text-xs">Loading student billing data...</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Loading student billing data...</p>
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="text-center py-10">
-                  <Users className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-slate-700 font-semibold text-xs">No allocated students found</p>
+                  <Users className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-slate-700 dark:text-slate-300 font-semibold text-xs">No allocated students found</p>
                 </div>
               ) : (
                 <Table className="w-full text-xs">
                   <TableHeader>
-                    <TableRow className="bg-slate-50/80 border-b border-slate-200/80">
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Student</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Room</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Sub-Meter</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Consumption</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Charge</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Status</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5 text-right">Action</TableHead>
+                    <TableRow className="bg-slate-50/80 dark:bg-[#122b3b]/60 border-b border-slate-200/80 dark:border-[#1a3d52]">
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Student</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Room</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Sub-Meter</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Consumption</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Charge</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Status</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5 text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredStudents.map(student => (
-                      <TableRow key={student.allocation_id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
-                        <TableCell className="px-3.5 py-2.5 font-medium text-slate-900">
+                      <TableRow key={student.allocation_id} className="hover:bg-slate-50/60 dark:hover:bg-[#122b3b]/40 border-b border-slate-100 dark:border-[#1a3d52] transition-colors">
+                        <TableCell className="px-3.5 py-2.5 font-medium text-slate-900 dark:text-white">
                           <div>{student.student_name}</div>
                           {student.student_email && (
-                            <div className="text-[11px] text-slate-400 font-normal truncate max-w-[150px]">{student.student_email}</div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-400 font-normal truncate max-w-[150px]">{student.student_email}</div>
                           )}
                         </TableCell>
-                        <TableCell className="px-3.5 py-2.5 font-medium text-slate-800">
+                        <TableCell className="px-3.5 py-2.5 font-medium text-slate-800 dark:text-slate-200">
                           Room {student.room_number}
                         </TableCell>
-                        <TableCell className="px-3.5 py-2.5 font-mono text-slate-700">
+                        <TableCell className="px-3.5 py-2.5 font-mono text-slate-700 dark:text-slate-300">
                           {student.meter_number || <span className="text-slate-400 italic">None</span>}
                         </TableCell>
                         <TableCell className="px-3.5 py-2.5">
                           {student.consumption_calculable ? (
-                            <span className="font-semibold text-slate-900">{student.consumption_units.toFixed(2)} kWh</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{student.consumption_units.toFixed(2)} kWh</span>
                           ) : (
-                            <span className="text-amber-700 font-medium">Pending Reading</span>
+                            <span className="text-amber-700 dark:text-amber-400 font-medium">Pending Reading</span>
                           )}
                         </TableCell>
-                        <TableCell className="px-3.5 py-2.5 font-semibold text-slate-900">
+                        <TableCell className="px-3.5 py-2.5 font-semibold text-slate-900 dark:text-white">
                           {student.charge_amount_paise > 0 ? (
-                            <span className="text-emerald-700">{formatCurrency(student.charge_amount_paise)}</span>
+                            <span className="text-emerald-700 dark:text-emerald-400">{formatCurrency(student.charge_amount_paise)}</span>
                           ) : student.consumption_calculable ? (
                             <span className="text-slate-400 font-normal">₹0.00</span>
                           ) : (
@@ -633,7 +633,7 @@ export default function BillingOverviewPage() {
                             size="sm"
                             variant="outline"
                             asChild
-                            className="h-7 text-xs px-2.5 border-slate-200 hover:bg-slate-50 text-slate-700"
+                            className="h-7 text-xs px-2.5 border-slate-200 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#122b3b] text-slate-700 dark:text-slate-200"
                           >
                             <Link href={`/owner/electricity/billing/room-details?room_id=${student.room_id}&month=${selectedMonth}`}>
                               Details
@@ -651,28 +651,28 @@ export default function BillingOverviewPage() {
 
         {/* Tab 2: Room Electricity Consumption Table - Compact & Responsive */}
         <TabsContent value="rooms" className="m-0">
-          <Card className="border border-slate-200/90 bg-white shadow-2xs rounded-xl overflow-hidden">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-2xs rounded-xl overflow-hidden">
             <div className="w-full overflow-x-auto">
               {loading ? (
                 <div className="text-center py-10">
-                  <p className="text-slate-500 text-xs">Loading room billing data...</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Loading room billing data...</p>
                 </div>
               ) : filteredRooms.length === 0 ? (
                 <div className="text-center py-10">
-                  <Zap className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-slate-600 font-medium text-xs">No matching rooms found</p>
+                  <Zap className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-slate-600 dark:text-slate-400 font-medium text-xs">No matching rooms found</p>
                 </div>
               ) : (
                 <Table className="w-full text-xs">
                   <TableHeader>
-                    <TableRow className="bg-slate-50/80 border-b border-slate-200/80">
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Room</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Sub-Meter</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Occupancy</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Latest Reading</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Consumption</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5">Billing Status</TableHead>
-                      <TableHead className="font-semibold text-slate-600 uppercase text-[11px] px-3.5 py-2.5 text-right">Actions</TableHead>
+                    <TableRow className="bg-slate-50/80 dark:bg-[#122b3b]/60 border-b border-slate-200/80 dark:border-[#1a3d52]">
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Room</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Sub-Meter</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Occupancy</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Latest Reading</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Consumption</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5">Billing Status</TableHead>
+                      <TableHead className="font-semibold text-slate-600 dark:text-slate-300 uppercase text-[11px] px-3.5 py-2.5 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -682,19 +682,19 @@ export default function BillingOverviewPage() {
                       const latest = room.latest_reading;
 
                       return (
-                        <TableRow key={room.room_id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
+                        <TableRow key={room.room_id} className="hover:bg-slate-50/60 dark:hover:bg-[#122b3b]/40 border-b border-slate-100 dark:border-[#1a3d52] transition-colors">
                           {/* 1. Room Number */}
-                          <TableCell className="px-3.5 py-2.5 font-semibold text-slate-900 whitespace-nowrap">
+                          <TableCell className="px-3.5 py-2.5 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
                             Room {room.room_number}
                             {room.floor !== undefined && (
-                              <span className="text-[10px] text-slate-400 font-normal ml-1.5">Fl. {room.floor}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-400 font-normal ml-1.5">Fl. {room.floor}</span>
                             )}
                           </TableCell>
 
                           {/* 2. Sub-Meter */}
                           <TableCell className="px-3.5 py-2.5 whitespace-nowrap">
                             {room.meter_number ? (
-                              <span className="font-mono text-xs font-medium text-slate-700">{room.meter_number}</span>
+                              <span className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300">{room.meter_number}</span>
                             ) : (
                               <span className="text-slate-400 italic">None</span>
                             )}
@@ -702,7 +702,7 @@ export default function BillingOverviewPage() {
 
                           {/* 3. Current Occupancy */}
                           <TableCell className="px-3.5 py-2.5 whitespace-nowrap">
-                            <span className="text-slate-800 font-medium">
+                            <span className="text-slate-800 dark:text-slate-200 font-medium">
                               {room.occupancy ?? 0} {(room.occupancy === 1 ? 'resident' : 'residents')}
                             </span>
                           </TableCell>
@@ -711,7 +711,7 @@ export default function BillingOverviewPage() {
                           <TableCell className="px-3.5 py-2.5 whitespace-nowrap">
                             {latest ? (
                               <div>
-                                <span className="font-mono font-medium text-slate-800">{latest.value} kWh</span>
+                                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">{latest.value} kWh</span>
                                 <span className="text-[10px] text-slate-400 block">
                                   {new Date(latest.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                                 </span>
@@ -725,12 +725,12 @@ export default function BillingOverviewPage() {
                           <TableCell className="px-3.5 py-2.5 whitespace-nowrap">
                             {room.consumption_calculable ? (
                               room.total_consumption > 0 ? (
-                                <span className="font-bold text-slate-900">{room.total_consumption.toFixed(2)} kWh</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{room.total_consumption.toFixed(2)} kWh</span>
                               ) : (
-                                <span className="text-slate-500 font-medium">0.00 kWh</span>
+                                <span className="text-slate-500 dark:text-slate-400 font-medium">0.00 kWh</span>
                               )
                             ) : room.meter_number ? (
-                              <span className="text-amber-700 font-medium">Pending Reading</span>
+                              <span className="text-amber-700 dark:text-amber-400 font-medium">Pending Reading</span>
                             ) : (
                               <span className="text-slate-400">—</span>
                             )}
@@ -749,7 +749,7 @@ export default function BillingOverviewPage() {
                                   size="sm"
                                   variant="outline"
                                   asChild
-                                  className="h-7 text-xs px-2.5 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold"
+                                  className="h-7 text-xs px-2.5 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-semibold"
                                 >
                                   <Link href={`/owner/electricity/readings/record?meter_id=${room.meter_id}&reason=${room.detailed_status === 'awaiting_initial_reading' ? 'initial' : room.detailed_status === 'awaiting_allocation_reading' ? 'occupancy_change' : 'month_end'}`}>
                                     Record
@@ -760,7 +760,7 @@ export default function BillingOverviewPage() {
                                 size="sm" 
                                 variant="outline" 
                                 asChild
-                                className="h-7 text-xs px-2.5 border-slate-200 hover:bg-slate-50 text-slate-700"
+                                className="h-7 text-xs px-2.5 border-slate-200 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#122b3b] text-slate-700 dark:text-slate-200"
                               >
                                 <Link href={`/owner/electricity/billing/room-details?room_id=${room.room_id}&month=${selectedMonth}`}>
                                   Details
