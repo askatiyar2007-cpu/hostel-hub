@@ -133,12 +133,32 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     setIsMobileOpen(false);
   }, [pathname]);
 
+  // Revalidate session on pageshow (bfcache) or history navigation (popstate)
+  useEffect(() => {
+    const handleRevalidation = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.replace('/auth/login');
+        }
+      } catch {
+        window.location.replace('/auth/login');
+      }
+    };
+    window.addEventListener('pageshow', handleRevalidation);
+    window.addEventListener('popstate', handleRevalidation);
+    return () => {
+      window.removeEventListener('pageshow', handleRevalidation);
+      window.removeEventListener('popstate', handleRevalidation);
+    };
+  }, []);
+
   // Authentication guard
   useEffect(() => {
     if (loading) return;
 
     if (!user || !profile) {
-      router.replace('/auth/login');
+      window.location.replace('/auth/login');
       return;
     }
 

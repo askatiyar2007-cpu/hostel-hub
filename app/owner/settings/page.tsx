@@ -129,8 +129,15 @@ function SettingsRow({
 // Main Settings Page Component
 // =========================================================================
 export default function OwnerSettingsPage() {
-  const { user, profile, signOut, refreshAuthState } = useAuth();
+  const { user, profile, signOut, refreshAuthState, loading } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
+
+  // Defensive redirect if not authenticated
+  useEffect(() => {
+    if (!loading && (!user || !profile)) {
+      window.location.replace('/auth/login');
+    }
+  }, [loading, user, profile]);
 
   // Modals state
   const [activeModal, setActiveModal] = useState<
@@ -310,6 +317,14 @@ export default function OwnerSettingsPage() {
       setSavingPrefs(false);
     }
   };
+
+  if (loading || !user || !profile) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
+      </div>
+    );
+  }
 
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', {

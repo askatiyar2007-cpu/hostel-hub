@@ -405,7 +405,7 @@ export default function OwnerStudentsPage() {
         <div className="space-y-4">
   {filteredAssignments.map((item) => {
     const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
-    const profile = studentInfo?.profiles;
+    const profile = Array.isArray(studentInfo?.profiles) ? studentInfo.profiles[0] : studentInfo?.profiles;
     const studentName = item.student_name || profile?.full_name || 'Resident Student';
     const studentEmail = item.student_email || profile?.email || '-';
     const studentPhone = item.student_phone || profile?.phone_number || '-';

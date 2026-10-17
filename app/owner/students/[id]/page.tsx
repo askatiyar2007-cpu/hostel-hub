@@ -75,28 +75,27 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       if (studentErr) throw studentErr;
       setStudent(studentData);
 
-      // 3. Fetch latest approved room request
+      // 3. Fetch latest room request for metadata (pending, approved, or historical)
       const { data: reqData } = await supabase
         .from('room_requests')
         .select('*')
         .eq('student_id', allocData.student_id)
-        .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
       setLatestRequest(reqData);
 
-      // 4. Fetch passport photo URL if room request has photo_path
-      if (reqData?.photo_path) {
-        try {
-          const response = await fetch(`/api/students/photo-url?student_id=${allocData.student_id}`);
-          if (response.ok) {
-            const data = await response.json();
+      // 4. Fetch authoritative photo URL for this student (handles profile avatars and room requests)
+      try {
+        const response = await fetch(`/api/students/photo-url?student_id=${encodeURIComponent(allocData.student_id)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.signedUrl) {
             setPassportPhotoUrl(data.signedUrl);
           }
-        } catch (error) {
-          console.error('Failed to fetch passport photo:', error);
         }
+      } catch (error) {
+        console.error('Failed to fetch student photo:', error);
       }
 
       // 4. Fetch Student Fees
@@ -231,7 +230,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     );
   }
 
-  const profile = student.profiles;
+  const profile = Array.isArray(student.profiles) ? student.profiles[0] : student.profiles;
   const studentName = allocation.student_name || profile?.full_name || '-';
   const studentEmail = allocation.student_email || profile?.email || '-';
   const studentPhone = allocation.student_phone || profile?.phone_number || '-';
@@ -249,13 +248,14 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
   const displayPhoto = useMemo(() => {
     if (!allocation) return undefined;
+    const prof = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles;
     return resolveStudentPhoto({
       alloc: {
         student_name: allocation.student_name,
         student_email: allocation.student_email,
         student_phone: allocation.student_phone,
       },
-      profile: student?.profiles,
+      profile: prof,
       studentId: allocation.student_id,
       photoUrlFromRequest: passportPhotoUrl,
     });

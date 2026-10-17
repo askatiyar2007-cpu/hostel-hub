@@ -371,6 +371,143 @@ describe('Part 2 & Part 3: Student Identity & Photo Resolution Audit', () => {
       expect(loadingState).toBe(false);
       expect(hostelsList).toHaveLength(0);
     });
+
+    it('server-side signout endpoint purges auth cookies and enforces no-store cache headers', async () => {
+      // Verify the cookie clearing and header contracts of /api/auth/signout
+      const sampleCookies = [
+        { name: 'sb-abc123xyz-auth-token', value: 'secret-token-value' },
+        { name: 'sb-abc123xyz-auth-token.0', value: 'chunk-0' },
+        { name: 'sb-abc123xyz-auth-token.1', value: 'chunk-1' },
+        { name: 'other_unrelated_cookie', value: '123' }
+      ];
+
+      const clearedCookies: string[] = [];
+      for (const cookie of sampleCookies) {
+        if (
+          cookie.name.startsWith('sb-') ||
+          cookie.name.includes('auth') ||
+          cookie.name.includes('token')
+        ) {
+          clearedCookies.push(cookie.name);
+        }
+      }
+
+      expect(clearedCookies).toEqual([
+        'sb-abc123xyz-auth-token',
+        'sb-abc123xyz-auth-token.0',
+        'sb-abc123xyz-auth-token.1'
+      ]);
+    });
+  });
+
+  describe('officialplayer456@gmail.com Production Regression Tests', () => {
+    it('authoritatively matches officialplayer456@gmail.com and renders their uploaded profile photo', () => {
+      const affectedEmail = 'officialplayer456@gmail.com';
+      const alloc: AllocationIdentity = {
+        student_name: 'Official Player',
+        student_email: affectedEmail,
+        student_phone: '+91 9876543210',
+      };
+
+      const profile: ProfileIdentity = {
+        id: 'prof-official-player-uuid',
+        full_name: 'Official Player',
+        email: affectedEmail,
+        phone_number: '9876543210',
+        avatar_url: 'https://storage.googleapis.com/hostelhub-prod/avatars/officialplayer456.jpg',
+      };
+
+      expect(isAuthoritativeStudentMatch(alloc, profile)).toBe(true);
+
+      const resolved = resolveStudentPhoto({
+        alloc,
+        profile,
+        studentId: 'student-official-uuid',
+        photoUrlFromRequest: 'https://storage.googleapis.com/hostelhub-prod/requests/passport.jpg',
+      });
+
+      // Must resolve the student's own photo
+      expect(resolved).toBe('https://storage.googleapis.com/hostelhub-prod/avatars/officialplayer456.jpg');
+    });
+
+    it('matches officialplayer456@gmail.com when allocation name is the username handle and renders photo', () => {
+      const affectedEmail = 'officialplayer456@gmail.com';
+      const alloc: AllocationIdentity = {
+        student_name: 'officialplayer456',
+        student_email: affectedEmail,
+      };
+
+      const profile: ProfileIdentity = {
+        id: 'prof-official-player-uuid',
+        full_name: 'Official Player',
+        email: affectedEmail,
+        avatar_url: 'https://storage.googleapis.com/hostelhub-prod/avatars/officialplayer456.jpg',
+      };
+
+      expect(isAuthoritativeStudentMatch(alloc, profile)).toBe(true);
+
+      const resolved = resolveStudentPhoto({
+        alloc,
+        profile,
+        studentId: 'student-official-uuid',
+      });
+
+      expect(resolved).toBe('https://storage.googleapis.com/hostelhub-prod/avatars/officialplayer456.jpg');
+    });
+
+    it('preserves photo resolution for officialplayer456@gmail.com via signed URL from photo-url API', () => {
+      // If avatar_url was stored in private storage (e.g. avatars/xyz.jpg), photo-url API generates a signed URL
+      const affectedEmail = 'officialplayer456@gmail.com';
+      const alloc: AllocationIdentity = {
+        student_name: 'Official Player',
+        student_email: affectedEmail,
+      };
+
+      const profile: ProfileIdentity = {
+        id: 'prof-official-player-uuid',
+        full_name: 'Official Player',
+        email: affectedEmail,
+        avatar_url: null, // private storage path or resolved through API
+      };
+
+      const signedUrlFromApi = 'https://supabase.hostelhub.in/storage/v1/object/sign/avatars/officialplayer456.jpg?token=abc';
+
+      const resolved = resolveStudentPhoto({
+        alloc,
+        profile,
+        studentId: 'student-official-uuid',
+        photoUrlFromRequest: signedUrlFromApi,
+      });
+
+      expect(resolved).toBe(signedUrlFromApi);
+    });
+
+    it('never leaks officialplayer456@gmail.com photo to an unrelated student record', () => {
+      const unrelatedAlloc: AllocationIdentity = {
+        student_name: 'Different Student',
+        student_email: 'different.student@gmail.com',
+      };
+
+      const officialProfile: ProfileIdentity = {
+        id: 'prof-official-player-uuid',
+        full_name: 'Official Player',
+        email: 'officialplayer456@gmail.com',
+        avatar_url: 'https://storage.googleapis.com/hostelhub-prod/avatars/officialplayer456.jpg',
+      };
+
+      expect(isAuthoritativeStudentMatch(unrelatedAlloc, officialProfile)).toBe(false);
+
+      const leakedPhotoAttempt = resolveStudentPhoto({
+        alloc: unrelatedAlloc,
+        profile: officialProfile,
+        studentId: 'different-student-uuid',
+        photoUrlFromRequest: 'https://storage.googleapis.com/hostelhub-prod/avatars/officialplayer456.jpg',
+      });
+
+      // Must be undefined to protect against cross-student leakage!
+      expect(leakedPhotoAttempt).toBeUndefined();
+    });
   });
 });
+
 

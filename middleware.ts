@@ -42,6 +42,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  let response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
+
   const supabase = createServerClient(
     supabaseUrl,
     supabaseKey,
@@ -51,16 +57,15 @@ export async function middleware(req: NextRequest) {
           return req.cookies.getAll()
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            req.cookies.set(name, value)
-            if (options) {
-              req.cookies.set({
-                name,
-                value,
-                ...options,
-              })
-            }
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
+          response = NextResponse.next({
+            request: {
+              headers: req.headers,
+            },
           })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
         },
       },
     }
@@ -119,6 +124,9 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = destination;
     const res = NextResponse.redirect(url);
+    response.cookies.getAll().forEach(cookie => {
+      res.cookies.set(cookie);
+    });
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.headers.set('Pragma', 'no-cache');
     res.headers.set('Expires', '0');
@@ -200,12 +208,6 @@ export async function middleware(req: NextRequest) {
       }
     }
   }
-
-  const response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
 
   if (isProtectedRoute) {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

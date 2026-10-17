@@ -32,6 +32,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/context';
+import { supabase } from '@/lib/supabase/client';
 import { UserRole } from '@/types/database';
 
 interface NavItem {
@@ -139,6 +140,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [pathname]);
 
+  // Revalidate session on pageshow (bfcache) or history navigation (popstate)
+  useEffect(() => {
+    const handleRevalidation = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.replace('/auth/login');
+        }
+      } catch {
+        window.location.replace('/auth/login');
+      }
+    };
+    window.addEventListener('pageshow', handleRevalidation);
+    window.addEventListener('popstate', handleRevalidation);
+    return () => {
+      window.removeEventListener('pageshow', handleRevalidation);
+      window.removeEventListener('popstate', handleRevalidation);
+    };
+  }, []);
+
   // CRITICAL BUSINESS RULE ENFORCEMENT & ROLE ROUTE GUARDS:
   // password_set=false means NOT a HostelHub user, regardless of whether profile
   // or role data exists. An incomplete signup (e.g., Google OAuth where user
@@ -148,7 +169,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (loading) return;
 
     if (!user || !profile) {
-      router.replace('/auth/login');
+      window.location.replace('/auth/login');
       return;
     }
 

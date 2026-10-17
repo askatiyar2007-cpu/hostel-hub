@@ -183,8 +183,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null);
         setAccountCompletionStep(null);
         setPasswordSet(null);
+        setLoading(false);
         accountStateFailureCountRef.current = 0;
         lastAccountStateFailureTimeRef.current = 0;
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (
+          currentPath.startsWith('/owner') ||
+          currentPath.startsWith('/student') ||
+          currentPath.startsWith('/parent') ||
+          currentPath.startsWith('/admin')
+        ) {
+          window.location.replace('/auth/login');
+        }
       } else {
         void synchronize();
       }
@@ -211,6 +221,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Immediate session verification for protected routes on page restoration (bfcache or back/forward navigation)
         void supabase.auth.getSession().then(({ data: { session } }) => {
           if (!session) {
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
             window.location.replace('/auth/login');
             return;
           }
@@ -235,27 +248,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener('focus', refreshOnFocus);
     window.addEventListener('pageshow', refreshOnPageShow);
+    window.addEventListener('popstate', refreshOnPageShow as any);
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
       window.removeEventListener('focus', refreshOnFocus);
       window.removeEventListener('pageshow', refreshOnPageShow);
+      window.removeEventListener('popstate', refreshOnPageShow as any);
     };
   }, []);
 
   const handleActualSignOut = async (): Promise<void> => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) console.error('Sign out error:', error);
+      // 1. Authoritative server-side sign out to clear HTTP-only cookies and revoke session
+      await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {});
+      // 2. Revoke client-side Supabase tokens
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      await supabase.auth.signOut({ scope: 'global' }).catch(() => {});
     } catch (err) {
       console.error('Sign out exception:', err);
     } finally {
+      // 3. Clear client cookies manually if accessible
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';');
+        for (const c of cookies) {
+          const name = c.split('=')[0]?.trim();
+          if (name && (name.startsWith('sb-') || name.includes('auth') || name.includes('token'))) {
+            document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          }
+        }
+      }
+      // 4. Clear storage
+      if (typeof localStorage !== 'undefined') {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('sb-') || key.includes('auth') || key.includes('token') || key.includes('session')) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
       setUser(null);
       setProfile(null);
       setAccountCompletionStep(null);
       setPasswordSet(null);
+      setLoading(false);
       setShowLogoutConfirm(false);
+
       // Hard redirect to clear browser in-memory caches, React Query cache, and bfcache snapshots
       if (typeof window !== 'undefined') {
         window.location.replace('/auth/login');
