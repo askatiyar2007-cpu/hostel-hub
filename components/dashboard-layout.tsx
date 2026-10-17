@@ -118,7 +118,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isElectricityOpen, setIsElectricityOpen] = useState(false);
   const pathname = usePathname();
-  const { profile, signOut, loading, accountCompletionStep, password_set } = useAuth();
+  const { profile, user, signOut, loading, accountCompletionStep, password_set } = useAuth();
   const router = useRouter();
 
   const role = profile?.role as UserRole || 'student';
@@ -145,7 +145,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // selected a role but never set a password) must NEVER access the dashboard.
   // The saved role is only temporary onboarding progress and grants NO access.
   useEffect(() => {
-    if (loading || !profile) return;
+    if (loading) return;
+
+    if (!user || !profile) {
+      router.replace('/auth/login');
+      return;
+    }
 
     // Check password_set FIRST, before any other completion checks.
     if (password_set === false) {
@@ -182,9 +187,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       router.replace(getDashboardForRole(profile.role));
       return;
     }
-  }, [loading, profile, accountCompletionStep, password_set, router, signOut, pathname]);
+  }, [loading, user, profile, accountCompletionStep, password_set, router, signOut, pathname]);
 
-  if (loading) {
+  if (loading || !user || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

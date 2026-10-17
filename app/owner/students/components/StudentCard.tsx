@@ -41,6 +41,11 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   onCheckout,
 }) => {
   const [imageError, setImageError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImageError(false);
+  }, [studentPhotoUrl]);
+
   const isStatusActive = statusLabel.toLowerCase() === 'active';
   const isCheckedOut = statusLabel.toLowerCase().includes('checked out');
   const badgeClass = isStatusActive 
@@ -73,6 +78,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       <div className="flex items-center gap-4 min-w-0 flex-1 w-full border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-[#1a3d52] pb-4 xl:pb-0 xl:pr-6">
         {studentPhotoUrl && !imageError ? (
           <img 
+            key={studentPhotoUrl}
             src={studentPhotoUrl} 
             alt={studentName} 
             onError={() => setImageError(true)}

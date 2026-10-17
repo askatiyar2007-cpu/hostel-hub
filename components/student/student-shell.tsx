@@ -135,7 +135,12 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   // Authentication guard
   useEffect(() => {
-    if (loading || !profile) return;
+    if (loading) return;
+
+    if (!user || !profile) {
+      router.replace('/auth/login');
+      return;
+    }
 
     if (password_set === false) {
       console.log('[StudentShell] Detected incomplete account (password_set=false), signing out');
@@ -160,7 +165,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       router.replace(getDashboardForRole(profile.role));
       return;
     }
-  }, [loading, profile, accountCompletionStep, password_set, router, signOut]);
+  }, [loading, user, profile, accountCompletionStep, password_set, router, signOut]);
 
   // Check whether the student already has an active room allocation
   const { data: hasActiveAllocation } = useQuery({
@@ -214,7 +219,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
     refetchOnMount: true
   });
 
-  if (loading) {
+  if (loading || !user || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />

@@ -15,7 +15,7 @@ import { OwnerHostelCard } from '@/components/owner/owner-hostel-card';
 import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
 export default function HostelsListPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [hostels, setHostels] = useState<Hostel[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [allocations, setAllocations] = useState<any[]>([]);
@@ -23,16 +23,21 @@ export default function HostelsListPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchHostels = useCallback(async () => {
-    if (!profile?.user_id) return;
+    const ownerId = profile?.user_id || user?.id;
+    if (!ownerId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
-      const { data: hostelsData } = await supabase
+      const { data: hostelsData, error: hostelsError } = await supabase
         .from('hostels')
         .select('*')
-        .eq('owner_id', profile.user_id)
+        .eq('owner_id', ownerId)
         .order('created_at', { ascending: false });
 
+      if (hostelsError) throw hostelsError;
       setHostels((hostelsData as Hostel[]) || []);
 
       if (hostelsData && hostelsData.length > 0) {
@@ -51,6 +56,9 @@ export default function HostelsListPage() {
           .eq('active', true);
         
         setAllocations(allocationsData || []);
+      } else {
+        setRooms([]);
+        setAllocations([]);
       }
     } catch (error) {
       console.error('Error fetching hostels:', error);
@@ -58,7 +66,7 @@ export default function HostelsListPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.user_id]);
+  }, [profile?.user_id, user?.id]);
 
   useEffect(() => {
     fetchHostels();

@@ -199,12 +199,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       void synchronize();
     };
 
-    const refreshOnPageShow = () => {
-      const now = Date.now();
-      if (accountStateFailureCountRef.current > 0 && now - lastAccountStateFailureTimeRef.current < 15000) {
-        return;
+    const refreshOnPageShow = (event: PageTransitionEvent) => {
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isProtected = 
+        pathname.startsWith('/owner') ||
+        pathname.startsWith('/student') ||
+        pathname.startsWith('/parent') ||
+        pathname.startsWith('/admin');
+
+      if (isProtected) {
+        // Immediate session verification for protected routes on page restoration (bfcache or back/forward navigation)
+        void supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) {
+            window.location.replace('/auth/login');
+            return;
+          }
+          if (event.persisted) {
+            accountStateFailureCountRef.current = 0;
+            lastAccountStateFailureTimeRef.current = 0;
+          }
+          void synchronize();
+        });
+      } else {
+        if (event.persisted) {
+          accountStateFailureCountRef.current = 0;
+          lastAccountStateFailureTimeRef.current = 0;
+        }
+        const now = Date.now();
+        if (accountStateFailureCountRef.current > 0 && now - lastAccountStateFailureTimeRef.current < 15000) {
+          return;
+        }
+        void synchronize();
       }
-      void synchronize();
     };
 
     window.addEventListener('focus', refreshOnFocus);
@@ -221,13 +247,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleActualSignOut = async (): Promise<void> => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
+      if (error) console.error('Sign out error:', error);
+    } catch (err) {
+      console.error('Sign out exception:', err);
+    } finally {
       setUser(null);
       setProfile(null);
-      router.replace('/auth/login');
-    } finally {
+      setAccountCompletionStep(null);
+      setPasswordSet(null);
       setShowLogoutConfirm(false);
+      // Hard redirect to clear browser in-memory caches, React Query cache, and bfcache snapshots
+      if (typeof window !== 'undefined') {
+        window.location.replace('/auth/login');
+      } else {
+        router.replace('/auth/login');
+      }
     }
   };
 

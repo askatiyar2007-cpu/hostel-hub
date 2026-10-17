@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { PaymentHistoryModal } from '../../requests/payment-modals';
 import { PageHeader } from "@/components/owner/page-header";
+import { resolveStudentPhoto } from '@/lib/utils/student-identity';
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
@@ -246,6 +247,20 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     ? Math.max(1, Math.round((new Date(allocation.end_date).getTime() - new Date(allocation.start_date).getTime()) / (1000 * 60 * 60 * 24)))
     : null;
 
+  const displayPhoto = useMemo(() => {
+    if (!allocation) return undefined;
+    return resolveStudentPhoto({
+      alloc: {
+        student_name: allocation.student_name,
+        student_email: allocation.student_email,
+        student_phone: allocation.student_phone,
+      },
+      profile: student?.profiles,
+      studentId: allocation.student_id,
+      photoUrlFromRequest: passportPhotoUrl,
+    });
+  }, [allocation, student?.profiles, passportPhotoUrl]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -283,18 +298,12 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       {/* 1. Profile Header Row */}
       <div className="bg-card border border-border p-6 rounded-3xl shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex flex-col md:flex-row items-center gap-5">
-          {passportPhotoUrl ? (
+          {displayPhoto ? (
             <img 
-              src={passportPhotoUrl} 
-              alt="Student passport photo"
-              className="h-20 w-20 rounded-full object-cover border-2 border-primary shadow-sm cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-              onClick={() => setPreviewPhoto(passportPhotoUrl)}
-            />
-          ) : (profile?.avatar_url && ((!allocation.student_email && !allocation.student_name) || (allocation.student_email && profile.email && allocation.student_email.trim().toLowerCase() === profile.email.trim().toLowerCase()) || (allocation.student_name && profile.full_name && allocation.student_name.trim().toLowerCase() === profile.full_name.trim().toLowerCase()))) ? (
-            <img 
-              src={profile.avatar_url} 
+              src={displayPhoto} 
               alt={studentName} 
-              className="h-20 w-20 rounded-full object-cover border-2 border-primary shadow-sm"
+              className="h-20 w-20 rounded-full object-cover border-2 border-primary shadow-sm cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              onClick={() => setPreviewPhoto(displayPhoto)}
             />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-3xl shadow-sm">

@@ -115,10 +115,18 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith('/auth/setup-password')
   )
 
+  function redirectWithNoStore(destination: string): NextResponse {
+    const url = req.nextUrl.clone();
+    url.pathname = destination;
+    const res = NextResponse.redirect(url);
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.headers.set('Pragma', 'no-cache');
+    res.headers.set('Expires', '0');
+    return res;
+  }
+
   if (!user && (isProtectedRoute || isOnboardingPage)) {
-    const url = req.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
+    return redirectWithNoStore('/auth/login');
   }
 
   // CRITICAL BUSINESS RULE ENFORCEMENT:
@@ -141,9 +149,7 @@ export async function middleware(req: NextRequest) {
       if (error || !data) {
         console.error('[Middleware] Account state lookup failed for:', user.email, error);
         if (isProtectedRoute) {
-          const url = req.nextUrl.clone();
-          url.pathname = '/auth/login';
-          return NextResponse.redirect(url);
+          return redirectWithNoStore('/auth/login');
         }
       } else {
         const accountState = readAccountState(data);
@@ -151,17 +157,13 @@ export async function middleware(req: NextRequest) {
         // Fail closed if state is malformed or does not match authenticated user
         if (isProtectedRoute && (!accountState || accountState.user_id !== user.id)) {
           console.log('[Middleware] Failing closed: account state identity mismatch or invalid for:', user.email);
-          const url = req.nextUrl.clone();
-          url.pathname = '/auth/login';
-          return NextResponse.redirect(url);
+          return redirectWithNoStore('/auth/login');
         }
 
         // Block dashboard access for incomplete accounts
         if (isProtectedRoute && (!accountState?.is_complete || accountState?.password_set === false)) {
           console.log('[Middleware] Blocking dashboard access for incomplete account:', user.email);
-          const url = req.nextUrl.clone();
-          url.pathname = '/auth/login';
-          return NextResponse.redirect(url);
+          return redirectWithNoStore('/auth/login');
         }
 
         // Strict role authorization: prevent cross-role dashboard access
@@ -181,35 +183,37 @@ export async function middleware(req: NextRequest) {
           if (!isAuthorized) {
             console.log(`[Middleware] Role mismatch: ${role} denied access to ${pathname}`);
             const destination = (role && dashboardPathForRole(role)) || '/auth/login';
-            const url = req.nextUrl.clone();
-            url.pathname = destination;
-            return NextResponse.redirect(url);
+            return redirectWithNoStore(destination);
           }
         }
 
         // If completed account visits onboarding pages, redirect to their role dashboard
         if (isOnboardingPage && accountState?.is_complete && accountState?.password_set) {
           const destination = (accountState.role && dashboardPathForRole(accountState.role)) || '/auth/login';
-          const url = req.nextUrl.clone();
-          url.pathname = destination;
-          return NextResponse.redirect(url);
+          return redirectWithNoStore(destination);
         }
       }
     } catch (err) {
       console.error('[Middleware] Unexpected error checking account state:', err);
       if (isProtectedRoute) {
-        const url = req.nextUrl.clone();
-        url.pathname = '/auth/login';
-        return NextResponse.redirect(url);
+        return redirectWithNoStore('/auth/login');
       }
     }
   }
 
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: req.headers,
     },
-  })
+  });
+
+  if (isProtectedRoute) {
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+  }
+
+  return response;
 }
 
 export const config = {

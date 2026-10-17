@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { PageHeader } from "@/components/owner/page-header";
+import { isAuthoritativeStudentMatch, resolveStudentPhoto } from '@/lib/utils/student-identity';
 
 // User-facing labels for the two booking modes. The underlying persisted
 // value and public.booking_type enum are unchanged -- only the displayed
@@ -62,9 +63,11 @@ export default function OwnerStudentsPage() {
   const [selectedHostel, setSelectedHostel] = useState<string>('all');
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const currentFetchIdRef = React.useRef<number>(0);
 
   const fetchStudents = useCallback(async () => {
     if (!user?.id) return;
+    const fetchId = ++currentFetchIdRef.current;
     try {
       setLoading(true);
       setError(null);
@@ -117,6 +120,7 @@ export default function OwnerStudentsPage() {
         .eq('active', activeTab === 'active')
         .order('created_at', { ascending: false });
 
+      if (fetchId !== currentFetchIdRef.current) return;
       if (fetchError) throw fetchError;
       setAssignments(data || []);
 
@@ -134,47 +138,69 @@ export default function OwnerStudentsPage() {
           .eq('active', false)
       ]);
 
+      if (fetchId !== currentFetchIdRef.current) return;
       if (aCount !== null && aCount !== undefined) setActiveCount(aCount);
       if (hCount !== null && hCount !== undefined) setHistoryCount(hCount);
 
-      // Fetch photo URLs for students with room requests
+      // Fetch photo URLs for authoritative students with room requests
       if (data && data.length > 0) {
-        const photoUrlPromises = data.map(async (assignment) => {
-          const studentInfo = Array.isArray(assignment.students) ? assignment.students[0] : assignment.students;
-          const studentId = studentInfo?.id;
-          if (!studentId) return null;
+        // Collect unique valid studentIds that authoritatively belong to their allocations
+        const uniqueStudentIds = Array.from(
+          new Set(
+            data
+              .map(assignment => {
+                const studentInfo = Array.isArray(assignment.students) ? assignment.students[0] : assignment.students;
+                const profile = Array.isArray(studentInfo?.profiles) ? studentInfo.profiles[0] : studentInfo?.profiles;
+                const studentId = studentInfo?.id || assignment.student_id;
+                const isMatch = isAuthoritativeStudentMatch(
+                  {
+                    student_name: assignment.student_name,
+                    student_email: assignment.student_email,
+                    student_phone: assignment.student_phone,
+                  },
+                  profile
+                );
+                return isMatch ? studentId : null;
+              })
+              .filter((id): id is string => Boolean(id) && typeof id === 'string')
+          )
+        );
 
+        const photoPromises = uniqueStudentIds.map(async (studentId) => {
           try {
-            const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
+            const response = await fetch(`/api/students/photo-url?student_id=${encodeURIComponent(studentId)}`);
             if (response.ok) {
               const resData = await response.json();
-              return { studentId, allocId: assignment.id, url: resData.signedUrl };
+              if (resData?.signedUrl) {
+                return { studentId, url: resData.signedUrl };
+              }
             }
             return null;
-          } catch (error) {
-            console.error(`Failed to fetch photo for student ${studentId}:`, error);
+          } catch {
             return null;
           }
         });
 
-        const photoResults = await Promise.all(photoUrlPromises);
+        const photoResults = await Promise.all(photoPromises);
+        if (fetchId !== currentFetchIdRef.current) return; // Stale fetch cancellation
+
         const urlMap: Record<string, string> = {};
         photoResults.forEach(result => {
           if (result && result.url) {
             urlMap[result.studentId] = result.url;
-            if (result.allocId) {
-              urlMap[result.allocId] = result.url;
-            }
           }
         });
         setPhotoUrls(urlMap);
       }
     } catch (err: any) {
+      if (fetchId !== currentFetchIdRef.current) return;
       console.error('Error fetching students:', err);
       setError(err.message || 'Failed to load resident students.');
       toast.error('Error loading resident student allocations');
     } finally {
-      setLoading(false);
+      if (fetchId === currentFetchIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [user?.id, activeTab]);
 
@@ -228,51 +254,28 @@ export default function OwnerStudentsPage() {
     });
   }, [assignments, searchQuery, selectedHostel]);
 
-  // Compute resolved, deduplicated photos per allocation ID to guarantee no duplicate avatars across distinct residents
+  // Canonical identity-safe photo resolution for each student allocation
   const resolvedPhotos = useMemo(() => {
     const photoMap: Record<string, string | undefined> = {};
-    const seenUrls = new Set<string>();
-    const seenStudentIds = new Set<string>();
 
     for (const item of filteredAssignments) {
       const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
-      const profile = studentInfo?.profiles;
-      const allocName = (item.student_name || '').trim().toLowerCase();
-      const allocEmail = (item.student_email || '').trim().toLowerCase();
-      const profName = (profile?.full_name || '').trim().toLowerCase();
-      const profEmail = (profile?.email || '').trim().toLowerCase();
+      const profile = Array.isArray(studentInfo?.profiles) ? studentInfo.profiles[0] : studentInfo?.profiles;
+      const studentId = studentInfo?.id || item.student_id;
+      const photoUrlFromRequest = studentId ? photoUrls[studentId] : undefined;
 
-      // Only trust profile avatar if the profile identity corresponds to this allocation
-      const isIdentityMatch = (!allocEmail && !allocName) ? true :
-        ((allocEmail && profEmail && allocEmail === profEmail) ||
-         (allocName && profName && allocName === profName));
+      const photo = resolveStudentPhoto({
+        alloc: {
+          student_name: item.student_name,
+          student_email: item.student_email,
+          student_phone: item.student_phone,
+        },
+        profile,
+        studentId,
+        photoUrlFromRequest,
+      });
 
-      const studentId = studentInfo?.id;
-      let candidatePhoto: string | undefined = undefined;
-
-      if (isIdentityMatch) {
-        if (studentId && photoUrls[studentId]) {
-          candidatePhoto = photoUrls[studentId];
-        } else if (photoUrls[item.id]) {
-          candidatePhoto = photoUrls[item.id];
-        } else if (profile?.avatar_url) {
-          candidatePhoto = profile.avatar_url;
-        }
-      }
-
-      if (candidatePhoto) {
-        const urlKey = candidatePhoto.split('?')[0].toLowerCase();
-        if (seenUrls.has(urlKey) || (studentId && seenStudentIds.has(studentId))) {
-          // Photo already used by another resident card on this page. Suppress duplicate so student gets their distinct deterministic initials badge.
-          photoMap[item.id] = undefined;
-        } else {
-          seenUrls.add(urlKey);
-          if (studentId) seenStudentIds.add(studentId);
-          photoMap[item.id] = candidatePhoto;
-        }
-      } else {
-        photoMap[item.id] = undefined;
-      }
+      photoMap[item.id] = photo;
     }
 
     return photoMap;
