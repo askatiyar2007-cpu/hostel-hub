@@ -239,14 +239,14 @@ export default function OwnerBillingPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Billing & Revenue</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage student fee schedules, rent dues, and payment records</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Billing & Revenue</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage student fee schedules, rent dues, and payment records</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={handleExportCSV}
             disabled={filteredFees.length === 0}
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-2 border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
           >
             <Download size={16} />
             <span>Export CSV</span>
@@ -258,8 +258,8 @@ export default function OwnerBillingPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-xs border border-slate-200/90 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="bg-white dark:bg-[#0e222e] rounded-xl shadow-xs border border-slate-200/90 dark:border-[#1a3d52] overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-[#1a3d52] flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
@@ -267,7 +267,7 @@ export default function OwnerBillingPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by student, month, or fee ID..." 
-              className="w-full pl-9 pr-4 py-2 bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50/70 dark:bg-[#122b3b] border border-slate-200/80 dark:border-[#1a3d52] rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
             />
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
@@ -277,7 +277,7 @@ export default function OwnerBillingPage() {
               <select
                 value={monthFilter}
                 onChange={(e) => setMonthFilter(e.target.value)}
-                className="border border-slate-200 bg-white text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+                className="border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
                 aria-label="Filter by billing month"
               >
                 <option value="all">All Months</option>
@@ -295,7 +295,7 @@ export default function OwnerBillingPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="border border-slate-200 bg-white text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+                className="border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
                 aria-label="Filter by fee status"
               >
                 <option value="all">All Statuses</option>

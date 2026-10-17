@@ -499,13 +499,13 @@ export default function OwnerPaymentsDashboard() {
       </div>
 
       {/* Payment Type Filter Tabs */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-slate-200 dark:border-[#1a3d52]">
         <button
           onClick={() => setPaymentTypeFilter('all')}
           className={`px-4 py-2.5 font-semibold text-xs border-b-2 transition duration-150 ${
             paymentTypeFilter === 'all'
-              ? 'border-teal-600 text-teal-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-teal-600 text-teal-700 dark:text-teal-400 font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           All Payments
@@ -514,8 +514,8 @@ export default function OwnerPaymentsDashboard() {
           onClick={() => setPaymentTypeFilter('online')}
           className={`px-4 py-2.5 font-semibold text-xs border-b-2 transition duration-150 ${
             paymentTypeFilter === 'online'
-              ? 'border-teal-600 text-teal-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-teal-600 text-teal-700 dark:text-teal-400 font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           Online (Knit Pay)
@@ -524,8 +524,8 @@ export default function OwnerPaymentsDashboard() {
           onClick={() => setPaymentTypeFilter('manual')}
           className={`px-4 py-2.5 font-semibold text-xs border-b-2 transition duration-150 ${
             paymentTypeFilter === 'manual'
-              ? 'border-teal-600 text-teal-700 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-teal-600 text-teal-700 dark:text-teal-400 font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           Manual Submissions
@@ -533,7 +533,7 @@ export default function OwnerPaymentsDashboard() {
       </div>
 
       {/* Filters and Search toolbar */}
-      <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs flex flex-col md:flex-row items-center gap-4">
+      <div className="bg-white dark:bg-[#0e222e] rounded-xl border border-slate-200/90 dark:border-[#1a3d52] p-4 shadow-xs flex flex-col md:flex-row items-center gap-4">
         {/* Search */}
         <div className="flex-1 w-full relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 shrink-0" size={16} />
@@ -542,7 +542,7 @@ export default function OwnerPaymentsDashboard() {
             placeholder="Search by student name or room number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 bg-white text-xs rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-800 dark:text-slate-100 text-xs rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
 
@@ -551,7 +551,7 @@ export default function OwnerPaymentsDashboard() {
           <select
             value={selectedHostelId}
             onChange={(e) => setSelectedHostelId(e.target.value)}
-            className="w-full md:w-44 h-9 px-3 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none"
+            className="w-full md:w-44 h-9 px-3 border border-slate-200 dark:border-[#1a3d52] rounded-xl text-xs bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
           >
             <option value="all">All Hostels</option>
             {hostels.map((h) => (
@@ -564,7 +564,7 @@ export default function OwnerPaymentsDashboard() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full md:w-40 h-9 px-3 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none"
+          className="w-full md:w-40 h-9 px-3 border border-slate-200 dark:border-[#1a3d52] rounded-xl text-xs bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
         >
           <option value="all">All Statuses</option>
           <option value="pending">Pending</option>
@@ -577,7 +577,7 @@ export default function OwnerPaymentsDashboard() {
         <select
           value={periodFilter}
           onChange={(e) => setPeriodFilter(e.target.value)}
-          className="w-full md:w-36 h-9 px-3 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none"
+          className="w-full md:w-36 h-9 px-3 border border-slate-200 dark:border-[#1a3d52] rounded-xl text-xs bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
         >
           <option value="all">All Time</option>
           <option value="this_month">This Month</option>

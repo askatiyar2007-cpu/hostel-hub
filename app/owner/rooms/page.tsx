@@ -162,18 +162,18 @@ export default function OwnerRoomsPage() {
 
       {/* Compact Operational Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 px-2">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-          <span className="font-medium text-slate-900">{totalRooms} rooms</span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+          <span className="font-medium text-slate-900 dark:text-slate-100">{totalRooms} rooms</span>
           <span>·</span>
           <span>{totalBeds} beds</span>
           <span>·</span>
-          <span className="font-medium text-slate-900">{occupiedBeds} occupied</span>
+          <span className="font-medium text-slate-900 dark:text-slate-100">{occupiedBeds} occupied</span>
           <span>·</span>
           <span>{availableBeds} available</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-slate-500">Occupancy:</span>
-          <span className="font-semibold text-slate-900">{overallOccupancy}%</span>
+          <span className="text-slate-500 dark:text-slate-400">Occupancy:</span>
+          <span className="font-semibold text-slate-900 dark:text-slate-100">{overallOccupancy}%</span>
         </div>
       </div>
 
@@ -181,12 +181,12 @@ export default function OwnerRoomsPage() {
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <Input
               placeholder="Search rooms by number, hostel, type..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-white border-slate-200 rounded-xl text-sm"
+              className="pl-10 h-10 bg-white dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] dark:text-slate-100 rounded-xl text-sm"
             />
           </div>
         </div>
@@ -194,11 +194,11 @@ export default function OwnerRoomsPage() {
           <select
             value={selectedHostel}
             onChange={(e) => setSelectedHostel(e.target.value)}
-            className="h-10 px-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+            className="h-10 px-4 bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer"
           >
-            <option value="all">All Hostels</option>
+            <option value="all" className="dark:bg-[#0e222e]">All Hostels</option>
             {hostels.map(h => (
-              <option key={h.id} value={h.id}>{h.name}</option>
+              <option key={h.id} value={h.id} className="dark:bg-[#0e222e]">{h.name}</option>
             ))}
           </select>
           {(searchQuery || selectedHostel !== 'all') && (
@@ -206,7 +206,7 @@ export default function OwnerRoomsPage() {
               variant="outline"
               size="default"
               onClick={clearFilters}
-              className="h-10"
+              className="h-10 border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#16364a]"
             >
               <X size={16} className="mr-2" />
               Clear
@@ -219,19 +219,19 @@ export default function OwnerRoomsPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs animate-pulse space-y-4">
+            <div key={i} className="bg-white dark:bg-[#0e222e] border border-slate-200/80 dark:border-[#1a3d52] rounded-xl p-5 shadow-xs animate-pulse space-y-4">
               <div className="flex items-center justify-between">
-                <div className="h-6 bg-slate-200 rounded w-28" />
-                <div className="h-5 bg-slate-200 rounded-full w-20" />
+                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-28" />
+                <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded-full w-20" />
               </div>
               <div className="space-y-2">
-                <div className="h-4 bg-slate-200 rounded w-36" />
-                <div className="h-3 bg-slate-100 rounded w-24" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-36" />
+                <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-24" />
               </div>
-              <div className="h-10 bg-slate-100 rounded-xl" />
-              <div className="flex justify-between pt-2 border-t border-slate-100">
-                <div className="h-4 bg-slate-200 rounded w-20" />
-                <div className="h-8 bg-slate-200 rounded w-16" />
+              <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+              <div className="flex justify-between pt-2 border-t border-slate-100 dark:border-[#1a3d52]">
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+                <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-16" />
               </div>
             </div>
           ))}
@@ -245,7 +245,7 @@ export default function OwnerRoomsPage() {
             return (
               <div 
                 key={room.id} 
-                className="bg-white border border-slate-200/90 hover:border-blue-300 rounded-xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-blue-300 dark:hover:border-blue-700 rounded-xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
                   {/* Card Header: Room Number + Status Badge + Actions */}
@@ -256,15 +256,15 @@ export default function OwnerRoomsPage() {
                       </IconWrapper>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold text-slate-900 tracking-tight">
+                          <span className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                             Room {room.room_number}
                           </span>
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 capitalize">
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#16364a] text-slate-600 dark:text-slate-300 capitalize">
                             {room.room_type}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          <span className="font-medium text-slate-700 truncate max-w-[180px] block" title={room.hostels?.name}>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[180px] block" title={room.hostels?.name}>
                             {room.hostels?.name}
                           </span>
                         </div>
@@ -275,19 +275,19 @@ export default function OwnerRoomsPage() {
                       <StatusBadge status={room.status} />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-lg">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg">
                             <MoreVertical size={16} />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white border-slate-200 rounded-xl shadow-lg">
-                          <DropdownMenuItem asChild className="cursor-pointer text-xs font-medium text-slate-700">
+                        <DropdownMenuContent align="end" className="bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-100 rounded-xl shadow-lg">
+                          <DropdownMenuItem asChild className="cursor-pointer text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a]">
                             <Link href={`/owner/rooms/edit/${room.id}`}>
                               Edit Room
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDelete(room.id)}
-                            className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer text-xs font-medium"
+                            className="text-rose-600 dark:text-rose-400 focus:text-rose-700 dark:focus:text-rose-300 focus:bg-rose-50 dark:focus:bg-rose-950/30 cursor-pointer text-xs font-medium"
                           >
                             <Trash2 size={14} className="mr-2" />
                             Delete Room
@@ -298,25 +298,25 @@ export default function OwnerRoomsPage() {
                   </div>
 
                   {/* Prominent Occupancy Section with Blue Identity */}
-                  <div className="mt-4 p-3.5 bg-blue-50/60 border border-blue-100/90 rounded-xl space-y-2">
+                  <div className="mt-4 p-3.5 bg-blue-50/60 dark:bg-[#122b3b] border border-blue-100/90 dark:border-[#1a3d52] rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-900">Occupancy</span>
-                      <span className="text-xs font-bold text-blue-900 bg-white border border-blue-200/90 px-2.5 py-0.5 rounded-full shadow-2xs">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">Occupancy</span>
+                      <span className="text-xs font-bold text-blue-900 dark:text-blue-200 bg-white dark:bg-[#16364a] border border-blue-200/90 dark:border-blue-800/60 px-2.5 py-0.5 rounded-full shadow-2xs">
                         {room.occupied} / {room.capacity} occupied
                       </span>
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-blue-100 dark:bg-[#16364a] rounded-full overflow-hidden">
                       <div 
                         className={`h-full rounded-full transition-all ${
-                          isFull ? 'bg-amber-500' : 'bg-blue-600'
+                          isFull ? 'bg-amber-500' : 'bg-blue-600 dark:bg-blue-500'
                         }`}
                         style={{ width: `${Math.min(100, room.occupancy)}%` }}
                       />
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-blue-950 font-medium pt-0.5">
+                    <div className="flex items-center justify-between text-xs text-blue-950 dark:text-slate-300 font-medium pt-0.5">
                       <span>{room.remaining} bed{room.remaining !== 1 ? 's' : ''} available</span>
                       <span className="font-semibold">{room.occupancy}% filled</span>
                     </div>
@@ -324,14 +324,14 @@ export default function OwnerRoomsPage() {
                 </div>
 
                 {/* Bottom Row: Rent & View Details Button */}
-                <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+                <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-[#1a3d52] flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold block">Monthly Rent</span>
-                    <span className="text-base font-bold text-slate-900">₹{Number(room.rent).toLocaleString()}</span>
-                    <span className="text-xs text-slate-500 font-normal"> /mo</span>
+                    <span className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold block">Monthly Rent</span>
+                    <span className="text-base font-bold text-slate-900 dark:text-slate-100">₹{Number(room.rent).toLocaleString()}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal"> /mo</span>
                   </div>
                   <Link href={`/owner/rooms/${room.id}`}>
-                    <Button size="sm" variant="outline" className="h-8 px-3.5 border-blue-200 text-blue-800 hover:bg-blue-50 text-xs font-semibold rounded-lg">
+                    <Button size="sm" variant="outline" className="h-8 px-3.5 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold rounded-lg">
                       View Room
                     </Button>
                   </Link>

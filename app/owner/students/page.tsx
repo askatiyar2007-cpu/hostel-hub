@@ -215,11 +215,17 @@ export default function OwnerStudentsPage() {
 
       {/* View Tabs: Active vs Past Residents / History */}
       <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
-        <TabsList className="bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="active" className="rounded-lg text-xs font-semibold px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-xs">
+        <TabsList className="bg-slate-100 dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] p-1 rounded-xl">
+          <TabsTrigger 
+            value="active" 
+            className="rounded-lg text-xs font-semibold px-4 py-2 transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a3d52] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400 data-[state=active]:shadow-xs"
+          >
             Active Residents ({activeCount})
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg text-xs font-semibold px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-xs">
+          <TabsTrigger 
+            value="history" 
+            className="rounded-lg text-xs font-semibold px-4 py-2 transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a3d52] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400 data-[state=active]:shadow-xs"
+          >
             Past Residents / History ({historyCount})
           </TabsTrigger>
         </TabsList>
@@ -229,18 +235,18 @@ export default function OwnerStudentsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
             <Input 
               placeholder="Search by student name, email, phone, or room..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-8 h-10 border-slate-200 bg-white rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+              className="pl-9 pr-8 h-10 border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] dark:text-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={16} />
               </button>
@@ -248,15 +254,15 @@ export default function OwnerStudentsPage() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10 gap-2 border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 rounded-xl">
-                <Building2 size={16} className="text-teal-600" />
+              <Button variant="outline" className="h-10 gap-2 border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] rounded-xl">
+                <Building2 size={16} className="text-teal-600 dark:text-teal-400" />
                 <span className="truncate">{selectedHostel === 'all' ? 'All Hostels' : uniqueHostels.find(h => h.id === selectedHostel)?.name}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white border-slate-200 rounded-xl shadow-lg">
-              <DropdownMenuItem onClick={() => setSelectedHostel('all')}>All Hostels</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-100 rounded-xl shadow-lg">
+              <DropdownMenuItem onClick={() => setSelectedHostel('all')} className="cursor-pointer dark:hover:bg-[#16364a]">All Hostels</DropdownMenuItem>
               {uniqueHostels.map(hostel => (
-                <DropdownMenuItem key={hostel.id} onClick={() => setSelectedHostel(hostel.id)}>
+                <DropdownMenuItem key={hostel.id} onClick={() => setSelectedHostel(hostel.id)} className="cursor-pointer dark:hover:bg-[#16364a]">
                   {hostel.name}
                 </DropdownMenuItem>
               ))}

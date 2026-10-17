@@ -552,16 +552,16 @@ export default function BillingOverviewPage() {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="space-y-3">
         <div className="flex items-center justify-between">
-          <TabsList className="bg-slate-100 p-1 rounded-xl border border-slate-200 h-9">
+          <TabsList className="bg-slate-100 dark:bg-[#122b3b] p-1 rounded-xl border border-slate-200 dark:border-[#1a3d52] h-9">
             <TabsTrigger 
               value="students" 
-              className="rounded-lg text-xs font-semibold px-4 py-1.5 transition-all data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600 hover:text-slate-900"
+              className="rounded-lg text-xs font-semibold px-4 py-1.5 transition-all data-[state=active]:bg-slate-900 dark:data-[state=active]:bg-[#1a3d52] data-[state=active]:text-white data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             >
               Allocated Students ({filteredStudents.length})
             </TabsTrigger>
             <TabsTrigger 
               value="rooms" 
-              className="rounded-lg text-xs font-semibold px-4 py-1.5 transition-all data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600 hover:text-slate-900"
+              className="rounded-lg text-xs font-semibold px-4 py-1.5 transition-all data-[state=active]:bg-slate-900 dark:data-[state=active]:bg-[#1a3d52] data-[state=active]:text-white data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             >
               Room Electricity Consumption ({filteredRooms.length})
             </TabsTrigger>

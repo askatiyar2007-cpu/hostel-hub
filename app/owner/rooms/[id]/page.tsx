@@ -156,18 +156,18 @@ export default function ViewRoomPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="flex items-start gap-4">
-          <Link href="/owner/rooms" className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors mt-1">
+          <Link href="/owner/rooms" className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#16364a] text-slate-600 dark:text-slate-400 transition-colors mt-1">
             <ArrowLeft size={20} />
           </Link>
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">Room {roomData?.room_number}</h1>
-              <span className="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm font-medium">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Room {roomData?.room_number}</h1>
+              <span className="bg-teal-100 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 px-3 py-1 rounded-full text-sm font-medium">
                 {occupiedCount} / {roomData?.capacity || 1} occupied
               </span>
             </div>
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-              <MapPin size={16} className="text-teal-600" />
+            <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 dark:text-slate-400">
+              <MapPin size={16} className="text-teal-600 dark:text-teal-400" />
               <span>{hostels.find(h => h.id === formData.hostel_id)?.name}</span>
             </div>
           </div>
@@ -175,14 +175,14 @@ export default function ViewRoomPage() {
 
         <div className="flex gap-3">
           <Link href="/owner/rooms/new">
-            <Button variant="outline" className="border-gray-300">
+            <Button variant="outline" className="border-slate-300 dark:border-[#1a3d52] dark:text-slate-200 dark:hover:bg-[#16364a]">
               Create Room
             </Button>
           </Link>
           <Button
             onClick={handleDelete}
             variant="outline"
-            className="border-red-300 text-red-600 hover:bg-red-50"
+            className="border-rose-300 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
           >
             Delete Room
           </Button>
@@ -193,18 +193,18 @@ export default function ViewRoomPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Residents */}
-          <Card className="border-teal-200 shadow-sm">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm rounded-2xl">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Residents ({allocations.length})</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Residents ({allocations.length})</h2>
               {allocations.length === 0 ? (
-                <p className="text-gray-600 italic">No residents currently assigned to this room.</p>
+                <p className="text-slate-500 dark:text-slate-400 italic">No residents currently assigned to this room.</p>
               ) : (
                 <div className="space-y-3">
                   {allocations.map((allocation, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#122b3b] rounded-xl border border-slate-100 dark:border-[#1a3d52]">
                       <div>
-                        <p className="font-medium text-gray-900">{allocation.student_name}</p>
-                        <p className="text-xs text-gray-500">Since {new Date(allocation.start_date).toLocaleDateString()}</p>
+                        <p className="font-medium text-slate-900 dark:text-slate-100">{allocation.student_name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Since {new Date(allocation.start_date).toLocaleDateString()}</p>
                       </div>
                     </div>
                   ))}
@@ -214,40 +214,40 @@ export default function ViewRoomPage() {
           </Card>
 
           {/* Edit Form */}
-          <Card className="border-teal-200 shadow-sm">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm rounded-2xl">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Edit Room Details</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Edit Room Details</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Hostel
                   </label>
                   <select
                     required
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
                     value={formData.hostel_id}
                     onChange={(e) => setFormData({ ...formData, hostel_id: e.target.value })}
                   >
                     {hostels.map(h => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
+                      <option key={h.id} value={h.id} className="dark:bg-[#0e222e]">{h.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Room Number
                     </label>
                     <Input
                       required
                       value={formData.room_number}
                       onChange={(e) => setFormData({ ...formData, room_number: e.target.value })}
-                      className="bg-white border-gray-200"
+                      className="bg-white dark:bg-[#122b3b] border-gray-200 dark:border-[#1a3d52] dark:text-slate-100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Floor
                     </label>
                     <Input
@@ -255,28 +255,28 @@ export default function ViewRoomPage() {
                       type="number"
                       value={formData.floor}
                       onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
-                      className="bg-white border-gray-200"
+                      className="bg-white dark:bg-[#122b3b] border-gray-200 dark:border-[#1a3d52] dark:text-slate-100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Room Type
                     </label>
                     <select
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
                       value={formData.room_type}
                       onChange={(e) => setFormData({ ...formData, room_type: e.target.value })}
                     >
-                      <option value="single">Single Sharing</option>
-                      <option value="double">Double Sharing</option>
-                      <option value="triple">Triple Sharing</option>
-                      <option value="quad">Four Sharing</option>
+                      <option value="single" className="dark:bg-[#0e222e]">Single Sharing</option>
+                      <option value="double" className="dark:bg-[#0e222e]">Double Sharing</option>
+                      <option value="triple" className="dark:bg-[#0e222e]">Triple Sharing</option>
+                      <option value="quad" className="dark:bg-[#0e222e]">Four Sharing</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Capacity
                     </label>
                     <Input
@@ -284,12 +284,12 @@ export default function ViewRoomPage() {
                       type="number"
                       value={formData.capacity}
                       onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
-                      className="bg-white border-gray-200"
+                      className="bg-white dark:bg-[#122b3b] border-gray-200 dark:border-[#1a3d52] dark:text-slate-100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Monthly Rent (₹)
                     </label>
                     <Input
@@ -297,40 +297,40 @@ export default function ViewRoomPage() {
                       type="number"
                       value={formData.rent}
                       onChange={(e) => setFormData({ ...formData, rent: Number(e.target.value) })}
-                      className="bg-white border-gray-200"
+                      className="bg-white dark:bg-[#122b3b] border-gray-200 dark:border-[#1a3d52] dark:text-slate-100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Status
                     </label>
                     <select
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-white dark:bg-[#122b3b] border border-gray-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     >
-                      <option value="available">Available</option>
-                      <option value="occupied">Occupied</option>
-                      <option value="maintenance">Maintenance</option>
+                      <option value="available" className="dark:bg-[#0e222e]">Available</option>
+                      <option value="occupied" className="dark:bg-[#0e222e]">Occupied</option>
+                      <option value="maintenance" className="dark:bg-[#0e222e]">Maintenance</option>
                     </select>
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Facilities (comma separated)
                     </label>
                     <Input
                       value={formData.facilities}
                       onChange={(e) => setFormData({ ...formData, facilities: e.target.value })}
-                      className="bg-white border-gray-200"
+                      className="bg-white dark:bg-[#122b3b] border-gray-200 dark:border-[#1a3d52] dark:text-slate-100"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#1a3d52]">
                   <Link href="/owner/rooms">
-                    <Button type="button" variant="outline" className="border-gray-300">
+                    <Button type="button" variant="outline" className="border-slate-300 dark:border-[#1a3d52] dark:text-slate-300 dark:hover:bg-[#16364a]">
                       Cancel
                     </Button>
                   </Link>
@@ -350,33 +350,33 @@ export default function ViewRoomPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Financial */}
-          <Card className="border-teal-200 shadow-sm">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm rounded-2xl">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Financial</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Financial</h2>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Monthly Rent</span>
-                  <span className="font-semibold text-gray-900">₹{Number(formData.rent).toLocaleString()}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Monthly Rent</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">₹{Number(formData.rent).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Security Deposit</span>
-                  <span className="font-semibold text-gray-900">₹{Number(formData.security_deposit).toLocaleString()}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Security Deposit</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">₹{Number(formData.security_deposit).toLocaleString()}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Facilities */}
-          <Card className="border-teal-200 shadow-sm">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm rounded-2xl">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Facilities</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Facilities</h2>
               <div className="flex flex-wrap gap-2">
                 {formData.facilities ? formData.facilities.split(',').map((f, i) => (
-                  <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-full bg-teal-50 text-teal-800 text-sm border border-teal-100">
+                  <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 text-sm border border-teal-100 dark:border-teal-800">
                     {f.trim()}
                   </span>
                 )) : (
-                  <p className="text-gray-600 italic text-sm">No facilities listed</p>
+                  <p className="text-slate-500 dark:text-slate-400 italic text-sm">No facilities listed</p>
                 )}
               </div>
             </CardContent>

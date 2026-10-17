@@ -145,11 +145,11 @@ export default function OwnerComplaintsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Tabs defaultValue="all" className="w-full sm:w-auto" onValueChange={setStatusTab}>
-            <TabsList className="bg-white border border-slate-200 p-1 rounded-xl shadow-2xs">
-              <TabsTrigger value="all" className="rounded-lg text-xs font-semibold data-[state=active]:bg-teal-600 data-[state=active]:text-white">All</TabsTrigger>
-              <TabsTrigger value="open" className="rounded-lg text-xs font-semibold data-[state=active]:bg-amber-500 data-[state=active]:text-white">Open</TabsTrigger>
-              <TabsTrigger value="in_progress" className="rounded-lg text-xs font-semibold data-[state=active]:bg-amber-500 data-[state=active]:text-white">In Progress</TabsTrigger>
-              <TabsTrigger value="resolved" className="rounded-lg text-xs font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Resolved</TabsTrigger>
+            <TabsList className="bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] p-1 rounded-xl shadow-2xs">
+              <TabsTrigger value="all" className="rounded-lg text-xs font-semibold data-[state=active]:bg-teal-600 data-[state=active]:text-white dark:data-[state=inactive]:text-slate-400">All</TabsTrigger>
+              <TabsTrigger value="open" className="rounded-lg text-xs font-semibold data-[state=active]:bg-amber-500 data-[state=active]:text-white dark:data-[state=inactive]:text-slate-400">Open</TabsTrigger>
+              <TabsTrigger value="in_progress" className="rounded-lg text-xs font-semibold data-[state=active]:bg-amber-500 data-[state=active]:text-white dark:data-[state=inactive]:text-slate-400">In Progress</TabsTrigger>
+              <TabsTrigger value="resolved" className="rounded-lg text-xs font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=inactive]:text-slate-400">Resolved</TabsTrigger>
             </TabsList>
           </Tabs>
           
@@ -159,7 +159,7 @@ export default function OwnerComplaintsPage() {
               placeholder="Search complaints..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 border-slate-200 bg-white rounded-xl text-xs"
+              className="pl-9 h-10 border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] rounded-xl text-xs dark:text-slate-100"
             />
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function OwnerComplaintsPage() {
               <div className="flex items-center gap-3 self-end md:self-center shrink-0">
                 <span className="text-xs text-slate-400 font-semibold hidden md:inline">Update Status:</span>
                 <select 
-                  className="rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all cursor-pointer"
+                  className="rounded-lg border border-slate-200 dark:border-[#1a3d52] bg-slate-50/60 dark:bg-[#122b3b] hover:bg-white dark:hover:bg-[#16364a] px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all cursor-pointer"
                   defaultValue={complaint.status}
                   onChange={(e) => updateStatus(complaint.id, e.target.value)}
                 >

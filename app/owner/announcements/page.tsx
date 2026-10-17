@@ -279,7 +279,7 @@ export default function OwnerAnnouncementsPage() {
           <select 
             value={selectedHostelFilter}
             onChange={(e) => setSelectedHostelFilter(e.target.value)}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="h-10 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
           >
             <option value="all">All Hostels</option>
             {hostels.map(h => (
@@ -295,31 +295,31 @@ export default function OwnerAnnouncementsPage() {
 
       {/* Main Content */}
       {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-20">
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] py-20">
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-            <p className="text-xs font-medium text-slate-500">Loading announcements...</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Loading announcements...</p>
           </div>
         </div>
       ) : filteredAnnouncements.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-white">
-          <div className="rounded-full bg-slate-100 p-4">
+        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e]">
+          <div className="rounded-full bg-slate-100 dark:bg-[#16364a] p-4">
             <Megaphone size={32} className="text-slate-400" />
           </div>
           <div className="text-center">
-            <p className="text-base font-bold text-slate-900">No announcements found</p>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
+            <p className="text-base font-bold text-slate-900 dark:text-slate-100">No announcements found</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
               Create your first announcement to share updates with your students.
             </p>
           </div>
-          <Button onClick={handleCreateOpen} variant="outline" className="border-teal-200 text-teal-700 hover:bg-teal-50 text-xs">
+          <Button onClick={handleCreateOpen} variant="outline" className="border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-xs">
             Create Announcement &rarr;
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {filteredAnnouncements.map((item) => (
-            <div key={item.id} className="group relative flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-md transition-all duration-200">
+            <div key={item.id} className="group relative flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 shadow-xs hover:shadow-md transition-all duration-200">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityStyle(item.notice_type)}`}>
