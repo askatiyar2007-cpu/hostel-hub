@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import {
   User, Lock, Bell, ShieldCheck, FileText, LogOut,
   Building2, Calendar, ShieldAlert, ArrowRight, Home,
-  Palette, Sun, Moon, Monitor, Check
+  Palette, Sun, Moon, Monitor, Check, KeyRound, Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,42 @@ import { useAuth } from '@/lib/auth/context';
 import { useTheme } from '@/lib/theme-context';
 import { AccountPasswordDialog } from '@/components/auth/AccountPasswordDialog';
 import { cn } from '@/lib/utils';
+
+function ToggleSwitch({
+  checked,
+  onChange,
+  disabled = false,
+  label,
+}: {
+  checked: boolean;
+  onChange: (val: boolean) => void;
+  disabled?: boolean;
+  label?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2",
+        checked ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
+          checked ? "translate-x-5" : "translate-x-0"
+        )}
+      />
+    </button>
+  );
+}
 
 export default function StudentSettingsPage() {
   const { user, profile, signOut } = useAuth();
@@ -305,11 +341,10 @@ export default function StudentSettingsPage() {
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Email Receipts</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Payment receipts and invoices</p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <ToggleSwitch
                     checked={emailNotif}
-                    onChange={(e) => setEmailNotif(e.target.checked)}
-                    className="h-4.5 w-8 appearance-none bg-slate-300 dark:bg-slate-700 rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-teal-600 before:content-[''] before:h-3.5 before:w-3.5 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-4 border border-slate-400 dark:border-slate-600 shrink-0"
+                    onChange={setEmailNotif}
+                    label="Email Receipts"
                   />
                 </div>
 
@@ -318,11 +353,10 @@ export default function StudentSettingsPage() {
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Announcements</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Hostel notices and broadcast updates</p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <ToggleSwitch
                     checked={announceNotif}
-                    onChange={(e) => setAnnounceNotif(e.target.checked)}
-                    className="h-4.5 w-8 appearance-none bg-slate-300 dark:bg-slate-700 rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-teal-600 before:content-[''] before:h-3.5 before:w-3.5 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-4 border border-slate-400 dark:border-slate-600 shrink-0"
+                    onChange={setAnnounceNotif}
+                    label="Announcements"
                   />
                 </div>
 
@@ -331,11 +365,10 @@ export default function StudentSettingsPage() {
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Payment Reminders</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Advance notification before fee due dates</p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <ToggleSwitch
                     checked={payRemind}
-                    onChange={(e) => setPayRemind(e.target.checked)}
-                    className="h-4.5 w-8 appearance-none bg-slate-300 dark:bg-slate-700 rounded-full relative cursor-pointer outline-none transition-all duration-300 checked:bg-teal-600 before:content-[''] before:h-3.5 before:w-3.5 before:rounded-full before:bg-white before:absolute before:top-0.5 before:left-0.5 before:transition-all before:duration-300 checked:before:left-4 border border-slate-400 dark:border-slate-600 shrink-0"
+                    onChange={setPayRemind}
+                    label="Payment Reminders"
                   />
                 </div>
               </div>
@@ -345,9 +378,19 @@ export default function StudentSettingsPage() {
                   onClick={savePreferences} 
                   disabled={savingPrefs} 
                   size="sm"
-                  className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold h-8.5 px-4 cursor-pointer shadow-xs"
+                  className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-semibold h-9 px-4.5 cursor-pointer shadow-sm hover:shadow transition-all flex items-center gap-1.5 active:scale-95"
                 >
-                  {savingPrefs ? 'Saving...' : 'Save Preferences'}
+                  {savingPrefs ? (
+                    <>
+                      <span className="h-3.5 w-3.5 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-3.5 w-3.5" />
+                      <span>Save Preferences</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -392,9 +435,14 @@ export default function StudentSettingsPage() {
                     </div>
                   </div>
 
-                  <a href="/student/dashboard" className="block pt-1">
-                    <Button variant="outline" size="sm" className="w-full rounded-xl font-semibold text-xs border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] h-8.5">
-                      View Living Dashboard <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                  <a href="/student/dashboard" className="block pt-1.5">
+                    <Button 
+                      size="sm" 
+                      className="w-full rounded-xl font-semibold text-xs bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:via-teal-800 hover:to-emerald-700 text-white shadow-sm hover:shadow h-9 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      <span>View Living Dashboard</span>
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                     </Button>
                   </a>
                 </div>
@@ -427,11 +475,11 @@ export default function StudentSettingsPage() {
 
               <Button 
                 onClick={() => setIsPasswordModalOpen(true)} 
-                variant="outline"
                 size="sm"
-                className="w-full border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] rounded-xl font-semibold text-xs h-8.5 cursor-pointer shadow-2xs"
+                className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-semibold text-xs h-9 cursor-pointer shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 group active:scale-95"
               >
-                Change Password
+                <KeyRound className="h-3.5 w-3.5 transition-transform group-hover:rotate-45" />
+                <span>Change Password</span>
               </Button>
             </CardContent>
           </Card>

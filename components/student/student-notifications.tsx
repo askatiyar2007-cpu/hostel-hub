@@ -133,7 +133,7 @@ export function StudentNotifications() {
               title: 'Room Allocation Approved 🎉',
               message: `Your request for ${roomNum} at ${hostelName} has been approved!`,
               type: 'request',
-              link: '/student/room',
+              link: '/student/dashboard',
               created_at: req.created_at || new Date().toISOString(),
               read: false,
             });
@@ -143,7 +143,7 @@ export function StudentNotifications() {
               title: 'Room Request Update',
               message: `Your request for ${roomNum} at ${hostelName} was not approved.`,
               type: 'request',
-              link: '/student/room',
+              link: '/student/room-request',
               created_at: req.created_at || new Date().toISOString(),
               read: false,
             });
@@ -306,6 +306,22 @@ export function StudentNotifications() {
 
   const handleItemClick = (item: StudentNotificationItem) => {
     setOpen(false);
+    // Mark as read/dismissed
+    setDismissedIds((prev) => {
+      const next = Array.from(new Set([...prev, item.id]));
+      if (user?.id && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`hostelhub_dismissed_student_notifs_${user.id}`, JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
+
+    if (item.id.startsWith('notif-')) {
+      const rawId = item.id.replace('notif-', '');
+      supabase.from('notifications').update({ read: true }).eq('id', rawId).then(() => {});
+    }
+
     router.push(item.link);
   };
 
@@ -366,16 +382,23 @@ export function StudentNotifications() {
                 key={notif.id} 
                 className={cn(
                   "p-3.5 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-[#122b3b] transition-colors cursor-pointer group relative",
-                  !notif.read ? "bg-teal-50/20 dark:bg-teal-950/30" : "opacity-80"
+                  !notif.read ? "bg-teal-50/30 dark:bg-teal-950/40" : "opacity-80"
                 )}
                 onClick={() => handleItemClick(notif)}
               >
                 {getIcon(notif.type)}
                 <div className="flex-1 min-w-0 pr-6">
-                  <div className="flex items-center justify-between gap-1">
-                    <p className={cn("text-xs text-slate-900 dark:text-slate-100 mb-0.5 truncate", !notif.read && "font-bold text-slate-900 dark:text-white")}>
-                      {notif.title}
-                    </p>
+                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <p className={cn("text-xs text-slate-900 dark:text-slate-100 truncate", !notif.read && "font-bold text-slate-900 dark:text-white")}>
+                        {notif.title}
+                      </p>
+                      {!notif.read && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-teal-500 text-white shrink-0 animate-pulse">
+                          NEW
+                        </span>
+                      )}
+                    </div>
                     <ArrowRight className="h-3 w-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-all shrink-0" />
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2 mb-1">
@@ -411,9 +434,9 @@ export function StudentNotifications() {
             My Bills <ArrowRight size={12} />
           </Link>
           <Link
-            href="/student/room"
+            href="/student/dashboard"
             onClick={() => setOpen(false)}
-            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium inline-flex items-center gap-1 cursor-pointer"
+            className="text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 font-medium inline-flex items-center gap-1 cursor-pointer"
           >
             Room Details <ArrowRight size={12} />
           </Link>

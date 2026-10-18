@@ -700,20 +700,20 @@ export function ActiveResidentDashboard({
   const activeComplaints = complaints.filter((c: any) => c.status !== 'resolved' && c.status !== 'closed');
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-4 sm:space-y-4.5 w-full">
       {/* 1. Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 pb-3.5 border-b border-slate-200/80 dark:border-[#1a3d52]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 font-display tracking-tight">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Student'} 👋
           </h1>
-          <p className="text-sm text-slate-600 mt-1 flex items-center gap-2 flex-wrap">
-            <span>Room <strong className="text-slate-900 font-bold">{room?.room_number || '—'}</strong></span>
-            <span className="text-slate-300">•</span>
-            <span className="font-semibold text-slate-800">{hostel?.name || 'Hostel'}</span>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+            <span>Room <strong className="text-slate-900 dark:text-slate-100 font-bold">{room?.room_number || '—'}</strong></span>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">{hostel?.name || 'Hostel'}</span>
             {hostel?.city && (
               <>
-                <span className="text-slate-300">•</span>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
                 <span>{hostel.city}</span>
               </>
             )}
@@ -721,7 +721,7 @@ export function ActiveResidentDashboard({
         </div>
 
         {/* Right CTA cluster */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
           <NewComplaintDialog
             studentId={authUserId ?? ''}
             hostelId={allocation.hostel_id}
@@ -730,75 +730,79 @@ export function ActiveResidentDashboard({
 
           <Link href="/student/bills">
             <Button
-              className={cn(
-                "rounded-xl shadow-xs text-xs sm:text-sm font-semibold transition-all",
-                totalOutstanding > 0
-                  ? "bg-amber-600 hover:bg-amber-700 text-white"
-                  : "bg-teal-600 hover:bg-teal-700 text-white"
-              )}
+              className="rounded-xl shadow-xs hover:shadow text-xs sm:text-sm font-semibold transition-all bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white flex items-center gap-1.5 h-9 px-3.5 sm:px-4 cursor-pointer active:scale-95"
             >
-              <CreditCard className="mr-1.5 h-4 w-4" />
-              {totalOutstanding > 0 ? `Pay Dues (${formatCurrency(totalOutstanding)})` : 'Billing Ledger'}
+              <CreditCard className="h-4 w-4" />
+              {totalOutstanding > 0 ? (
+                <>
+                  <span>Pay Dues</span>
+                  <span className="bg-white/20 px-1.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide">
+                    {formatCurrency(totalOutstanding)}
+                  </span>
+                </>
+              ) : (
+                'Billing Ledger'
+              )}
             </Button>
           </Link>
         </div>
       </div>
 
       {/* 2. Digital Resident Room Pass & Living Hub */}
-      <div className="relative overflow-hidden rounded-2xl bg-white p-6 sm:p-7 shadow-xs border border-slate-200/90 transition-all hover:border-slate-300">
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#0e222e] p-4 sm:p-5.5 shadow-xs border border-slate-200/90 dark:border-[#1a3d52] transition-all hover:border-teal-500/30">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 sm:gap-5">
           {/* Left: Room Badge, Specs & Amenities */}
-          <div className="space-y-4 max-w-2xl flex-1">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+          <div className="space-y-3 max-w-2xl flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 text-xs font-semibold">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Active Resident Pass
               </span>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 {allocation.start_date ? `Checked In: ${new Date(allocation.start_date).toLocaleDateString()}` : 'Active Residency'}
               </span>
             </div>
 
             <div>
-              <p className="text-xs text-teal-700 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+              <p className="text-xs text-teal-600 dark:text-teal-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
                 {hostel?.name || 'Student Residence'}
               </p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-slate-900 mt-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-slate-900 dark:text-slate-100 mt-0.5">
                 Room {room?.room_number || '—'}
               </h2>
-              <p className="text-sm text-slate-600 mt-1 flex items-center gap-2 flex-wrap">
-                <span className="capitalize font-medium text-slate-700">{room?.room_type || room?.type || 'Standard Room'}</span>
-                <span className="text-slate-300">•</span>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-0.5 flex items-center gap-2 flex-wrap">
+                <span className="capitalize font-medium text-slate-700 dark:text-slate-200">{room?.room_type || room?.type || 'Standard Room'}</span>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
                 <span>{room?.floor ? `Floor ${room.floor}` : 'Ground Floor'}</span>
-                <span className="text-slate-300">•</span>
-                <span className="inline-flex items-center gap-1 text-slate-700">
-                  <Bed className="h-3.5 w-3.5 text-teal-600" />
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-200">
+                  <Bed className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
                   {allocation.booking_type === 'entire_room' ? 'Entire Room Booking' : 'Shared Bed Space'}
                 </span>
               </p>
             </div>
 
             {/* Room Inclusions / Amenities Tags */}
-            <div className="pt-1 flex flex-wrap gap-2">
+            <div className="pt-0.5 flex flex-wrap gap-1.5 sm:gap-2">
               {Array.isArray(room?.facilities) && room.facilities.length > 0 ? (
                 room.facilities.map((fac: string, idx: number) => (
-                  <span key={idx} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+                  <span key={idx} className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
                     {fac}
                   </span>
                 ))
               ) : (
                 <>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
                     High-Speed Wi-Fi
                   </span>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
                     Study Desk &amp; Chair
                   </span>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
                     Wardrobe Storage
                   </span>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
                     Ceiling Fan &amp; Light
                   </span>
                 </>
@@ -807,21 +811,21 @@ export function ActiveResidentDashboard({
           </div>
 
           {/* Right: Warden Desk Contact & Quick Actions */}
-          <div className="flex flex-col gap-3 lg:w-80 shrink-0">
+          <div className="flex flex-col gap-2.5 lg:w-76 shrink-0">
             {/* Warden Quick Contact Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#122b3b] border border-slate-200/90 dark:border-[#1a3d52] space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Hostel Warden Desk</span>
-                <Phone className="h-3.5 w-3.5 text-teal-600" />
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Hostel Warden Desk</span>
+                <Phone className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-normal">
                 Need key assistance, curfew extension, or room maintenance help?
               </p>
-              <div className="space-y-1.5 pt-1">
+              <div className="space-y-1.5 pt-0.5">
                 {hostel?.contact_number && (
                   <a
                     href={`tel:${hostel.contact_number}`}
-                    className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition-colors shadow-xs"
+                    className="flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs transition-colors shadow-xs"
                   >
                     <Phone className="h-3.5 w-3.5" />
                     Call Warden ({hostel.contact_number})
@@ -830,9 +834,9 @@ export function ActiveResidentDashboard({
                 {hostel?.email && (
                   <a
                     href={`mailto:${hostel.email}`}
-                    className="flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium transition-colors"
+                    className="flex items-center justify-center gap-2 w-full py-1.5 px-3 rounded-lg bg-white dark:bg-[#16364a] hover:bg-slate-100 dark:hover:bg-[#1c435c] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1a3d52] text-xs font-medium transition-colors"
                   >
-                    <Mail className="h-3.5 w-3.5 text-slate-500" />
+                    <Mail className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                     Email Hostel Office
                   </a>
                 )}
@@ -845,9 +849,9 @@ export function ActiveResidentDashboard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full justify-center rounded-xl text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-50 border-slate-300 bg-white"
+                  className="w-full justify-center rounded-xl text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#16364a] border-slate-300 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] h-8.5"
                 >
-                  <Building2 className="h-3.5 w-3.5 mr-1.5 text-slate-500" />
+                  <Building2 className="h-3.5 w-3.5 mr-1.5 text-slate-500 dark:text-slate-400" />
                   Hostel Profile
                 </Button>
               </Link>
@@ -855,7 +859,7 @@ export function ActiveResidentDashboard({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 justify-center rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 bg-white font-medium transition-all"
+                className="flex-1 justify-center rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 bg-white dark:bg-[#122b3b] font-medium transition-all h-8.5"
                 onClick={() => setIsCheckoutDialogOpen(true)}
               >
                 <LogOut className="h-3.5 w-3.5 mr-1.5" />
@@ -867,33 +871,33 @@ export function ActiveResidentDashboard({
       </div>
 
       {/* 3. Four Student Living Essentials Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
         {/* Card 1: Monthly Rent Status */}
-        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Rent</span>
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs hover:border-teal-500/30 transition-all rounded-2xl">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Monthly Rent</span>
               <div className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center",
-                totalOutstanding > 0 ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600"
+                "h-8 w-8 rounded-xl flex items-center justify-center shrink-0",
+                totalOutstanding > 0 ? "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-200/60 dark:border-teal-800" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800"
               )}>
                 <CreditCard className="h-4 w-4" />
               </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold font-display text-slate-900">
+            <div className="space-y-0.5">
+              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
                 {totalOutstanding > 0 ? formatCurrency(totalOutstanding) : formatCurrency(currentRentAmount)}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className={cn(
-                  "font-semibold px-2 py-0.5 rounded-full text-[11px]",
+                  "font-semibold px-2 py-0.5 rounded-full text-[10px]",
                   totalOutstanding === 0
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                    : "bg-amber-50 text-amber-700 border border-amber-200/60"
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
+                    : "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800"
                 )}>
                   {totalOutstanding === 0 ? "Rent Up to Date" : `${monthlyRentStatus} (${feesData?.pendingFees?.length || 1} Due)`}
                 </span>
-                <Link href="/student/bills" className="font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-0.5">
+                <Link href="/student/bills" className="font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 inline-flex items-center gap-0.5 text-xs">
                   Bills <ChevronRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -902,23 +906,23 @@ export function ActiveResidentDashboard({
         </Card>
 
         {/* Card 2: Electricity Usage */}
-        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Electricity Usage</span>
-              <div className="h-8 w-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs hover:border-teal-500/30 transition-all rounded-2xl">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Electricity Usage</span>
+              <div className="h-8 w-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 border border-cyan-200/60 dark:border-cyan-800 flex items-center justify-center shrink-0">
                 <Zap className="h-4 w-4" />
               </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold font-display text-slate-900">
+            <div className="space-y-0.5">
+              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
                 {electricitySnapshot?.consumption_units ? `${electricitySnapshot.consumption_units} kWh` : 'Active'}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
-                <span className="text-slate-500 font-medium">
+                <span className="text-slate-500 dark:text-slate-400 font-medium text-[11px]">
                   {electricitySnapshot?.total_rupees ? `${formatCurrency(electricitySnapshot.total_rupees)} current` : 'Sub-meter linked'}
                 </span>
-                <Link href="/student/electricity" className="font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-0.5">
+                <Link href="/student/electricity" className="font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 inline-flex items-center gap-0.5 text-xs">
                   Meter <ChevronRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -927,31 +931,31 @@ export function ActiveResidentDashboard({
         </Card>
 
         {/* Card 3: Room Maintenance */}
-        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Maintenance Desk</span>
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs hover:border-teal-500/30 transition-all rounded-2xl">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Maintenance Desk</span>
               <div className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center",
-                activeComplaints.length > 0 ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"
+                "h-8 w-8 rounded-xl flex items-center justify-center shrink-0",
+                activeComplaints.length > 0 ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800"
               )}>
                 <Wrench className="h-4 w-4" />
               </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold font-display text-slate-900">
+            <div className="space-y-0.5">
+              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
                 {activeComplaints.length > 0 ? `${activeComplaints.length} Active` : "All Good"}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className={cn(
-                  "font-semibold px-2 py-0.5 rounded-full text-[11px]",
+                  "font-semibold px-2 py-0.5 rounded-full text-[10px]",
                   activeComplaints.length > 0
-                    ? "bg-blue-50 text-blue-700 border border-blue-200/60"
-                    : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800"
+                    : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
                 )}>
                   {activeComplaints.length > 0 ? "Under Repair" : "No Open Issues"}
                 </span>
-                <Link href="/student/complaints" className="font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-0.5">
+                <Link href="/student/complaints" className="font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 inline-flex items-center gap-0.5 text-xs">
                   Tickets <ChevronRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -960,28 +964,28 @@ export function ActiveResidentDashboard({
         </Card>
 
         {/* Card 4: Security Deposit */}
-        <Card className="border border-slate-200/90 bg-white shadow-xs hover:border-slate-300 transition-all">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Security Deposit</span>
-              <div className="h-8 w-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs hover:border-teal-500/30 transition-all rounded-2xl">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Security Deposit</span>
+              <div className="h-8 w-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800 flex items-center justify-center shrink-0">
                 <ShieldCheck className="h-4 w-4" />
               </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold font-display text-slate-900">
+            <div className="space-y-0.5">
+              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
                 {formatCurrency(depositAmount)}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className={cn(
-                  "font-semibold px-2 py-0.5 rounded-full text-[11px]",
+                  "font-semibold px-2 py-0.5 rounded-full text-[10px]",
                   depositStatus === 'Paid'
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                    : "bg-amber-50 text-amber-700 border border-amber-200/60"
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                 )}>
                   {depositStatus}
                 </span>
-                <span className="text-slate-400 font-medium">Refundable</span>
+                <span className="text-slate-400 dark:text-slate-500 font-medium text-[11px]">Refundable</span>
               </div>
             </div>
           </CardContent>
@@ -989,28 +993,28 @@ export function ActiveResidentDashboard({
       </div>
 
       {/* 4. Split Two-Column Operations Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
         {/* Left Column: Recent Fee Invoices & Payment Ledger */}
-        <Card className="border border-slate-200/90 bg-white shadow-xs">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
+          <CardContent className="p-4 sm:p-4.5 space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#1a3d52]">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-200/60 dark:border-teal-800 flex items-center justify-center shrink-0">
                   <Receipt className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Recent Rent &amp; Fees</h3>
-                  <p className="text-xs text-slate-500">Monthly accommodation fees ledger</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Recent Rent &amp; Fees</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Monthly accommodation fees ledger</p>
                 </div>
               </div>
 
-              <Link href="/student/bills" className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1">
+              <Link href="/student/bills" className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 flex items-center gap-1">
                 View all <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </div>
 
             {feesData?.fees && feesData.fees.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {feesData.fees.slice(0, 4).map((fee: any) => {
                   const isPaid = fee.status === 'paid';
                   const isOverdue = fee.status === 'overdue';
@@ -1019,41 +1023,41 @@ export function ActiveResidentDashboard({
                   return (
                     <div
                       key={fee.id}
-                      className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 hover:border-slate-200 transition-colors flex items-center justify-between gap-3"
+                      className="p-3 rounded-xl border border-slate-100 dark:border-[#1a3d52] bg-slate-50/70 dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] transition-colors flex items-center justify-between gap-3"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                             {fee.month_year ? `Monthly Rent (${fee.month_year})` : 'Monthly Rent'}
                           </p>
                           <span className={cn(
                             "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0",
-                            isPaid ? "bg-emerald-100 text-emerald-800" :
-                            isOverdue ? "bg-rose-100 text-rose-800" :
-                            isPendingVerif ? "bg-blue-100 text-blue-800" :
-                            "bg-amber-100 text-amber-800"
+                            isPaid ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300" :
+                            isOverdue ? "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300" :
+                            isPendingVerif ? "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300" :
+                            "bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300"
                           )}>
                             {fee.status.replace('_', ' ')}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                           {fee.due_date ? `Due: ${new Date(fee.due_date).toLocaleDateString()}` : 'Monthly invoice'}
                           {fee.payment_method && ` • ${fee.payment_method.toUpperCase()}`}
                         </p>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-slate-900">
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                           {formatCurrency(fee.amount)}
                         </p>
                         {!isPaid ? (
                           <Link href="/student/bills">
-                            <span className="text-[11px] font-bold text-teal-700 hover:underline">
+                            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline">
                               Pay Now →
                             </span>
                           </Link>
                         ) : (
-                          <span className="text-[11px] font-medium text-emerald-700">
+                          <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                             Receipt available
                           </span>
                         )}
@@ -1063,10 +1067,10 @@ export function ActiveResidentDashboard({
                 })}
               </div>
             ) : (
-              <div className="text-center py-10">
-                <Receipt className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-slate-700">No Fee Invoices Yet</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+              <div className="text-center py-7">
+                <Receipt className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Fee Invoices Yet</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                   Monthly rent invoices issued by the hostel owner will appear here.
                 </p>
               </div>
@@ -1075,28 +1079,28 @@ export function ActiveResidentDashboard({
         </Card>
 
         {/* Right Column: Maintenance & Support Tickets */}
-        <Card className="border border-slate-200/90 bg-white shadow-xs">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
+          <CardContent className="p-4 sm:p-4.5 space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#1a3d52]">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800 flex items-center justify-center shrink-0">
                   <Wrench className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Maintenance &amp; Complaints</h3>
-                  <p className="text-xs text-slate-500">Service requests and repair tracking</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Maintenance &amp; Complaints</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Service requests and repair tracking</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <Link href="/student/complaints" className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1">
+                <Link href="/student/complaints" className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 flex items-center gap-1">
                   View all <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
 
             {complaints && complaints.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {complaints.slice(0, 4).map((c: any) => {
                   const cat = COMPLAINT_CATEGORY_CONFIG[c.category] || COMPLAINT_CATEGORY_CONFIG.other;
                   const Icon = cat.icon;
@@ -1105,17 +1109,17 @@ export function ActiveResidentDashboard({
                   return (
                     <div
                       key={c.id}
-                      className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 hover:border-slate-200 transition-colors flex items-center justify-between gap-3"
+                      className="p-3 rounded-xl border border-slate-100 dark:border-[#1a3d52] bg-slate-50/70 dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] transition-colors flex items-center justify-between gap-3"
                     >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5", cat.bg)}>
-                          <Icon className={cn("h-4 w-4", cat.color)} />
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className={cn("h-7.5 w-7.5 rounded-lg flex items-center justify-center shrink-0 border mt-0.5", cat.bg)}>
+                          <Icon className={cn("h-3.5 w-3.5", cat.color)} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                             {c.title}
                           </p>
-                          <p className="text-xs text-slate-500 capitalize mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize mt-0.5">
                             {cat.label} • {new Date(c.created_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -1124,9 +1128,9 @@ export function ActiveResidentDashboard({
                       <div className="shrink-0">
                         <span className={cn(
                           "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize",
-                          isResolved ? "bg-emerald-100 text-emerald-800" :
-                          c.status === 'in_progress' ? "bg-blue-100 text-blue-800" :
-                          "bg-amber-100 text-amber-800"
+                          isResolved ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300" :
+                          c.status === 'in_progress' ? "bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300" :
+                          "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300"
                         )}>
                           {c.status.replace('_', ' ')}
                         </span>
@@ -1136,10 +1140,10 @@ export function ActiveResidentDashboard({
                 })}
               </div>
             ) : (
-              <div className="text-center py-10">
-                <ShieldCheck className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-slate-700">No Support Issues Reported</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+              <div className="text-center py-7">
+                <ShieldCheck className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Support Issues Reported</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                   Have a maintenance or electrical issue? Raise a ticket and the warden will resolve it.
                 </p>
               </div>
@@ -1149,59 +1153,59 @@ export function ActiveResidentDashboard({
       </div>
 
       {/* 5. Hostel Announcements & Notices */}
-      <Card className="border border-slate-200/90 bg-white shadow-xs">
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
+        <CardContent className="p-4 sm:p-4.5 space-y-3">
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#1a3d52]">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800 flex items-center justify-center shrink-0">
                 <Calendar className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Hostel Notice Board</h3>
-                <p className="text-xs text-slate-500">Official updates, curfew, mess menu &amp; policies from management</p>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Hostel Notice Board</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Official updates, curfew, mess menu &amp; policies from management</p>
               </div>
             </div>
 
-            <Link href="/student/announcements" className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1">
+            <Link href="/student/announcements" className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 flex items-center gap-1">
               All Notices <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
           {notices && notices.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
               {notices.map((n: any) => {
                 const isEmergency = n.notice_type === 'emergency';
                 return (
                   <div
                     key={n.id}
                     className={cn(
-                      "p-4 rounded-xl border transition-all",
+                      "p-3.5 rounded-xl border transition-all",
                       isEmergency
-                        ? "bg-rose-50/60 border-rose-200"
-                        : "bg-slate-50/70 border-slate-200/80 hover:bg-slate-50"
+                        ? "bg-rose-50/60 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                        : "bg-slate-50/70 dark:bg-[#122b3b] border-slate-200/80 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#16364a]"
                     )}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <span className={cn(
                         "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize",
-                        isEmergency ? "bg-rose-100 text-rose-800" : "bg-teal-100 text-teal-800"
+                        isEmergency ? "bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300" : "bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300"
                       )}>
                         {n.notice_type || 'General Notice'}
                       </span>
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
                         {new Date(n.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mb-1">{n.title}</h4>
-                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">{n.body}</p>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5">{n.title}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">{n.body}</p>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Calendar className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-xs font-medium text-slate-500">No active announcements from hostel management</p>
+            <div className="text-center py-6">
+              <Calendar className="h-7 w-7 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">No active announcements from hostel management</p>
             </div>
           )}
         </CardContent>
