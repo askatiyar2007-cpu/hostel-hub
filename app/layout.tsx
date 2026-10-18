@@ -46,7 +46,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var stored = localStorage.getItem('hostelhub_theme');
-                  var theme = stored || 'system';
+                  var theme = stored || 'light';
                   var isDark = false;
                   if (theme === 'dark') {
                     isDark = true;

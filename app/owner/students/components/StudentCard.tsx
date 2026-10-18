@@ -73,24 +73,24 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   }, [studentName]);
 
   return (
-    <Card className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-sky-300 dark:hover:border-teal-700 rounded-2xl shadow-xs hover:shadow-md p-5 flex flex-col xl:flex-row items-start xl:items-center gap-6 transition-all">
+    <Card className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-sky-300 dark:hover:border-teal-700 rounded-2xl shadow-xs hover:shadow-md p-4 sm:p-4.5 flex flex-col xl:flex-row items-start xl:items-center gap-4 xl:gap-5 transition-all">
       {/* Student (Primary) */}
-      <div className="flex items-center gap-4 min-w-0 flex-1 w-full border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-[#1a3d52] pb-4 xl:pb-0 xl:pr-6">
+      <div className="flex items-center gap-3.5 min-w-0 flex-1 w-full border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-[#1a3d52] pb-3.5 xl:pb-0 xl:pr-5">
         {studentPhotoUrl && !imageError ? (
           <img 
             key={studentPhotoUrl}
             src={studentPhotoUrl} 
             alt={studentName} 
             onError={() => setImageError(true)}
-            className="h-14 w-14 rounded-full object-cover border-2 border-slate-100 dark:border-[#1a3d52] shadow-xs shrink-0" 
+            className="h-12 w-12 rounded-full object-cover border-2 border-slate-100 dark:border-[#1a3d52] shadow-xs shrink-0" 
           />
         ) : (
-          <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-bold text-xl border shadow-xs select-none", avatarGradientClass)}>
+          <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold text-lg border shadow-xs select-none", avatarGradientClass)}>
             {(studentName || 'S').trim().charAt(0).toUpperCase()}
           </div>
         )}
         <div className="flex flex-col min-w-0">
-          <h4 className="font-bold text-slate-900 dark:text-slate-100 text-lg truncate mb-1" title={studentName}>{studentName}</h4>
+          <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base truncate mb-0.5" title={studentName}>{studentName}</h4>
           <span className={cn('inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-2xs', badgeClass)}>
             {isStatusActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mr-1.5" />}
             {statusLabel}
@@ -99,29 +99,29 @@ export const StudentCard: React.FC<StudentCardProps> = ({
       </div>
 
       {/* Grid for details on tablet/desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-[2] w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-[2] w-full">
         {/* Contact */}
         <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Contact</p>
-          <div className="space-y-1">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Contact</p>
+          <div className="space-y-0.5">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title={studentEmail}>{studentEmail}</p>
             {studentPhone && studentPhone !== '-' && (
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate" title={studentPhone}>{studentPhone}</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate" title={studentPhone}>{studentPhone}</p>
             )}
           </div>
         </div>
 
         {/* Residence */}
         <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Residence</p>
-          <div className="space-y-1">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Residence</p>
+          <div className="space-y-0.5">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={hostelName}>{hostelName}</p>
-            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 truncate" title={roomNumber ?? '-'}>
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 truncate" title={roomNumber ?? '-'}>
               Room {roomNumber ?? '-'}
               <span className="text-slate-400 dark:text-slate-500 font-medium ml-1">({bookingType})</span>
             </p>
             {stayDuration && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-normal">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-normal">
                 {stayDuration}
               </p>
             )}
@@ -130,31 +130,31 @@ export const StudentCard: React.FC<StudentCardProps> = ({
 
         {/* Financial */}
         <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
             {isStatusActive ? 'Monthly Rent' : 'Previous Rent'}
           </p>
-          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400" title={String(rent)}>
+          <p className="text-base font-extrabold text-emerald-700 dark:text-emerald-400" title={String(rent)}>
             ₹{Number(rent).toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 xl:border-l border-slate-100 dark:border-[#1a3d52] xl:pl-6">
+      <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto pt-3 xl:pt-0 border-t xl:border-t-0 xl:border-l border-slate-100 dark:border-[#1a3d52] xl:pl-5">
         <Button 
           variant="outline" 
           onClick={onViewProfile} 
-          className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] shadow-xs"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl text-xs font-semibold border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] shadow-xs cursor-pointer"
         >
-          <Eye size={15} /> {isStatusActive ? 'Profile' : 'Past Records'}
+          <Eye size={14} /> {isStatusActive ? 'Profile' : 'Past Records'}
         </Button>
         {isStatusActive && onCheckout && (
           <Button 
             variant="outline" 
             onClick={onCheckout} 
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs cursor-pointer"
           >
-            <LogOut size={15} /> Checkout
+            <LogOut size={14} /> Checkout
           </Button>
         )}
       </div>

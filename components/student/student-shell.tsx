@@ -17,7 +17,10 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  Home
+  Home,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -29,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
+import { useTheme } from '@/lib/theme-context';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { getDashboardForRole } from '@/components/dashboard-layout';
@@ -123,6 +127,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
   const { profile, user, signOut, loading, accountCompletionStep, password_set } = useAuth();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
@@ -429,8 +434,22 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         {/* Center: Clean Empty Area */}
         <div className="flex-1" />
 
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-3 md:gap-4">
+        {/* Right Side Actions: Theme Toggle | Notifications | Separator | Profile Menu */}
+        <div className="flex items-center gap-2.5 sm:gap-3 md:gap-3.5">
+          {/* Quick Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = resolvedTheme === 'dark' ? 'light' : 'dark';
+              setTheme(next);
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-teal-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+            title={resolvedTheme === 'dark' ? 'Switch to Light theme' : 'Switch to Dark theme'}
+            aria-label="Toggle visual theme"
+          >
+            {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
           {/* Notifications */}
           <StudentNotifications />
 
@@ -454,7 +473,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                       className="h-8 w-8 rounded-full object-cover ring-2 ring-teal-400/40 shadow-xs shrink-0"
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center text-xs font-bold tracking-wide ring-2 ring-teal-400/40 shadow-xs shrink-0">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center text-xs font-bold tracking-wide ring-2 ring-teal-400/40 shadow-xs shrink-0 select-none">
                       {(() => {
                         const name = profile?.full_name || user?.user_metadata?.full_name || 'Student';
                         const parts = name.trim().split(/\s+/);
@@ -477,65 +496,116 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-68 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+              <DropdownMenuContent align="end" className="w-68 p-2 bg-white dark:bg-[#0e222e] border border-slate-200 dark:border-[#1a3d52] rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 text-slate-800 dark:text-slate-100">
                 {/* Account Header Card */}
-                <div className="p-3 bg-gradient-to-r from-slate-50 to-teal-50/40 rounded-lg border border-slate-200/80 mb-1.5">
+                <div className="p-3 bg-gradient-to-r from-slate-50 to-teal-50/40 dark:from-[#122b3b] dark:to-[#0e222e] rounded-lg border border-slate-200/80 dark:border-[#1a3d52] mb-1.5">
                   <div className="flex items-center gap-3">
                     {profile?.avatar_url ? (
                       <img
                         src={profile.avatar_url}
                         alt={profile?.full_name || 'Student'}
-                        className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-xs"
+                        className="h-10 w-10 rounded-full object-cover ring-2 ring-white dark:ring-[#1a3d52] shadow-xs"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 text-white flex items-center justify-center text-sm font-bold shadow-xs ring-2 ring-white">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 text-white flex items-center justify-center text-sm font-bold shadow-xs ring-2 ring-white dark:ring-[#1a3d52]">
                         {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-900 truncate">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                         {profile?.full_name || 'Student'}
                       </p>
-                      <p className="text-xs text-slate-500 truncate" title={profile?.email || user?.email || ''}>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate" title={profile?.email || user?.email || ''}>
                         {profile?.email || user?.email || 'No email registered'}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-2.5 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[11px]">
-                    <span className="font-semibold text-teal-800 bg-teal-100/70 border border-teal-200 px-2 py-0.5 rounded-full">
+                  <div className="mt-2.5 flex items-center justify-between border-t border-slate-200/70 dark:border-[#1a3d52] pt-2 text-[11px]">
+                    <span className="font-semibold text-teal-800 dark:text-teal-300 bg-teal-100/70 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800 px-2 py-0.5 rounded-full">
                       Student
                     </span>
-                    <span className="text-emerald-700 font-medium flex items-center gap-1 bg-emerald-50 border border-emerald-200/70 px-2 py-0.5 rounded-full">
+                    <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       Active
                     </span>
                   </div>
                 </div>
 
-                <DropdownMenuSeparator className="my-1 border-slate-100" />
+                {/* Appearance / Theme Quick Selector */}
+                <div className="px-2 py-1.5 border-b border-slate-100 dark:border-[#1a3d52] mb-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Theme
+                    </span>
+                    <span className="text-[10px] font-semibold text-teal-700 dark:text-teal-400 capitalize">
+                      {theme}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-[#122b3b] p-1 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setTheme('light')}
+                      className={cn(
+                        "flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                        theme === 'light'
+                          ? "bg-white dark:bg-[#1a3d52] text-teal-700 dark:text-teal-300 shadow-2xs font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                      title="Light mode"
+                    >
+                      <Sun size={12} /> Light
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTheme('dark')}
+                      className={cn(
+                        "flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                        theme === 'dark'
+                          ? "bg-white dark:bg-[#1a3d52] text-teal-700 dark:text-teal-300 shadow-2xs font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                      title="Dark mode"
+                    >
+                      <Moon size={12} /> Dark
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTheme('system')}
+                      className={cn(
+                        "flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                        theme === 'system'
+                          ? "bg-white dark:bg-[#1a3d52] text-teal-700 dark:text-teal-300 shadow-2xs font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      )}
+                      title="System mode"
+                    >
+                      <Monitor size={12} /> Auto
+                    </button>
+                  </div>
+                </div>
 
-                <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 focus:bg-slate-100">
+                <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a] focus:bg-slate-100 dark:focus:bg-[#16364a]">
                   <Link href="/student/settings" className="flex items-center gap-2.5 w-full">
-                    <div className="p-1 rounded-md bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                    <div className="p-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 shrink-0">
                       <Settings size={14} />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-medium text-slate-800">Account Settings</span>
-                      <span className="text-[10px] text-slate-400">Profile & preferences</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">Account Settings</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">Profile & preferences</span>
                     </div>
                   </Link>
                 </DropdownMenuItem>
 
-                <DropdownMenuSeparator className="my-1 border-slate-100" />
+                <DropdownMenuSeparator className="my-1 border-slate-100 dark:border-[#1a3d52]" />
 
                 <DropdownMenuItem 
                   onClick={() => signOut()} 
-                  className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 focus:bg-rose-50 focus:text-rose-700 flex items-center gap-2.5"
+                  className="cursor-pointer rounded-lg px-2.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 focus:bg-rose-50 dark:focus:bg-rose-950/30 focus:text-rose-700 dark:focus:text-rose-300 flex items-center gap-2.5"
                 >
-                  <div className="p-1 rounded-md bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
+                  <div className="p-1 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900 shrink-0">
                     <LogOut size={14} />
                   </div>
-                  <span className="font-semibold text-rose-600">Log out</span>
+                  <span className="font-semibold text-rose-600 dark:text-rose-400">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

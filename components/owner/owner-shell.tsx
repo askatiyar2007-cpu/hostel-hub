@@ -24,7 +24,9 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/context';
+import { useTheme } from '@/lib/theme-context';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { getDashboardForRole } from '@/components/dashboard-layout';
@@ -230,6 +233,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
   const [isElectricityOpen, setIsElectricityOpen] = useState(false);
   const pathname = usePathname();
   const { profile, user, signOut, loading, accountCompletionStep, password_set } = useAuth();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
@@ -525,8 +529,22 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           {/* Center: Clean Empty Area (No giant global search bar on dashboard) */}
           <div className="flex-1" />
 
-          {/* Right Side Actions: Notification Bell | Separator | Owner Profile Dropdown */}
-          <div className="flex items-center gap-3 md:gap-4">
+          {/* Right Side Actions: Theme Toggle | Notification Bell | Separator | Owner Profile Dropdown */}
+          <div className="flex items-center gap-2.5 sm:gap-3 md:gap-3.5">
+            {/* Quick Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = resolvedTheme === 'dark' ? 'light' : 'dark';
+                setTheme(next);
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-teal-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              title={resolvedTheme === 'dark' ? 'Switch to Light theme' : 'Switch to Dark theme'}
+              aria-label="Toggle visual theme"
+            >
+              {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
             <OwnerNotifications />
 
             {/* Subtle vertical separator */}
@@ -599,6 +617,59 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                         Active
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Appearance / Theme Quick Selector */}
+                  <div className="px-2 py-1.5 border-b border-slate-100 dark:border-[#1a3d52] mb-1">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                        Theme
+                      </span>
+                      <span className="text-[10px] font-semibold text-teal-700 dark:text-teal-400 capitalize">
+                        {theme}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-[#122b3b] p-1 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => setTheme('light')}
+                        className={cn(
+                          "flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                          theme === 'light'
+                            ? "bg-white dark:bg-[#1a3d52] text-teal-700 dark:text-teal-300 shadow-2xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                        title="Light mode"
+                      >
+                        <Sun size={12} /> Light
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheme('dark')}
+                        className={cn(
+                          "flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                          theme === 'dark'
+                            ? "bg-white dark:bg-[#1a3d52] text-teal-700 dark:text-teal-300 shadow-2xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                        title="Dark mode"
+                      >
+                        <Moon size={12} /> Dark
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheme('system')}
+                        className={cn(
+                          "flex items-center justify-center gap-1 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
+                          theme === 'system'
+                            ? "bg-white dark:bg-[#1a3d52] text-teal-700 dark:text-teal-300 shadow-2xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        )}
+                        title="Match system preferences"
+                      >
+                        Auto
+                      </button>
                     </div>
                   </div>
 

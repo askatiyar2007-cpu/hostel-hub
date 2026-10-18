@@ -25,6 +25,9 @@ import {
   X, 
   IndianRupee, 
   Trash2, 
+  Calendar,
+  CreditCard,
+  ShieldCheck,
   X as CloseIcon
 } from 'lucide-react';
 
@@ -758,7 +761,7 @@ export default function OwnerRequestsPage() {
       </div>
 
       {/* 2. Search & Filter Bar */}
-      <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-center justify-between bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] p-4 rounded-xl shadow-xs">
+      <div className="mt-4 flex flex-col gap-3.5 md:flex-row md:items-center justify-between bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] p-3.5 sm:p-4 rounded-2xl shadow-xs">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
@@ -844,7 +847,7 @@ export default function OwnerRequestsPage() {
       </div>
 
       {/* 3. Dynamic Tab Content */}
-      <div className="mt-6">
+      <div className="mt-4">
         {activeTab === 'pending' && (
           visiblePending.length === 0 ? (
             <EmptyState message="No pending room requests found." />
@@ -1088,10 +1091,10 @@ function PendingRequestCard({
   onPreviewPhoto?: (url: string) => void 
 }) {
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
-  const studentName = student?.full_name || req.student_name || 'Unnamed Student';
+  const studentName = student?.full_name || req.student_name || 'Applicant Student';
   const studentEmail = student?.email || req.student_email || '-';
   const studentPhone = student?.phone_number || req.student_phone || '-';
-  const emergencyContact = req.emergency_contact || (req.emergency_contact_name && req.emergency_contact_phone ? `${req.emergency_contact_name} - ${req.emergency_contact_phone}` : req.emergency_contact_name || 'N/A');
+  const emergencyContact = req.emergency_contact || (req.emergency_contact_name && req.emergency_contact_phone ? `${req.emergency_contact_name} - ${req.emergency_contact_phone}` : req.emergency_contact_name || null);
   
   const room = req.rooms;
   const capacity = room?.capacity ?? 0;
@@ -1099,128 +1102,132 @@ function PendingRequestCard({
     capacity,
     room?.room_allocations
   );
+  const rent = room?.rent ? Number(room.rent) : 0;
+  const submissionDate = req.created_at ? new Date(req.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
   return (
-    <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-sm rounded-xl p-5 lg:p-5 transition-all">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-        {/* 1. Student (Passport Photo, Name, Contact) */}
-        <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
-          {passportPhotoUrl ? (
-            <div className="relative group shrink-0">
-              <img 
-                src={passportPhotoUrl} 
-                alt="Student passport photo"
-                className="h-12 w-12 rounded-xl object-cover border border-violet-200 cursor-pointer group-hover:ring-2 group-hover:ring-violet-500 transition-all"
-                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
-              />
-              <div 
-                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
-                className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
-              >
-                <Eye size={14} />
+    <div className="w-full bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-slate-300 dark:hover:border-teal-700/60 shadow-xs hover:shadow-sm rounded-2xl p-4 sm:p-5 transition-all space-y-3">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        {/* Left: Student Identity + Requested Accommodation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
+          {/* A. Student Profile */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            {passportPhotoUrl ? (
+              <div className="relative group shrink-0">
+                <img 
+                  src={passportPhotoUrl} 
+                  alt={studentName}
+                  className="h-12 w-12 rounded-xl object-cover border border-violet-200 dark:border-violet-800 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all shadow-xs"
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                />
+                <div 
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                  className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
+                >
+                  <Eye size={14} />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 font-bold text-base border border-violet-100">
-              {studentName.charAt(0)}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-slate-900 truncate" title={studentName}>{studentName}</h3>
-            <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-slate-400" />
-              <span className="truncate">{studentEmail}</span>
-            </div>
-            {studentPhone !== '-' && (
-              <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5">
-                <Phone size={12} className="shrink-0 text-slate-400" />
-                <span>{studentPhone}</span>
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white font-bold text-base shadow-xs select-none">
+                {studentName.charAt(0).toUpperCase()}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* 2. Hostel & Room */}
-        <div className="lg:col-span-2 min-w-0">
-          <div className="flex items-center gap-1.5 font-medium text-slate-900">
-            <Building2 size={14} className="text-blue-600 shrink-0" />
-            <span className="truncate">{req.hostels?.name || 'Hostel Property'}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-800 text-xs font-semibold">
-              Room {room?.room_number || '-'}
-            </span>
-            <span className="text-xs text-slate-500">
-              {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
-            </span>
-          </div>
-          {room?.rent && (
-            <div className="text-xs text-slate-600 font-medium mt-1">
-              ₹{Number(room.rent).toLocaleString()}/month
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate" title={studentName}>
+                {studentName}
+              </h3>
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+                <Mail size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                <span className="truncate">{studentEmail}</span>
+              </div>
+              {studentPhone !== '-' && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                  <Phone size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                  <span>{studentPhone}</span>
+                </div>
+              )}
+              {emergencyContact && (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={`Emergency: ${emergencyContact}`}>
+                  <ShieldCheck size={12} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                  <span className="truncate">ICE: {emergencyContact}</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* 3. Request Info */}
-        <div className="lg:col-span-3 min-w-0 text-xs text-slate-600 space-y-1">
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <Clock size={12} className="text-slate-400 shrink-0" />
-            <span>{new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
-          </div>
-          <div>
-            <span className="text-slate-500">Occupancy: </span>
-            <span className="font-semibold text-slate-800">{occupancy}/{capacity}</span>
-            <span className={`ml-1 font-medium ${freeSlots > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              ({freeSlots > 0 ? `${freeSlots} free` : 'Full'})
-            </span>
-          </div>
-          {emergencyContact !== 'N/A' && (
-            <div className="text-[11px] text-slate-500 truncate" title={emergencyContact}>
-              Emg: {emergencyContact}
+          {/* B. Requested Accommodation Details */}
+          <div className="flex flex-col justify-center min-w-0 md:border-l md:border-slate-100 dark:md:border-[#1a3d52] md:pl-4">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100 text-sm">
+              <Building2 size={15} className="text-teal-600 dark:text-teal-400 shrink-0" />
+              <span className="truncate">{req.hostels?.name || 'Hostel Property'}</span>
             </div>
-          )}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                Room {room?.room_number || '-'}
+              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
+              </span>
+              {rent > 0 && (
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                  ₹{rent.toLocaleString()}/mo
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+              <span className="flex items-center gap-1">
+                <Clock size={12} className="text-slate-400 shrink-0" />
+                <span>Requested {submissionDate}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span>Occupancy: <strong className="text-slate-800 dark:text-slate-200">{occupancy}/{capacity}</strong></span>
+                <span className={`font-semibold ${freeSlots > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  ({freeSlots > 0 ? `${freeSlots} free` : 'Full'})
+                </span>
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* 4. Status */}
-        <div className="lg:col-span-1 flex lg:justify-center">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs">
-            <Clock size={12} /> Pending
+        {/* Right: Status Badge & Primary Decision Actions */}
+        <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end justify-between xl:justify-center gap-2.5 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-[#1a3d52] shrink-0">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 shadow-2xs">
+            <Clock size={13} className="text-amber-600 dark:text-amber-400" /> Pending Review
           </span>
-        </div>
 
-        {/* 5. Actions */}
-        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex-wrap">
-          <Button 
-            onClick={onApprove} 
-            disabled={freeSlots <= 0}
-            size="sm"
-            className="h-9 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
-          >
-            <CheckCircle2 size={14} /> Approve
-          </Button>
-          <Button 
-            onClick={onReject} 
-            variant="outline" 
-            size="sm"
-            className="h-9 px-3 rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-medium flex items-center gap-1 transition-colors"
-          >
-            <XCircle size={14} /> Reject
-          </Button>
-          <Button 
-            onClick={onViewDetails} 
-            variant="ghost" 
-            size="sm"
-            className="h-9 px-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-medium flex items-center gap-1 transition-colors"
-          >
-            <Eye size={14} /> Details
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <Button 
+              onClick={onApprove} 
+              disabled={freeSlots <= 0}
+              size="sm"
+              className="h-8.5 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <CheckCircle2 size={14} /> Approve
+            </Button>
+            <Button 
+              onClick={onReject} 
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-3 rounded-lg border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+            >
+              <XCircle size={14} /> Reject
+            </Button>
+            <Button 
+              onClick={onViewDetails} 
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-2.5 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] text-xs font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Eye size={14} /> Details
+            </Button>
+          </div>
         </div>
       </div>
 
       {freeSlots <= 0 && (
-        <div className="mt-3 p-2.5 bg-rose-50 text-rose-700 rounded-lg flex items-center gap-2 text-xs font-medium border border-rose-100">
+        <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 rounded-xl flex items-center gap-2 text-xs font-medium border border-rose-200 dark:border-rose-900">
           <AlertTriangle size={14} className="shrink-0" />
-          Approval is blocked because the requested room is currently full.
+          Approval is currently blocked because this room has reached full capacity.
         </div>
       )}
     </div>
@@ -1248,6 +1255,7 @@ function ApprovedAllocationCard({
   passportPhotoUrl?: string;
   onPreviewPhoto?: (url: string) => void;
 }) {
+  const [showAllFees, setShowAllFees] = useState(false);
   const student = Array.isArray(alloc.students) ? alloc.students[0]?.profiles : alloc.students?.profiles;
   const studentName = student?.full_name || alloc.student_name || 'Resident Student';
   const studentEmail = student?.email || alloc.student_email || '-';
@@ -1257,237 +1265,283 @@ function ApprovedAllocationCard({
   const emergencyContact = studentRecord?.emergency_contact
     || (studentRecord?.emergency_contact_name && studentRecord?.emergency_contact_phone
       ? `${studentRecord.emergency_contact_name} - ${studentRecord.emergency_contact_phone}`
-      : studentRecord?.emergency_contact_name || 'N/A');
+      : studentRecord?.emergency_contact_name || null);
 
   const room = alloc.rooms;
-  const rent = room?.rent ?? 0;
+  const rent = Number(room?.rent ?? 0);
+  const depositAmount = Number(alloc.rooms?.security_deposit || (rent > 0 ? rent * 2 : 5000));
+  const isDepositPaid = alloc.deposit_status === 'paid';
+  const joinedDate = alloc.start_date 
+    ? new Date(alloc.start_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Active';
+
+  const sortedFees = [...(alloc.student_fees || [])].sort(
+    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+  );
 
   return (
-    <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-sm rounded-xl p-5 lg:p-6 transition-all space-y-4">
-      {/* Main Row: Student -> Hostel/Room -> Timeline/Rent -> Status -> Primary Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-        {/* 1. Resident Student */}
-        <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
-          {passportPhotoUrl ? (
-            <div className="relative group shrink-0">
-              <img 
-                src={passportPhotoUrl} 
-                alt="Student passport photo"
-                className="h-12 w-12 rounded-xl object-cover border border-violet-200 cursor-pointer group-hover:ring-2 group-hover:ring-violet-500 transition-all"
-                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
-              />
-              <div 
-                onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
-                className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
-              >
-                <Eye size={14} />
+    <div className="w-full bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-slate-300 dark:hover:border-teal-700/60 shadow-xs hover:shadow-sm rounded-2xl p-4 sm:p-5 transition-all space-y-4">
+      {/* 1. Header Section: Resident Student & Accommodation + Status & Actions */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-3.5 border-b border-slate-100 dark:border-[#1a3d52]">
+        {/* Left: Student Identity + Accommodation Specs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
+          {/* A. Student Profile */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            {passportPhotoUrl ? (
+              <div className="relative group shrink-0">
+                <img 
+                  src={passportPhotoUrl} 
+                  alt={studentName}
+                  className="h-12 w-12 rounded-xl object-cover border border-violet-200 dark:border-violet-800 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all shadow-xs"
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                />
+                <div 
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                  className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
+                >
+                  <Eye size={14} />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 font-bold text-base border border-violet-100">
-              {studentName.charAt(0)}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-slate-900 truncate" title={studentName}>{studentName}</h3>
-            <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-slate-400" />
-              <span className="truncate">{studentEmail}</span>
-            </div>
-            {studentPhone !== '-' && (
-              <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5">
-                <Phone size={12} className="shrink-0 text-slate-400" />
-                <span>{studentPhone}</span>
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white font-bold text-base shadow-xs select-none">
+                {studentName.charAt(0).toUpperCase()}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* 2. Hostel & Room */}
-        <div className="lg:col-span-2 min-w-0">
-          <div className="flex items-center gap-1.5 font-medium text-slate-900">
-            <Building2 size={14} className="text-blue-600 shrink-0" />
-            <span className="truncate">{alloc.hostels?.name || 'Hostel Property'}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 border border-blue-100 text-blue-800 text-xs font-semibold">
-              Room {room?.room_number || '-'}
-            </span>
-            <span className="text-xs text-slate-500">
-              {alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
-            </span>
-          </div>
-          <div className="text-xs text-slate-600 font-medium mt-1">
-            ₹{Number(rent).toLocaleString()}/month
-          </div>
-        </div>
-
-        {/* 3. Allocation Timeline */}
-        <div className="lg:col-span-2 min-w-0 text-xs text-slate-600 space-y-1">
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <Clock size={12} className="text-slate-400 shrink-0" />
-            <span>Joined {new Date(alloc.start_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
-          </div>
-          {emergencyContact !== 'N/A' && (
-            <div className="text-[11px] text-slate-500 truncate" title={emergencyContact}>
-              Emg: {emergencyContact}
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate" title={studentName}>
+                {studentName}
+              </h3>
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+                <Mail size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                <span className="truncate">{studentEmail}</span>
+              </div>
+              {studentPhone !== '-' && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                  <Phone size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                  <span>{studentPhone}</span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* B. Accommodation Details */}
+          <div className="flex flex-col justify-center min-w-0 md:border-l md:border-slate-100 dark:md:border-[#1a3d52] md:pl-4">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100 text-sm">
+              <Building2 size={15} className="text-teal-600 dark:text-teal-400 shrink-0" />
+              <span className="truncate">{alloc.hostels?.name || 'Hostel Property'}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                Room {room?.room_number || '-'}
+              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                {alloc.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
+              </span>
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                ₹{rent.toLocaleString()}/mo
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+              <span className="flex items-center gap-1">
+                <Calendar size={12} className="text-slate-400 shrink-0" />
+                <span>Joined {joinedDate}</span>
+              </span>
+              {emergencyContact && (
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]" title={`Emergency: ${emergencyContact}`}>
+                  Emg: {emergencyContact}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* 4. Status */}
-        <div className="lg:col-span-1 flex lg:justify-center">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-            <Check size={12} /> Approved
+        {/* Right: Status Badge & Consistent Action Toolbar */}
+        <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end justify-between xl:justify-center gap-2.5 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-[#1a3d52] shrink-0">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 shadow-2xs">
+            <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
+            Approved
           </span>
-        </div>
 
-        {/* 5. Primary Actions */}
-        <div className="lg:col-span-4 flex items-center justify-start lg:justify-end gap-1.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex-wrap">
-          <Button 
-            onClick={onViewAgreement}
-            variant="outline" 
-            size="sm"
-            className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
-          >
-            <FileText size={13} /> Agreement
-          </Button>
-          <Button 
-            onClick={onViewDetails}
-            variant="outline" 
-            size="sm"
-            className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
-          >
-            <User size={13} /> Profile
-          </Button>
-          <Button 
-            onClick={onViewHistory}
-            variant="outline" 
-            size="sm"
-            className="h-8 px-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
-          >
-            <IndianRupee size={13} /> History
-          </Button>
-          <Button 
-            onClick={onCheckout}
-            variant="outline" 
-            size="sm"
-            className="h-8 px-2.5 rounded-lg border-rose-200 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-1"
-          >
-            <LogOut size={13} /> Checkout
-          </Button>
+          <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+            <Button 
+              onClick={onViewAgreement}
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-3 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <FileText size={13} className="text-teal-600 dark:text-teal-400" /> Agreement
+            </Button>
+            <Button 
+              onClick={onViewDetails}
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-3 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <User size={13} className="text-blue-600 dark:text-blue-400" /> Profile
+            </Button>
+            <Button 
+              onClick={onViewHistory}
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-3 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <IndianRupee size={13} className="text-emerald-600 dark:text-emerald-400" /> History
+            </Button>
+            <Button 
+              onClick={onCheckout}
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-3 rounded-lg border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <LogOut size={13} /> Checkout
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Sub-panel: Security Deposit & Monthly Fees Schedule */}
-      <div className="pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/70">
-        {/* Deposit Box */}
-        <div className="md:col-span-4 flex items-center justify-between gap-3 p-2.5 bg-white rounded-lg border border-slate-200/70">
-          <div>
-            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Security Deposit</div>
-            <div className="text-xs font-bold text-slate-900 mt-0.5">
-              ₹{Number(alloc.rooms?.security_deposit || rent * 2).toLocaleString()}
-            </div>
-          </div>
-          <div>
-            {alloc.deposit_status === 'paid' ? (
-              <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs font-semibold">
+      {/* 2. Payment Section: Clearly Distinguished Security Deposit & Monthly Fees */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 pt-0.5">
+        {/* A. Security Deposit Box */}
+        <div className="lg:col-span-4 p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#122b3b]/60 border border-slate-200/80 dark:border-[#1a3d52] flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+              <ShieldCheck size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
+              Security Deposit
+            </span>
+            {isDepositPaid ? (
+              <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md text-xs font-bold shadow-2xs">
                 ✓ Paid
               </span>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[11px] font-semibold">
-                  Pending
-                </span>
-                <button 
-                  onClick={onMarkDepositPaid}
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-2 py-0.5 rounded text-xs transition-colors"
-                >
-                  Mark Paid
-                </button>
+              <span className="inline-flex items-center text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md text-xs font-bold shadow-2xs">
+                Pending
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-baseline justify-between gap-2">
+            <div>
+              <div className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+                ₹{depositAmount.toLocaleString()}
               </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Refundable move-in deposit</p>
+            </div>
+
+            {!isDepositPaid && (
+              <button 
+                type="button"
+                onClick={onMarkDepositPaid}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-2.5 py-1 rounded-lg text-xs transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
+              >
+                <Check size={12} /> Mark Paid
+              </button>
             )}
           </div>
         </div>
 
-        {/* Fees Schedule Box */}
-        <div className="md:col-span-8 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-slate-700 uppercase tracking-wider text-[11px]">Monthly Fees</span>
-            <span className="text-[11px] text-slate-500 font-medium">
-              {alloc.student_fees?.length || 0} scheduled
+        {/* B. Monthly Fees Schedule Box */}
+        <div className="lg:col-span-8 p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#122b3b]/60 border border-slate-200/80 dark:border-[#1a3d52] flex flex-col justify-between gap-2.5">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+              <CreditCard size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
+              Monthly Fees Schedule
             </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold bg-white dark:bg-[#0e222e] border border-slate-200/70 dark:border-[#1a3d52] px-2 py-0.5 rounded-full">
+                {sortedFees.length} scheduled
+              </span>
+              {sortedFees.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllFees(!showAllFees)}
+                  className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
+                >
+                  {showAllFees ? 'Show Less' : `View All (${sortedFees.length})`}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {(() => {
-              const sortedFees = [...(alloc.student_fees || [])].sort(
-                (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-              );
-
               const earliestUnpaidIndex = sortedFees.findIndex(f => f.status !== 'paid');
               let displayFees: any[] = [];
-              let isMonth1List: boolean[] = [];
+              let isCurrentList: boolean[] = [];
 
-              if (earliestUnpaidIndex !== -1) {
+              if (showAllFees) {
+                displayFees = sortedFees;
+                isCurrentList = sortedFees.map((_, i) => i === earliestUnpaidIndex);
+              } else if (earliestUnpaidIndex !== -1) {
                 displayFees.push(sortedFees[earliestUnpaidIndex]);
-                isMonth1List.push(true);
+                isCurrentList.push(true);
                 if (earliestUnpaidIndex + 1 < sortedFees.length) {
                   displayFees.push(sortedFees[earliestUnpaidIndex + 1]);
-                  isMonth1List.push(false);
+                  isCurrentList.push(false);
                 }
               } else if (sortedFees.length > 0) {
                 const lastTwo = sortedFees.slice(-2);
                 displayFees = lastTwo;
-                isMonth1List = lastTwo.map(() => false);
+                isCurrentList = lastTwo.map(() => false);
               }
 
               if (displayFees.length === 0) {
-                return <p className="text-xs text-slate-500 italic col-span-2">No fees scheduled yet.</p>;
+                return (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 italic col-span-2 py-2">
+                    No monthly fees scheduled yet.
+                  </p>
+                );
               }
 
               return displayFees.map((fee: any, idx: number) => {
-                const isMonth1 = isMonth1List[idx];
+                const isCurrent = isCurrentList[idx];
                 const hasProof = fee.status === 'pending_verification';
                 const displayPeriod = fee.billing_period || new Date(fee.due_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                const dueDateFormatted = new Date(fee.due_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+                const feeAmount = fee.amount_due || fee.amount || 0;
+
                 return (
-                  <div key={fee.id} className="p-2.5 border rounded-lg bg-white flex items-center justify-between gap-2 border-slate-200/70">
+                  <div 
+                    key={fee.id} 
+                    className="p-2.5 border rounded-lg bg-white dark:bg-[#0e222e] flex items-center justify-between gap-2 border-slate-200/80 dark:border-[#1a3d52] shadow-2xs"
+                  >
                     <div className="min-w-0">
-                      <div className="font-semibold text-xs text-slate-900 truncate">
-                        {displayPeriod} {isMonth1 ? '(Current)' : ''}
+                      <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                        {displayPeriod} {isCurrent ? <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">(Current)</span> : ''}
                       </div>
-                      <div className="text-[11px] text-slate-500">
-                        ₹{fee.amount_due || fee.amount || 0} &bull; Due: {new Date(fee.due_date).toLocaleDateString()}
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">₹{feeAmount.toLocaleString()}</span> &bull; Due: {dueDateFormatted}
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md capitalize ${
                         fee.status === 'paid' 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
                           : fee.status === 'pending_verification' 
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200' 
-                          : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800' 
+                          : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
                       }`}>
                         {fee.status.replace('_', ' ')}
                       </span>
-                      {isMonth1 && fee.status !== 'paid' && (
+                      {fee.status !== 'paid' && (
                         <button 
+                          type="button"
                           onClick={() => onMarkFeePaid(fee.id)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 py-0.5 rounded text-xs transition-colors"
+                          className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 py-0.5 rounded-md text-xs transition-colors shadow-2xs cursor-pointer"
                         >
                           Mark Paid
                         </button>
                       )}
                       {hasProof && (
                         <button 
+                          type="button"
                           onClick={() => {
                             const pendingPayment = alloc.payments?.find((p: any) => p.payment_status === 'pending_verification' || p.status === 'pending_verification');
                             const refNo = pendingPayment?.reference_number || 'N/A';
                             const payMethod = pendingPayment?.payment_method || 'N/A';
                             toast.info(`Payment Details - Method: ${payMethod}, Ref: ${refNo}`);
                           }}
-                          className="border border-gray-200 text-gray-700 hover:bg-gray-100 font-medium px-2 py-0.5 rounded text-xs transition-colors"
+                          className="border border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a] font-medium px-2 py-0.5 rounded-md text-xs transition-colors shadow-2xs cursor-pointer"
                         >
                           Details
                         </button>
@@ -1518,76 +1572,87 @@ function RejectedRequestCard({
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
   const studentName = student?.full_name || req.student_name || 'Applicant';
   const studentEmail = student?.email || req.student_email || '-';
+  const studentPhone = student?.phone_number || req.student_phone || '-';
   const room = req.rooms;
+  const submissionDate = req.created_at ? new Date(req.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
   return (
-    <div className="w-full bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs rounded-xl p-5 transition-all">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-        {/* 1. Student */}
-        <div className="lg:col-span-3 flex items-center gap-3 min-w-0">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 font-bold text-base border border-slate-200">
-            {studentName.charAt(0)}
+    <div className="w-full bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-slate-300 dark:hover:border-teal-700/60 shadow-xs hover:shadow-sm rounded-2xl p-4 sm:p-5 transition-all space-y-3">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        {/* Left: Student Identity + Rejected Accommodation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-base border border-slate-200 dark:border-slate-700 select-none">
+              {studentName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate" title={studentName}>
+                {studentName}
+              </h3>
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
+                <Mail size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                <span className="truncate">{studentEmail}</span>
+              </div>
+              {studentPhone !== '-' && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                  <Phone size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                  <span>{studentPhone}</span>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-slate-900 truncate" title={studentName}>{studentName}</h3>
-            <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
-              <Mail size={12} className="shrink-0 text-slate-400" />
-              <span className="truncate">{studentEmail}</span>
+
+          <div className="flex flex-col justify-center min-w-0 md:border-l md:border-slate-100 dark:md:border-[#1a3d52] md:pl-4">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100 text-sm">
+              <Building2 size={15} className="text-slate-500 dark:text-slate-400 shrink-0" />
+              <span className="truncate">{req.hostels?.name || 'Hostel'}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold">
+                Room {room?.room_number || '-'}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+              <Clock size={12} className="text-slate-400" />
+              <span>Submitted {submissionDate}</span>
             </div>
           </div>
         </div>
 
-        {/* 2. Hostel & Room */}
-        <div className="lg:col-span-2 min-w-0">
-          <div className="flex items-center gap-1.5 font-medium text-slate-900">
-            <Building2 size={14} className="text-blue-600 shrink-0" />
-            <span className="truncate">{req.hostels?.name || 'Hostel'}</span>
-          </div>
-          <div className="text-xs text-slate-500 mt-1">
-            Room {room?.room_number || '-'} &bull; {req.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Room'}
-          </div>
-        </div>
-
-        {/* 3. Submission Info */}
-        <div className="lg:col-span-3 min-w-0 text-xs text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <Clock size={12} className="text-slate-400 shrink-0" />
-            <span>Submitted {new Date(req.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
-          </div>
-        </div>
-
-        {/* 4. Status */}
-        <div className="lg:col-span-1 flex lg:justify-center">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
-            <XCircle size={12} /> Rejected
+        {/* Right: Status Badge & Decision Actions */}
+        <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end justify-between xl:justify-center gap-2.5 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100 dark:border-[#1a3d52] shrink-0">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800 shadow-2xs">
+            <XCircle size={13} className="text-rose-600 dark:text-rose-400" /> Rejected
           </span>
-        </div>
 
-        {/* 5. Actions */}
-        <div className="lg:col-span-3 flex items-center justify-start lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex-wrap">
-          <Button 
-            onClick={onViewDetails} 
-            variant="ghost" 
-            size="sm"
-            className="h-8 px-2.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-medium flex items-center gap-1"
-          >
-            <Eye size={13} /> Details
-          </Button>
-          <Button 
-            onClick={onRereview} 
-            size="sm"
-            className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium flex items-center gap-1 shadow-2xs"
-          >
-            <RotateCcw size={13} /> Re-review
-          </Button>
-          <Button 
-            onClick={onDelete} 
-            variant="outline" 
-            size="sm"
-            className="h-8 px-2.5 rounded-lg border-rose-200 text-xs font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-1"
-          >
-            <Trash2 size={13} /> Delete
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <Button 
+              onClick={onViewDetails} 
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-2.5 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] text-xs font-semibold flex items-center gap-1 shadow-2xs cursor-pointer"
+            >
+              <Eye size={13} /> Details
+            </Button>
+            <Button 
+              onClick={onRereview} 
+              size="sm"
+              className="h-8.5 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <RotateCcw size={13} /> Re-review
+            </Button>
+            <Button 
+              onClick={onDelete} 
+              variant="outline" 
+              size="sm"
+              className="h-8.5 px-2.5 rounded-lg border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 flex items-center gap-1 shadow-2xs cursor-pointer"
+            >
+              <Trash2 size={13} /> Delete
+            </Button>
+          </div>
         </div>
       </div>
     </div>

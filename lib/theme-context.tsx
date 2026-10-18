@@ -26,7 +26,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (stored && (stored === 'light' || stored === 'dark' || stored === 'system')) {
         setThemeState(stored);
       } else {
-        setThemeState('system');
+        setThemeState('light');
       }
       if (document.documentElement.classList.contains('dark')) {
         setResolvedTheme('dark');
