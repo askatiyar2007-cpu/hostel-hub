@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye, LogOut } from 'lucide-react';
+import { Eye, LogOut, Mail, Phone, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface StudentCardProps {
@@ -22,8 +22,8 @@ export interface StudentCardProps {
 
 /**
  * Compact horizontal strip for a resident student.
- * Uses a minimal flex layout to keep vertical space low while preserving all columns:
- * Student | Contact | Hostel & Room | Booking & Rent | Actions.
+ * Uses a balanced, proportional flex layout with subtle dividers:
+ * Student | Contact | Residence | Monthly Rent | Actions.
  */
 export const StudentCard: React.FC<StudentCardProps> = ({
   studentName,
@@ -73,90 +73,115 @@ export const StudentCard: React.FC<StudentCardProps> = ({
   }, [studentName]);
 
   return (
-    <Card className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-sky-300 dark:hover:border-teal-700 rounded-2xl shadow-xs hover:shadow-md p-4 sm:p-4.5 flex flex-col xl:flex-row items-start xl:items-center gap-4 xl:gap-5 transition-all">
-      {/* Student (Primary) */}
-      <div className="flex items-center gap-3.5 min-w-0 flex-1 w-full border-b xl:border-b-0 xl:border-r border-slate-100 dark:border-[#1a3d52] pb-3.5 xl:pb-0 xl:pr-5">
-        {studentPhotoUrl && !imageError ? (
-          <img 
-            key={studentPhotoUrl}
-            src={studentPhotoUrl} 
-            alt={studentName} 
-            onError={() => setImageError(true)}
-            className="h-12 w-12 rounded-full object-cover border-2 border-slate-100 dark:border-[#1a3d52] shadow-xs shrink-0" 
-          />
-        ) : (
-          <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold text-lg border shadow-xs select-none", avatarGradientClass)}>
-            {(studentName || 'S').trim().charAt(0).toUpperCase()}
+    <Card className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] hover:border-teal-500/40 dark:hover:border-teal-500/40 rounded-2xl shadow-xs hover:shadow-sm p-3.5 sm:p-4 transition-all">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 xl:gap-0">
+        
+        {/* 1. Student Identity (Avatar, Name, Status) */}
+        <div className="flex items-center gap-3 min-w-0 xl:w-[220px] 2xl:w-[240px] shrink-0 xl:pr-4">
+          {studentPhotoUrl && !imageError ? (
+            <img 
+              key={studentPhotoUrl}
+              src={studentPhotoUrl} 
+              alt={studentName} 
+              onError={() => setImageError(true)}
+              className="h-11 w-11 rounded-xl object-cover border border-slate-200 dark:border-[#1a3d52] shadow-xs shrink-0" 
+            />
+          ) : (
+            <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-bold text-base border shadow-xs select-none", avatarGradientClass)}>
+              {(studentName || 'S').trim().charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="flex flex-col min-w-0">
+            <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate leading-tight" title={studentName}>
+              {studentName}
+            </h4>
+            <span className={cn('inline-flex items-center w-fit px-2 py-0.5 rounded-full text-[11px] font-semibold mt-1 shadow-2xs', badgeClass)}>
+              {isStatusActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mr-1" />}
+              {statusLabel}
+            </span>
           </div>
-        )}
-        <div className="flex flex-col min-w-0">
-          <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base truncate mb-0.5" title={studentName}>{studentName}</h4>
-          <span className={cn('inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-2xs', badgeClass)}>
-            {isStatusActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mr-1.5" />}
-            {statusLabel}
-          </span>
         </div>
-      </div>
 
-      {/* Grid for details on tablet/desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-[2] w-full">
-        {/* Contact */}
-        <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Contact</p>
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title={studentEmail}>{studentEmail}</p>
+        {/* 2. Contact Details (Email, Phone) */}
+        <div className="flex flex-col min-w-0 xl:w-[260px] 2xl:w-[280px] shrink-0 xl:px-4 xl:border-l border-slate-100 dark:border-[#1a3d52] pt-2 xl:pt-0 border-t xl:border-t-0">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            Contact
+          </p>
+          <div className="space-y-0.5 min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 truncate flex items-center gap-1.5" title={studentEmail}>
+              <Mail size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+              <span className="truncate">{studentEmail}</span>
+            </p>
             {studentPhone && studentPhone !== '-' && (
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate" title={studentPhone}>{studentPhone}</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5 mt-0.5" title={studentPhone}>
+                <Phone size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                <span>{studentPhone}</span>
+              </p>
             )}
           </div>
         </div>
 
-        {/* Residence */}
-        <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Residence</p>
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={hostelName}>{hostelName}</p>
-            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 truncate" title={roomNumber ?? '-'}>
-              Room {roomNumber ?? '-'}
-              <span className="text-slate-400 dark:text-slate-500 font-medium ml-1">({bookingType})</span>
+        {/* 3. Residence Details (Hostel, Room, Booking Type) */}
+        <div className="flex flex-col min-w-0 xl:flex-1 xl:px-4 xl:border-l border-slate-100 dark:border-[#1a3d52] pt-2 xl:pt-0 border-t xl:border-t-0">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            Residence
+          </p>
+          <div className="space-y-0.5 min-w-0">
+            <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5" title={hostelName}>
+              <Building2 size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
+              <span className="truncate">{hostelName}</span>
             </p>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-[11px] font-bold">
+                Room {roomNumber ?? '-'}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                ({bookingType})
+              </span>
+            </div>
             {stayDuration && (
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-normal">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 {stayDuration}
               </p>
             )}
           </div>
         </div>
 
-        {/* Financial */}
-        <div className="flex flex-col min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+        {/* 4. Financial (Monthly Rent) */}
+        <div className="flex flex-col min-w-0 xl:w-[130px] shrink-0 xl:px-4 xl:border-l border-slate-100 dark:border-[#1a3d52] pt-2 xl:pt-0 border-t xl:border-t-0">
+          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
             {isStatusActive ? 'Monthly Rent' : 'Previous Rent'}
           </p>
-          <p className="text-base font-extrabold text-emerald-700 dark:text-emerald-400" title={String(rent)}>
-            ₹{Number(rent).toLocaleString()}
-          </p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-base sm:text-lg font-extrabold text-emerald-700 dark:text-emerald-400 leading-none" title={String(rent)}>
+              ₹{Number(rent).toLocaleString()}
+            </span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">/mo</span>
+          </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto pt-3 xl:pt-0 border-t xl:border-t-0 xl:border-l border-slate-100 dark:border-[#1a3d52] xl:pl-5">
-        <Button 
-          variant="outline" 
-          onClick={onViewProfile} 
-          className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl text-xs font-semibold border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] shadow-xs cursor-pointer"
-        >
-          <Eye size={14} /> {isStatusActive ? 'Profile' : 'Past Records'}
-        </Button>
-        {isStatusActive && onCheckout && (
+        {/* 5. Actions (Profile & Checkout) */}
+        <div className="flex sm:flex-row xl:flex-col gap-1.5 shrink-0 w-full sm:w-auto xl:w-[125px] pt-3 xl:pt-0 border-t xl:border-t-0 xl:border-l border-slate-100 dark:border-[#1a3d52] xl:pl-4">
           <Button 
             variant="outline" 
-            onClick={onCheckout} 
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs cursor-pointer"
+            size="sm"
+            onClick={onViewProfile} 
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] shadow-2xs cursor-pointer"
           >
-            <LogOut size={14} /> Checkout
+            <Eye size={13} className="text-teal-600 dark:text-teal-400" /> {isStatusActive ? 'Profile' : 'Records'}
           </Button>
-        )}
+          {isStatusActive && onCheckout && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={onCheckout} 
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-2xs cursor-pointer"
+            >
+              <LogOut size={13} /> Checkout
+            </Button>
+          )}
+        </div>
+
       </div>
     </Card>
   );

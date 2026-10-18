@@ -1,15 +1,16 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
-
-export function PageHeader({ label, title, description, icon, children }: {
+export function PageHeader({ label, title, description, icon, children, className }: {
   label?: string;
   title: string;
   description?: string;
   icon?: React.ReactNode;
   children?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+    <div className={cn("flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4 sm:mb-6", className)}>
       <div className="space-y-2 flex-1">
         {label && (
           <div className="flex items-center gap-2 mb-2">

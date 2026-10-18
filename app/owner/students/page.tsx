@@ -282,11 +282,12 @@ export default function OwnerStudentsPage() {
   }, [filteredAssignments, photoUrls]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-7xl">
       {/* Header */}
       <PageHeader 
         title="Students"
         description="Manage resident students and active room allocations across your properties."
+        className="mb-1"
       />
 
       {/* View Tabs: Active vs Past Residents / History */}
@@ -308,7 +309,7 @@ export default function OwnerStudentsPage() {
       </Tabs>
 
       {/* Top Toolbar: Search, Hostel Filter, Assign CTA */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
@@ -402,7 +403,7 @@ export default function OwnerStudentsPage() {
           ) : null}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
   {filteredAssignments.map((item) => {
     const studentInfo = Array.isArray(item.students) ? item.students[0] : item.students;
     const profile = Array.isArray(studentInfo?.profiles) ? studentInfo.profiles[0] : studentInfo?.profiles;
