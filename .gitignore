@@ -6,3 +6,8 @@ build
 
 # debug / temp build logs
 build-*.txt
+*.tsbuildinfo
+
+# Promo video assets
+hostelhub-promo-video/
+hostelhub-promo-video-final/

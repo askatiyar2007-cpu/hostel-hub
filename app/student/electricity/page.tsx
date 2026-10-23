@@ -167,26 +167,26 @@ export default function StudentElectricityPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       {/* Header & Month Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-100 dark:border-[#1a3d52]">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 font-display flex items-center gap-2">
-            <Zap className="h-5 w-5 text-teal-600" />
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-teal-600 dark:text-teal-400" />
             Electricity &amp; Sub-Meter
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             Personal electricity consumption and billing records
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <label htmlFor="month-select" className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <label htmlFor="month-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
             Period:
           </label>
           <select
             id="month-select"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg shadow-2xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="px-2.5 py-1 text-xs font-semibold bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] rounded-lg shadow-2xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-500"
           >
             {availableMonths.map((m) => (
               <option key={m} value={m}>
@@ -228,21 +228,21 @@ export default function StudentElectricityPage() {
               ========================================================================= */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* 1. Room & Sub-Meter */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3 shadow-2xs">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Room &amp; Meter
               </span>
-              <p className="text-sm font-bold text-slate-900 mt-1 truncate">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1 truncate">
                 Room {roomNumber}
               </p>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 font-mono mt-0.5 truncate">
                 {meterNumber}
               </p>
             </div>
 
             {/* 2. Billing Status */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3 shadow-2xs">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Cycle Status
               </span>
               <div className="mt-1">
@@ -263,7 +263,7 @@ export default function StudentElectricityPage() {
                     Payment Due
                   </Badge>
                 ) : isUnmetered ? (
-                  <Badge variant="outline" className="text-slate-400 border-slate-200 text-[11px] font-normal py-0 px-2 h-5">
+                  <Badge variant="outline" className="text-slate-500 border-slate-200 text-[11px] font-normal py-0 px-2 h-5">
                     Unmetered
                   </Badge>
                 ) : (
@@ -272,17 +272,17 @@ export default function StudentElectricityPage() {
                   </Badge>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                 {formatMonth(month)}
               </p>
             </div>
 
             {/* 3. Your Consumption */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3 shadow-2xs">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Your Consumption
               </span>
-              <p className="text-sm font-bold text-slate-900 mt-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                 {isOpenCycle ? (
                   <span className="text-amber-700 font-semibold text-xs">Pending Reading</span>
                 ) : isZeroMeasured ? (
@@ -293,28 +293,28 @@ export default function StudentElectricityPage() {
                   <span className="text-slate-400">—</span>
                 )}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                 {isOpenCycle ? 'Logging active usage' : 'Measured share'}
               </p>
             </div>
 
             {/* 4. Your Share (Charge Amount) */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] rounded-xl p-3 shadow-2xs">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Your Share
               </span>
-              <p className="text-sm font-bold text-slate-900 mt-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                 {isOpenCycle ? (
                   <span className="text-amber-800 font-semibold text-xs">Pending Calculation</span>
                 ) : isZeroMeasured ? (
-                  <span className="text-slate-700">₹0.00</span>
+                  <span className="text-slate-700 dark:text-slate-300">₹0.00</span>
                 ) : charges.length > 0 ? (
-                  <span className="text-emerald-700 font-mono">₹{(totalCost / 100).toFixed(2)}</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-mono">₹{(totalCost / 100).toFixed(2)}</span>
                 ) : (
                   <span className="text-slate-400">—</span>
                 )}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate">
                 {feeDueDate ? `Due: ${formatDate(feeDueDate)}` : 'Month-end invoice'}
               </p>
             </div>
@@ -339,28 +339,28 @@ export default function StudentElectricityPage() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-white p-3 rounded-lg border border-amber-200/70">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-white dark:bg-[#0e222e] p-3 rounded-lg border border-amber-200/70 dark:border-amber-900/60">
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Start Baseline</span>
-                    <span className="font-mono font-bold text-slate-900">
+                    <span className="text-slate-600 dark:text-slate-400 block text-[11px]">Start Baseline</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
                       {activeCycle?.start_reading_value != null ? `${activeCycle.start_reading_value.toFixed(2)} kWh` : 'Recorded'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Start Date</span>
-                    <span className="font-medium text-slate-800">{formatDate(activeCycle?.start_date)}</span>
+                    <span className="text-slate-600 dark:text-slate-400 block text-[11px]">Start Date</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{formatDate(activeCycle?.start_date)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Tariff Rate</span>
-                    <span className="font-semibold text-slate-900">₹{tariffRate.toFixed(2)}/kWh</span>
+                    <span className="text-slate-600 dark:text-slate-400 block text-[11px]">Tariff Rate</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">₹{tariffRate.toFixed(2)}/kWh</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[11px]">Roommates</span>
-                    <span className="font-medium text-slate-800">{activeCycle?.occupant_count || 1} Resident(s)</span>
+                    <span className="text-slate-600 dark:text-slate-400 block text-[11px]">Roommates</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{activeCycle?.occupant_count || 1} Resident(s)</span>
                   </div>
                 </div>
 
-                <p className="text-xs text-amber-900/90 leading-relaxed">
+                <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
                   Your electricity charge will be calculated after the closing meter reading is recorded and verified.
                 </p>
               </CardContent>
@@ -371,13 +371,13 @@ export default function StudentElectricityPage() {
               SECTION C: BILLING HISTORY & FINALIZED CHARGES
               Clean table of finalized charges
               ========================================================================= */}
-          <Card className="border border-slate-200/90 bg-white shadow-2xs rounded-xl overflow-hidden">
-            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-2xs rounded-xl overflow-hidden">
+            <div className="p-3.5 border-b border-slate-100 dark:border-[#1a3d52] flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
                 Finalized Billing Records &bull; {formatMonth(month)}
               </span>
               {charges.length > 0 && (
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-600 dark:text-slate-400">
                   {charges.length} finalized interval{charges.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -387,27 +387,27 @@ export default function StudentElectricityPage() {
               {charges.length === 0 ? (
                 <div className="text-center py-8 px-4 text-xs">
                   {isOpenCycle ? (
-                    <p className="text-slate-500">
+                    <p className="text-slate-500 dark:text-slate-400">
                       No finalized closed intervals for {formatMonth(month)} yet. Final charges will appear here once the closing reading is verified.
                     </p>
                   ) : isZeroMeasured ? (
                     <div className="space-y-1">
-                      <p className="font-semibold text-slate-800">Zero Measured Consumption</p>
-                      <p className="text-slate-500 max-w-md mx-auto">
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">Zero Measured Consumption</p>
+                      <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                         The room sub-meter was read with no change in cumulative units (0.00 kWh consumed). No charges were billed for this cycle.
                       </p>
                     </div>
                   ) : isUnmetered ? (
-                    <p className="text-slate-500">This room does not have an active sub-meter configured.</p>
+                    <p className="text-slate-500 dark:text-slate-400">This room does not have an active sub-meter configured.</p>
                   ) : (
-                    <p className="text-slate-500">No electricity charges recorded for {formatMonth(month)}.</p>
+                    <p className="text-slate-500 dark:text-slate-400">No electricity charges recorded for {formatMonth(month)}.</p>
                   )}
                 </div>
               ) : (
                 <div className="w-full overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-600 text-left text-[11px] uppercase">
+                      <tr className="bg-slate-50/80 dark:bg-white/[0.03] border-b border-slate-100 dark:border-[#1a3d52] text-slate-600 dark:text-slate-400 text-left text-[11px] uppercase">
                         <th className="px-3.5 py-2.5 font-semibold">Interval</th>
                         <th className="px-3.5 py-2.5 font-semibold">Your Units</th>
                         <th className="px-3.5 py-2.5 font-semibold">Tariff</th>
@@ -416,19 +416,19 @@ export default function StudentElectricityPage() {
                         <th className="px-3.5 py-2.5 font-semibold text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-[#1a3d52]">
                       {charges.map((c, idx) => (
-                        <tr key={c.segment_id || idx} className="hover:bg-slate-50/50">
-                          <td className="px-3.5 py-2.5 font-medium text-slate-800 whitespace-nowrap">
+                        <tr key={c.segment_id || idx} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
+                          <td className="px-3.5 py-2.5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                             {formatDate(c.start_date)} &rarr; {formatDate(c.end_date)}
                           </td>
-                          <td className="px-3.5 py-2.5 font-mono text-slate-900 whitespace-nowrap">
+                          <td className="px-3.5 py-2.5 font-mono text-slate-900 dark:text-slate-100 whitespace-nowrap">
                             {c.student_consumption_units.toFixed(2)} kWh
                           </td>
-                          <td className="px-3.5 py-2.5 text-slate-600 whitespace-nowrap">
+                          <td className="px-3.5 py-2.5 text-slate-600 dark:text-slate-400 whitespace-nowrap">
                             ₹{c.rate_per_unit.toFixed(2)}/kWh
                           </td>
-                          <td className="px-3.5 py-2.5 font-mono font-bold text-emerald-700 whitespace-nowrap">
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                             ₹{(c.charge_amount_paise / 100).toFixed(2)}
                           </td>
                           <td className="px-3.5 py-2.5 whitespace-nowrap">
@@ -444,7 +444,7 @@ export default function StudentElectricityPage() {
                           </td>
                           <td className="px-3.5 py-2.5 text-right whitespace-nowrap">
                             <Link href="/student/bills">
-                              <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-700 hover:text-teal-800 hover:bg-teal-50 px-2">
+                              <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-700 dark:text-teal-400 hover:text-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 px-2">
                                 View Bills &rarr;
                               </Button>
                             </Link>
@@ -459,9 +459,9 @@ export default function StudentElectricityPage() {
           </Card>
 
           {/* Quick link to Bills */}
-          <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+          <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-[#0e222e] border border-slate-200 dark:border-[#1a3d52] rounded-xl text-xs text-slate-600 dark:text-slate-300">
             <span>Electricity charges are billed through your monthly hostel invoice.</span>
-            <Link href="/student/bills" className="font-semibold text-teal-700 hover:underline flex items-center gap-1 shrink-0">
+            <Link href="/student/bills" className="font-semibold text-teal-700 dark:text-teal-400 hover:underline flex items-center gap-1 shrink-0">
               Go to Bills <ArrowRight className="h-3 w-3" />
             </Link>
           </div>

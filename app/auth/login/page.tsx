@@ -140,13 +140,13 @@ function AuthContent() {
     }
 
     // Completed user: redirect directly to their dashboard
-    if (accountCompletionStep === 'complete' && password_set === true && profile.role) {
+    if (accountCompletionStep === 'complete' && profile.role) {
       const destination = dashboardPathForRole(profile.role);
       if (destination) {
-        router.push(destination);
+        window.location.assign(destination);
       }
     }
-  }, [isAuthenticated, profile, accountCompletionStep, password_set, router, refreshAuthState]);
+  }, [isAuthenticated, profile, accountCompletionStep, refreshAuthState]);
 
   // URL searchParams handling
   useEffect(() => {
@@ -209,18 +209,26 @@ function AuthContent() {
         throw error ?? new Error('Login failed');
       }
 
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('role')
         .eq('user_id', data.user.id)
         .maybeSingle();
-      if (profileError) {
-        throw profileError;
+
+      let userRole = profileData?.role;
+      if (!userRole && data.user.email) {
+        const { data: emailProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('email', data.user.email)
+          .maybeSingle();
+        userRole = emailProfile?.role;
       }
 
       await refreshAuthState();
-      router.push(profileData?.role ? dashboardPathForRole(profileData.role) || '/auth/select-role' : '/auth/select-role');
+      const destination = userRole ? dashboardPathForRole(userRole) || '/auth/select-role' : '/auth/select-role';
       toast.success('Welcome back!');
+      window.location.assign(destination);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Login failed');
     } finally {

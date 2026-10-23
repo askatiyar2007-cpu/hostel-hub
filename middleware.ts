@@ -73,7 +73,16 @@ export async function middleware(req: NextRequest) {
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
+
+  if (authError && (authError.message?.includes('Refresh Token') || (authError as any).code === 'refresh_token_not_found')) {
+    req.cookies.getAll().forEach(cookie => {
+      if (cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token')) {
+        response.cookies.delete(cookie.name);
+      }
+    });
+  }
 
   const pathname = req.nextUrl.pathname
 
@@ -103,7 +112,7 @@ export async function middleware(req: NextRequest) {
     publicPrefixPaths.some(path => pathname === path || pathname.startsWith(path + '/'))
 
   if (isPublicPath) {
-    return NextResponse.next()
+    return response
   }
 
   // Protected routes require authentication

@@ -43,6 +43,22 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   const [passportPhotoUrl, setPassportPhotoUrl] = useState<string | null>(null);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
+  // Authoritative photo resolution hook (must execute before any conditional early returns)
+  const displayPhoto = useMemo(() => {
+    if (!allocation) return undefined;
+    const prof = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles;
+    return resolveStudentPhoto({
+      alloc: {
+        student_name: allocation.student_name,
+        student_email: allocation.student_email,
+        student_phone: allocation.student_phone,
+      },
+      profile: prof,
+      studentId: allocation.student_id,
+      photoUrlFromRequest: passportPhotoUrl,
+    });
+  }, [allocation, student?.profiles, passportPhotoUrl]);
+
   const fetchAllData = useCallback(async () => {
     if (!user?.id || !allocationId) return;
     try {
@@ -65,66 +81,76 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       }
       setAllocation(allocData);
 
-      // 2. Fetch Student record & Profile
-      const { data: studentData, error: studentErr } = await supabase
-        .from('students')
-        .select('*, profiles(*)')
-        .eq('id', allocData.student_id)
-        .single();
+      // 2. Fetch independent dependent data concurrently via Promise.all
+      const [
+        studentRes,
+        reqRes,
+        photoSignedUrl,
+        feesRes,
+        electricityRes,
+      ] = await Promise.all([
+        // Student record & Profile
+        supabase
+          .from('students')
+          .select('*, profiles(*)')
+          .eq('id', allocData.student_id)
+          .single(),
+        // Latest room request for metadata
+        supabase
+          .from('room_requests')
+          .select('*')
+          .eq('student_id', allocData.student_id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        // Authoritative photo URL
+        fetch(`/api/students/photo-url?student_id=${encodeURIComponent(allocData.student_id)}`)
+          .then(async (res) => {
+            if (res.ok) {
+              const data = await res.json();
+              return data?.signedUrl || null;
+            }
+            return null;
+          })
+          .catch((photoErr) => {
+            console.error('Failed to fetch student photo:', photoErr);
+            return null;
+          }),
+        // Student Fees
+        supabase
+          .from('student_fees')
+          .select('*')
+          .eq('allocation_id', allocationId)
+          .order('due_date', { ascending: false }),
+        // Electricity Charges
+        supabase
+          .from('student_electricity_charges')
+          .select('charge_amount_paise')
+          .eq('student_id', allocData.student_id)
+          .eq('hostel_id', allocData.hostel_id),
+      ]);
 
-      if (studentErr) throw studentErr;
-      setStudent(studentData);
-
-      // 3. Fetch latest room request for metadata (pending, approved, or historical)
-      const { data: reqData } = await supabase
-        .from('room_requests')
-        .select('*')
-        .eq('student_id', allocData.student_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      setLatestRequest(reqData);
-
-      // 4. Fetch authoritative photo URL for this student (handles profile avatars and room requests)
-      try {
-        const response = await fetch(`/api/students/photo-url?student_id=${encodeURIComponent(allocData.student_id)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data?.signedUrl) {
-            setPassportPhotoUrl(data.signedUrl);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch student photo:', error);
+      if (studentRes.error) throw studentRes.error;
+      setStudent(studentRes.data);
+      setLatestRequest(reqRes.data);
+      if (photoSignedUrl) {
+        setPassportPhotoUrl(photoSignedUrl);
       }
+      setFees(feesRes.data || []);
 
-      // 4. Fetch Student Fees
-      const { data: feesData } = await supabase
-        .from('student_fees')
-        .select('*')
-        .eq('allocation_id', allocationId)
-        .order('due_date', { ascending: false });
-      setFees(feesData || []);
-
-      // 5. Fetch Electricity Charges
-      const { data: electricityChargesData } = await supabase
-        .from('student_electricity_charges')
-        .select('charge_amount_paise')
-        .eq('student_id', allocData.student_id)
-        .eq('hostel_id', allocData.hostel_id);
-
-      const totalElectricityRupees = (electricityChargesData || []).reduce(
+      const totalElectricityRupees = (electricityRes.data || []).reduce(
         (sum: number, c: any) => sum + (Number(c.charge_amount_paise || 0) / 100),
         0
       );
       setElectricityCharges(totalElectricityRupees);
 
-      // 6. Fetch Student Complaints
-      if (studentData?.profiles?.user_id) {
+      // 3. Fetch Complaints if student profile has user_id
+      const profileUserId = studentRes.data?.profiles?.user_id;
+      if (profileUserId) {
         const { data: complaintsData } = await supabase
           .from('complaints')
           .select('*')
-          .eq('student_id', studentData.profiles.user_id)
+          .eq('student_id', profileUserId)
           .order('created_at', { ascending: false });
         setComplaints(complaintsData || []);
       }
@@ -245,21 +271,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   const stayDays = allocation.start_date && allocation.end_date
     ? Math.max(1, Math.round((new Date(allocation.end_date).getTime() - new Date(allocation.start_date).getTime()) / (1000 * 60 * 60 * 24)))
     : null;
-
-  const displayPhoto = useMemo(() => {
-    if (!allocation) return undefined;
-    const prof = Array.isArray(student?.profiles) ? student.profiles[0] : student?.profiles;
-    return resolveStudentPhoto({
-      alloc: {
-        student_name: allocation.student_name,
-        student_email: allocation.student_email,
-        student_phone: allocation.student_phone,
-      },
-      profile: prof,
-      studentId: allocation.student_id,
-      photoUrlFromRequest: passportPhotoUrl,
-    });
-  }, [allocation, student?.profiles, passportPhotoUrl]);
 
   return (
     <div className="space-y-6">

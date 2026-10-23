@@ -17,7 +17,7 @@ export default function StudentDocumentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Documents &amp; KYC</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">Documents &amp; KYC</h1>
           <p className="text-sm text-slate-500 mt-1">Manage your verified identity, college ID, and registration files.</p>
         </div>
         <Button variant="outline" className="rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs font-semibold text-xs sm:text-sm">
@@ -31,7 +31,7 @@ export default function StudentDocumentsPage() {
           <Card key={idx} className="border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                <div className="h-12 w-12 rounded-xl bg-teal-50 border border-teal-200/60 text-teal-700 flex items-center justify-center shrink-0">
                   <FileText className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">

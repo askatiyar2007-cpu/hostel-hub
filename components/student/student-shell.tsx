@@ -486,11 +486,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                   )}
 
                   {/* Real student name + "Student" subtitle */}
-                  <div className="hidden sm:block leading-tight text-left">
-                    <p className="text-sm font-semibold text-white leading-none truncate max-w-[140px]">
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-semibold text-white leading-normal capitalize max-w-[140px] whitespace-nowrap overflow-visible">
                       {profile?.full_name || user?.user_metadata?.full_name || 'Student'}
                     </p>
-                    <p className="text-[11px] text-teal-300/80 font-medium leading-none mt-1">
+                    <p className="text-[11px] text-teal-300/80 font-medium leading-none mt-0.5">
                       Student
                     </p>
                   </div>
@@ -512,7 +512,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate capitalize">
                         {profile?.full_name || 'Student'}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate" title={profile?.email || user?.email || ''}>

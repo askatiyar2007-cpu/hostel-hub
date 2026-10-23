@@ -75,7 +75,11 @@ export default function OwnerDashboard() {
     enabled: !!hostels?.length,
     queryFn: async () => {
       const ids = hostels!.map((h) => h.id);
-      const { data } = await supabase.from("student_fees").select("*").in("hostel_id", ids);
+      const { data } = await supabase
+        .from("student_fees")
+        .select("status, amount_due, amount")
+        .in("hostel_id", ids)
+        .in("status", ["pending", "paid"]);
       return data ?? [];
     },
   });
@@ -122,9 +126,9 @@ export default function OwnerDashboard() {
     occupancyPercentage: overallOccupancy
   } = calculateHostelOccupancy(rooms ?? [], allocations ?? []);
 
-  const pendingDues = fees?.filter((b) => b.status === "pending").reduce((s, b) => s + Number(b.amount_due), 0) ?? 0;
+  const pendingDues = fees?.filter((b) => b.status === "pending").reduce((s, b) => s + Number(b.amount_due ?? b.amount ?? 0), 0) ?? 0;
   const unpaidBillsCount = fees?.filter((b) => b.status === "pending").length ?? 0;
-  const monthlyRevenue = fees?.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.amount_due), 0) ?? 0;
+  const monthlyRevenue = fees?.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.amount_due ?? b.amount ?? 0), 0) ?? 0;
 
   // Calculate occupancy per hostel
   const hostelOccupancy = hostels?.map(hostel => {

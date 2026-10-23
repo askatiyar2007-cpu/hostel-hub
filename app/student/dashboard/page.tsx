@@ -122,12 +122,12 @@ export default function StudentDashboardPage() {
       const candidateIds: string[] = [profile!.id];
       if (studentRecord?.id) candidateIds.push(studentRecord.id);
 
-      // Query room_allocations by candidate IDs or email
+      // Query room_allocations by candidate IDs or email with joined rooms and hostels
       let alloc: any = null;
 
       const { data: allocList, error: allocErr } = await supabase
         .from('room_allocations')
-        .select('*')
+        .select('*, rooms(*, hostels(*))')
         .in('student_id', candidateIds)
         .eq('active', true)
         .order('created_at', { ascending: false })
@@ -140,7 +140,7 @@ export default function StudentDashboardPage() {
       if (!alloc && profile?.email) {
         const { data: emailAllocs } = await supabase
           .from('room_allocations')
-          .select('*')
+          .select('*, rooms(*, hostels(*))')
           .ilike('student_email', profile.email)
           .eq('active', true)
           .order('created_at', { ascending: false })
@@ -153,8 +153,13 @@ export default function StudentDashboardPage() {
 
       if (!alloc) return null;
 
-      // Join room and hostel details safely
-      if (alloc.room_id) {
+      // Extract joined hostels reference if already loaded
+      if (alloc.rooms && !alloc.hostels) {
+        alloc.hostels = (alloc.rooms as any).hostels;
+      }
+
+      // Safe fallback: fetch room details if not already loaded in join
+      if (alloc.room_id && (!alloc.rooms || !alloc.hostels)) {
         const { data: roomData, error: roomError } = await supabase
           .from('rooms')
           .select('*, hostels(*)')
@@ -286,8 +291,8 @@ export function NoAllocationView({
       {/* Welcome Greeting */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">
-            {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Student'} 👋
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
+            {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span> 👋
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Welcome to HostelHub. Manage your accommodation, rent payments, and requests in one place.
@@ -508,32 +513,27 @@ export function ActiveResidentDashboard({
     queryKey: ["student-fees-with-payments", studentId, allocation?.id],
     enabled: !!studentId && !!allocation?.id,
     queryFn: async () => {
-      const { data: fees, error } = await supabase
-        .from('student_fees')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('allocation_id', allocation.id)
-        .order('due_date', { ascending: false });
+      // Fetch Student Fees and payments concurrently
+      const [feesRes, paymentsRes] = await Promise.all([
+        supabase
+          .from('student_fees')
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('allocation_id', allocation.id)
+          .order('due_date', { ascending: false }),
+        supabase
+          .from('payments')
+          .select('*')
+          .eq('student_id', studentId),
+      ]);
 
-      if (error) {
-        console.error("[Dashboard] Error fetching fees:", error);
+      if (feesRes.error) {
+        console.error("[Dashboard] Error fetching fees:", feesRes.error);
         return { fees: [], total_due: 0, total_paid: 0, currentMonthFee: null, pendingFees: [] };
       }
 
-      const feeList = fees ?? [];
-      const feeIds = feeList.map((f: any) => f.id).filter(Boolean);
-
-      let payments: any[] = [];
-      if (feeIds.length > 0) {
-        const { data: paymentsData, error: paymentsErr } = await supabase
-          .from('payments')
-          .select('*')
-          .eq('student_id', studentId);
-
-        if (!paymentsErr && paymentsData) {
-          payments = paymentsData;
-        }
-      }
+      const feeList = feesRes.data ?? [];
+      const payments = paymentsRes.data ?? [];
 
       const formattedFees = feeList.map((fee: any) => {
         const matchingPayments = payments.filter((p: any) =>
@@ -704,17 +704,17 @@ export function ActiveResidentDashboard({
       {/* 1. Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 pb-3.5 border-b border-slate-200/80 dark:border-[#1a3d52]">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 font-display tracking-tight">
-            {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Student'} 👋
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span> 👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
             <span>Room <strong className="text-slate-900 dark:text-slate-100 font-bold">{room?.room_number || '—'}</strong></span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">{hostel?.name || 'Hostel'}</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200 capitalize">{hostel?.name || 'Hostel'}</span>
             {hostel?.city && (
               <>
                 <span className="text-slate-300 dark:text-slate-700">•</span>
-                <span>{hostel.city}</span>
+                <span className="capitalize">{hostel.city}</span>
               </>
             )}
           </p>
@@ -766,9 +766,9 @@ export function ActiveResidentDashboard({
             <div>
               <p className="text-xs text-teal-600 dark:text-teal-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
-                {hostel?.name || 'Student Residence'}
+                <span className="capitalize">{hostel?.name || 'Student Residence'}</span>
               </p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-slate-900 dark:text-slate-100 mt-0.5">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-0.5">
                 Room {room?.room_number || '—'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-0.5 flex items-center gap-2 flex-wrap">
@@ -786,11 +786,14 @@ export function ActiveResidentDashboard({
             {/* Room Inclusions / Amenities Tags */}
             <div className="pt-0.5 flex flex-wrap gap-1.5 sm:gap-2">
               {Array.isArray(room?.facilities) && room.facilities.length > 0 ? (
-                room.facilities.map((fac: string, idx: number) => (
-                  <span key={idx} className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
-                    {fac}
-                  </span>
-                ))
+                room.facilities.map((fac: string, idx: number) => {
+                  const label = fac.replace(/laundary/gi, 'Laundry');
+                  return (
+                    <span key={idx} className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
+                      {label}
+                    </span>
+                  );
+                })
               ) : (
                 <>
                   <span className="text-xs font-medium px-2.5 py-0.5 rounded-lg bg-slate-50 dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-[#1a3d52]">
@@ -877,15 +880,12 @@ export function ActiveResidentDashboard({
           <CardContent className="p-3.5 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Monthly Rent</span>
-              <div className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center shrink-0",
-                totalOutstanding > 0 ? "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-200/60 dark:border-teal-800" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800"
-              )}>
+              <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                 <CreditCard className="h-4 w-4" />
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 {totalOutstanding > 0 ? formatCurrency(totalOutstanding) : formatCurrency(currentRentAmount)}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
@@ -910,12 +910,12 @@ export function ActiveResidentDashboard({
           <CardContent className="p-3.5 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Electricity Usage</span>
-              <div className="h-8 w-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 border border-cyan-200/60 dark:border-cyan-800 flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                 <Zap className="h-4 w-4" />
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 {electricitySnapshot?.consumption_units ? `${electricitySnapshot.consumption_units} kWh` : 'Active'}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
@@ -935,15 +935,12 @@ export function ActiveResidentDashboard({
           <CardContent className="p-3.5 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Maintenance Desk</span>
-              <div className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center shrink-0",
-                activeComplaints.length > 0 ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800"
-              )}>
+              <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                 <Wrench className="h-4 w-4" />
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 {activeComplaints.length > 0 ? `${activeComplaints.length} Active` : "All Good"}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
@@ -968,12 +965,12 @@ export function ActiveResidentDashboard({
           <CardContent className="p-3.5 sm:p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Security Deposit</span>
-              <div className="h-8 w-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800 flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                 <ShieldCheck className="h-4 w-4" />
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-xl sm:text-2xl font-bold font-display text-slate-900 dark:text-slate-100">
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 {formatCurrency(depositAmount)}
               </h3>
               <div className="flex items-center justify-between text-xs pt-1">
@@ -993,13 +990,13 @@ export function ActiveResidentDashboard({
       </div>
 
       {/* 4. Split Two-Column Operations Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 items-start">
         {/* Left Column: Recent Fee Invoices & Payment Ledger */}
         <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
           <CardContent className="p-4 sm:p-4.5 space-y-3">
             <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#1a3d52]">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-200/60 dark:border-teal-800 flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <Receipt className="h-4 w-4" />
                 </div>
                 <div>
@@ -1023,7 +1020,7 @@ export function ActiveResidentDashboard({
                   return (
                     <div
                       key={fee.id}
-                      className="p-3 rounded-xl border border-slate-100 dark:border-[#1a3d52] bg-slate-50/70 dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] transition-colors flex items-center justify-between gap-3"
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-between gap-3"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -1083,7 +1080,7 @@ export function ActiveResidentDashboard({
           <CardContent className="p-4 sm:p-4.5 space-y-3">
             <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#1a3d52]">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800 flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <Wrench className="h-4 w-4" />
                 </div>
                 <div>
@@ -1109,14 +1106,14 @@ export function ActiveResidentDashboard({
                   return (
                     <div
                       key={c.id}
-                      className="p-3 rounded-xl border border-slate-100 dark:border-[#1a3d52] bg-slate-50/70 dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] transition-colors flex items-center justify-between gap-3"
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-between gap-3"
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
                         <div className={cn("h-7.5 w-7.5 rounded-lg flex items-center justify-center shrink-0 border mt-0.5", cat.bg)}>
                           <Icon className={cn("h-3.5 w-3.5", cat.color)} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate capitalize">
                             {c.title}
                           </p>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize mt-0.5">
@@ -1157,7 +1154,7 @@ export function ActiveResidentDashboard({
         <CardContent className="p-4 sm:p-4.5 space-y-3">
           <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#1a3d52]">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800 flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                 <Calendar className="h-4 w-4" />
               </div>
               <div>
@@ -1196,7 +1193,7 @@ export function ActiveResidentDashboard({
                         {new Date(n.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5">{n.title}</h4>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5 capitalize">{n.title}</h4>
                     <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">{n.body}</p>
                   </div>
                 );
@@ -1213,17 +1210,17 @@ export function ActiveResidentDashboard({
 
       {/* Checkout / Vacate Room Confirmation Modal Dialog */}
       <Dialog open={isCheckoutDialogOpen} onOpenChange={setIsCheckoutDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-white border border-slate-200 shadow-2xl">
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-white dark:bg-[#0e222e] border border-slate-200 dark:border-[#1a3d52] shadow-2xl">
           <DialogHeader className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="h-11 w-11 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shadow-2xs shrink-0">
                 <LogOut className="h-5 w-5" />
               </div>
               <div>
-                <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 font-display">
+                <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                   Vacate Room {room?.room_number || ''}?
                 </DialogTitle>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
                   {hostel?.name ? `${hostel.name}` : 'Hostel Resident Checkout'}
                 </p>
               </div>

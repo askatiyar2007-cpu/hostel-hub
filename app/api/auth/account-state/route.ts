@@ -19,14 +19,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
   }
 
+  // Helper to resolve account state from user profile when service-role is unavailable
+  const getProfileFallbackState = async () => {
+    let { data: profile } = await sessionClient
+      .from('profiles')
+      .select('role, full_name, password_set')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!profile && user.email) {
+      const { data: byEmail } = await sessionClient
+        .from('profiles')
+        .select('role, full_name, password_set')
+        .eq('email', user.email)
+        .maybeSingle();
+      profile = byEmail;
+    }
+
+    const missing_step = !profile?.role
+      ? 'role'
+      : !profile?.full_name
+      ? 'password'
+      : 'complete';
+
+    return {
+      missing_step,
+      is_complete: missing_step === 'complete',
+      role: profile?.role || null,
+      password_set: profile?.password_set !== false,
+    };
+  };
+
   // Check if service role key is properly configured
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey || serviceRoleKey.trim() === '') {
-    console.error('SUPABASE_SERVICE_ROLE_KEY is not configured. Account state lookup requires service role permissions.');
-    return NextResponse.json(
-      { error: 'Server configuration error: Service role key missing.' },
-      { status: 500 }
-    );
+    const fallback = await getProfileFallbackState();
+    return NextResponse.json(fallback);
   }
 
   // Call get_account_state via service-role client (the function requires
@@ -36,22 +64,17 @@ export async function GET(req: NextRequest) {
   });
 
   if (error) {
-    console.error('Account state lookup failed:', error);
-    return NextResponse.json(
-      { error: 'Unable to determine account state.' },
-      { status: 500 }
-    );
+    console.warn('Account state RPC lookup failed, using profile fallback:', error.message);
+    const fallback = await getProfileFallbackState();
+    return NextResponse.json(fallback);
   }
 
   const state = Array.isArray(data) ? data[0] : data;
 
   // Verify the returned state belongs to the authenticated user (security check)
   if (!state || state.user_id !== user.id) {
-    console.error('Account state mismatch:', { state, userId: user.id });
-    return NextResponse.json(
-      { error: 'Account state mismatch.' },
-      { status: 500 }
-    );
+    const fallback = await getProfileFallbackState();
+    return NextResponse.json(fallback);
   }
 
   // Return only the fields needed by the client

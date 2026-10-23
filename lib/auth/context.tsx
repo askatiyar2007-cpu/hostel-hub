@@ -58,7 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (sessionError) throw sessionError;
+      if (sessionError) {
+        if (
+          sessionError.message?.includes('Refresh Token') ||
+          (sessionError as any).code === 'refresh_token_not_found' ||
+          (sessionError as any).status === 400
+        ) {
+          console.warn('[Auth] Stale refresh token detected, clearing session.');
+          try {
+            await supabase.auth.signOut({ scope: 'local' });
+          } catch {
+            // Ignore signOut error
+          }
+          setUser(null);
+          setProfile(null);
+          setAccountCompletionStep(null);
+          setPasswordSet(null);
+          return;
+        }
+        throw sessionError;
+      }
 
       if (!session?.user) {
         setUser(null);
@@ -219,8 +238,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (isProtected) {
         // Immediate session verification for protected routes on page restoration (bfcache or back/forward navigation)
-        void supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!session) {
+        void supabase.auth.getSession().then(({ data, error: bfError }) => {
+          const session = data?.session;
+          if (bfError || !session) {
+            if (bfError && (bfError.message?.includes('Refresh Token') || (bfError as any).code === 'refresh_token_not_found')) {
+              void supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+            }
             setUser(null);
             setProfile(null);
             setLoading(false);
@@ -232,6 +255,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             lastAccountStateFailureTimeRef.current = 0;
           }
           void synchronize();
+        }).catch(() => {
+          window.location.replace('/auth/login');
         });
       } else {
         if (event.persisted) {

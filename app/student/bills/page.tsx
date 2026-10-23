@@ -151,7 +151,7 @@ export default function StudentBillsPage() {
           .select('*')
           .eq('student_id', student.id)
           .eq('allocation_id', alloc.id)
-          .order('due_date', { ascending: false });
+          .order('due_date', { ascending: true });
 
         if (feesError) throw feesError;
 
@@ -190,12 +190,30 @@ export default function StudentBillsPage() {
           };
         });
 
-        const total_due = formattedFees
-          .filter((f: any) => f.status === 'pending' || f.status === 'overdue')
+        // Chronological sort by nearest / current due date first
+        formattedFees.sort((a: any, b: any) => {
+          const dateA = new Date(a.due_date || a.created_at).getTime();
+          const dateB = new Date(b.due_date || b.created_at).getTime();
+          return dateA - dateB;
+        });
+
+        const isFeeOverdue = (fee: any) => {
+          if (fee.status === 'paid' || fee.status === 'pending_verification') return false;
+          if (fee.status === 'overdue') return true;
+          if (!fee.due_date) return false;
+          const due = new Date(fee.due_date);
+          const today = new Date();
+          due.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+          return due.getTime() < today.getTime();
+        };
+
+        const overdueFees = formattedFees.filter(isFeeOverdue);
+        const total_overdue = overdueFees
           .reduce((sum: number, f: any) => sum + Number(f.amount), 0);
 
-        const total_overdue = formattedFees
-          .filter((f: any) => f.status === 'overdue')
+        const total_due = formattedFees
+          .filter((f: any) => f.status === 'pending' || f.status === 'overdue' || isFeeOverdue(f))
           .reduce((sum: number, f: any) => sum + Number(f.amount), 0);
 
         const total_paid = formattedFees
@@ -206,12 +224,14 @@ export default function StudentBillsPage() {
           fees: formattedFees,
           total_due,
           total_paid,
-          total_overdue
+          total_overdue,
+          overdue_count: overdueFees.length,
+          pending_count: formattedFees.filter((f: any) => f.status === 'pending' || f.status === 'overdue' || isFeeOverdue(f)).length
         });
       } else {
         setAllocation(null);
         setPaymentMethods([]);
-        setFeesData({ fees: [], total_due: 0, total_paid: 0, total_overdue: 0 });
+        setFeesData({ fees: [], total_due: 0, total_paid: 0, total_overdue: 0, overdue_count: 0, pending_count: 0 });
       }
 
     } catch (err: any) {
@@ -428,21 +448,21 @@ export default function StudentBillsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-[#1a3d52]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Fees &amp; Billing</h1>
-          <p className="text-sm text-slate-500 mt-1">Monitor your rent schedules, security deposits, and submit payment verifications.</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Fees &amp; Billing</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitor your rent schedules, security deposits, and submit payment verifications.</p>
         </div>
       </div>
 
       {!allocation ? (
-        <Card className="border border-slate-200 bg-white shadow-sm">
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
           <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto mb-4">
-              <Info className="h-8 w-8 text-amber-600" />
+            <div className="h-16 w-16 rounded-2xl bg-amber-50 border border-amber-100 dark:bg-amber-950/40 dark:border-amber-900/60 flex items-center justify-center mx-auto mb-4">
+              <Info className="h-8 w-8 text-amber-600 dark:text-amber-400" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No Active Room Allocation</h3>
-            <p className="text-slate-600 max-w-md mx-auto">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">No Active Room Allocation</h3>
+            <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
               Your billing details and payment tracking will become active once the owner approves your room booking request and allocates you a room.
             </p>
           </CardContent>
@@ -451,76 +471,76 @@ export default function StudentBillsPage() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border border-slate-200 bg-white shadow-sm">
+            <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                  <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 dark:bg-amber-950/40 dark:border-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                     <IndianRupee className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Total Due</p>
-                    <p className="font-bold text-slate-900">₹{feesData.total_due.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Total Due</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">₹{feesData.total_due.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400">{feesData.fees.filter((f: any) => f.status === 'pending' || f.status === 'overdue').length} pending bills</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{feesData.pending_count ?? feesData.fees.filter((f: any) => f.status === 'pending' || f.status === 'overdue').length} pending bills</p>
               </CardContent>
             </Card>
 
-            <Card className="border border-slate-200 bg-white shadow-sm">
+            <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center text-green-600">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Total Paid</p>
-                    <p className="font-bold text-slate-900">₹{feesData.total_paid.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Total Paid</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">₹{feesData.total_paid.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400">{feesData.fees.filter((f: any) => f.status === 'paid').length} paid bills</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{feesData.fees.filter((f: any) => f.status === 'paid').length} paid bills</p>
               </CardContent>
             </Card>
 
-            <Card className="border border-slate-200 bg-white shadow-sm">
+            <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+                  <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 dark:bg-rose-950/40 dark:border-rose-900/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
                     <AlertCircle className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Overdue</p>
-                    <p className="font-bold text-slate-900">₹{feesData.total_overdue.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Overdue</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">₹{feesData.total_overdue.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400">{feesData.fees.filter((f: any) => f.status === 'overdue').length} overdue bills</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{feesData.overdue_count ?? feesData.fees.filter((f: any) => f.status === 'overdue').length} overdue bills</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Current Month Summary */}
           {summaryFee && (
-            <Card className="border border-slate-200 bg-white shadow-sm">
+            <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {formatBillingMonth(summaryFee.month_year, summaryFee.due_date)}
                     </p>
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-3xl font-bold text-slate-900">
-                        ₹{summaryFee.status === 'paid' ? 0 : summaryFee.amount}
+                      <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                        ₹{(summaryFee.status === 'paid' ? 0 : Number(summaryFee.amount)).toLocaleString('en-IN')}
                       </h2>
-                      <span className="text-sm text-slate-500">due of ₹{summaryFee.amount} rent</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">due of ₹{Number(summaryFee.amount).toLocaleString('en-IN')} rent</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-slate-600">
+                    <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
                       <span className="flex items-center gap-1">
                         <Calendar size={14} />
                         Due: {new Date(summaryFee.due_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                       <span className={cn("font-medium", 
-                        summaryFee.status === 'paid' ? 'text-green-600' :
-                        summaryFee.status === 'pending_verification' ? 'text-amber-600' :
-                        summaryFee.status === 'overdue' ? 'text-rose-600' : 'text-amber-600'
+                        summaryFee.status === 'paid' ? 'text-green-600 dark:text-green-400' :
+                        summaryFee.status === 'pending_verification' ? 'text-amber-600 dark:text-amber-400' :
+                        summaryFee.status === 'overdue' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
                       )}>
                         {summaryFee.status.replace('_', ' ')}
                       </span>
@@ -541,7 +561,7 @@ export default function StudentBillsPage() {
                       </Button>
                     )}
                     {summaryFee.status === 'pending_verification' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60">
                         <Clock size={14} />
                         Awaiting Verification
                       </span>
@@ -553,69 +573,71 @@ export default function StudentBillsPage() {
           )}
 
           {/* Payment History */}
-          <Card className="border border-slate-200 bg-white shadow-sm">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
             <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard className="h-5 w-5 text-amber-600" />
-                <h3 className="font-semibold text-slate-900">Payment History</h3>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-4 w-4" />
+                </div>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">Payment History</h3>
               </div>
 
               {feesData.fees.length === 0 ? (
                 <div className="text-center py-12">
-                  <Info className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-500">No billing schedule generated yet</p>
+                  <Info className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400">No billing schedule generated yet</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {feesData.fees.map((fee: any) => {
                     const daysBadge = getDaysRemainingBadge(fee);
                     return (
-                      <div key={fee.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                      <div key={fee.id} className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-100 dark:border-white/5">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                            <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                               <Calendar className="h-5 w-5" />
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-900">{formatBillingMonth(fee.month_year, fee.due_date)}</p>
-                              <p className="text-xs text-slate-500">Due: {new Date(fee.due_date).toLocaleDateString()}</p>
+                              <p className="font-semibold text-slate-900 dark:text-slate-100">{formatBillingMonth(fee.month_year, fee.due_date)}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">Due: {new Date(fee.due_date).toLocaleDateString()}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-slate-900">₹{fee.amount}</p>
+                            <p className="font-bold text-slate-900 dark:text-slate-100">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
                             <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", 
                               fee.status === 'paid'
-                                ? 'bg-green-100 text-green-700' 
+                                ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300' 
                                 : fee.status === 'pending_verification'
-                                ? 'bg-amber-100 text-amber-700' 
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' 
                                 : fee.status === 'overdue'
-                                ? 'bg-rose-100 text-rose-700' 
-                                : 'bg-amber-100 text-amber-700'
+                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' 
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
                             )}>
                               {fee.status.replace('_', ' ')}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-                          <div className="text-xs text-slate-500">
+                        <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 dark:border-[#1a3d52]">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             {fee.status === 'paid' ? (
                               <span>Paid on {fee.paid_date ? new Date(fee.paid_date).toLocaleDateString() : new Date(fee.updated_at).toLocaleDateString()} via {fee.payment_method || 'Manual'}</span>
                             ) : fee.status === 'pending_verification' ? (
-                              <span className="text-amber-600">Awaiting Owner Approval</span>
+                              <span className="text-amber-600 dark:text-amber-400">Awaiting Owner Approval</span>
                             ) : (
-                              <span className={cn("font-medium", daysBadge.className === 'bg-rose-100 text-rose-800' ? 'text-rose-600' : 'text-slate-600')}>
+                              <span className={cn("font-medium", daysBadge.className === 'bg-rose-100 text-rose-800' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600 dark:text-slate-300')}>
                                 {daysBadge.text}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
                             {fee.status === 'paid' && (
-                              <span className="text-green-600 font-bold text-xs flex items-center gap-1">
+                              <span className="text-green-600 dark:text-green-400 font-bold text-xs flex items-center gap-1">
                                 <CheckCircle2 size={14} /> Verified
                               </span>
                             )}
                             {fee.status === 'pending_verification' && (
-                              <span className="text-amber-600 font-medium text-xs flex items-center gap-1">
+                              <span className="text-amber-600 dark:text-amber-400 font-medium text-xs flex items-center gap-1">
                                 <Clock size={14} /> In Review
                               </span>
                             )}
@@ -624,7 +646,7 @@ export default function StudentBillsPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openPaymentModal(fee)}
-                                className="text-xs font-semibold text-teal-700 border-teal-300 hover:bg-teal-50 h-7"
+                                className="text-xs font-semibold text-teal-700 dark:text-teal-400 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 h-7"
                               >
                                 Submit Proof
                               </Button>
@@ -640,43 +662,45 @@ export default function StudentBillsPage() {
           </Card>
 
           {/* Payment Methods */}
-          <Card className="border border-slate-200 bg-white shadow-sm">
+          <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
             <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-slate-900">Hostel Payment Details</h3>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">Hostel Payment Details</h3>
               </div>
 
               {paymentMethods.length === 0 ? (
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-start gap-3">
+                <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-3">
                   <AlertCircle size={18} className="shrink-0 mt-0.5" />
                   <p>Owner has not set payment methods yet. Please contact your hostel owner for payment instructions.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {paymentMethods.map((method: any) => (
-                    <div key={method.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div key={method.id} className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-100 dark:border-white/5">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <span className="h-8 w-8 flex items-center justify-center rounded-lg bg-teal-100 text-teal-700 font-bold text-xs uppercase">
+                          <span className="h-8 w-8 flex items-center justify-center rounded-lg bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold text-xs uppercase">
                             {method.payment_type === 'qr_code' ? 'QR' : method.payment_type}
                           </span>
-                          <span className="font-semibold text-slate-900">
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">
                             {method.payment_type === 'upi' && 'UPI Payment'}
                             {method.payment_type === 'bank' && 'Bank Transfer'}
                             {method.payment_type === 'qr_code' && 'Scan QR'}
                           </span>
                         </div>
                         {method.is_primary && (
-                          <span className="bg-teal-100 text-teal-700 text-xs font-bold px-2 py-1 rounded-full">Primary</span>
+                          <span className="bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold px-2 py-1 rounded-full">Primary</span>
                         )}
                       </div>
 
                       {method.payment_type === 'upi' && (
-                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                        <div className="flex items-center justify-between p-3 bg-white dark:bg-[#0a1820] rounded-lg border border-slate-200 dark:border-white/10">
                           <div>
-                            <p className="text-xs text-slate-500 mb-1">UPI ID</p>
-                            <p className="font-mono font-semibold text-slate-900">{method.upi_id}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">UPI ID</p>
+                            <p className="font-mono font-semibold text-slate-900 dark:text-slate-100">{method.upi_id}</p>
                           </div>
                           <Button
                             size="sm"
@@ -685,7 +709,7 @@ export default function StudentBillsPage() {
                               navigator.clipboard.writeText(method.upi_id || '');
                               toast.success('UPI ID copied');
                             }}
-                            className="rounded-lg"
+                            className="rounded-lg dark:border-white/10 dark:hover:bg-white/5"
                           >
                             <Copy size={14} />
                           </Button>
@@ -693,15 +717,15 @@ export default function StudentBillsPage() {
                       )}
 
                       {method.payment_type === 'bank' && (
-                        <div className="space-y-2 p-3 bg-white rounded-lg border border-slate-200">
+                        <div className="space-y-2 p-3 bg-white dark:bg-[#0a1820] rounded-lg border border-slate-200 dark:border-white/10">
                           <div>
-                            <p className="text-xs text-slate-500">Account Holder</p>
-                            <p className="font-semibold text-slate-900">{method.account_holder_name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Account Holder</p>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100">{method.account_holder_name}</p>
                           </div>
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-xs text-slate-500">Account Number</p>
-                              <p className="font-mono font-semibold text-slate-900">{method.bank_account}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">Account Number</p>
+                              <p className="font-mono font-semibold text-slate-900 dark:text-slate-100">{method.bank_account}</p>
                             </div>
                             <Button
                               size="sm"
@@ -710,28 +734,28 @@ export default function StudentBillsPage() {
                                 navigator.clipboard.writeText(method.bank_account || '');
                                 toast.success('Account number copied');
                               }}
-                              className="rounded-lg"
+                              className="rounded-lg dark:border-white/10 dark:hover:bg-white/5"
                             >
                               <Copy size={14} />
                             </Button>
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500">IFSC Code</p>
-                            <p className="font-mono font-semibold text-slate-900 uppercase">{method.ifsc_code}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">IFSC Code</p>
+                            <p className="font-mono font-semibold text-slate-900 dark:text-slate-100 uppercase">{method.ifsc_code}</p>
                           </div>
                         </div>
                       )}
 
                       {method.payment_type === 'qr_code' && method.qr_code_url && (
-                        <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-4 p-3 bg-white dark:bg-[#0a1820] rounded-lg border border-slate-200 dark:border-white/10">
                           <button
-                            className="h-20 w-20 rounded-lg overflow-hidden border border-slate-200 hover:ring-2 hover:ring-teal-400 transition-all"
+                            className="h-20 w-20 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 hover:ring-2 hover:ring-teal-400 transition-all"
                           >
                             <img src={method.qr_code_url} alt="QR Code" className="h-full w-full object-contain" />
                           </button>
                           <div className="flex-1">
-                            <p className="font-semibold text-slate-900 mb-1">Scan to Pay</p>
-                            <p className="text-xs text-slate-500">Use any UPI app to scan this QR code</p>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Scan to Pay</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Use any UPI app to scan this QR code</p>
                           </div>
                         </div>
                       )}
@@ -746,13 +770,13 @@ export default function StudentBillsPage() {
 
       {/* Payment Proof Submission Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="sm:max-w-[480px] bg-white rounded-2xl p-6 border border-slate-200 shadow-xl">
+        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-[#0e222e] rounded-2xl p-6 border border-slate-200 dark:border-[#1a3d52] shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-teal-600" />
+            <DialogTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               Submit Payment Proof
             </DialogTitle>
-            <DialogDescription className="text-slate-500 text-xs">
+            <DialogDescription className="text-slate-500 dark:text-slate-400 text-xs">
               Record your offline payment details and receipt for hostel owner verification.
             </DialogDescription>
           </DialogHeader>
@@ -760,16 +784,16 @@ export default function StudentBillsPage() {
           {selectedFeeForPayment && (
             <form onSubmit={handleSubmitPaymentProof} className="space-y-4 pt-2">
               {/* Fee summary card */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+              <div className="p-3 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-slate-500 font-medium">Billing Period</p>
-                  <p className="font-semibold text-slate-900 text-sm">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Billing Period</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                     {formatBillingMonth(selectedFeeForPayment.month_year, selectedFeeForPayment.due_date)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-slate-500 font-medium">Amount Due</p>
-                  <p className="font-bold text-teal-700 text-base">₹{selectedFeeForPayment.amount}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Amount Due</p>
+                  <p className="font-bold text-teal-700 dark:text-teal-400 text-base">₹{Number(selectedFeeForPayment.amount).toLocaleString('en-IN')}</p>
                 </div>
               </div>
 

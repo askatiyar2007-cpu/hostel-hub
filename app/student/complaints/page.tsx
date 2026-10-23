@@ -158,10 +158,10 @@ export default function StudentComplaintsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-[#1a3d52]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-display tracking-tight">Complaints &amp; Maintenance</h1>
-          <p className="text-sm text-slate-500 mt-1">Report room issues and track resolution status in real time.</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Complaints &amp; Maintenance</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Report room issues and track resolution status in real time.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -170,26 +170,27 @@ export default function StudentComplaintsPage() {
               New Complaint
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-xl">
+          <DialogContent className="rounded-xl bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52]" overlayClassName="backdrop-blur-sm">
             <DialogHeader>
-              <DialogTitle>Submit a Complaint</DialogTitle>
+              <DialogTitle className="text-slate-900 dark:text-slate-100 font-semibold tracking-tight">Submit a Complaint</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label>Title</Label>
+                <Label className="text-slate-700 dark:text-slate-300">Title</Label>
                 <Input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Brief description of the issue"
                   required
+                  className="bg-white dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100"
                 />
               </div>
               <div>
-                <Label>Category</Label>
+                <Label className="text-slate-700 dark:text-slate-300">Category</Label>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full mt-1 h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  className="w-full mt-1 h-10 rounded-md border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] px-3 text-sm text-slate-900 dark:text-slate-100"
                 >
                   {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
@@ -197,17 +198,18 @@ export default function StudentComplaintsPage() {
                 </select>
               </div>
               <div>
-                <Label>Description</Label>
+                <Label className="text-slate-700 dark:text-slate-300">Description</Label>
                 <Textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Detailed description of the issue"
                   rows={4}
                   required
+                  className="bg-white dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100"
                 />
               </div>
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="rounded-xl">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="rounded-xl border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200">
                   Cancel
                 </Button>
                 <Button type="submit" disabled={submitting} className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl">
@@ -220,13 +222,13 @@ export default function StudentComplaintsPage() {
       </div>
 
       {complaints.length === 0 ? (
-        <Card className="border border-slate-200 bg-white shadow-sm">
+        <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
           <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-4">
-              <ShieldCheck className="h-8 w-8 text-emerald-600" />
+            <div className="h-16 w-16 rounded-2xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck className="h-8 w-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No complaints filed yet</h3>
-            <p className="text-slate-600 max-w-md mx-auto">Report issues to help improve your hostel experience.</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">No complaints filed yet</h3>
+            <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">Report issues to help improve your hostel experience.</p>
           </CardContent>
         </Card>
       ) : (
@@ -237,10 +239,10 @@ export default function StudentComplaintsPage() {
             const CategoryIcon = CATEGORY_ICON[complaint.category] || AlertCircle;
             
             return (
-              <Card key={complaint.id} className="border border-slate-200 bg-white shadow-sm">
+              <Card key={complaint.id} className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                    <div className="h-12 w-12 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                       <CategoryIcon className="h-6 w-6" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -253,21 +255,21 @@ export default function StudentComplaintsPage() {
                             {statusConfig.label}
                           </span>
                         </div>
-                        <span className="text-xs text-slate-500 flex items-center">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center">
                           <Clock size={12} className="mr-1" />
                           {new Date(complaint.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-slate-900 mb-1">{complaint.title}</h3>
-                      <p className="text-slate-600 text-sm mb-3">{complaint.description}</p>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1 capitalize">{complaint.title}</h3>
+                      <p className="text-slate-600 dark:text-slate-300 text-sm mb-3">{complaint.description}</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                           {CATEGORY_LABEL[complaint.category] || complaint.category}
                         </span>
                       </div>
                       
                       {complaint.status === 'resolved' && (
-                        <div className="mt-4 p-3 bg-emerald-50 rounded-lg flex items-center gap-2 text-emerald-700 text-sm">
+                        <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-sm">
                           <MessageCircle size={16} />
                           <span>Your issue has been resolved.</span>
                         </div>

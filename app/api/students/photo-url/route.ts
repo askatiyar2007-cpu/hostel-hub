@@ -219,3 +219,196 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
+/**
+ * Shared helper to resolve and sign a single photo storage path or external URL
+ */
+async function signPhotoPath(rawAvatar: string): Promise<string | null> {
+  const trimmed = rawAvatar.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  let bucket = 'avatars';
+  let path = trimmed;
+  if (trimmed.startsWith('student-room-requests/')) {
+    bucket = 'student-room-requests';
+    path = trimmed.replace(/^student-room-requests\//, '');
+  } else if (trimmed.startsWith('avatars/')) {
+    bucket = 'avatars';
+    path = trimmed.replace(/^avatars\//, '');
+  }
+
+  const { data: signedAvatar, error: avatarSignErr } = await supabaseServer.storage
+    .from(bucket)
+    .createSignedUrl(path, 3600);
+
+  if (!avatarSignErr && signedAvatar?.signedUrl) {
+    return signedAvatar.signedUrl;
+  }
+
+  // Fallback to student-room-requests bucket if avatars failed
+  if (bucket === 'avatars') {
+    const { data: signedFallback } = await supabaseServer.storage
+      .from('student-room-requests')
+      .createSignedUrl(path, 3600);
+
+    if (signedFallback?.signedUrl) {
+      return signedFallback.signedUrl;
+    }
+  }
+
+  return null;
+}
+
+const BatchPhotoUrlSchema = z.object({
+  student_ids: z.array(z.string().uuid('Invalid student ID format')).min(1).max(100),
+});
+
+/**
+ * POST /api/students/photo-url
+ *
+ * Secure batch resolution for student photos.
+ * Takes { student_ids: string[] } and returns { photos: Record<string, string> }.
+ * Executes only 2-3 batched database queries for up to 100 students instead of N+1 individual HTTP requests.
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const body = await request.json();
+    const validationResult = BatchPhotoUrlSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: validationResult.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const requestedIds = Array.from(new Set(validationResult.data.student_ids));
+    const supabase = createClient(request);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if caller is super admin
+    const { data: callerProfile } = await supabaseServer
+      .from('profiles')
+      .select('id, role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const isSuperAdmin = callerProfile?.role === 'super_admin';
+    let authorizedIds: Set<string>;
+
+    if (isSuperAdmin) {
+      authorizedIds = new Set(requestedIds);
+    } else {
+      authorizedIds = new Set<string>();
+
+      // 1. Check if caller is student querying their own student_id
+      const { data: selfStudentRecord } = await supabaseServer
+        .from('students')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (selfStudentRecord && requestedIds.includes(selfStudentRecord.id)) {
+        authorizedIds.add(selfStudentRecord.id);
+      }
+
+      // 2. Check if caller is an owner of hostels associated with any requested students
+      const [allocationsCheck, requestsCheck] = await Promise.all([
+        supabaseServer
+          .from('room_allocations')
+          .select('student_id, hostels!inner(owner_id)')
+          .in('student_id', requestedIds)
+          .eq('hostels.owner_id', user.id),
+        supabaseServer
+          .from('room_requests')
+          .select('student_id, hostels!inner(owner_id)')
+          .in('student_id', requestedIds)
+          .eq('hostels.owner_id', user.id),
+      ]);
+
+      allocationsCheck.data?.forEach((a: any) => authorizedIds.add(a.student_id));
+      requestsCheck.data?.forEach((r: any) => authorizedIds.add(r.student_id));
+    }
+
+    const validIds = Array.from(authorizedIds);
+    if (validIds.length === 0) {
+      return NextResponse.json({ photos: {} });
+    }
+
+    // 1. Query profiles for all authorized students in one batch query
+    const { data: studentsWithProfiles } = await supabaseServer
+      .from('students')
+      .select(`
+        id,
+        profile_id,
+        profiles (
+          id,
+          avatar_url
+        )
+      `)
+      .in('id', validIds);
+
+    const photos: Record<string, string> = {};
+    const studentsNeedingRoomRequest: string[] = [];
+    const signingPromises: Promise<void>[] = [];
+
+    studentsWithProfiles?.forEach((student: any) => {
+      const prof = Array.isArray(student.profiles) ? student.profiles[0] : student.profiles;
+      const avatarUrl = prof?.avatar_url;
+      if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.trim()) {
+        signingPromises.push(
+          signPhotoPath(avatarUrl).then((signed) => {
+            if (signed) {
+              photos[student.id] = signed;
+            }
+          })
+        );
+      } else {
+        studentsNeedingRoomRequest.push(student.id);
+      }
+    });
+
+    // 2. Fallback: Query room_requests for students who don't have a profile avatar
+    if (studentsNeedingRoomRequest.length > 0) {
+      const { data: reqPhotos } = await supabaseServer
+        .from('room_requests')
+        .select('student_id, photo_path, created_at')
+        .in('student_id', studentsNeedingRoomRequest)
+        .not('photo_path', 'is', null)
+        .order('created_at', { ascending: false });
+
+      // Group by student_id to pick the latest room request photo
+      const latestReqMap = new Map<string, string>();
+      reqPhotos?.forEach((r: any) => {
+        if (!latestReqMap.has(r.student_id) && r.photo_path) {
+          latestReqMap.set(r.student_id, r.photo_path);
+        }
+      });
+
+      latestReqMap.forEach((photoPath, studentId) => {
+        signingPromises.push(
+          signPhotoPath(photoPath).then((signed) => {
+            if (signed) {
+              photos[studentId] = signed;
+            }
+          })
+        );
+      });
+    }
+
+    await Promise.all(signingPromises);
+
+    return NextResponse.json({ photos });
+  } catch (error: any) {
+    console.error('[Batch Photo URL API] Internal error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

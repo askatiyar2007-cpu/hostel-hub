@@ -166,31 +166,24 @@ export default function OwnerStudentsPage() {
           )
         );
 
-        const photoPromises = uniqueStudentIds.map(async (studentId) => {
+        if (uniqueStudentIds.length > 0) {
           try {
-            const response = await fetch(`/api/students/photo-url?student_id=${encodeURIComponent(studentId)}`);
+            const response = await fetch('/api/students/photo-url', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ student_ids: uniqueStudentIds }),
+            });
             if (response.ok) {
               const resData = await response.json();
-              if (resData?.signedUrl) {
-                return { studentId, url: resData.signedUrl };
+              if (fetchId !== currentFetchIdRef.current) return; // Stale fetch cancellation
+              if (resData?.photos) {
+                setPhotoUrls(resData.photos);
               }
             }
-            return null;
-          } catch {
-            return null;
+          } catch (photoErr) {
+            console.error('Failed to batch fetch student photos:', photoErr);
           }
-        });
-
-        const photoResults = await Promise.all(photoPromises);
-        if (fetchId !== currentFetchIdRef.current) return; // Stale fetch cancellation
-
-        const urlMap: Record<string, string> = {};
-        photoResults.forEach(result => {
-          if (result && result.url) {
-            urlMap[result.studentId] = result.url;
-          }
-        });
-        setPhotoUrls(urlMap);
+        }
       }
     } catch (err: any) {
       if (fetchId !== currentFetchIdRef.current) return;

@@ -285,7 +285,7 @@ export function StudentNotifications() {
         );
       case 'notice':
         return (
-          <div className="h-8 w-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-800 flex items-center justify-center shrink-0">
             <Megaphone className="h-4 w-4" />
           </div>
         );
@@ -345,7 +345,7 @@ export function StudentNotifications() {
       <PopoverContent align="end" className="w-88 p-0 border border-slate-200 dark:border-[#1a3d52] shadow-2xl rounded-2xl bg-white dark:bg-[#0e222e] overflow-hidden text-slate-800 dark:text-slate-100">
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 dark:border-[#1a3d52] bg-slate-50/80 dark:bg-[#0b1b25]">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 font-display">Student Alerts</h3>
+            <h3 className="font-semibold tracking-tight text-sm text-slate-900 dark:text-slate-100">Student Alerts</h3>
             {unreadCount > 0 && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
                 {unreadCount} new
@@ -390,7 +390,7 @@ export function StudentNotifications() {
                 <div className="flex-1 min-w-0 pr-6">
                   <div className="flex items-center justify-between gap-1.5 mb-0.5">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <p className={cn("text-xs text-slate-900 dark:text-slate-100 truncate", !notif.read && "font-bold text-slate-900 dark:text-white")}>
+                      <p className={cn("text-xs text-slate-900 dark:text-slate-100 truncate capitalize", !notif.read && "font-bold text-slate-900 dark:text-white")}>
                         {notif.title}
                       </p>
                       {!notif.read && (

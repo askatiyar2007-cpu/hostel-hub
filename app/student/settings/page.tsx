@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  User, Lock, Bell, ShieldCheck, FileText, LogOut,
+  User, Lock, Bell, ShieldCheck, FileText,
   Building2, Calendar, ShieldAlert, ArrowRight, Home,
   Palette, Sun, Moon, Monitor, Check, KeyRound, Save
 } from 'lucide-react';
@@ -56,7 +56,7 @@ function ToggleSwitch({
 }
 
 export default function StudentSettingsPage() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
   const { theme, setTheme } = useTheme();
 
   // Change Password Modal State
@@ -134,7 +134,7 @@ export default function StudentSettingsPage() {
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Header */}
       <div className="space-y-0.5">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 font-display">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Settings</h1>
         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
           Manage your student profile, visual theme, notification alerts, and security credentials.
         </p>
@@ -156,14 +156,14 @@ export default function StudentSettingsPage() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate capitalize">
                 {profile?.full_name || 'Student'}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
                 {profile?.email || 'No email registered'}
               </p>
               {profile?.phone_number && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 truncate mt-0.5">
                   {profile.phone_number}
                 </p>
               )}
@@ -188,12 +188,12 @@ export default function StudentSettingsPage() {
           <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
             <CardContent className="p-4 sm:p-5 space-y-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 border border-cyan-100 dark:border-cyan-800 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <Palette className="h-4.5 w-4.5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Appearance & Theme</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Choose your workspace display mode</p>
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Appearance &amp; Theme</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Choose your workspace display mode</p>
                 </div>
               </div>
 
@@ -217,7 +217,7 @@ export default function StudentSettingsPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Light</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Daylight</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400">Daylight</p>
                   </div>
                   {theme === 'light' && (
                     <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-teal-600 text-white flex items-center justify-center">
@@ -245,7 +245,7 @@ export default function StudentSettingsPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Dark</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Night-time</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400">Night-time</p>
                   </div>
                   {theme === 'dark' && (
                     <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-teal-600 text-white flex items-center justify-center">
@@ -273,7 +273,7 @@ export default function StudentSettingsPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100">System</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Device sync</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400">Device sync</p>
                   </div>
                   {theme === 'system' && (
                     <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-teal-600 text-white flex items-center justify-center">
@@ -289,34 +289,34 @@ export default function StudentSettingsPage() {
           <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
             <CardContent className="p-4 sm:p-5 space-y-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-100 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <User className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Account</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Profile identity information</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Profile identity information</p>
                 </div>
               </div>
 
               <div className="space-y-2.5 pt-1">
                 <div>
-                  <Label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Full Name</Label>
-                  <Input disabled value={profile?.full_name || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-200 text-xs cursor-not-allowed" />
+                  <Label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Full Name</Label>
+                  <Input disabled value={profile?.full_name || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 disabled:opacity-100 disabled:text-slate-700 dark:disabled:text-slate-300 font-medium text-xs cursor-not-allowed capitalize" />
                 </div>
                 <div>
-                  <Label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Email Address</Label>
-                  <Input disabled value={profile?.email || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-200 text-xs cursor-not-allowed" />
+                  <Label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Email Address</Label>
+                  <Input disabled value={profile?.email || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 disabled:opacity-100 disabled:text-slate-700 dark:disabled:text-slate-300 font-medium text-xs cursor-not-allowed" />
                 </div>
                 <div>
-                  <Label className="text-xs text-slate-500 dark:text-slate-400 font-medium">Phone Number</Label>
-                  <Input disabled value={profile?.phone_number || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-800 dark:text-slate-200 text-xs cursor-not-allowed" />
+                  <Label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Phone Number</Label>
+                  <Input disabled value={profile?.phone_number || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 disabled:opacity-100 disabled:text-slate-700 dark:disabled:text-slate-300 font-medium text-xs cursor-not-allowed" />
                 </div>
               </div>
 
               <div className="flex items-start gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl">
                 <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-normal">
-                  Profile details are linked to your authoritative room request. Contact hostel management if corrections are required.
+                  To update your profile details, please contact the hostel office.
                 </p>
               </div>
             </CardContent>
@@ -326,20 +326,20 @@ export default function StudentSettingsPage() {
           <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
             <CardContent className="p-4 sm:p-5 space-y-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <Bell className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Notifications</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Email alerts and payment reminders</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Email alerts and payment reminders</p>
                 </div>
               </div>
 
               <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#122b3b] border border-slate-200/80 dark:border-[#1a3d52]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
                   <div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Email Receipts</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Payment receipts and invoices</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400">Payment receipts and invoices</p>
                   </div>
                   <ToggleSwitch
                     checked={emailNotif}
@@ -348,10 +348,10 @@ export default function StudentSettingsPage() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#122b3b] border border-slate-200/80 dark:border-[#1a3d52]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
                   <div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Announcements</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Hostel notices and broadcast updates</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400">Hostel notices and broadcast updates</p>
                   </div>
                   <ToggleSwitch
                     checked={announceNotif}
@@ -360,10 +360,10 @@ export default function StudentSettingsPage() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#122b3b] border border-slate-200/80 dark:border-[#1a3d52]">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
                   <div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Payment Reminders</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Advance notification before fee due dates</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400">Advance notification before fee due dates</p>
                   </div>
                   <ToggleSwitch
                     checked={payRemind}
@@ -397,18 +397,18 @@ export default function StudentSettingsPage() {
           </Card>
         </div>
 
-        {/* Right Column: Current Allocation, Security, Documents, Sign Out */}
+        {/* Right Column: Current Allocation, Security, Documents */}
         <div className="space-y-4 sm:space-y-5">
           {/* 1. Allocation Card */}
           <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
             <CardContent className="p-4 sm:p-5 space-y-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <Building2 className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Current Allocation</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Assigned room & residency status</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Assigned room &amp; residency status</p>
                 </div>
               </div>
 
@@ -416,19 +416,19 @@ export default function StudentSettingsPage() {
                 <div className="space-y-2.5 pt-1">
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-[#1a3d52]">
-                      <span className="text-slate-500 dark:text-slate-400">Hostel</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">{allocation.hostels?.name}</span>
+                      <span className="text-slate-600 dark:text-slate-400">Hostel</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100 capitalize">{allocation.hostels?.name}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-[#1a3d52]">
-                      <span className="text-slate-500 dark:text-slate-400">Room</span>
+                      <span className="text-slate-600 dark:text-slate-400">Room</span>
                       <span className="font-semibold text-slate-900 dark:text-slate-100">Room {allocation.rooms?.room_number}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-[#1a3d52]">
-                      <span className="text-slate-500 dark:text-slate-400">Check-in</span>
+                      <span className="text-slate-600 dark:text-slate-400">Check-in</span>
                       <span className="font-semibold text-slate-900 dark:text-slate-100">{new Date(allocation.start_date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex justify-between py-1">
-                      <span className="text-slate-500 dark:text-slate-400">Residency Status</span>
+                      <span className="text-slate-600 dark:text-slate-400">Residency Status</span>
                       <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Active
                       </span>
@@ -449,9 +449,9 @@ export default function StudentSettingsPage() {
               ) : (
                 <div className="text-center py-5 space-y-2.5">
                   <Home className="h-7 w-7 text-slate-300 dark:text-slate-600 mx-auto" />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">No active room allocation</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">No active room allocation</p>
                   <a href="/student/room-request" className="inline-block">
-                    <Button variant="outline" size="sm" className="rounded-xl font-semibold text-xs border-slate-200 dark:border-[#1a3d52] h-8.5">
+                    <Button variant="outline" size="sm" className="rounded-xl font-semibold text-xs border-slate-200 dark:border-[#1a3d52] h-8.5 text-slate-700 dark:text-slate-200">
                       Request a Room
                     </Button>
                   </a>
@@ -464,19 +464,19 @@ export default function StudentSettingsPage() {
           <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
             <CardContent className="p-4 sm:p-5 space-y-3.5">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-800 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <Lock className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Security</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Password and account protection</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Password and account protection</p>
                 </div>
               </div>
 
               <Button 
                 onClick={() => setIsPasswordModalOpen(true)} 
                 size="sm"
-                className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-semibold text-xs h-9 cursor-pointer shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 group active:scale-95"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white dark:border-white/15 rounded-xl font-semibold text-xs h-9 cursor-pointer shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-2 group active:scale-95"
               >
                 <KeyRound className="h-3.5 w-3.5 transition-transform group-hover:rotate-45" />
                 <span>Change Password</span>
@@ -488,12 +488,12 @@ export default function StudentSettingsPage() {
           <Card className="border border-slate-200/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] shadow-xs rounded-2xl">
             <CardContent className="p-4 sm:p-5 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-100 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 flex items-center justify-center shrink-0">
                   <FileText className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">Documents</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Agreements, certificates & records</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Agreements, certificates &amp; records</p>
                 </div>
               </div>
 
@@ -519,16 +519,6 @@ export default function StudentSettingsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* 4. Sign Out Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl font-semibold text-xs h-9 cursor-pointer shadow-2xs"
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4 mr-2" /> Sign Out
-          </Button>
         </div>
       </div>
 

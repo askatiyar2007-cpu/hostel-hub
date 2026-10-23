@@ -54,6 +54,29 @@ export default function PublicHomePage() {
   const [hostels, setHostels] = useState<HostelListing[]>([]);
   const [loadingHostels, setLoadingHostels] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAuthPayload, setMobileAuthPayload] = useState<string | null>(null);
+
+  // Mobile App OAuth Bridge: If Supabase redirects here after a mobile OAuth sign-in,
+  // immediately bounce back to the HostelHub mobile app via deep link.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const hasTokens = hash.includes('access_token=') || search.includes('code=') || hash.includes('code=');
+    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobileParam = search.includes('source=mobile') || hash.includes('source=mobile');
+
+    if (hasTokens && (isMobileDevice || isMobileParam)) {
+      const payload = hash || search;
+      setMobileAuthPayload(payload);
+      const appUrl = `hostelhubmobile://auth/callback${payload}`;
+      try {
+        window.location.replace(appUrl);
+      } catch {
+        window.location.href = appUrl;
+      }
+    }
+  }, []);
 
   // Scroll-driven animations
   const { scrollY } = useScroll();
@@ -146,6 +169,26 @@ export default function PublicHomePage() {
 
     loadHostels();
   }, []);
+
+  if (mobileAuthPayload) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#07131D] px-6 py-12 text-center text-white">
+        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-teal-500/20 text-teal-400 shadow-xl shadow-teal-500/10">
+          <Sparkles className="h-10 w-10 animate-pulse" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Connecting to HostelHub Mobile</h1>
+        <p className="mt-3 max-w-sm text-sm text-slate-400">
+          Google authentication successful! Returning to your mobile app...
+        </p>
+        <a
+          href={`hostelhubmobile://auth/callback${mobileAuthPayload}`}
+          className="mt-6 inline-flex items-center justify-center rounded-xl bg-teal-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg transition-transform active:scale-95 hover:bg-teal-500"
+        >
+          Open HostelHub App
+        </a>
+      </div>
+    );
+  }
 
   if (loading || profile) {
     return (

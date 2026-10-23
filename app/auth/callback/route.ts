@@ -70,6 +70,28 @@ function genericLoginError(request: NextRequest): NextResponse {
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const requestUrl = new URL(request.url);
+
+  // Mobile App OAuth Bridge: If request originated from mobile app, exchange code and deep-link back to app
+  const userAgent = request.headers.get('user-agent') || '';
+  const isMobileUserAgent = /Android|iPhone|iPad|iPod/i.test(userAgent);
+  const isExplicitMobile = requestUrl.searchParams.get('source') === 'mobile' || requestUrl.searchParams.get('mobile') === 'true';
+  const hasTransaction = Boolean(requestUrl.searchParams.get('transaction'));
+  const isMobile = isExplicitMobile || (!hasTransaction && isMobileUserAgent);
+  const mobileCode = requestUrl.searchParams.get('code');
+  if (isMobile && mobileCode) {
+    try {
+      const sessionClient = createClient();
+      const { data: exchangeData, error: exchangeError } = await sessionClient.auth.exchangeCodeForSession(mobileCode);
+      if (!exchangeError && exchangeData?.session) {
+        const returnUrl = `hostelhubmobile://auth/callback#access_token=${exchangeData.session.access_token}&refresh_token=${exchangeData.session.refresh_token}`;
+        return NextResponse.redirect(new URL(returnUrl));
+      }
+    } catch (e) {
+      console.error('Mobile OAuth bridge error:', e);
+    }
+    return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=oauth_failed'));
+  }
+
   const transaction = requestUrl.searchParams.get('transaction');
   const transactionCookie = request.cookies.get(OAUTH_CALLBACK_TRANSACTION_COOKIE)?.value;
   const intent = verifyOAuthIntentTransaction(transaction);
