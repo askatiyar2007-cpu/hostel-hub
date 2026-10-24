@@ -51,7 +51,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Fraunces', 'serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -728,10 +728,10 @@ export function ActiveResidentDashboard({
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span>
           </h1>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-            <span>Room {room?.room_number || '—'}</span>
-            <span className="text-slate-300 dark:text-slate-700">·</span>
-            <span className="capitalize">{hostel?.name || 'Hostel'}</span>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+            <span>Room <strong className="text-slate-900 dark:text-slate-100 font-bold">{room?.room_number || '—'}</strong></span>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200 capitalize">{hostel?.name || 'Hostel'}</span>
             {hostel?.city && (
               <>
                 <span className="text-slate-300 dark:text-slate-700">·</span>
@@ -841,7 +841,7 @@ export function ActiveResidentDashboard({
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Hostel Warden Desk</span>
               </div>
-              <p className="font-sans text-xs text-slate-500 dark:text-slate-400 leading-normal">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-normal">
                 Need key assistance, curfew extension, or room maintenance help?
               </p>
               <div className="space-y-1.5 pt-0.5">

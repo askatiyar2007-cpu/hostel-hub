@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -75,19 +75,19 @@ body {
 
 /* Typography */
 h1 {
-  @apply font-sans text-4xl font-semibold tracking-tight;
+  @apply font-display text-4xl font-bold tracking-tight;
 }
 
 h2 {
-  @apply font-sans text-3xl font-semibold tracking-tight;
+  @apply font-display text-3xl font-bold tracking-tight;
 }
 
 h3 {
-  @apply font-sans text-2xl font-semibold tracking-tight;
+  @apply font-display text-2xl font-bold tracking-tight;
 }
 
 h4 {
-  @apply font-sans text-xl font-semibold tracking-tight;
+  @apply font-display text-xl font-bold tracking-tight;
 }
 
 p {

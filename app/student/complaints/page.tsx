@@ -172,7 +172,7 @@ export default function StudentComplaintsPage() {
           </DialogTrigger>
           <DialogContent className="rounded-xl bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52]" overlayClassName="backdrop-blur-sm">
             <DialogHeader>
-              <DialogTitle className="text-slate-900 dark:text-slate-100 font-sans font-semibold tracking-tight">Submit a Complaint</DialogTitle>
+              <DialogTitle className="text-slate-900 dark:text-slate-100 font-semibold tracking-tight">Submit a Complaint</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

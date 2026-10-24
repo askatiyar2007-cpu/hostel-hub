@@ -377,7 +377,8 @@ export default function StudentSettingsPage() {
                 <Button 
                   onClick={savePreferences} 
                   disabled={savingPrefs} 
-                  className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-5 py-2.5 text-sm font-medium rounded-lg h-auto cursor-pointer shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95"
+                  size="sm"
+                  className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-semibold h-9 px-4.5 cursor-pointer shadow-sm hover:shadow transition-all flex items-center gap-1.5 active:scale-95"
                 >
                   {savingPrefs ? (
                     <>

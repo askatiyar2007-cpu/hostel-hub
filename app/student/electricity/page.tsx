@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { supabase } from '@/lib/supabase/client';
 import { 
+  Zap,
   Clock, 
   AlertCircle,
   ArrowRight
@@ -169,6 +170,7 @@ export default function StudentElectricityPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-100 dark:border-[#1a3d52]">
         <div>
           <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-teal-600 dark:text-teal-400" />
             Electricity &amp; Sub-Meter
           </h1>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
@@ -230,7 +232,7 @@ export default function StudentElectricityPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Room &amp; Meter
               </span>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1 truncate">
                 Room {roomNumber}
               </p>
               <p className="text-[11px] text-slate-600 dark:text-slate-400 font-mono mt-0.5 truncate uppercase">
@@ -243,19 +245,33 @@ export default function StudentElectricityPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Cycle Status
               </span>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1 truncate">
-                {isOpenCycle
-                  ? 'In Progress'
-                  : isZeroMeasured
-                  ? 'Zero Consumption'
-                  : feeStatus === 'paid'
-                  ? 'Paid'
-                  : charges.length > 0
-                  ? 'Payment Due'
-                  : isUnmetered
-                  ? 'Unmetered'
-                  : 'Unbilled'}
-              </p>
+              <div className="mt-1">
+                {isOpenCycle ? (
+                  <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[11px] font-semibold py-0 px-2 h-5">
+                    Cycle in Progress
+                  </Badge>
+                ) : isZeroMeasured ? (
+                  <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-300 text-[11px] font-semibold py-0 px-2 h-5">
+                    Zero Consumption
+                  </Badge>
+                ) : feeStatus === 'paid' ? (
+                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px] font-semibold py-0 px-2 h-5">
+                    Paid
+                  </Badge>
+                ) : charges.length > 0 ? (
+                  <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[11px] font-semibold py-0 px-2 h-5">
+                    Payment Due
+                  </Badge>
+                ) : isUnmetered ? (
+                  <Badge variant="outline" className="text-slate-500 border-slate-200 text-[11px] font-normal py-0 px-2 h-5">
+                    Unmetered
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-slate-500 border-slate-200 text-[11px] font-normal py-0 px-2 h-5">
+                    Unbilled
+                  </Badge>
+                )}
+              </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                 {formatMonth(month)}
               </p>
@@ -266,7 +282,7 @@ export default function StudentElectricityPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Your Consumption
               </span>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                 {isOpenCycle ? (
                   <span className="text-amber-700 font-semibold text-xs">Pending Reading</span>
                 ) : isZeroMeasured ? (
@@ -287,7 +303,7 @@ export default function StudentElectricityPage() {
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                 Your Share
               </span>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                 {isOpenCycle ? (
                   <span className="text-amber-800 font-semibold text-xs">Pending Calculation</span>
                 ) : isZeroMeasured ? (
