@@ -451,7 +451,7 @@ export default function StudentBillsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-[#1a3d52]">
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Fees &amp; Billing</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitor your rent schedules, security deposits, and submit payment verifications.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">View your monthly rent schedule and submit payment proofs.</p>
         </div>
       </div>
 
@@ -512,7 +512,10 @@ export default function StudentBillsPage() {
                     <p className="font-bold text-slate-900 dark:text-slate-100">₹{feesData.total_overdue.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{feesData.overdue_count ?? feesData.fees.filter((f: any) => f.status === 'overdue').length} overdue bills</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{(() => {
+                  const count = feesData.overdue_count ?? feesData.fees.filter((f: any) => f.status === 'overdue').length;
+                  return `${count} overdue ${count === 1 ? 'bill' : 'bills'}`;
+                })()}</p>
               </CardContent>
             </Card>
           </div>
@@ -542,7 +545,7 @@ export default function StudentBillsPage() {
                         summaryFee.status === 'pending_verification' ? 'text-amber-600 dark:text-amber-400' :
                         summaryFee.status === 'overdue' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
                       )}>
-                        {summaryFee.status.replace('_', ' ')}
+                        {summaryFee.status === 'pending_verification' ? 'Pending Verification' : summaryFee.status ? summaryFee.status.charAt(0).toUpperCase() + summaryFee.status.slice(1).toLowerCase() : ''}
                       </span>
                     </div>
                   </div>
@@ -614,7 +617,7 @@ export default function StudentBillsPage() {
                                 ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' 
                                 : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
                             )}>
-                              {fee.status.replace('_', ' ')}
+                              {fee.status === 'pending_verification' ? 'Pending Verification' : fee.status ? fee.status.charAt(0).toUpperCase() + fee.status.slice(1).toLowerCase() : ''}
                             </span>
                           </div>
                         </div>

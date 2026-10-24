@@ -23,7 +23,7 @@ import {
   Calendar,
   Wifi,
   Wrench,
-  Trash2,
+  Sparkles,
   Home,
   Check,
   LogOut
@@ -45,6 +45,27 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/context";
 import { cn } from "@/lib/utils";
 
+
+function formatFeeTitle(monthYear?: string, dueDate?: string): string {
+  if (monthYear) {
+    const parts = monthYear.split('-');
+    if (parts.length === 2) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      if (!isNaN(year) && !isNaN(month)) {
+        const d = new Date(year, month - 1, 1);
+        return `${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Rent`;
+      }
+    }
+    return `${monthYear} Rent`;
+  }
+  if (dueDate) {
+    const d = new Date(dueDate);
+    return `${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Rent`;
+  }
+  return 'Monthly Rent';
+}
+
 // Time-of-day greeting helper
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -63,7 +84,7 @@ const COMPLAINT_CATEGORY_CONFIG: Record<string, { label: string; icon: React.Ele
   electrical: { label: "Electrical", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
   plumbing: { label: "Plumbing", icon: Wrench, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
   wifi: { label: "Wi-Fi & Internet", icon: Wifi, color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
-  cleaning: { label: "Cleaning & Hygiene", icon: Trash2, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+  cleaning: { label: "Cleaning & Hygiene", icon: Sparkles, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
   furniture: { label: "Furniture & Bed", icon: Home, color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200" },
   security: { label: "Security & Locks", icon: ShieldCheck, color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
   other: { label: "General Issue", icon: AlertCircle, color: "text-slate-600", bg: "bg-slate-50 border-slate-200" },
@@ -292,7 +313,7 @@ export function NoAllocationView({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-200/80">
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
-            {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span> 👋
+            {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Welcome to HostelHub. Manage your accommodation, rent payments, and requests in one place.
@@ -334,24 +355,24 @@ export function NoAllocationView({
 
                 {/* Requested Details Box */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-medium">Hostel</p>
                     <p className="text-sm font-bold text-slate-900 truncate">{reqHostel?.name || '—'}</p>
                     <p className="text-[11px] text-slate-400 truncate">{reqHostel?.city || ''}</p>
                   </div>
-                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-medium">Room</p>
                     <p className="text-sm font-bold text-slate-900">Room {reqRoom?.room_number || '—'}</p>
                     <p className="text-[11px] text-slate-400 capitalize">{reqRoom?.room_type || 'Standard'}</p>
                   </div>
-                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-medium">Booking Type</p>
                     <p className="text-sm font-bold text-slate-900 capitalize">
                       {pendingRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}
                     </p>
                     <p className="text-[11px] text-slate-400">Monthly Rent</p>
                   </div>
-                  <div className="p-3 bg-white/90 rounded-xl border border-slate-200/80">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-medium">Estimated Rent</p>
                     <p className="text-sm font-bold text-teal-700">₹{Number(reqRoom?.rent ?? 0).toLocaleString('en-IN')}/mo</p>
                     <p className="text-[11px] text-slate-400">Excl. electricity</p>
@@ -516,11 +537,7 @@ export function ActiveResidentDashboard({
       // Fetch Student Fees and payments concurrently
       const [feesRes, paymentsRes] = await Promise.all([
         supabase
-          .from('student_fees')
-          .select('*')
-          .eq('student_id', studentId)
-          .eq('allocation_id', allocation.id)
-          .order('due_date', { ascending: false }),
+          .from('student_fees').select('*').eq('student_id', studentId).eq('allocation_id', allocation.id).order('due_date', { ascending: true }),
         supabase
           .from('payments')
           .select('*')
@@ -577,8 +594,12 @@ export function ActiveResidentDashboard({
         .filter((f: any) => f.status === 'paid')
         .reduce((sum: number, f: any) => sum + Number(f.amount), 0);
 
-      return {
-        fees: formattedFees,
+      formattedFees.sort((a: any, b: any) => {
+        const dateA = new Date(a.due_date || a.created_at).getTime();
+        const dateB = new Date(b.due_date || b.created_at).getTime();
+        return dateA - dateB;
+      });
+      return { fees: formattedFees,
         total_due,
         total_paid,
         currentMonthFee,
@@ -705,15 +726,15 @@ export function ActiveResidentDashboard({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 pb-3.5 border-b border-slate-200/80 dark:border-[#1a3d52]">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span> 👋
+            {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-            <span>Room <strong className="text-slate-900 dark:text-slate-100 font-bold">{room?.room_number || '—'}</strong></span>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200 capitalize">{hostel?.name || 'Hostel'}</span>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+            <span>Room {room?.room_number || '—'}</span>
+            <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span className="capitalize">{hostel?.name || 'Hostel'}</span>
             {hostel?.city && (
               <>
-                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <span className="text-slate-300 dark:text-slate-700">·</span>
                 <span className="capitalize">{hostel.city}</span>
               </>
             )}
@@ -819,9 +840,8 @@ export function ActiveResidentDashboard({
             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#122b3b] border border-slate-200/90 dark:border-[#1a3d52] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Hostel Warden Desk</span>
-                <Phone className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-normal">
+              <p className="font-sans text-xs text-slate-500 dark:text-slate-400 leading-normal">
                 Need key assistance, curfew extension, or room maintenance help?
               </p>
               <div className="space-y-1.5 pt-0.5">
@@ -852,7 +872,7 @@ export function ActiveResidentDashboard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full justify-center rounded-xl text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#16364a] border-slate-300 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] h-8.5"
+                  className="w-full justify-center rounded-lg py-2 px-3 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#16364a] border-slate-300 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] h-auto"
                 >
                   <Building2 className="h-3.5 w-3.5 mr-1.5 text-slate-500 dark:text-slate-400" />
                   Hostel Profile
@@ -893,7 +913,7 @@ export function ActiveResidentDashboard({
                   "font-semibold px-2 py-0.5 rounded-full text-[10px]",
                   totalOutstanding === 0
                     ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
-                    : "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800"
+                    : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-500 border border-amber-200 dark:border-amber-500/20"
                 )}>
                   {totalOutstanding === 0 ? "Rent Up to Date" : `${monthlyRentStatus} (${feesData?.pendingFees?.length || 1} Due)`}
                 </span>
@@ -978,7 +998,7 @@ export function ActiveResidentDashboard({
                   "font-semibold px-2 py-0.5 rounded-full text-[10px]",
                   depositStatus === 'Paid'
                     ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-500 border border-amber-200 dark:border-amber-500/20"
                 )}>
                   {depositStatus}
                 </span>
@@ -1001,7 +1021,7 @@ export function ActiveResidentDashboard({
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Recent Rent &amp; Fees</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Monthly accommodation fees ledger</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Upcoming and recent rent bills</p>
                 </div>
               </div>
 
@@ -1014,8 +1034,8 @@ export function ActiveResidentDashboard({
               <div className="space-y-2">
                 {feesData.fees.slice(0, 4).map((fee: any) => {
                   const isPaid = fee.status === 'paid';
-                  const isOverdue = fee.status === 'overdue';
                   const isPendingVerif = fee.status === 'pending_verification';
+                  const isOverdue = fee.status === 'overdue' || (!isPaid && !isPendingVerif && fee.due_date && new Date(fee.due_date).getTime() < Date.now());
 
                   return (
                     <div
@@ -1025,7 +1045,7 @@ export function ActiveResidentDashboard({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-                            {fee.month_year ? `Monthly Rent (${fee.month_year})` : 'Monthly Rent'}
+                            {formatFeeTitle(fee.month_year, fee.due_date)}
                           </p>
                           <span className={cn(
                             "text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0",
@@ -1169,7 +1189,7 @@ export function ActiveResidentDashboard({
           </div>
 
           {notices && notices.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
+            <div className={cn("grid gap-3 sm:gap-3.5", notices.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
               {notices.map((n: any) => {
                 const isEmergency = n.notice_type === 'emergency';
                 return (
@@ -1177,9 +1197,8 @@ export function ActiveResidentDashboard({
                     key={n.id}
                     className={cn(
                       "p-3.5 rounded-xl border transition-all",
-                      isEmergency
-                        ? "bg-rose-50/60 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900"
-                        : "bg-slate-50/70 dark:bg-[#122b3b] border-slate-200/80 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#16364a]"
+                      notices.length === 1 && "w-full col-span-full",
+                      "bg-slate-50 border border-slate-200/80 dark:bg-white/[0.03] dark:border-white/10"
                     )}
                   >
                     <div className="flex items-center justify-between mb-1.5">

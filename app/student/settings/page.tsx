@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import {
   User, Lock, Bell, ShieldCheck, FileText,
   Building2, Calendar, ShieldAlert, ArrowRight, Home,
-  Palette, Sun, Moon, Monitor, Check, KeyRound, Save
+  Palette, Sun, Moon, Monitor, Check, KeyRound, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -152,7 +152,7 @@ export default function StudentSettingsPage() {
               />
             ) : (
               <div className="h-16 w-16 sm:h-18 sm:w-18 rounded-full bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center text-xl sm:text-2xl font-bold ring-2 ring-teal-400/40 shrink-0 select-none">
-                {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
+                {(() => { const parts = (profile?.full_name || 'Shubham Singh').trim().split(/\s+/); return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : (parts[0]?.slice(0, 2) || 'SS').toUpperCase(); })()}
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -309,7 +309,7 @@ export default function StudentSettingsPage() {
                 </div>
                 <div>
                   <Label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Phone Number</Label>
-                  <Input disabled value={profile?.phone_number || 'N/A'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 disabled:opacity-100 disabled:text-slate-700 dark:disabled:text-slate-300 font-medium text-xs cursor-not-allowed" />
+                  <Input disabled value={profile?.phone_number || 'Not provided'} className="mt-1 h-9 bg-slate-50 dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-300 disabled:opacity-100 disabled:text-slate-700 dark:disabled:text-slate-300 font-medium text-xs cursor-not-allowed" />
                 </div>
               </div>
 
@@ -377,8 +377,7 @@ export default function StudentSettingsPage() {
                 <Button 
                   onClick={savePreferences} 
                   disabled={savingPrefs} 
-                  size="sm"
-                  className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-semibold h-9 px-4.5 cursor-pointer shadow-sm hover:shadow transition-all flex items-center gap-1.5 active:scale-95"
+                  className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-5 py-2.5 text-sm font-medium rounded-lg h-auto cursor-pointer shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95"
                 >
                   {savingPrefs ? (
                     <>
@@ -386,10 +385,7 @@ export default function StudentSettingsPage() {
                       <span>Saving...</span>
                     </>
                   ) : (
-                    <>
-                      <Save className="h-3.5 w-3.5" />
-                      <span>Save Preferences</span>
-                    </>
+                    <span>Save Preferences</span>
                   )}
                 </Button>
               </div>
@@ -498,24 +494,26 @@ export default function StudentSettingsPage() {
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="w-full justify-start rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#122b3b] h-8 text-xs font-medium cursor-pointer" 
+                <div 
+                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer text-slate-700 dark:text-slate-200 text-xs font-medium" 
                   onClick={() => toast.info('Document download coming soon')}
                 >
-                  <ShieldCheck className="h-4 w-4 mr-2.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Allocation Certificate</span>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="w-full justify-start rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#122b3b] h-8 text-xs font-medium cursor-pointer" 
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Allocation Certificate</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                </div>
+                <div 
+                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer text-slate-700 dark:text-slate-200 text-xs font-medium" 
                   onClick={() => toast.info('Payment receipt export coming soon')}
                 >
-                  <Calendar className="h-4 w-4 mr-2.5 text-blue-600 dark:text-blue-400" />
-                  <span>Payment Receipts</span>
-                </Button>
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span>Payment Receipts</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                </div>
               </div>
             </CardContent>
           </Card>

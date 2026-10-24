@@ -172,7 +172,7 @@ export default function StudentComplaintsPage() {
           </DialogTrigger>
           <DialogContent className="rounded-xl bg-white dark:bg-[#0e222e] border-slate-200 dark:border-[#1a3d52]" overlayClassName="backdrop-blur-sm">
             <DialogHeader>
-              <DialogTitle className="text-slate-900 dark:text-slate-100 font-semibold tracking-tight">Submit a Complaint</DialogTitle>
+              <DialogTitle className="text-slate-900 dark:text-slate-100 font-sans font-semibold tracking-tight">Submit a Complaint</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -182,7 +182,7 @@ export default function StudentComplaintsPage() {
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Brief description of the issue"
                   required
-                  className="bg-white dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100"
+                  className="border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
@@ -190,7 +190,7 @@ export default function StudentComplaintsPage() {
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full mt-1 h-10 rounded-md border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] px-3 text-sm text-slate-900 dark:text-slate-100"
+                  className="w-full mt-1 h-10 rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900/60 px-3 text-sm text-slate-900 dark:text-white"
                 >
                   {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
@@ -205,7 +205,7 @@ export default function StudentComplaintsPage() {
                   placeholder="Detailed description of the issue"
                   rows={4}
                   required
-                  className="bg-white dark:bg-[#122b3b] border-slate-200 dark:border-[#1a3d52] text-slate-900 dark:text-slate-100"
+                  className="border border-slate-300 dark:border-white/15 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-white"
                 />
               </div>
               <div className="flex justify-end gap-2">

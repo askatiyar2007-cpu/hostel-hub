@@ -144,7 +144,7 @@ export default function StudentAnnouncementsPage() {
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 capitalize">{item.title}</h3>
-                      <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{item.body}</p>
+                      <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap first-letter:uppercase">{item.body}</p>
                     </div>
                   </div>
                 </CardContent>
