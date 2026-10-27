@@ -62,6 +62,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!hostelId || !roomId) {
+      console.error('[ROOM OTP] Missing hostelId or roomId in request');
+      return NextResponse.json(
+        { error: 'Hostel ID and Room ID are required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify room exists and belongs to specified hostel
+    const { data: roomCheck, error: roomCheckError } = await supabase
+      .from('rooms')
+      .select('id, capacity, status')
+      .eq('id', roomId)
+      .eq('hostel_id', hostelId)
+      .maybeSingle();
+
+    if (roomCheckError || !roomCheck) {
+      console.error('[ROOM OTP] Room not found or does not belong to hostel:', { roomId, hostelId, roomCheckError });
+      return NextResponse.json(
+        { error: 'Selected room does not belong to the specified hostel' },
+        { status: 400 }
+      );
+    }
+
     // Use the email entered in the room-request form for OTP
     const otpEmail = details?.parent_email?.trim();
     const studentName = profile.full_name;

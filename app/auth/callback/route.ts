@@ -71,25 +71,46 @@ function genericLoginError(request: NextRequest): NextResponse {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const requestUrl = new URL(request.url);
 
-  // Mobile App OAuth Bridge: If request originated from mobile app, exchange code and deep-link back to app
-  const userAgent = request.headers.get('user-agent') || '';
-  const isMobileUserAgent = /Android|iPhone|iPad|iPod/i.test(userAgent);
+  // Mobile App OAuth Bridge: If request explicitly originated from mobile app, exchange code and deep-link back to app
   const isExplicitMobile = requestUrl.searchParams.get('source') === 'mobile' || requestUrl.searchParams.get('mobile') === 'true';
-  const hasTransaction = Boolean(requestUrl.searchParams.get('transaction'));
-  const isMobile = isExplicitMobile || (!hasTransaction && isMobileUserAgent);
   const mobileCode = requestUrl.searchParams.get('code');
-  if (isMobile && mobileCode) {
+  if (isExplicitMobile) {
+    if (!mobileCode || requestUrl.searchParams.has('error')) {
+      return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=oauth_failed'));
+    }
+
     try {
       const sessionClient = createClient();
       const { data: exchangeData, error: exchangeError } = await sessionClient.auth.exchangeCodeForSession(mobileCode);
-      if (!exchangeError && exchangeData?.session) {
-        const returnUrl = `hostelhubmobile://auth/callback#access_token=${exchangeData.session.access_token}&refresh_token=${exchangeData.session.refresh_token}`;
-        return NextResponse.redirect(new URL(returnUrl));
+      if (exchangeError || !exchangeData?.session || !exchangeData.user?.email) {
+        console.error('Mobile OAuth bridge code exchange failed:', exchangeError);
+        return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=oauth_failed'));
       }
+
+      // Validate account state via canonical RPC before emitting active session tokens to mobile
+      const { data: stateData, error: stateError } = await supabaseServer
+        .rpc('get_account_state', { p_email: exchangeData.user.email });
+      const accountState = readAccountState(stateData);
+
+      if (stateError || !accountState || accountState.user_id !== exchangeData.user.id) {
+        console.error('Mobile OAuth bridge account-state lookup failed:', stateError);
+        await sessionClient.auth.signOut();
+        return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=account_invalid'));
+      }
+
+      // Check account completeness: incomplete or unassociated accounts must not receive active tokens
+      if (!accountState.is_complete || !accountState.password_set) {
+        console.error('Mobile OAuth bridge account incomplete:', accountState.missing_step);
+        await sessionClient.auth.signOut();
+        return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=account_incomplete'));
+      }
+
+      const returnUrl = `hostelhubmobile://auth/callback#access_token=${exchangeData.session.access_token}&refresh_token=${exchangeData.session.refresh_token}`;
+      return NextResponse.redirect(new URL(returnUrl));
     } catch (e) {
       console.error('Mobile OAuth bridge error:', e);
+      return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=oauth_failed'));
     }
-    return NextResponse.redirect(new URL('hostelhubmobile://auth/callback?error=oauth_failed'));
   }
 
   const transaction = requestUrl.searchParams.get('transaction');

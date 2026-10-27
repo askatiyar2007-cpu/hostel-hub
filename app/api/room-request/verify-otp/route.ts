@@ -114,13 +114,14 @@ export async function POST(req: NextRequest) {
       .from('rooms')
       .select('capacity')
       .eq('id', roomId)
+      .eq('hostel_id', hostelId)
       .single();
 
     if (roomError || !roomData) {
-      console.error('[ROOM VERIFY OTP] Room not found:', roomError);
+      console.error('[ROOM VERIFY OTP] Room not found or does not belong to hostel:', roomError);
       return NextResponse.json(
-        { error: 'Room not found' },
-        { status: 404 }
+        { error: 'Selected room does not belong to the specified hostel' },
+        { status: 400 }
       );
     }
 
