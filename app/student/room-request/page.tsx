@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   Building2, Search, BedDouble, CheckCircle2, ShieldCheck, Clock,
-  User, MapPin, Shield, Upload, X
+  User, MapPin, Shield, Upload, X, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import type { Hostel } from '@/types/database';
+import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
 type Step = 'hostel' | 'room' | 'details' | 'otp' | 'done';
 
@@ -33,7 +34,10 @@ export default function RoomRequestPage() {
 
   const [step, setStep] = useState<Step>('hostel');
   const [detailsSubStep, setDetailsSubStep] = useState(1);
-  const [hostelIdInput, setHostelIdInput] = useState('');
+  const [hostelSearchQuery, setHostelSearchQuery] = useState('');
+  const [hostelSearchResults, setHostelSearchResults] = useState<any[]>([]);
+  const [hostelSearchLoading, setHostelSearchLoading] = useState(false);
+  const [hasSearchedHostels, setHasSearchedHostels] = useState(false);
   const [hostel, setHostel] = useState<Hostel | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<any | null>(null);
   const [otp, setOtp] = useState('');
@@ -337,38 +341,92 @@ export default function RoomRequestPage() {
   }, [hostel?.id, refetch]);
 
   // ------------------------------------------------------------
-  // HOSTEL LOOKUP
+  // HOSTEL LOOKUP & SEARCH
   // ------------------------------------------------------------
 
-  const lookupHostel = useCallback(async () => {
-    if (!hostelIdInput.trim()) {
-      toast.error('Please enter a Hostel ID');
+  const handleHostelSearch = useCallback(async () => {
+    const trimmed = hostelSearchQuery.trim();
+    if (!trimmed) {
+      toast.error('Please enter a hostel name or hostel ID');
       return;
     }
 
-    try {
-      const {
-        data,
-        error,
-      } = await supabase
-        .from('hostels')
-        .select('*')
-        .eq('id', hostelIdInput.trim())
-        .maybeSingle();
+    setHostelSearchLoading(true);
+    setHasSearchedHostels(true);
 
-      if (error || !data) {
-        toast.error('Hostel not found');
-        return;
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+
+      let fetchedHostels: any[] = [];
+
+      if (isUuid) {
+        const { data, error } = await supabase
+          .from('hostels')
+          .select(`
+            id,
+            name,
+            city,
+            address,
+            rooms (
+              id,
+              capacity,
+              occupancy,
+              occupied_count,
+              occupied_beds
+            )
+          `)
+          .eq('id', trimmed.toLowerCase());
+
+        if (error) throw error;
+        fetchedHostels = data || [];
       }
 
-      setHostel(data as Hostel);
-      setSelectedRoom(null);
-      setStep('room');
-    } catch (e) {
-      console.error('Hostel lookup error:', e);
-      toast.error('Hostel not found');
+      if (fetchedHostels.length === 0) {
+        const { data, error } = await supabase
+          .from('hostels')
+          .select(`
+            id,
+            name,
+            city,
+            address,
+            rooms (
+              id,
+              capacity,
+              occupancy,
+              occupied_count,
+              occupied_beds
+            )
+          `)
+          .or(`name.ilike.%${trimmed}%,city.ilike.%${trimmed}%`)
+          .limit(20);
+
+        if (error) throw error;
+        fetchedHostels = data || [];
+      }
+
+      const resultsWithOccupancy = fetchedHostels.map((h: any) => {
+        const occ = calculateHostelOccupancy(h.rooms || []);
+        return {
+          ...h,
+          totalBeds: occ.totalBeds,
+          occupiedBeds: occ.occupiedBeds,
+          availableBeds: occ.availableBeds,
+          isFull: occ.totalBeds > 0 ? occ.availableBeds <= 0 : false,
+        };
+      });
+
+      setHostelSearchResults(resultsWithOccupancy);
+
+      if (resultsWithOccupancy.length === 0) {
+        toast.error('No hostels found matching your search');
+      }
+    } catch (e: any) {
+      console.error('Hostel search error:', e);
+      toast.error('Failed to search hostels');
+    } finally {
+      setHostelSearchLoading(false);
     }
-  }, [hostelIdInput]);
+  }, [hostelSearchQuery]);
 
   // Pre-load hostel / room from URL search parameters if redirected from public page
   useEffect(() => {
@@ -378,7 +436,7 @@ export default function RoomRequestPage() {
     const roomParam = params.get('room') || params.get('room_id');
 
     if (hostelParam && !hostel) {
-      setHostelIdInput(hostelParam);
+      setHostelSearchQuery(hostelParam);
       supabase
         .from('hostels')
         .select('*')
@@ -1107,48 +1165,136 @@ export default function RoomRequestPage() {
       ------------------------------------------------------- */}
 
       {step === 'hostel' && (
-        <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm space-y-6">
 
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-            <Building2 className="h-7 w-7 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 border border-teal-100 dark:border-teal-900 shrink-0">
+              <Building2 className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold font-display text-slate-900 dark:text-slate-100">
+                Find Your Hostel
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Search by hostel name, location, or enter the unique Hostel ID.
+              </p>
+            </div>
           </div>
-
-          <h2 className="text-xl font-bold font-display mb-1">
-            Find Your Hostel
-          </h2>
-
-          <p className="text-sm text-muted-foreground mb-6">
-            Enter the exact Hostel ID provided by your hostel owner.
-          </p>
 
           <div className="space-y-3">
-
-            <Label htmlFor="hostel-code">
-              Hostel ID
+            <Label htmlFor="hostel-search" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Hostel Name or ID
             </Label>
 
-            <Input
-              id="hostel-code"
-              placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-              value={hostelIdInput}
-              onChange={(e) =>
-                setHostelIdInput(e.target.value)
-              }
-              onKeyDown={(e) =>
-                e.key === 'Enter' &&
-                lookupHostel()
-              }
-            />
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <Input
+                id="hostel-search"
+                placeholder="Search hostels by name or hostel ID..."
+                value={hostelSearchQuery}
+                onChange={(e) =>
+                  setHostelSearchQuery(e.target.value)
+                }
+                onKeyDown={(e) =>
+                  e.key === 'Enter' &&
+                  handleHostelSearch()
+                }
+                className="flex-1"
+              />
 
-            <Button
-              className="w-full rounded-full"
-              onClick={lookupHostel}
-            >
-              <Search className="mr-2 h-4 w-4" />
-              Find Hostel
-            </Button>
-
+              <Button
+                className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium h-10 px-5 shrink-0"
+                onClick={handleHostelSearch}
+                disabled={hostelSearchLoading}
+              >
+                {hostelSearchLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="mr-2 h-4 w-4" />
+                )}
+                {hostelSearchLoading ? 'Searching...' : 'Search'}
+              </Button>
+            </div>
           </div>
+
+          {/* Search loading */}
+          {hostelSearchLoading && (
+            <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+              <Loader2 className="h-6 w-6 animate-spin text-teal-600 mb-2" />
+              <p className="text-sm text-slate-600 dark:text-slate-400">Searching hostels and live availability...</p>
+            </div>
+          )}
+
+          {/* Empty search results */}
+          {!hostelSearchLoading && hasSearchedHostels && hostelSearchResults.length === 0 && (
+            <div className="p-6 text-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">No hostels found</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Please check the spelling or ask your hostel owner for their unique Hostel ID.
+              </p>
+            </div>
+          )}
+
+          {/* Search results list with live vacancy */}
+          {!hostelSearchLoading && hostelSearchResults.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Matching Hostels ({hostelSearchResults.length})
+                </h3>
+                <span className="text-xs text-slate-500">Select your hostel below</span>
+              </div>
+
+              <div className="grid gap-3">
+                {hostelSearchResults.map((h: any) => (
+                  <div
+                    key={h.id}
+                    className="p-4 rounded-xl border border-border bg-card hover:border-teal-300 dark:hover:border-teal-700 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-900 dark:text-slate-100">{h.name}</span>
+                        {h.totalBeds === 0 ? (
+                          <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                            No rooms listed
+                          </span>
+                        ) : h.isFull ? (
+                          <span className="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                            Full (0 beds free)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+                            {h.availableBeds} {h.availableBeds === 1 ? 'bed' : 'beds'} available
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin size={13} className="shrink-0 text-slate-400" />
+                        <span>{h.city ? `${h.city} • ${h.address || ''}` : (h.address || 'Address not listed')}</span>
+                      </div>
+
+                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded w-fit select-all">
+                        ID: {h.id}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      <Button
+                        onClick={() => {
+                          setHostel(h);
+                          setSelectedRoom(null);
+                          setStep('room');
+                        }}
+                        className="w-full sm:w-auto h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs shadow-xs"
+                      >
+                        Select This Hostel &rarr;
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1167,9 +1313,9 @@ export default function RoomRequestPage() {
                 setHostel(null);
                 setSelectedRoom(null);
               }}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-900 transition-colors"
             >
-              &larr; Back
+              &larr; Change Hostel
             </button>
 
             <div>
@@ -1770,7 +1916,7 @@ export default function RoomRequestPage() {
                           e.target.value,
                       })
                     }
-                    className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1 resize-none"
+                    className="flex w-full rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-900 dark:text-slate-100 p-3 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/20 focus-visible:border-teal-500 mt-1 resize-none shadow-xs"
                     placeholder="House/Street/City/State/Pincode"
                   />
 
@@ -2230,7 +2376,9 @@ export default function RoomRequestPage() {
               setStep('hostel');
               setHostel(null);
               setSelectedRoom(null);
-              setHostelIdInput('');
+              setHostelSearchQuery('');
+              setHostelSearchResults([]);
+              setHasSearchedHostels(false);
               setOtp('');
               setOtpSent(false);
               setDetailsSubStep(1);

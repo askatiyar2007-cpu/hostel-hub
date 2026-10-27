@@ -20,6 +20,9 @@ export interface AllocationLike {
 export interface RoomLike {
   id?: string;
   capacity?: number | null;
+  occupancy?: number | null;
+  occupied_count?: number | null;
+  occupied_beds?: number | null;
 }
 
 export interface RoomOccupancyResult {
@@ -69,26 +72,41 @@ export function calculateRoomOccupancy(
 
 /**
  * Aggregates room-level occupancy across all rooms in a hostel.
+ * When allocations are provided, aggregates via calculateRoomOccupancy.
+ * When allocations are empty/omitted (e.g. prospective student/anon callers where
+ * RLS restricts SELECT on room_allocations), falls back authoritatively to synced
+ * room.occupancy / room.occupied_count / room.occupied_beds.
  */
 export function calculateHostelOccupancy(
   rooms: RoomLike[],
-  allocations: AllocationLike[]
+  allocations?: AllocationLike[] | null
 ): HostelOccupancyResult {
   const totalRooms = rooms.length;
   let totalBeds = 0;
   let occupiedBeds = 0;
 
-  const activeAllocs = (allocations || []).filter(
-    (a) => a.active === true || a.active === undefined
-  );
+  const hasAllocations = Array.isArray(allocations) && allocations.length > 0;
+  const activeAllocs = hasAllocations
+    ? (allocations || []).filter(
+        (a) => a.active === true || a.active === undefined
+      )
+    : [];
 
   for (const room of rooms) {
     const cap = Math.max(0, room.capacity ?? 0);
     totalBeds += cap;
 
-    const roomAllocs = activeAllocs.filter((a) => a.room_id === room.id);
-    const { occupied } = calculateRoomOccupancy(cap, roomAllocs);
-    occupiedBeds += occupied;
+    if (hasAllocations) {
+      const roomAllocs = activeAllocs.filter((a) => a.room_id === room.id);
+      const { occupied } = calculateRoomOccupancy(cap, roomAllocs);
+      occupiedBeds += occupied;
+    } else {
+      const roomOcc = Math.max(
+        0,
+        room.occupied_beds ?? room.occupancy ?? room.occupied_count ?? 0
+      );
+      occupiedBeds += Math.min(cap, roomOcc);
+    }
   }
 
   const availableBeds = Math.max(0, totalBeds - occupiedBeds);

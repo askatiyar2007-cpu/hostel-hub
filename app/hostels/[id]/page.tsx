@@ -29,7 +29,8 @@ export default function PublicHostelPage() {
   const [stats, setStats] = useState({
     rooms: 0,
     students: 0,
-    availableBeds: 0
+    availableBeds: 0,
+    hasUnknownAvailability: false,
   });
 
   useEffect(() => {
@@ -64,40 +65,60 @@ export default function PublicHostelPage() {
           console.error('Error fetching rooms:', roomsError);
         }
 
-        // Fetch active allocations
-        const { data: allocationsData } = await supabase
-          .from('room_allocations')
-          .select('room_id, booking_type')
-          .eq('hostel_id', id)
-          .eq('active', true);
+        // Compute authoritative room occupancy using get_room_actual_occupancy RPC.
+        // If the RPC fails or returns an invalid/null result, do NOT silently present
+        // a potentially stale fallback count as confirmed live availability.
+        const roomsWithRealOccupancy = await Promise.all(
+          (roomsData ?? []).map(async (room: any) => {
+            const cap = Math.max(0, room.capacity ?? 1);
+            let availabilityStatus: 'available' | 'full' | 'unknown' = 'unknown';
+            let realOccupied: number | null = null;
+            let freeBeds: number | null = null;
 
-        const allocsByRoom = new Map<string, number>();
-        (allocationsData || []).forEach((a: any) => {
-          allocsByRoom.set(a.room_id, (allocsByRoom.get(a.room_id) || 0) + 1);
-        });
+            try {
+              const { data: rpcOccupied, error: rpcErr } = await supabase.rpc('get_room_actual_occupancy', {
+                p_room_id: room.id,
+              });
 
-        const computedRooms = (roomsData || []).map((r: any) => {
-          const occ = allocsByRoom.get(r.id) || 0;
-          const cap = r.capacity || 1;
-          return {
-            ...r,
-            occupancy: occ,
-            availableBeds: Math.max(0, cap - occ),
-            isFull: occ >= cap,
-          };
-        });
+              const isValidRpcNumber = !rpcErr && rpcOccupied !== null && rpcOccupied !== undefined && !isNaN(Number(rpcOccupied));
 
-        setRooms(computedRooms);
+              if (isValidRpcNumber) {
+                realOccupied = Math.max(0, Math.min(cap, Number(rpcOccupied)));
+                freeBeds = Math.max(0, cap - realOccupied);
+                availabilityStatus = freeBeds <= 0 ? 'full' : 'available';
+              } else {
+                console.warn(`[get_room_actual_occupancy] RPC returned invalid/null result for room ${room.id}:`, rpcErr || rpcOccupied);
+                availabilityStatus = 'unknown';
+              }
+            } catch (err) {
+              console.error(`[get_room_actual_occupancy] Exception for room ${room.id}:`, err);
+              availabilityStatus = 'unknown';
+            }
 
-        const { availableBeds } = calculateHostelOccupancy(
-          roomsData || [],
-          allocationsData || []
+            return {
+              ...room,
+              occupancy: realOccupied,
+              occupied_beds: realOccupied,
+              occupied_count: realOccupied,
+              availableBeds: freeBeds,
+              isFull: availabilityStatus === 'full',
+              availabilityStatus,
+            };
+          })
         );
 
+        setRooms(roomsWithRealOccupancy);
+
+        const confirmedRooms = roomsWithRealOccupancy.filter((r) => r.availabilityStatus !== 'unknown');
+        const hasUnknown = roomsWithRealOccupancy.some((r) => r.availabilityStatus === 'unknown');
+
+        const hostelOcc = calculateHostelOccupancy(confirmedRooms);
+
         setStats({
-          rooms: roomsData?.length || 0,
-          students: allocationsData?.length || 0,
-          availableBeds
+          rooms: roomsWithRealOccupancy.length,
+          students: hostelOcc.occupiedBeds,
+          availableBeds: hostelOcc.availableBeds,
+          hasUnknownAvailability: hasUnknown,
         });
       } catch (error) {
         console.error('Error fetching hostel:', error);
@@ -195,8 +216,16 @@ export default function PublicHostelPage() {
                 <h3 className="text-lg font-bold text-slate-900">Rooms & Availability</h3>
                 <p className="text-xs text-slate-500">Live room occupancy and bed status</p>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full border border-teal-200">
-                {stats.availableBeds} beds available
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                stats.hasUnknownAvailability
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-teal-50 text-teal-700 border-teal-200'
+              }`}>
+                {stats.hasUnknownAvailability
+                  ? stats.availableBeds > 0
+                    ? `${stats.availableBeds}+ beds available (partial live check)`
+                    : 'Availability check pending'
+                  : `${stats.availableBeds} beds available`}
               </span>
             </div>
 
@@ -209,13 +238,16 @@ export default function PublicHostelPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {rooms.map((room) => {
-                  const isFull = room.isFull || room.availableBeds <= 0;
+                  const isFull = room.availabilityStatus === 'full';
+                  const isUnknown = room.availabilityStatus === 'unknown';
                   return (
                     <div
                       key={room.id}
                       className={`p-4 rounded-xl border transition-all ${
                         isFull
                           ? 'border-slate-200 bg-slate-50/60 opacity-80'
+                          : isUnknown
+                          ? 'border-amber-200/80 bg-amber-50/20'
                           : 'border-slate-200 bg-white hover:border-teal-300 hover:shadow-xs'
                       }`}
                     >
@@ -235,12 +267,24 @@ export default function PublicHostelPage() {
                           className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
                             isFull
                               ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : isUnknown
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
                               : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           }`}
                         >
-                          {isFull ? 'Full' : `${room.availableBeds} beds left`}
+                          {isFull
+                            ? 'Full'
+                            : isUnknown
+                            ? 'Live check unavailable'
+                            : `${room.availableBeds} beds left`}
                         </span>
                       </div>
+
+                      {isUnknown && (
+                        <p className="text-[11px] text-amber-700/90 mt-1 mb-2">
+                          Live availability could not be verified. You can still submit a request; capacity will be checked automatically upon review.
+                        </p>
+                      )}
 
                       <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100">
                         <div>

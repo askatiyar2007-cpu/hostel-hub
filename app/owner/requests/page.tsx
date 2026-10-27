@@ -487,7 +487,11 @@ export default function OwnerRequestsPage() {
           return old.map(item => item.id === req.id ? { ...item, status: 'approved' } : item);
         });
       }
+      // Immediately decrement pending requests count badge
+      qc.setQueriesData<number>({ queryKey: ['owner-pending-requests-count'] }, (old) => Math.max(0, (old ?? 1) - 1));
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
+      qc.invalidateQueries({ queryKey: ['owner-pending-requests-count'] });
+      qc.invalidateQueries({ queryKey: ['owner-notifications'] });
       qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
       qc.invalidateQueries({ queryKey: ['owner-rooms'] });
       qc.invalidateQueries({ queryKey: ['owner-rooms-list'] });
@@ -517,7 +521,11 @@ export default function OwnerRequestsPage() {
           return old.map(item => item.id === id ? { ...item, status: 'rejected' } : item);
         });
       }
+      // Immediately decrement pending requests count badge
+      qc.setQueriesData<number>({ queryKey: ['owner-pending-requests-count'] }, (old) => Math.max(0, (old ?? 1) - 1));
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
+      qc.invalidateQueries({ queryKey: ['owner-pending-requests-count'] });
+      qc.invalidateQueries({ queryKey: ['owner-notifications'] });
     },
     onError: (e: Error) => {
       toast.error(e.message);
@@ -543,7 +551,11 @@ export default function OwnerRequestsPage() {
           return old.map(item => item.id === id ? { ...item, status: 'pending' } : item);
         });
       }
+      // Immediately increment pending requests count badge
+      qc.setQueriesData<number>({ queryKey: ['owner-pending-requests-count'] }, (old) => (old ?? 0) + 1);
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
+      qc.invalidateQueries({ queryKey: ['owner-pending-requests-count'] });
+      qc.invalidateQueries({ queryKey: ['owner-notifications'] });
     },
     onError: (e: Error) => {
       toast.error(e.message);
@@ -946,17 +958,23 @@ export default function OwnerRequestsPage() {
                 <div className="col-span-3 text-right">Actions</div>
               </div>
               <div className="flex flex-col gap-3">
-                {visibleRejected.map((req: any) => (
-                  <RejectedRequestCard 
-                    key={req.id} 
-                    req={req} 
-                    onRereview={() => setSelectedConfirmAction({ type: 'rereview', id: req.id })}
-                    onDelete={() => setSelectedConfirmAction({ type: 'delete', id: req.id })}
-                    onViewDetails={() => {
-                      setSelectedDetailsItem(req);
-                    }}
-                  />
-                ))}
+                {visibleRejected.map((req: any) => {
+                  const studentId = req.student_id;
+                  const passportPhotoUrl = req.passportPhotoUrl || (studentId ? photoUrls[studentId] : undefined);
+                  return (
+                    <RejectedRequestCard
+                      key={req.id}
+                      req={req}
+                      passportPhotoUrl={passportPhotoUrl}
+                      onPreviewPhoto={setPreviewPhoto}
+                      onRereview={() => setSelectedConfirmAction({ type: 'rereview', id: req.id })}
+                      onDelete={() => setSelectedConfirmAction({ type: 'delete', id: req.id })}
+                      onViewDetails={() => {
+                        setSelectedDetailsItem(req);
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
           )
@@ -1226,7 +1244,7 @@ function PendingRequestCard({
             <Button 
               onClick={onApprove} 
               size="sm"
-              className="h-8.5 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <CheckCircle2 size={14} /> Approve
             </Button>
@@ -1234,7 +1252,7 @@ function PendingRequestCard({
               onClick={onReject} 
               variant="outline" 
               size="sm"
-              className="h-8.5 px-3 rounded-lg border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <XCircle size={14} /> Reject
             </Button>
@@ -1242,7 +1260,7 @@ function PendingRequestCard({
               onClick={onViewDetails} 
               variant="outline" 
               size="sm"
-              className="h-8.5 px-2.5 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] text-xs font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <Eye size={14} /> Details
             </Button>
@@ -1253,7 +1271,7 @@ function PendingRequestCard({
       {freeSlots <= 0 && (
         <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 rounded-xl flex items-center gap-2 text-xs font-medium border border-amber-200/80 dark:border-amber-800">
           <AlertTriangle size={14} className="shrink-0" />
-          Cached room data shows 0 available beds. Server will verify real-time capacity upon approval.
+          Room capacity is currently at maximum. Live availability will be verified upon approval.
         </div>
       )}
     </div>
@@ -1392,38 +1410,38 @@ function ApprovedAllocationCard({
             Approved
           </span>
 
-          <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button 
               onClick={onViewAgreement}
               variant="outline" 
               size="sm"
-              className="h-8.5 px-3 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
             >
-              <FileText size={13} className="text-teal-600 dark:text-teal-400" /> Agreement
+              <FileText size={14} className="text-teal-600 dark:text-teal-400" /> Agreement
             </Button>
             <Button 
               onClick={onViewDetails}
               variant="outline" 
               size="sm"
-              className="h-8.5 px-3 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
             >
-              <User size={13} className="text-blue-600 dark:text-blue-400" /> Profile
+              <User size={14} className="text-blue-600 dark:text-blue-400" /> Profile
             </Button>
             <Button 
               onClick={onViewHistory}
               variant="outline" 
               size="sm"
-              className="h-8.5 px-3 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
             >
-              <IndianRupee size={13} className="text-emerald-600 dark:text-emerald-400" /> History
+              <IndianRupee size={14} className="text-emerald-600 dark:text-emerald-400" /> History
             </Button>
             <Button 
               onClick={onCheckout}
               variant="outline" 
               size="sm"
-              className="h-8.5 px-3 rounded-lg border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
             >
-              <LogOut size={13} /> Checkout
+              <LogOut size={14} /> Checkout
             </Button>
           </div>
         </div>
@@ -1592,13 +1610,20 @@ function RejectedRequestCard({
   req, 
   onRereview, 
   onDelete, 
-  onViewDetails 
+  onViewDetails,
+  passportPhotoUrl,
+  onPreviewPhoto
 }: { 
   req: any; 
   onRereview: () => void; 
   onDelete: () => void; 
-  onViewDetails: () => void; 
+  onViewDetails: () => void;
+  passportPhotoUrl?: string;
+  onPreviewPhoto?: (url: string) => void;
 }) {
+  const [imageError, setImageError] = useState(false);
+  const showPhoto = Boolean(passportPhotoUrl && !imageError);
+
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
   const studentName = student?.full_name || req.student_name || 'Applicant';
   const studentEmail = student?.email || req.student_email || '-';
@@ -1612,9 +1637,27 @@ function RejectedRequestCard({
         {/* Left: Student Identity + Rejected Accommodation */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-base border border-slate-200 dark:border-slate-700 select-none">
-              {studentName.charAt(0).toUpperCase()}
-            </div>
+            {showPhoto ? (
+              <div className="relative group shrink-0">
+                <img
+                  src={passportPhotoUrl}
+                  alt={studentName}
+                  onError={() => setImageError(true)}
+                  className="h-12 w-12 rounded-xl object-cover border border-violet-200 dark:border-violet-800 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all shadow-xs"
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl!)}
+                />
+                <div
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl!)}
+                  className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
+                >
+                  <Eye size={14} />
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-base border border-slate-200 dark:border-slate-700 select-none">
+                {studentName.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate" title={studentName}>
                 {studentName}
@@ -1663,24 +1706,24 @@ function RejectedRequestCard({
               onClick={onViewDetails} 
               variant="outline" 
               size="sm"
-              className="h-8.5 px-2.5 rounded-lg border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] text-xs font-semibold flex items-center gap-1 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#16364a] text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <Eye size={13} /> Details
+              <Eye size={14} /> Details
             </Button>
             <Button 
               onClick={onRereview} 
               size="sm"
-              className="h-8.5 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <RotateCcw size={13} /> Re-review
+              <RotateCcw size={14} /> Re-review
             </Button>
             <Button 
               onClick={onDelete} 
               variant="outline" 
               size="sm"
-              className="h-8.5 px-2.5 rounded-lg border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 flex items-center gap-1 shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-[#122b3b] text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <Trash2 size={13} /> Delete
+              <Trash2 size={14} /> Delete
             </Button>
           </div>
         </div>

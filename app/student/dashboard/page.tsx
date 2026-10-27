@@ -872,9 +872,9 @@ export function ActiveResidentDashboard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full justify-center rounded-lg py-2 px-3 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#16364a] border-slate-300 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] h-auto"
+                  className="w-full justify-center rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#16364a] border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] h-9 shadow-2xs transition-colors"
                 >
-                  <Building2 className="h-3.5 w-3.5 mr-1.5 text-slate-500 dark:text-slate-400" />
+                  <Building2 className="h-3.5 w-3.5 mr-1.5 text-teal-600 dark:text-teal-400" />
                   Hostel Profile
                 </Button>
               </Link>
@@ -882,7 +882,7 @@ export function ActiveResidentDashboard({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 justify-center rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 bg-white dark:bg-[#122b3b] font-medium transition-all h-8.5"
+                className="flex-1 justify-center rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 bg-white dark:bg-[#122b3b] font-semibold transition-all h-9 shadow-2xs"
                 onClick={() => setIsCheckoutDialogOpen(true)}
               >
                 <LogOut className="h-3.5 w-3.5 mr-1.5" />
