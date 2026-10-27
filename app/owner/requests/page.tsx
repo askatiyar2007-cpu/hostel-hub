@@ -41,6 +41,37 @@ import { calculateRoomOccupancy } from '@/lib/utils/occupancy';
 
 type TabType = 'pending' | 'approved' | 'rejected';
 
+/**
+ * Robust batch photo resolution helper.
+ * Uses the POST /api/students/photo-url route to resolve signed passport URLs in chunks <= 100.
+ */
+async function fetchBatchPhotos(studentIds: string[]): Promise<Record<string, string>> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const validIds = Array.from(new Set(studentIds.filter(id => typeof id === 'string' && uuidRegex.test(id))));
+  if (validIds.length === 0) return {};
+
+  const photos: Record<string, string> = {};
+  for (let i = 0; i < validIds.length; i += 100) {
+    const chunk = validIds.slice(i, i + 100);
+    try {
+      const response = await fetch('/api/students/photo-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_ids: chunk }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && typeof data.photos === 'object') {
+          Object.assign(photos, data.photos);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch batch photos:', error);
+    }
+  }
+  return photos;
+}
+
 export default function OwnerRequestsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -162,37 +193,25 @@ export default function OwnerRequestsPage() {
         };
       });
 
-      // Fetch photo URLs for students with room requests
-      if (mergedRequests && mergedRequests.length > 0) {
-        const photoUrlPromises = mergedRequests.map(async (req) => {
-          const studentId = req.student_id;
-          if (!studentId) return null;
+      // Fetch photo URLs in batch for students with room requests
+      const requestStudentIds = mergedRequests.map((r: any) => r.student_id).filter(Boolean);
+      const batchPhotos = await fetchBatchPhotos(requestStudentIds);
 
-          try {
-            const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
-            if (response.ok) {
-              const data = await response.json();
-              return { studentId, url: data.signedUrl };
-            }
-            return null;
-          } catch (error) {
-            console.error(`Failed to fetch photo for student ${studentId}:`, error);
-            return null;
-          }
-        });
-
-        const photoResults = await Promise.all(photoUrlPromises);
-        const urlMap: Record<string, string> = {};
-        photoResults.forEach(result => {
-          if (result) {
-            urlMap[result.studentId] = result.url;
-          }
-        });
-        setPhotoUrls(urlMap);
+      // Functional merge: safely combine without erasing existing photos
+      if (Object.keys(batchPhotos).length > 0) {
+        setPhotoUrls(prev => ({ ...prev, ...batchPhotos }));
       }
 
-      return mergedRequests;
+      // Query-owned photo data model: attach directly to each request object
+      return mergedRequests.map((req: any) => ({
+        ...req,
+        passportPhotoUrl: req.student_id ? batchPhotos[req.student_id] : undefined
+      }));
     },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // 2. Fetch Active Room Allocations
@@ -276,30 +295,12 @@ export default function OwnerRequestsPage() {
         );
       }
 
-      // Fetch photo URLs for students with room requests
-      if (studentIds.length > 0) {
-        const photoUrlPromises = studentIds.map(async (studentId) => {
-          try {
-            const response = await fetch(`/api/students/photo-url?student_id=${studentId}`);
-            if (response.ok) {
-              const data = await response.json();
-              return { studentId, url: data.signedUrl };
-            }
-            return null;
-          } catch (error) {
-            console.error(`Failed to fetch photo for student ${studentId}:`, error);
-            return null;
-          }
-        });
+      // Fetch photo URLs in batch for allocation students
+      const allocBatchPhotos = await fetchBatchPhotos(studentIds);
 
-        const photoResults = await Promise.all(photoUrlPromises);
-        const urlMap: Record<string, string> = {};
-        photoResults.forEach(result => {
-          if (result) {
-            urlMap[result.studentId] = result.url;
-          }
-        });
-        setPhotoUrls(urlMap);
+      // Functional merge: do NOT overwrite pending photo URLs
+      if (Object.keys(allocBatchPhotos).length > 0) {
+        setPhotoUrls(prev => ({ ...prev, ...allocBatchPhotos }));
       }
 
       // Fetch students and profiles sequentially to prevent RLS-related recursion / nested traversal issues
@@ -361,6 +362,7 @@ export default function OwnerRequestsPage() {
 
         return {
           ...alloc,
+          passportPhotoUrl: alloc.student_id ? allocBatchPhotos[alloc.student_id] : undefined,
           students: {
             id: alloc.student_id,
             profiles: {
@@ -475,12 +477,20 @@ export default function OwnerRequestsPage() {
       
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, req) => {
       toast.success('Room request approved successfully.');
       setSelectedConfirmAction(null);
+      // Immediately update query cache so the approved request disappears from pending list
+      if (req?.id) {
+        qc.setQueriesData<any[]>({ queryKey: ['owner-room-requests'] }, (old) => {
+          if (!old || !Array.isArray(old)) return old;
+          return old.map(item => item.id === req.id ? { ...item, status: 'approved' } : item);
+        });
+      }
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
       qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
       qc.invalidateQueries({ queryKey: ['owner-rooms'] });
+      qc.invalidateQueries({ queryKey: ['owner-rooms-list'] });
       refetchAllocations();
     },
     onError: (e: Error) => {
@@ -498,9 +508,15 @@ export default function OwnerRequestsPage() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       toast.success('Request rejected.');
       setSelectedConfirmAction(null);
+      if (id) {
+        qc.setQueriesData<any[]>({ queryKey: ['owner-room-requests'] }, (old) => {
+          if (!old || !Array.isArray(old)) return old;
+          return old.map(item => item.id === id ? { ...item, status: 'rejected' } : item);
+        });
+      }
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
     },
     onError: (e: Error) => {
@@ -518,9 +534,15 @@ export default function OwnerRequestsPage() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       toast.success('Request moved back to pending.');
       setSelectedConfirmAction(null);
+      if (id) {
+        qc.setQueriesData<any[]>({ queryKey: ['owner-room-requests'] }, (old) => {
+          if (!old || !Array.isArray(old)) return old;
+          return old.map(item => item.id === id ? { ...item, status: 'pending' } : item);
+        });
+      }
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
     },
     onError: (e: Error) => {
@@ -541,6 +563,7 @@ export default function OwnerRequestsPage() {
       qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
       qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
       qc.invalidateQueries({ queryKey: ['owner-rooms'] });
+      qc.invalidateQueries({ queryKey: ['owner-rooms-list'] });
     },
     onError: (e: Error) => {
       toast.error(e.message);
@@ -856,7 +879,7 @@ export default function OwnerRequestsPage() {
               <div className="flex flex-col gap-3">
                 {visiblePending.map((req: any) => {
                   const studentId = req.student_id;
-                  const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+                  const passportPhotoUrl = req.passportPhotoUrl || (studentId ? photoUrls[studentId] : undefined);
                   return (
                     <PendingRequestCard 
                       key={req.id} 
@@ -885,7 +908,7 @@ export default function OwnerRequestsPage() {
               <div className="flex flex-col gap-4">
                 {visibleApproved.map((alloc: any) => {
                   const studentId = alloc.student_id;
-                  const passportPhotoUrl = studentId ? photoUrls[studentId] : undefined;
+                  const passportPhotoUrl = alloc.passportPhotoUrl || (studentId ? photoUrls[studentId] : undefined);
                   return (
                     <ApprovedAllocationCard 
                       key={alloc.id} 
@@ -1090,6 +1113,9 @@ function PendingRequestCard({
   passportPhotoUrl?: string; 
   onPreviewPhoto?: (url: string) => void 
 }) {
+  const [imageError, setImageError] = useState(false);
+  const showPhoto = Boolean(passportPhotoUrl && !imageError);
+
   const student = Array.isArray(req.students) ? req.students[0]?.profiles : req.students?.profiles;
   const studentName = student?.full_name || req.student_name || 'Applicant Student';
   const studentEmail = student?.email || req.student_email || '-';
@@ -1112,16 +1138,17 @@ function PendingRequestCard({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
           {/* A. Student Profile */}
           <div className="flex items-center gap-3.5 min-w-0">
-            {passportPhotoUrl ? (
+            {showPhoto ? (
               <div className="relative group shrink-0">
                 <img 
                   src={passportPhotoUrl} 
                   alt={studentName}
+                  onError={() => setImageError(true)}
                   className="h-12 w-12 rounded-xl object-cover border border-violet-200 dark:border-violet-800 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all shadow-xs"
-                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl!)}
                 />
                 <div 
-                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl!)}
                   className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
                 >
                   <Eye size={14} />
@@ -1198,9 +1225,8 @@ function PendingRequestCard({
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <Button 
               onClick={onApprove} 
-              disabled={freeSlots <= 0}
               size="sm"
-              className="h-8.5 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+              className="h-8.5 px-3.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <CheckCircle2 size={14} /> Approve
             </Button>
@@ -1225,9 +1251,9 @@ function PendingRequestCard({
       </div>
 
       {freeSlots <= 0 && (
-        <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 rounded-xl flex items-center gap-2 text-xs font-medium border border-rose-200 dark:border-rose-900">
+        <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 rounded-xl flex items-center gap-2 text-xs font-medium border border-amber-200/80 dark:border-amber-800">
           <AlertTriangle size={14} className="shrink-0" />
-          Approval is currently blocked because this room has reached full capacity.
+          Cached room data shows 0 available beds. Server will verify real-time capacity upon approval.
         </div>
       )}
     </div>
@@ -1255,6 +1281,9 @@ function ApprovedAllocationCard({
   passportPhotoUrl?: string;
   onPreviewPhoto?: (url: string) => void;
 }) {
+  const [imageError, setImageError] = useState(false);
+  const showPhoto = Boolean(passportPhotoUrl && !imageError);
+
   const [showAllFees, setShowAllFees] = useState(false);
   const student = Array.isArray(alloc.students) ? alloc.students[0]?.profiles : alloc.students?.profiles;
   const studentName = student?.full_name || alloc.student_name || 'Resident Student';
@@ -1287,16 +1316,17 @@ function ApprovedAllocationCard({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-w-0">
           {/* A. Student Profile */}
           <div className="flex items-center gap-3.5 min-w-0">
-            {passportPhotoUrl ? (
+            {showPhoto ? (
               <div className="relative group shrink-0">
                 <img 
                   src={passportPhotoUrl} 
                   alt={studentName}
+                  onError={() => setImageError(true)}
                   className="h-12 w-12 rounded-xl object-cover border border-violet-200 dark:border-violet-800 cursor-pointer group-hover:ring-2 group-hover:ring-teal-500 transition-all shadow-xs"
-                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl!)}
                 />
                 <div 
-                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl)}
+                  onClick={() => onPreviewPhoto && onPreviewPhoto(passportPhotoUrl!)}
                   className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white"
                 >
                   <Eye size={14} />

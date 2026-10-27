@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -20,6 +21,7 @@ import { resolveStudentPhoto } from '@/lib/utils/student-identity';
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
   const router = useRouter();
+  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const fromParam = searchParams.get('from');
   const allocationId = params.id;
@@ -183,6 +185,10 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
       const { error: checkoutErr } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocationId });
       if (checkoutErr) throw checkoutErr;
       toast.success('Student checked out successfully!');
+      qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
+      qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
+      qc.invalidateQueries({ queryKey: ['owner-rooms'] });
+      qc.invalidateQueries({ queryKey: ['owner-rooms-list'] });
       router.push('/owner/students?tab=history');
     } catch (err: any) {
       console.error('Error checking out student:', err);

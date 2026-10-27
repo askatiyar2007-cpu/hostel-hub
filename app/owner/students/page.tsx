@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/context';
 import { Search, Plus, Users, Building2, AlertTriangle, X } from 'lucide-react';
@@ -34,6 +35,7 @@ const BOOKING_TYPE_LABEL: Record<string, string> = {
 export default function OwnerStudentsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
 
@@ -207,6 +209,10 @@ export default function OwnerStudentsPage() {
       const { error: checkoutErr } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocId });
       if (checkoutErr) throw checkoutErr;
       toast.success('Student checked out successfully!');
+      qc.invalidateQueries({ queryKey: ['owner-room-requests'] });
+      qc.invalidateQueries({ queryKey: ['owner-room-allocations'] });
+      qc.invalidateQueries({ queryKey: ['owner-rooms'] });
+      qc.invalidateQueries({ queryKey: ['owner-rooms-list'] });
       fetchStudents();
     } catch (err: any) {
       console.error('Error checking out student:', err);
