@@ -133,7 +133,7 @@ export default function FindHostelPage() {
 
   const startScanner = async () => {
     if (!isMobile) {
-      toast.info('Please open HostelHub on your mobile phone to scan QR codes with your camera.');
+      toast.info('Please open StayKosh on your mobile phone to scan QR codes with your camera.');
       return;
     }
 
@@ -194,7 +194,7 @@ export default function FindHostelPage() {
     }
 
     if (!hostelId) {
-      toast.error('Invalid HostelHub QR code');
+      toast.error('Invalid StayKosh QR code');
       return;
     }
 

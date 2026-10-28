@@ -729,7 +729,7 @@ export function AccountPasswordDialog({ isOpen, onClose, userEmail }: AccountPas
                 <div className="space-y-1">
                   <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display">Password Updated!</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-                    Your password has been reset successfully. You can now use your new password across all HostelHub services.
+                    Your password has been reset successfully. You can now use your new password across all StayKosh services.
                   </p>
                 </div>
                 <Button

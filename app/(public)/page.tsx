@@ -176,7 +176,7 @@ export default function PublicHomePage() {
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-teal-500/20 text-teal-400 shadow-xl shadow-teal-500/10">
           <Sparkles className="h-10 w-10 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Connecting to HostelHub Mobile</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Connecting to StayKosh Mobile</h1>
         <p className="mt-3 max-w-sm text-sm text-slate-400">
           Google authentication successful! Returning to your mobile app...
         </p>
@@ -184,7 +184,7 @@ export default function PublicHomePage() {
           href={`hostelhubmobile://auth/callback${mobileAuthPayload}`}
           className="mt-6 inline-flex items-center justify-center rounded-xl bg-teal-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg transition-transform active:scale-95 hover:bg-teal-500"
         >
-          Open HostelHub App
+          Open StayKosh App
         </a>
       </div>
     );
@@ -192,10 +192,10 @@ export default function PublicHomePage() {
 
   if (loading || profile) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F5FBFF]">
+      <div className="flex h-screen items-center justify-center bg-[#FAFCFB] dark:bg-[#07131d]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0F766E] border-t-transparent" />
-          <p className="text-xs font-semibold tracking-wider text-[#0F766E] uppercase">Loading HostelHub...</p>
+          <p className="text-xs font-semibold tracking-wider text-[#0F766E] dark:text-teal-400 uppercase">Loading StayKosh...</p>
         </div>
       </div>
     );
@@ -1114,7 +1114,7 @@ export default function PublicHomePage() {
                 <Building2 className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-sm">HostelHub Dashboard</h3>
+                <h3 className="font-bold text-sm">StayKosh Dashboard</h3>
                 <p className="text-slate-400 text-xs">Welcome back</p>
               </div>
             </motion.div>
@@ -1261,7 +1261,7 @@ export default function PublicHomePage() {
               One Platform. Everyone Connected.
             </h2>
             <p className="text-lg text-slate-300 max-w-2xl mx-auto mt-4">
-              HostelHub bridges student residents and hostel owners in one unified, real-time operating ecosystem
+              StayKosh bridges student residents and hostel owners in one unified, real-time operating ecosystem
             </p>
           </motion.div>
 
@@ -1370,7 +1370,7 @@ export default function PublicHomePage() {
 
                 <div className="text-center mt-4 z-10">
                   <p className="font-bold text-base tracking-widest text-teal-400 font-display">
-                    HOSTELHUB CORE
+                    STAYKOSH CORE
                   </p>
                   <p className="text-xs text-slate-300 mt-0.5">Real-Time Sync Engine</p>
                   <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-semibold text-emerald-300">
@@ -1443,7 +1443,7 @@ export default function PublicHomePage() {
               08 • PROCESS
             </span>
             <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
-              How HostelHub Works
+              How StayKosh Works
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-4">
               Get started in 4 simple steps
@@ -1508,7 +1508,7 @@ export default function PublicHomePage() {
             className="text-center"
           >
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white font-display tracking-tight mb-8">
-              Why Students Choose HostelHub
+              Why Students Choose StayKosh
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -1556,10 +1556,10 @@ export default function PublicHomePage() {
             </motion.div>
             <h2 className="text-4xl sm:text-5xl font-bold font-display tracking-tight mb-3">
               Your Stay. Your Place.
-              <span className="text-teal-300 block">HostelHub.</span>
+              <span className="text-teal-300 block">StayKosh.</span>
             </h2>
             <p className="text-lg text-teal-100 max-w-2xl mx-auto mb-6">
-              Whether you're finding your next stay or managing a hostel, HostelHub brings everything together in one simple platform.
+              Whether you're finding your next stay or managing a hostel, StayKosh brings everything together in one simple platform.
             </p>
           </motion.div>
 

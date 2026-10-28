@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { Building2, Sparkles, Home, Search } from 'lucide-react';
+import { Home, Search } from 'lucide-react';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 
 export default function NotFound() {
   return (
@@ -19,26 +20,7 @@ export default function NotFound() {
 
       {/* Header */}
       <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 rounded-xl w-fit"
-          aria-label="HostelHub Home"
-        >
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#064E4A] via-[#0F766E] to-[#043330] text-white shadow-md shadow-teal-950/20 ring-1 ring-teal-500/20">
-            <Building2 className="h-5 w-5 text-white" />
-            <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white">
-              <Sparkles className="h-2 w-2" />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-bold tracking-tight text-slate-900 font-display leading-tight">
-              Hostel<span className="text-[#0F766E]">Hub</span>
-            </span>
-            <span className="text-[9px] font-bold tracking-wider text-[#0F766E] uppercase leading-none">
-              Your Stay, Simplified
-            </span>
-          </div>
-        </Link>
+        <StayKoshLogo size={36} theme="light" href="/" />
       </header>
 
       {/* Main 404 message */}
@@ -78,7 +60,7 @@ export default function NotFound() {
 
       {/* Footer */}
       <footer className="relative z-10 py-4 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} HostelHub Technologies. All rights reserved.
+        © {new Date().getFullYear()} StayKosh Technologies. All rights reserved.
       </footer>
     </div>
   );

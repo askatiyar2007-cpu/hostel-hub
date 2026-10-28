@@ -87,7 +87,7 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; messag
             body: new URLSearchParams({
               To: cleanPhone,
               From: twilioFrom,
-              Body: `Your HostelHub verification code is: ${generatedOtp}. It will expire in 10 minutes.`,
+              Body: `Your StayKosh verification code is: ${generatedOtp}. It will expire in 10 minutes.`,
             }),
           }
         );

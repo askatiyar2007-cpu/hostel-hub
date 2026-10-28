@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase/server';
 import { sendPasswordResetOtpEmail } from '@/lib/email/brevo';
 
-const NON_EXISTENT_ACCOUNT_MESSAGE = 'No HostelHub account exists with this email address. Please check the email or create an account.';
+const NON_EXISTENT_ACCOUNT_MESSAGE = 'No StayKosh account exists with this email address. Please check the email or create an account.';
 
 export async function POST(req: NextRequest) {
   try {

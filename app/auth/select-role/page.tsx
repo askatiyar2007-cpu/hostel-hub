@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { GraduationCap, Building2, Check, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserRole } from '@/types/database';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 
 interface OnboardingResponse {
   success?: unknown;
@@ -100,21 +101,8 @@ export default function SelectRolePage() {
     <div className="min-h-screen bg-gradient-to-br from-[#EFF8FF] via-[#F8FAFC] to-[#ECFDF5] dark:from-[#07131d] dark:via-[#091b27] dark:to-[#07131d] flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full space-y-8">
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-3 mb-2">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-700 via-emerald-600 to-teal-800 text-white shadow-md shadow-teal-900/15 ring-1 ring-teal-500/20">
-              <Building2 className="h-5 w-5 text-white" />
-              <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white dark:ring-[#0e222e]">
-                <span className="text-[8px] font-bold">✦</span>
-              </div>
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display leading-tight">
-                Hostel<span className="text-[#0F766E] dark:text-teal-400">Hub</span>
-              </span>
-              <span className="text-[9px] font-semibold tracking-wider text-teal-800/80 dark:text-teal-300/80 uppercase leading-none">
-                Your Stay, Simplified
-              </span>
-            </div>
+          <div className="mb-2 flex justify-center">
+            <StayKoshLogo size={36} theme="light" href="/" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight font-display text-slate-900 dark:text-white">
             What is your role?

@@ -224,7 +224,7 @@ export default function BillingOverviewPage() {
       const url = window.URL.createObjectURL(csvBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `hostelhub-electricity-${selectedMonth}.csv`;
+      a.download = `staykosh-electricity-${selectedMonth}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

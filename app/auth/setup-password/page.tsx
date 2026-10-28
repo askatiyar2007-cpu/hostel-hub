@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Lock, Building2, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, CheckCircle2, Building2 } from 'lucide-react';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -122,11 +123,8 @@ export default function SetupPasswordPage() {
     <div className="min-h-screen bg-muted/30 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <span className="text-2xl font-semibold tracking-tight font-display text-foreground">HostelHub</span>
+          <div className="mb-6 flex justify-center">
+            <StayKoshLogo size={36} theme="light" href="/" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight font-display">Complete Your Account Setup</h2>
           <p className="mt-2 text-sm text-muted-foreground">

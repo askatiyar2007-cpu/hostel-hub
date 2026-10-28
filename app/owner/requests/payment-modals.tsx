@@ -412,7 +412,7 @@ export function PaymentHistoryModal({
     if (!receiptWindow) return;
 
     const studentName = alloc.students?.profiles?.full_name || alloc.student_name || 'Student';
-    const hostelName = alloc.hostels?.name || 'HostelHub Accommodation';
+    const hostelName = alloc.hostels?.name || 'StayKosh Accommodation';
 
     receiptWindow.document.write(`
       <html>
@@ -432,7 +432,7 @@ export function PaymentHistoryModal({
         <body>
           <div class="receipt-card">
             <div class="header">
-              <div class="title">HostelHub Receipt</div>
+              <div class="title">StayKosh Receipt</div>
               <div style="font-size: 12px; margin-top: 4px; color: #666;">Generated on ${new Date().toLocaleDateString()}</div>
             </div>
             <div class="row">
@@ -472,7 +472,7 @@ export function PaymentHistoryModal({
               <span class="value" style="color: #16a34a;">${payment.payment_status.toUpperCase()}</span>
             </div>
             <div class="footer">
-              Thank you for choosing HostelHub. Keep this copy for records.
+              Thank you for choosing StayKosh. Keep this copy for records.
             </div>
           </div>
           <script>

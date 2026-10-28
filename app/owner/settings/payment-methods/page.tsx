@@ -305,7 +305,7 @@ export default function PaymentMethodsPage() {
               </div>
               <div className="flex gap-2">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">4</span>
-                <p>HostelHub matches amounts and enables <strong>Auto-verification</strong> to instantly clear matched transactions.</p>
+                <p>StayKosh matches amounts and enables <strong>Auto-verification</strong> to instantly clear matched transactions.</p>
               </div>
             </div>
             <div className="pt-2 border-t text-[11px] text-amber-600 flex gap-1.5 items-start">

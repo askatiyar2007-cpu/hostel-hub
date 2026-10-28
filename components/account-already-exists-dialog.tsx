@@ -34,7 +34,7 @@ export function AccountAlreadyExistsDialog({
           </DialogTitle>
           <DialogDescription className="text-base text-foreground">
             {isGoogle
-              ? 'This Google account is already connected to a HostelHub account. Please sign in to continue.'
+              ? 'This Google account is already connected to a StayKosh account. Please sign in to continue.'
               : 'An account with this email address already exists. Please sign in to continue.'}
           </DialogDescription>
         </DialogHeader>

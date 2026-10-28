@@ -22,7 +22,7 @@ const TEST_PROFILE_ID = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const OWNER_EMAIL = 'owner@example.com';
 const STUDENT_EMAIL = 'student@example.com';
 
-const NON_EXISTENT_MESSAGE = 'No HostelHub account exists with this email address. Please check the email or create an account.';
+const NON_EXISTENT_MESSAGE = 'No StayKosh account exists with this email address. Please check the email or create an account.';
 const INELIGIBLE_ACCOUNT_MESSAGE = 'This account cannot use password recovery at this time. Please contact support for assistance.';
 const EXPECTED_SUCCESS_RESPONSE = {
   success: true,

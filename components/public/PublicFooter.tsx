@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Building2, Sparkles, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 
 export default function PublicFooter() {
   const currentYear = new Date().getFullYear();
@@ -13,22 +14,7 @@ export default function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 pb-12 border-b border-slate-800/80">
           {/* Col 1: Brand & Identity */}
           <div className="space-y-4">
-            <Link href="/" className="inline-flex items-center gap-3 group" aria-label="HostelHub Home">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-md">
-                <Building2 className="h-5 w-5" />
-                <div className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-[#071922]">
-                  <Sparkles className="h-2 w-2" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight text-white font-display">
-                  Hostel<span className="text-teal-400">Hub</span>
-                </span>
-                <span className="text-[9px] font-semibold tracking-wider text-teal-300/80 uppercase">
-                  Your Stay, Simplified
-                </span>
-              </div>
-            </Link>
+            <StayKoshLogo size={36} theme="dark" href="/" />
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Modern student accommodation platform and hostel management system connecting students and verified property owners.
             </p>
@@ -129,7 +115,7 @@ export default function PublicFooter() {
 
         {/* Bottom copyright row */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>© {currentYear} HostelHub Technologies. All rights reserved.</p>
+          <p>© {currentYear} StayKosh Technologies. All rights reserved.</p>
           <div className="flex items-center gap-1">
             <span>Built for modern student accommodation</span>
             <Heart className="h-3 w-3 text-teal-400 fill-teal-400 inline mx-0.5" />

@@ -3,7 +3,7 @@
 import React from 'react';
 import { AuthBackground } from './AuthBackground';
 import { AuthMarketing } from './AuthMarketing';
-import { HostelHubLogo } from '@/components/HostelHubLogo';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 
 interface AuthShellProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export function AuthShell({ children }: AuthShellProps) {
       <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2 flex items-center justify-between">
         {/* Mobile Header Logo (<lg screens) */}
         <div className="lg:hidden">
-          <HostelHubLogo size="sm" variant="dark" href="/" />
+          <StayKoshLogo size={32} theme="dark" href="/" />
         </div>
 
         {/* Desktop left space (logo is positioned inside AuthMarketing directly on background) */}
@@ -34,7 +34,7 @@ export function AuthShell({ children }: AuthShellProps) {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 xl:gap-16">
             {/* Left Column: Marketing Content directly on background (Desktop full, Mobile headline) */}
             <section
-              aria-label="About HostelHub"
+              aria-label="About StayKosh"
               className="w-full lg:w-[50%] xl:w-[52%] flex flex-col justify-center"
             >
               {/* Desktop Full View */}
@@ -46,7 +46,7 @@ export function AuthShell({ children }: AuthShellProps) {
               <div className="lg:hidden text-center sm:text-left space-y-2 py-1 max-w-md mx-auto sm:mx-0 animate-auth-marketing-enter">
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#102033] dark:text-white tracking-tight leading-tight font-display">
                   Find Your Perfect{' '}
-                  <span className="text-[#0F766E] dark:text-teal-400">Stay at HostelHub</span>
+                  <span className="text-[#0F766E] dark:text-teal-400">Stay at StayKosh</span>
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                   Manage your stay, pay your bills, and stay connected — all in one place.
@@ -67,7 +67,7 @@ export function AuthShell({ children }: AuthShellProps) {
 
       {/* Subtle bottom footer bar */}
       <footer className="relative z-10 w-full py-3 text-center text-xs text-slate-500/80 dark:text-slate-400">
-        <span>© {new Date().getFullYear()} HostelHub. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} StayKosh. All rights reserved.</span>
       </footer>
     </div>
   );

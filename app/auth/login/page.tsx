@@ -164,7 +164,7 @@ function AuthContent() {
       setAuthMessage({
         variant: 'error',
         title: 'Account Not Found',
-        description: 'This Google account is not associated with a HostelHub account. Please create an account from the Sign Up tab first.',
+        description: 'This Google account is not associated with a StayKosh account. Please create an account from the Sign Up tab first.',
         action: {
           label: 'Go to Sign Up',
           onClick: () => {

@@ -334,7 +334,7 @@ export default function OwnerSettingsPage() {
     : null;
 
   const ownerName = profile?.full_name || user?.user_metadata?.full_name || 'Hostel Owner';
-  const ownerEmail = profile?.email || user?.email || 'owner@hostelhub.in';
+  const ownerEmail = profile?.email || user?.email || 'owner@staykosh.in';
   const ownerPhone = profile?.phone_number || '';
   const isEmailVerified = Boolean(user?.email_confirmed_at);
   const hasApprovedHostel = hostels.some(h => h.status === 'approved');
@@ -674,11 +674,11 @@ export default function OwnerSettingsPage() {
               onClick={() => setActiveModal('terms')}
             />
 
-            {/* About HostelHub */}
+            {/* About StayKosh */}
             <SettingsRow
               icon={<Info size={20} />}
               iconBg="bg-teal-50 text-teal-700 border border-teal-200/80"
-              title="About HostelHub"
+              title="About StayKosh"
               description="Application version, framework & database architecture"
               badge={
                 <span className="inline-flex items-center text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full">
@@ -1021,7 +1021,7 @@ export default function OwnerSettingsPage() {
                   </span>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-[11px]">
-                  HostelHub enables direct peer-to-peer student collections to your own UPI ID, QR code, or Bank Account. Payments go directly to you without platform escrow.
+                  StayKosh enables direct peer-to-peer student collections to your own UPI ID, QR code, or Bank Account. Payments go directly to you without platform escrow.
                 </p>
               </div>
 
@@ -1556,7 +1556,7 @@ export default function OwnerSettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Help & Support</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Contact HostelHub assistance</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Contact StayKosh assistance</p>
                 </div>
               </div>
               <button
@@ -1573,9 +1573,9 @@ export default function OwnerSettingsPage() {
                 <p className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                   <Mail size={13} className="text-teal-600 dark:text-teal-400" /> Support Email
                 </p>
-                <p className="text-slate-600 dark:text-slate-300 select-all font-medium">support@hostelhub.in</p>
+                <p className="text-slate-600 dark:text-slate-300 select-all font-medium">support@staykosh.in</p>
                 <a
-                  href="mailto:support@hostelhub.in?subject=HostelHub%20Owner%20Support%20Request"
+                  href="mailto:support@staykosh.in?subject=StayKosh%20Owner%20Support%20Request"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 pt-1"
                 >
                   <span>Open Mail App</span>
@@ -1645,7 +1645,7 @@ export default function OwnerSettingsPage() {
               <div className="space-y-1">
                 <p className="font-bold text-slate-900 dark:text-slate-100">1. Property & Pricing Integrity</p>
                 <p>
-                  HostelHub provides property management and tenant allocation tools. By listing properties, owners agree to keep room pricing, availability, and electricity meter readings accurate and up to date.
+                  StayKosh provides property management and tenant allocation tools. By listing properties, owners agree to keep room pricing, availability, and electricity meter readings accurate and up to date.
                 </p>
               </div>
               <div className="space-y-1">
@@ -1657,7 +1657,7 @@ export default function OwnerSettingsPage() {
               <div className="space-y-1">
                 <p className="font-bold text-slate-900 dark:text-slate-100">3. Direct Payment Settlements</p>
                 <p>
-                  Payment transactions initiated via owner UPI IDs or bank accounts settle directly between student and owner. HostelHub does not escrow funds or charge commission on standard fee collections.
+                  Payment transactions initiated via owner UPI IDs or bank accounts settle directly between student and owner. StayKosh does not escrow funds or charge commission on standard fee collections.
                 </p>
               </div>
               <div className="space-y-1">
@@ -1681,7 +1681,7 @@ export default function OwnerSettingsPage() {
         </div>
       )}
 
-      {/* 12. About HostelHub Modal */}
+      {/* 12. About StayKosh Modal */}
       {activeModal === 'about' && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) setActiveModal(null); }}
@@ -1694,7 +1694,7 @@ export default function OwnerSettingsPage() {
                   <Info size={18} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">About HostelHub</h3>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">About StayKosh</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Platform release details</p>
                 </div>
               </div>
@@ -1710,7 +1710,7 @@ export default function OwnerSettingsPage() {
             <div className="p-6 space-y-3 overflow-y-auto flex-1 text-xs">
               <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#1a3d52]">
                 <span className="text-slate-500 dark:text-slate-400">Application</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100">HostelHub</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">StayKosh</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#1a3d52]">
                 <span className="text-slate-500 dark:text-slate-400">Version</span>

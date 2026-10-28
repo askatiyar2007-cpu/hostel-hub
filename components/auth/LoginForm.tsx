@@ -58,7 +58,7 @@ export function LoginForm({
           <span className="inline-block" role="img" aria-label="waving hand">👋</span>
         </h2>
         <p className="text-xs sm:text-[13px] text-teal-100/75 font-normal">
-          Sign in to continue to your HostelHub account.
+          Sign in to continue to your StayKosh account.
         </p>
       </div>
 

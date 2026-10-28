@@ -56,7 +56,7 @@ export async function sendStudentInvitationEmail({
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>You're invited to join HostelHub</title>
+        <title>You're invited to join StayKosh</title>
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -170,12 +170,12 @@ export async function sendStudentInvitationEmail({
       <body>
         <div class="container">
           <div class="header">
-            <h1>🏠 HostelHub</h1>
+            <h1>🏠 StayKosh</h1>
           </div>
           <div class="content">
             <p class="greeting">Dear ${studentName},</p>
             <p class="message">
-              Great news! The hostel owner has assigned you a room and you're invited to join HostelHub to complete your registration.
+              Great news! The hostel owner has assigned you a room and you're invited to join StayKosh to complete your registration.
             </p>
             
             <div class="details">
@@ -212,7 +212,7 @@ export async function sendStudentInvitationEmail({
           </div>
           <div class="footer">
             <p>If you have any questions, please contact your hostel owner directly.</p>
-            <p>&copy; ${new Date().getFullYear()} HostelHub. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} StayKosh. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -228,16 +228,16 @@ export async function sendStudentInvitationEmail({
       },
       body: JSON.stringify({
         sender: {
-          name: 'HostelHub',
+          name: 'StayKosh',
           email: 'askatiyar2007@gmail.com'
         },
         to: [{
           email: email,
           name: studentName
         }],
-        subject: "You're invited to join HostelHub",
+        subject: "You're invited to join StayKosh",
         htmlContent: htmlContent,
-        textContent: `Dear ${studentName},\n\nGreat news! The hostel owner has assigned you a room and you're invited to join HostelHub.\n\nHostel: ${hostelName}\nRoom: ${roomName}\n\nComplete your signup here: ${invitationUrl}\n\nImportant: This invitation is linked to the email address ${email}. You must use this same email to complete your signup.\n\nThis invitation will expire in 7 days.\n\nIf you have any questions, please contact your hostel owner directly.\n\n© ${new Date().getFullYear()} HostelHub. All rights reserved.`
+        textContent: `Dear ${studentName},\n\nGreat news! The hostel owner has assigned you a room and you're invited to join StayKosh.\n\nHostel: ${hostelName}\nRoom: ${roomName}\n\nComplete your signup here: ${invitationUrl}\n\nImportant: This invitation is linked to the email address ${email}. You must use this same email to complete your signup.\n\nThis invitation will expire in 7 days.\n\nIf you have any questions, please contact your hostel owner directly.\n\n© ${new Date().getFullYear()} StayKosh. All rights reserved.`
       })
     });
 
@@ -290,7 +290,7 @@ export async function sendSignupOtpEmail({
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>HostelHub Signup Verification Code</title>
+        <title>StayKosh Signup Verification Code</title>
       </head>
       <body>
         <p>Hello,</p>
@@ -310,11 +310,11 @@ export async function sendSignupOtpEmail({
       },
       body: JSON.stringify({
         sender: {
-          name: 'HostelHub',
+          name: 'StayKosh',
           email: 'askatiyar2007@gmail.com'
         },
         to: [{ email: normalizedEmail }],
-        subject: 'HostelHub Signup Verification Code',
+        subject: 'StayKosh Signup Verification Code',
         htmlContent,
         textContent: `Use this code to verify signup for ${normalizedEmail}: ${otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`
       })
@@ -438,12 +438,12 @@ export async function sendPasswordResetOtpEmail({
       <body>
         <div class="container">
           <div class="header">
-            <h1>🏠 HostelHub</h1>
+            <h1>🏠 StayKosh</h1>
           </div>
           <div class="content">
             <p class="greeting">Hello,</p>
             <p class="message">
-              We received a request to reset your HostelHub password.
+              We received a request to reset your StayKosh password.
             </p>
             
             <div class="otp-container">
@@ -461,7 +461,7 @@ export async function sendPasswordResetOtpEmail({
           </div>
           <div class="footer">
             <p>If you have any questions, please contact our support team.</p>
-            <p>&copy; ${new Date().getFullYear()} HostelHub. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} StayKosh. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -477,15 +477,15 @@ export async function sendPasswordResetOtpEmail({
       },
       body: JSON.stringify({
         sender: {
-          name: 'HostelHub',
+          name: 'StayKosh',
           email: 'askatiyar2007@gmail.com'
         },
         to: [{
           email: email
         }],
-        subject: "HostelHub Password Reset Code",
+        subject: "StayKosh Password Reset Code",
         htmlContent: htmlContent,
-        textContent: `Hello,\n\nWe received a request to reset your HostelHub password.\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you did not request a password reset, you can safely ignore this email.\n\nDo not share this code with anyone.\n\nRegards,\nHostelHub Team\n\n© ${new Date().getFullYear()} HostelHub. All rights reserved.`
+        textContent: `Hello,\n\nWe received a request to reset your StayKosh password.\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you did not request a password reset, you can safely ignore this email.\n\nDo not share this code with anyone.\n\nRegards,\nStayKosh Team\n\n© ${new Date().getFullYear()} StayKosh. All rights reserved.`
       })
     });
 
@@ -612,12 +612,12 @@ export async function sendRoomRequestOtpEmail({
       <body>
         <div class="container">
           <div class="header">
-            <h1>🏠 HostelHub</h1>
+            <h1>🏠 StayKosh</h1>
           </div>
           <div class="content">
             <p class="greeting">Hello ${studentName},</p>
             <p class="message">
-              You are requesting a room through HostelHub.
+              You are requesting a room through StayKosh.
             </p>
             
             <div class="otp-container">
@@ -626,7 +626,7 @@ export async function sendRoomRequestOtpEmail({
             </div>
 
             <div class="warning">
-              <p>⚠️ This code expires in 10 minutes. Enter this code in HostelHub to verify and submit your room request.</p>
+              <p>⚠️ This code expires in 10 minutes. Enter this code in StayKosh to verify and submit your room request.</p>
             </div>
 
             <p class="message">
@@ -635,7 +635,7 @@ export async function sendRoomRequestOtpEmail({
           </div>
           <div class="footer">
             <p>If you have any questions, please contact your hostel owner directly.</p>
-            <p>&copy; ${new Date().getFullYear()} HostelHub. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} StayKosh. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -651,16 +651,16 @@ export async function sendRoomRequestOtpEmail({
       },
       body: JSON.stringify({
         sender: {
-          name: 'HostelHub',
+          name: 'StayKosh',
           email: 'askatiyar2007@gmail.com'
         },
         to: [{
           email: email,
           name: studentName
         }],
-        subject: "HostelHub Room Request Verification Code",
+        subject: "StayKosh Room Request Verification Code",
         htmlContent: htmlContent,
-        textContent: `Hello ${studentName},\n\nYou are requesting a room through HostelHub.\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nEnter this code in HostelHub to verify and submit your room request.\n\nIf you did not request a room, please ignore this email.\n\nRegards,\nHostelHub Team\n\n© ${new Date().getFullYear()} HostelHub. All rights reserved.`
+        textContent: `Hello ${studentName},\n\nYou are requesting a room through StayKosh.\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nEnter this code in StayKosh to verify and submit your room request.\n\nIf you did not request a room, please ignore this email.\n\nRegards,\nStayKosh Team\n\n© ${new Date().getFullYear()} StayKosh. All rights reserved.`
       })
     });
 

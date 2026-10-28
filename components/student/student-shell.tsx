@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 import {
   LayoutDashboard,
-  Building2,
   CreditCard,
   MessageSquare,
   Settings,
@@ -290,20 +290,10 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
             isCollapsed ? "justify-center" : "justify-between",
           )}>
             {!isCollapsed && (
-              <Link href="/student/dashboard" className="flex items-center gap-2.5 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded-lg">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500 shadow-md group-hover:scale-105 transition-transform">
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <span className="font-bold text-white tracking-tight text-base block leading-none">HostelHub</span>
-                  <span className="text-[10px] font-semibold text-teal-400 tracking-wider uppercase mt-1 block">Student Workspace</span>
-                </div>
-              </Link>
+              <StayKoshLogo size={32} theme="dark" badgeText="STUDENT" href="/student/dashboard" />
             )}
             {isCollapsed && (
-              <Link href="/student/dashboard" className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500 shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
-                <Building2 className="h-5 w-5 text-white" />
-              </Link>
+              <StayKoshLogo size={32} theme="dark" showWordmark={false} href="/student/dashboard" />
             )}
           </div>
 
@@ -360,12 +350,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
         <div className="relative z-10 flex h-full flex-col">
           <div className="flex h-14 items-center justify-between border-b px-4 flex-shrink-0 border-slate-800/80 bg-[#081720]/95 backdrop-blur-xs">
-            <Link href="/student/dashboard" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-700 via-teal-600 to-teal-500 shadow-md">
-                <Building2 className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-bold text-white tracking-tight">HostelHub</span>
-            </Link>
+            <StayKoshLogo size={28} theme="dark" badgeText="STUDENT" href="/student/dashboard" />
             <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="text-white hover:bg-slate-800/60 rounded-lg cursor-pointer">
               <X size={20} />
             </Button>
@@ -419,16 +404,8 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
             <Menu size={18} />
           </Button>
 
-          {/* Desktop HostelHub Branding context */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white shadow-xs">
-              <Building2 className="h-4.5 w-4.5" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-bold text-white tracking-tight text-base leading-none">HostelHub</span>
-              <span className="hidden sm:inline-block text-[10px] font-semibold text-teal-400/90 tracking-wider uppercase">Student Workspace</span>
-            </div>
-          </div>
+          {/* Desktop StayKosh Branding context */}
+          <StayKoshLogo size={28} theme="dark" badgeText="STUDENT" />
         </div>
 
         {/* Center: Clean Empty Area */}

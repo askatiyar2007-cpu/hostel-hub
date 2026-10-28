@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ArrowRight } from 'lucide-react';
-import { HostelHubLogo } from '@/components/HostelHubLogo';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 
 export default function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,7 +46,7 @@ export default function PublicHeader() {
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Real Brand Logo Component */}
-        <HostelHubLogo size="md" variant="dark" href="/" />
+        <StayKoshLogo size={36} theme="light" href="/" />
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
@@ -105,7 +105,7 @@ export default function PublicHeader() {
             <div>
               {/* Header inside drawer */}
               <div className="flex items-center justify-between pb-6 border-b border-slate-100">
-                <HostelHubLogo size="sm" variant="dark" href="/" />
+                <StayKoshLogo size={30} theme="light" href="/" />
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}

@@ -62,7 +62,7 @@ export default function HostelDetailsPage() {
         try {
           await navigator.share({
             title: hostel.name,
-            text: `View ${hostel.name} on HostelHub`,
+            text: `View ${hostel.name} on StayKosh`,
             url: publicUrl
           });
           toast.success('Link shared successfully');
@@ -292,7 +292,7 @@ export default function HostelDetailsPage() {
                     />
                   </div>
                   <p className="text-xs text-slate-500 text-center">
-                    Scan to view this hostel on HostelHub
+                    Scan to view this hostel on StayKosh
                   </p>
                   <div className="flex gap-2 w-full">
                     <Button

@@ -316,7 +316,7 @@ export function NoAllocationView({
             {getGreeting()}, <span className="capitalize">{profile?.full_name?.split(' ')[0] || 'Student'}</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Welcome to HostelHub. Manage your accommodation, rent payments, and requests in one place.
+            Welcome to StayKosh. Manage your accommodation, rent payments, and requests in one place.
           </p>
         </div>
 
@@ -458,7 +458,7 @@ export function NoAllocationView({
       {/* Step-by-Step Onboarding Guide */}
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">How Accommodation on HostelHub Works</h3>
+          <h3 className="text-lg font-bold text-slate-900">How Accommodation on StayKosh Works</h3>
           <p className="text-sm text-slate-500">Fast, digital check-in with transparent billing and sub-metered electricity</p>
         </div>
 

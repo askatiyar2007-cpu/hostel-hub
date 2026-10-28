@@ -26,8 +26,8 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'HostelHub - Hostel Management SaaS',
-  description: 'Complete hostel management solution for owners, students, and parents',
+  title: 'StayKosh - Hostel & Student Accommodation Management',
+  description: 'Complete modern hostel management solution for owners, students, and parents',
 };
 
 export default function RootLayout({

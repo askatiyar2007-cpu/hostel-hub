@@ -7,7 +7,7 @@ import {
   Users2,
   Headphones,
 } from 'lucide-react';
-import { HostelHubLogo } from '@/components/HostelHubLogo';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 
 const features = [
   {
@@ -35,16 +35,16 @@ const features = [
 export function AuthMarketing() {
   return (
     <div className="flex flex-col justify-center h-full max-w-xl py-2 select-none animate-auth-marketing-enter">
-      {/* 1. Real HostelHub Logo directly on the background */}
+      {/* 1. Real StayKosh Logo directly on the background */}
       <div className="mb-7">
-        <HostelHubLogo size="lg" variant="dark" href="/" />
+        <StayKoshLogo size={40} theme="dark" href="/" />
       </div>
 
       {/* 2. Editorial Typography: Slate-900 with rich #0F766E accent for high contrast */}
       <div className="space-y-3.5 mb-9">
         <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-slate-900 dark:text-white tracking-tight leading-[1.12] font-display">
           Find Your Perfect{' '}
-          <span className="text-[#0F766E] dark:text-teal-400 block sm:inline">Stay at HostelHub</span>
+          <span className="text-[#0F766E] dark:text-teal-400 block sm:inline">Stay at StayKosh</span>
         </h1>
         <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed max-w-lg font-medium">
           Manage your stay, pay your bills, and stay connected — all in one place.

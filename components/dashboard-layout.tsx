@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { StayKoshLogo } from '@/components/StayKoshLogo';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -384,12 +385,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-border p-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <span className="font-semibold">HostelHub</span>
-            </Link>
+            <StayKoshLogo size={28} theme="light" href="/" />
             <Button variant="ghost" size="icon" onClick={toggleMobileSidebar}>
               <X size={20} />
             </Button>
