@@ -338,59 +338,59 @@ export function NoAllocationView({
 
       {/* If there is a pending request currently being reviewed */}
       {isPending && (
-        <Card className="border border-teal-200 bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/40 shadow-sm overflow-hidden">
+        <Card className="border border-teal-200 dark:border-teal-900/60 bg-gradient-to-br from-teal-50/70 via-white to-emerald-50/40 dark:from-[#0e222e] dark:via-[#0b1b24] dark:to-[#081820] shadow-sm overflow-hidden">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 border border-teal-200 text-xs font-bold text-teal-800">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-950/70 border border-teal-200 dark:border-teal-800 text-xs font-bold text-teal-800 dark:text-teal-300">
                   <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
                   Application Status: Pending Owner Approval
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
                   Your Room Booking Request is Under Review
                 </h2>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Your request for <span className="font-semibold text-slate-900">{reqHostel?.name || 'the hostel'}</span> has been submitted. The owner will review your tenant details and allocate your room and bed. You will receive immediate confirmation once approved.
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Your request for <span className="font-semibold text-slate-900 dark:text-slate-100">{reqHostel?.name || 'the hostel'}</span> has been submitted. The owner will review your tenant details and allocate your room and bed. You will receive immediate confirmation once approved.
                 </p>
 
                 {/* Requested Details Box */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                    <p className="text-[11px] text-slate-500 font-medium">Hostel</p>
-                    <p className="text-sm font-bold text-slate-900 truncate">{reqHostel?.name || '—'}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{reqHostel?.city || ''}</p>
+                  <div className="p-3 bg-white dark:bg-[#122b3b] rounded-xl border border-slate-200/80 dark:border-[#1a3d52]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Hostel</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{reqHostel?.name || '—'}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{reqHostel?.city || ''}</p>
                   </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                    <p className="text-[11px] text-slate-500 font-medium">Room</p>
-                    <p className="text-sm font-bold text-slate-900">Room {reqRoom?.room_number || '—'}</p>
-                    <p className="text-[11px] text-slate-400 capitalize">{reqRoom?.room_type || 'Standard'}</p>
+                  <div className="p-3 bg-white dark:bg-[#122b3b] rounded-xl border border-slate-200/80 dark:border-[#1a3d52]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Room</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Room {reqRoom?.room_number || '—'}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 capitalize">{reqRoom?.room_type || 'Standard'}</p>
                   </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                    <p className="text-[11px] text-slate-500 font-medium">Booking Type</p>
-                    <p className="text-sm font-bold text-slate-900 capitalize">
+                  <div className="p-3 bg-white dark:bg-[#122b3b] rounded-xl border border-slate-200/80 dark:border-[#1a3d52]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Booking Type</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 capitalize">
                       {pendingRequest?.booking_type === 'entire_room' ? 'Entire Room' : 'Shared Bed'}
                     </p>
-                    <p className="text-[11px] text-slate-400">Monthly Rent</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500">Monthly Rent</p>
                   </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                    <p className="text-[11px] text-slate-500 font-medium">Estimated Rent</p>
-                    <p className="text-sm font-bold text-teal-700">₹{Number(reqRoom?.rent ?? 0).toLocaleString('en-IN')}/mo</p>
-                    <p className="text-[11px] text-slate-400">Excl. electricity</p>
+                  <div className="p-3 bg-white dark:bg-[#122b3b] rounded-xl border border-slate-200/80 dark:border-[#1a3d52]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Estimated Rent</p>
+                    <p className="text-sm font-bold text-teal-700 dark:text-teal-400">₹{Number(reqRoom?.rent ?? 0).toLocaleString('en-IN')}/mo</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500">Excl. electricity</p>
                   </div>
                 </div>
               </div>
 
               {/* Stepper Indicator */}
-              <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs lg:w-72 shrink-0 space-y-4">
-                <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Onboarding Progress</p>
+              <div className="p-5 bg-white dark:bg-[#122b3b] rounded-2xl border border-slate-200/90 dark:border-[#1a3d52] shadow-xs lg:w-72 shrink-0 space-y-4">
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Onboarding Progress</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Check className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-900">1. Request Submitted</p>
-                      <p className="text-[10px] text-slate-500">{new Date(pendingRequest.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100">1. Request Submitted</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{new Date(pendingRequest.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -398,26 +398,26 @@ export function NoAllocationView({
                       <Clock className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-teal-700">2. Owner Verification</p>
-                      <p className="text-[10px] text-teal-600 font-medium">In review by owner</p>
+                      <p className="text-xs font-bold text-teal-700 dark:text-teal-300">2. Owner Verification</p>
+                      <p className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">In review by owner</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 opacity-60">
-                    <div className="h-7 w-7 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-700">3. Deposit & Check-In</p>
-                      <p className="text-[10px] text-slate-400">Pay deposit to move in</p>
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">3. Deposit & Check-In</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">Pay deposit to move in</p>
                     </div>
                   </div>
                 </div>
 
                 {reqHostel?.contact_number && (
-                  <div className="pt-2 border-t border-slate-100">
+                  <div className="pt-2 border-t border-slate-100 dark:border-[#1a3d52]">
                     <a
                       href={`tel:${reqHostel.contact_number}`}
-                      className="text-xs font-medium text-teal-700 hover:text-teal-800 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-teal-50 hover:bg-teal-100 transition-colors"
+                      className="text-xs font-medium text-teal-700 dark:text-teal-300 hover:text-teal-800 dark:hover:text-teal-200 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-100 dark:border-teal-800 transition-colors"
                     >
                       <Phone className="h-3.5 w-3.5" /> Call Hostel Office: {reqHostel.contact_number}
                     </a>
@@ -523,9 +523,9 @@ export function ActiveResidentDashboard({
   room,
   studentRecord,
 }: ActiveResidentDashboardProps) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const studentId = studentRecord?.id;
-  const authUserId = profile?.user_id;
+  const authUserId = profile?.user_id || user?.id;
   const qc = useQueryClient();
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
 
@@ -679,10 +679,39 @@ export function ActiveResidentDashboard({
       if (!allocation) return;
       const { error } = await supabase.rpc('vacate_room_allocation', { p_alloc_id: allocation.id });
       if (error) throw error;
+
+      // Mark pre-checkout fee-schedule and rent notifications as read
+      if (user?.id) {
+        try {
+          await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('user_id', user.id)
+            .eq('read', false)
+            .in('type', ['fees', 'payment']);
+
+          // Add checkout confirmation record
+          const targetUserId = user?.id || authUserId;
+          if (targetUserId) {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: targetUserId,
+                title: 'Checkout Completed',
+                message: `You have successfully vacated Room ${room?.room_number || ''} at ${hostel?.name || 'the hostel'}.`,
+                type: 'system',
+                read: false,
+              });
+          }
+        } catch (e) {
+          console.warn('[checkoutMutation] Notification lifecycle update:', e);
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Successfully checked out from hostel room.");
       setIsCheckoutDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["student-actionable-notifications"] });
       qc.invalidateQueries({ queryKey: ["active-allocation-simple"] });
       qc.invalidateQueries({ queryKey: ["has-active-allocation"] });
       qc.invalidateQueries({ queryKey: ["student-record"] });

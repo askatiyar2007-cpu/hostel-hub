@@ -81,17 +81,65 @@ export function StudentNotifications() {
 
       const items: StudentNotificationItem[] = [];
 
+      // 0. Fetch the student's room allocations (active and historical)
+      let activeAllocation: any = null;
+      const inactiveAllocationIds = new Set<string>();
+      try {
+        const { data: allocations } = await supabase
+          .from('room_allocations')
+          .select('id, hostel_id, room_id, status, active, start_date, end_date')
+          .in('student_id', candidateIds)
+          .order('created_at', { ascending: false });
+
+        (allocations || []).forEach((a: any) => {
+          if (a.active) {
+            if (!activeAllocation) {
+              activeAllocation = a;
+            }
+          } else {
+            inactiveAllocationIds.add(a.id);
+          }
+        });
+      } catch (err) {
+        console.warn('[StudentNotifications] Error querying allocations:', err);
+      }
+
       // 1. Fetch pending / overdue bills
       try {
         const { data: fees } = await supabase
           .from('student_fees')
-          .select('id, month_year, amount_due, amount, due_date, status, created_at')
+          .select('id, month_year, amount_due, amount, due_date, status, created_at, allocation_id')
           .in('student_id', candidateIds)
           .in('status', ['pending', 'overdue'])
           .order('due_date', { ascending: false })
           .limit(5);
 
         (fees || []).forEach((fee: any) => {
+          // If fee is tied specifically to an ended room allocation
+          if (fee.allocation_id && inactiveAllocationIds.has(fee.allocation_id)) {
+            // Pending rent for a vacated room is not an active due bill
+            if (fee.status === 'pending') {
+              return;
+            }
+            // Preserve overdue unpaid debt from a previous stay
+            const amt = Number(fee.amount_due ?? fee.amount ?? 0);
+            items.push({
+              id: `fee-${fee.id}`,
+              title: 'Overdue Balance (Previous Stay)',
+              message: `Payment of ₹${amt.toLocaleString('en-IN')} for ${fee.month_year || 'previous stay'} remains unpaid.`,
+              type: 'bill',
+              link: '/student/bills',
+              created_at: fee.due_date || fee.created_at || new Date().toISOString(),
+              read: false,
+            });
+            return;
+          }
+
+          // If the student has checked out (no active allocation) and fee is pending, skip
+          if (!activeAllocation && fee.status === 'pending') {
+            return;
+          }
+
           const amt = Number(fee.amount_due ?? fee.amount ?? 0);
           const isOverdue = fee.status === 'overdue';
           items.push({
@@ -116,6 +164,8 @@ export function StudentNotifications() {
             id,
             status,
             created_at,
+            room_id,
+            hostel_id,
             hostel:hostels(name),
             room:rooms(room_number)
           `)
@@ -128,6 +178,17 @@ export function StudentNotifications() {
           const roomNum = req.room?.room_number ? `Room ${req.room.room_number}` : 'room';
           
           if (req.status === 'approved') {
+            // Only show "Room Allocation Approved" if the student STILL has an active allocation
+            // corresponding to this room request. If the student has checked out, this request
+            // represents an ended stay and must NOT continue appearing as a current notification.
+            const matchesActiveStay = activeAllocation &&
+              activeAllocation.room_id === req.room_id &&
+              activeAllocation.hostel_id === req.hostel_id;
+
+            if (!matchesActiveStay) {
+              return;
+            }
+
             items.push({
               id: `req-${req.id}`,
               title: 'Room Allocation Approved 🎉',
@@ -138,36 +199,33 @@ export function StudentNotifications() {
               read: false,
             });
           } else if (req.status === 'rejected') {
-            items.push({
-              id: `req-${req.id}`,
-              title: 'Room Request Update',
-              message: `Your request for ${roomNum} at ${hostelName} was not approved.`,
-              type: 'request',
-              link: '/student/room-request',
-              created_at: req.created_at || new Date().toISOString(),
-              read: false,
-            });
+            // Show rejection notice only if recent (within 14 days) and student has no active allocation
+            const reqTime = new Date(req.created_at || Date.now()).getTime();
+            const isRecent = (Date.now() - reqTime) < 14 * 24 * 60 * 60 * 1000;
+            if (isRecent && !activeAllocation) {
+              items.push({
+                id: `req-${req.id}`,
+                title: 'Room Request Update',
+                message: `Your request for ${roomNum} at ${hostelName} was not approved.`,
+                type: 'request',
+                link: '/student/room-request',
+                created_at: req.created_at || new Date().toISOString(),
+                read: false,
+              });
+            }
           }
         });
       } catch (err) {
         console.warn('[StudentNotifications] Error querying requests:', err);
       }
 
-      // 3. Fetch active allocation to get announcements/notices
+      // 3. Fetch active allocation announcements / notices
       try {
-        const { data: alloc } = await supabase
-          .from('room_allocations')
-          .select('hostel_id')
-          .in('student_id', candidateIds)
-          .eq('active', true)
-          .limit(1)
-          .maybeSingle();
-
-        if (alloc?.hostel_id) {
+        if (activeAllocation?.hostel_id) {
           const { data: notices } = await supabase
             .from('notices')
             .select('id, title, body, created_at')
-            .eq('hostel_id', alloc.hostel_id)
+            .eq('hostel_id', activeAllocation.hostel_id)
             .order('created_at', { ascending: false })
             .limit(3);
 
@@ -197,11 +255,18 @@ export function StudentNotifications() {
           .limit(10);
 
         (userNotifs || []).forEach((n: any) => {
+          // If the student has checked out (no active allocation), filter out unread pre-checkout fee-schedule notices
+          const isFeesScheduleNotice = (n.title || '').toLowerCase().includes('fees schedule') ||
+                                       (n.message || '').toLowerCase().includes('next 12 months');
+          if (!activeAllocation && isFeesScheduleNotice && !n.read) {
+            return;
+          }
+
           items.push({
             id: `notif-${n.id}`,
             title: n.title || 'Notification',
             message: n.message || '',
-            type: 'system',
+            type: (n.type as any) || 'system',
             link: '/student/dashboard',
             created_at: n.created_at || new Date().toISOString(),
             read: Boolean(n.read),
@@ -266,7 +331,7 @@ export function StudentNotifications() {
       }
     }
 
-    qc.invalidateQueries({ queryKey: ['student-actionable-notifications', user?.id] });
+    qc.invalidateQueries({ queryKey: ['student-actionable-notifications'] });
   }, [rawNotifications, dismissedIds, user?.id, qc]);
 
   const getIcon = (type: StudentNotificationItem['type']) => {

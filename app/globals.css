@@ -210,16 +210,27 @@ p {
   }
 }
 
-/* Webkit autofill styling for dark inputs */
+/* Webkit autofill styling: light mode uses white background; dark mode uses deep navy */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #032423 inset !important;
-  -webkit-text-fill-color: white !important;
-  background-color: #032423 !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #122b3b inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  background-color: #122b3b !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 
 /* ============================================================
    AUTH BACKGROUND ANIMATIONS

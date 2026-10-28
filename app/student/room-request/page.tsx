@@ -1165,7 +1165,7 @@ export default function RoomRequestPage() {
       ------------------------------------------------------- */}
 
       {step === 'hostel' && (
-        <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm space-y-6">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-6 md:p-8 shadow-sm space-y-6">
 
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 border border-teal-100 dark:border-teal-900 shrink-0">
@@ -1535,11 +1535,11 @@ export default function RoomRequestPage() {
       ------------------------------------------------------- */}
 
       {step === 'details' && selectedRoom && (
-        <div className="mx-auto max-w-2xl bg-card border border-border rounded-3xl shadow-xl overflow-hidden animate-fade-in">
+        <div className="mx-auto max-w-2xl bg-white dark:bg-[#0e222e] border border-slate-200 dark:border-[#1a3d52] rounded-3xl shadow-xl overflow-hidden animate-fade-in">
 
           {/* Header & Sub-step Progress */}
 
-          <div className="bg-primary/5 px-6 py-5 border-b border-border/60">
+          <div className="bg-slate-50/80 dark:bg-[#122b3b]/70 px-6 py-5 border-b border-slate-200 dark:border-[#1a3d52]">
 
             <div className="flex items-center justify-between mb-2">
 
@@ -1743,12 +1743,12 @@ export default function RoomRequestPage() {
 
                   <div className="mt-2">
                     {!photoPreview ? (
-                      <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
-                        <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground mb-2">
+                      <div className="border-2 border-dashed border-slate-300 dark:border-[#1a3d52] bg-slate-50/70 dark:bg-[#122b3b]/40 rounded-xl p-6 text-center hover:border-teal-500/50 transition-colors">
+                        <Upload className="h-8 w-8 mx-auto text-slate-400 dark:text-slate-500 mb-2" />
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                           Upload your passport-size photo
                         </p>
-                        <p className="text-xs text-muted-foreground mb-3">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
                           JPG, PNG, or WebP (max 5 MB)
                         </p>
                         <input
@@ -1760,7 +1760,7 @@ export default function RoomRequestPage() {
                         />
                         <label
                           htmlFor="photo"
-                          className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/95 cursor-pointer"
+                          className="inline-flex items-center justify-center rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 cursor-pointer shadow-xs transition-colors"
                         >
                           Select Photo
                         </label>
@@ -1996,9 +1996,9 @@ export default function RoomRequestPage() {
             {detailsSubStep === 5 && (
               <div className="space-y-4">
 
-                <div className="rounded-xl bg-muted/65 p-4 text-sm border space-y-2.5">
+                <div className="rounded-xl bg-slate-50 dark:bg-[#122b3b]/60 p-4 text-sm border border-slate-200 dark:border-[#1a3d52] space-y-2.5">
 
-                  <span className="font-bold text-foreground block border-b pb-1 font-display uppercase tracking-wider text-xs">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 block border-b border-slate-200 dark:border-[#1a3d52] pb-1 font-display uppercase tracking-wider text-xs">
                     Summary of Selection
                   </span>
 
@@ -2065,7 +2065,7 @@ export default function RoomRequestPage() {
                 )}
 
                 {selectedRoom.capacity > 1 && (
-                  <div className="space-y-2 bg-muted/20 p-4 rounded-xl border">
+                  <div className="space-y-2 bg-slate-50/70 dark:bg-[#122b3b]/40 p-4 rounded-xl border border-slate-200 dark:border-[#1a3d52]">
 
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Booking Option
@@ -2285,7 +2285,7 @@ export default function RoomRequestPage() {
 
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-8 shadow-sm space-y-4">
 
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mx-auto">
 
