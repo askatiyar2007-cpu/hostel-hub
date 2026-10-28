@@ -1,6 +1,14 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const renderWithQueryClient = (ui: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+};
 
 // Mocks
 const mockPush = vi.fn();
@@ -58,7 +66,7 @@ describe('StudentProfilePage Regression Tests (React Error #310 Guard)', () => {
       single: vi.fn().mockReturnValue(new Promise(() => {})), // Never resolves (stays loading)
     });
 
-    render(<StudentProfilePage params={{ id: 'alloc-123' }} />);
+    renderWithQueryClient(<StudentProfilePage params={{ id: 'alloc-123' }} />);
 
     expect(screen.getByText('Resident Profile')).toBeDefined();
     expect(screen.getByText('Loading student database...')).toBeDefined();
@@ -71,7 +79,7 @@ describe('StudentProfilePage Regression Tests (React Error #310 Guard)', () => {
       single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Allocation not found' } }),
     });
 
-    render(<StudentProfilePage params={{ id: 'alloc-not-found' }} />);
+    renderWithQueryClient(<StudentProfilePage params={{ id: 'alloc-not-found' }} />);
 
     await waitFor(() => {
       expect(screen.getByText(/Allocation not found/i)).toBeDefined();
@@ -176,7 +184,7 @@ describe('StudentProfilePage Regression Tests (React Error #310 Guard)', () => {
       };
     });
 
-    render(<StudentProfilePage params={{ id: 'alloc-123' }} />);
+    renderWithQueryClient(<StudentProfilePage params={{ id: 'alloc-123' }} />);
 
     // Initially displays loading
     expect(screen.getByText('Loading student database...')).toBeDefined();

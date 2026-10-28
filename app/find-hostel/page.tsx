@@ -14,11 +14,11 @@ import {
   Camera,
   Building2,
   Loader2,
-  MapPin
+  MapPin,
+  Bed,
+  ScanLine
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase/client';
 import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
 
@@ -30,7 +30,14 @@ export default function FindHostelPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const scannerRef = useRef<any>(null);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Cleanup scanner on unmount
   useEffect(() => {
@@ -44,7 +51,7 @@ export default function FindHostelPage() {
   const handleSearch = async () => {
     const trimmed = searchQuery.trim();
     if (!trimmed) {
-      toast.error('Please enter a hostel name or hostel ID');
+      toast.error('Please enter a hostel name, city, or hostel ID');
       return;
     }
 
@@ -126,7 +133,7 @@ export default function FindHostelPage() {
 
   const startScanner = async () => {
     if (!isMobile) {
-      toast.info('Please use your phone to scan QR codes');
+      toast.info('Please open HostelHub on your mobile phone to scan QR codes with your camera.');
       return;
     }
 
@@ -137,23 +144,19 @@ export default function FindHostelPage() {
       const readerElement = document.getElementById('qr-reader');
       if (!readerElement) return;
 
-      // Dynamic import only when needed
       import('html5-qrcode').then((mod) => {
         if (!scannerRef.current) {
           scannerRef.current = new mod.Html5QrcodeScanner(
             'qr-reader',
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            { fps: 10, qrbox: { width: 240, height: 240 } },
             /* verbose= */ false
           );
         }
 
         scannerRef.current.render(onScanSuccess, onScanFailure)
-          .then(() => {
-            console.log('Scanner started successfully');
-          })
           .catch((err: any) => {
             console.error('Scanner error:', err);
-            toast.error('Failed to start camera. Please ensure camera permission is granted.');
+            toast.error('Failed to access camera. Please grant camera permission.');
             setIsScanning(false);
           });
       }).catch(() => {
@@ -171,10 +174,8 @@ export default function FindHostelPage() {
   };
 
   const onScanSuccess = async (decodedText: string) => {
-    console.log('QR scanned:', decodedText);
     stopScanner();
 
-    // Validate QR content: match UUID anywhere or parse path
     let hostelId: string | null = null;
     const uuidMatch = decodedText.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
     if (uuidMatch) {
@@ -197,7 +198,6 @@ export default function FindHostelPage() {
       return;
     }
 
-    // Verify hostel exists
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -219,203 +219,223 @@ export default function FindHostelPage() {
   };
 
   const onScanFailure = () => {
-    // Suppress console spam for normal scan failures
+    // Suppress console spam for normal scan frames
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/" className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-            <ArrowLeft size={20} className="text-slate-600" />
-          </Link>
-          <h1 className="text-lg font-bold text-slate-900">Find a Hostel</h1>
+    <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100">
+      <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+        {/* Navigation Breadcrumb */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition-colors mb-5 group"
+        >
+          <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+          <span>Back to Home</span>
+        </Link>
+
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            Find a Hostel
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Search verified properties by name, city, or unique Hostel ID
+          </p>
         </div>
-      </header>
 
-      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
-        {/* Unified Search Option */}
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
-                <Search size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Search Hostels</h2>
-                <p className="text-sm text-slate-500">Find hostels by name, location, or unique Hostel ID</p>
-              </div>
+        {/* Cohesive Search Bar */}
+        <div className="relative mb-6">
+          <div className="flex items-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e222e] shadow-xs focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-500 dark:focus-within:border-teal-500 transition-all p-1.5 gap-2">
+            <div className="pl-3.5 text-slate-400 dark:text-slate-500 shrink-0">
+              <Search size={18} />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Input
-                placeholder="Search hostels by name or hostel ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSearch}
-                disabled={loading}
-                className="bg-teal-600 hover:bg-teal-700 text-white h-10 px-5 rounded-xl font-medium"
+            <input
+              type="text"
+              placeholder="Hostel name, city, or Hostel ID…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="flex-1 h-10 px-2 bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none dark:!bg-transparent dark:!border-0"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors"
+                aria-label="Clear search"
               >
-                {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : <Search size={16} className="mr-2" />}
-                {loading ? 'Searching...' : 'Search'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <X size={15} />
+              </button>
+            )}
+            <Button
+              onClick={handleSearch}
+              disabled={loading}
+              className="h-10 px-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium shrink-0 transition-colors shadow-none"
+            >
+              {loading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                'Search'
+              )}
+            </Button>
+          </div>
+        </div>
 
-        {/* Live Search Results */}
+        {/* Loading State */}
         {loading && (
-          <div className="flex flex-col items-center justify-center p-8 bg-white border border-slate-200 rounded-2xl shadow-xs">
-            <Loader2 size={28} className="animate-spin text-teal-600 mb-2" />
-            <p className="text-sm text-slate-600">Searching hostels and checking live vacancy...</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 size={26} className="animate-spin text-teal-600 mb-2.5" />
+            <p className="text-xs text-slate-500 dark:text-slate-400">Searching properties and checking live availability…</p>
           </div>
         )}
 
+        {/* No Results State */}
         {!loading && hasSearched && searchResults.length === 0 && (
-          <Card className="border border-slate-200 bg-white shadow-xs">
-            <CardContent className="p-8 text-center">
-              <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                <Search size={22} />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1">No hostels found</h3>
-              <p className="text-sm text-slate-500 max-w-sm mx-auto">
-                No properties matched &ldquo;{searchQuery}&rdquo;. Check the spelling or ask the owner for their exact Hostel ID or QR code.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e222e] p-8 mb-6">
+            <div className="h-11 w-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400 dark:text-slate-500">
+              <Search size={20} />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">No hostels found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              No properties matched &ldquo;{searchQuery}&rdquo;. Check the spelling or ask the hostel owner for their exact Hostel ID or QR code.
+            </p>
+          </div>
         )}
 
+        {/* Search Results List */}
         {!loading && searchResults.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900">
-                Matching Hostels ({searchResults.length})
+          <div className="space-y-3 mb-6">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Matching Properties ({searchResults.length})
               </h2>
-              <span className="text-xs text-slate-500">Select a hostel to view details</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                Select to view room vacancy
+              </span>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {searchResults.map((h) => (
-                <Card key={h.id} className="border border-slate-200 bg-white hover:border-teal-200 hover:shadow-md transition-all">
-                  <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-2">
+                <Link
+                  key={h.id}
+                  href={`/hostels/${h.id}`}
+                  className="group block rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e222e] p-4 sm:p-5 hover:border-teal-300 dark:hover:border-teal-700/80 hover:shadow-xs transition-all"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+                    <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg font-bold text-slate-900">{h.name}</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
+                          {h.name}
+                        </h3>
                         {h.totalBeds === 0 ? (
-                          <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
+                          <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                             No rooms listed
                           </span>
                         ) : h.isFull ? (
-                          <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
                             Full (0 beds free)
                           </span>
                         ) : (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
+                            <Bed size={11} />
                             {h.availableBeds} {h.availableBeds === 1 ? 'bed' : 'beds'} available
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <MapPin size={14} className="text-slate-400 shrink-0" />
-                        <span>{h.city ? `${h.city} • ${h.address || ''}` : (h.address || 'Address not specified')}</span>
-                      </div>
+                      {(h.city || h.address) && (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                          <MapPin size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                          <span className="truncate">
+                            {h.city ? `${h.city}${h.address ? ` · ${h.address}` : ''}` : (h.address || '')}
+                          </span>
+                        </div>
+                      )}
 
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100 w-fit">
-                        <Key size={12} className="text-slate-400 shrink-0" />
-                        <span className="select-all">ID: {h.id}</span>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                        <Key size={11} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                        <span className="select-all truncate">ID: {h.id}</span>
                       </div>
                     </div>
 
-                    <div className="shrink-0 flex items-center">
-                      <Link href={`/hostels/${h.id}`} className="w-full md:w-auto">
-                        <Button className="w-full md:w-auto h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs">
-                          View Hostel <ArrowRight size={14} className="ml-1.5" />
-                        </Button>
-                      </Link>
+                    <div className="shrink-0 flex items-center justify-end sm:pl-3">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 dark:text-teal-400 group-hover:translate-x-0.5 transition-transform">
+                        View Hostel
+                        <ArrowRight size={14} />
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
         )}
 
-        {/* QR Scan Option */}
-        <Card className="border border-slate-200 bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+        {/* QR Scan Section — Teal Design System */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e222e] overflow-hidden mb-6">
+          <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-teal-50 dark:bg-teal-950/50 border border-teal-100 dark:border-teal-900/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
                 <QrCode size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Scan Hostel QR</h2>
-                <p className="text-sm text-slate-500">
-                  {isMobile ? 'Scan the QR code from the hostel owner' : 'Use your phone to scan the hostel QR code'}
+                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Scan Hostel QR Code
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isMobile
+                    ? "Point your camera at the owner's hostel QR to open details instantly"
+                    : "Use your smartphone camera to scan the hostel's unique QR code"}
                 </p>
               </div>
             </div>
             <Button
               onClick={startScanner}
-              disabled={!isMobile}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10 rounded-xl"
+              variant="outline"
+              className="h-9 px-4 text-xs font-medium rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/50 shrink-0 self-start sm:self-auto"
             >
               {isMobile ? (
                 <>
-                  <Camera size={16} className="mr-2" />
-                  Scan Hostel QR
+                  <Camera size={14} className="mr-1.5" />
+                  Open Scanner
                 </>
               ) : (
                 <>
-                  <QrCode size={16} className="mr-2" />
-                  Scan with your phone
+                  <ScanLine size={14} className="mr-1.5" />
+                  Scan with Phone
                 </>
               )}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Info Card */}
-        <Card className="border border-slate-200 bg-slate-50 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <Building2 className="w-5 h-5 text-teal-600 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-slate-900 mb-1">About HostelHub</h3>
-                <p className="text-sm text-slate-600">
-                  HostelHub connects students with verified hostels. Ask your hostel owner for their unique QR code or Hostel ID to find their property quickly.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* QR Scanner Section */}
-        {isScanning && (
-          <Card className="border border-slate-200 bg-white shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-900">Scan Hostel QR</h3>
+          {/* Inline Scanner */}
+          {isScanning && (
+            <div className="border-t border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/40">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Align QR code within the camera frame
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={stopScanner}
-                  className="h-8 w-8"
+                  className="h-7 w-7 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  aria-label="Close scanner"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </Button>
               </div>
-              <div id="qr-reader" className="w-full"></div>
-              <p className="text-center text-sm text-slate-500 mt-4">
-                Point your camera at the hostel QR code
-              </p>
-            </CardContent>
-          </Card>
-        )}
+              <div id="qr-reader" className="w-full rounded-xl overflow-hidden bg-black/5 dark:bg-black/20"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Reassuring Footer Tip */}
+        <p className="text-xs text-slate-400 dark:text-slate-500 text-center flex items-center justify-center gap-1.5">
+          <Building2 size={13} className="shrink-0" />
+          <span>Every verified property has a unique Hostel ID and QR code provided by the owner.</span>
+        </p>
       </div>
     </div>
   );
