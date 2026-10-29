@@ -385,7 +385,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-border p-4">
-            <StayKoshLogo size={28} theme="light" href="/" />
+            <StayKoshLogo size="sm" theme="light" href="/" />
             <Button variant="ghost" size="icon" onClick={toggleMobileSidebar}>
               <X size={20} />
             </Button>

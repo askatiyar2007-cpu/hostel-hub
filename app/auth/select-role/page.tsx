@@ -102,7 +102,7 @@ export default function SelectRolePage() {
       <div className="max-w-4xl w-full space-y-8">
         <div className="text-center space-y-3">
           <div className="mb-2 flex justify-center">
-            <StayKoshLogo size={36} theme="light" href="/" />
+            <StayKoshLogo size="md" theme="light" href="/" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight font-display text-slate-900 dark:text-white">
             What is your role?

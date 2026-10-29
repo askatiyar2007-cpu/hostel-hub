@@ -21,7 +21,7 @@ export function AuthShell({ children }: AuthShellProps) {
       <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2 flex items-center justify-between">
         {/* Mobile Header Logo (<lg screens) */}
         <div className="lg:hidden">
-          <StayKoshLogo size={32} theme="light" href="/" />
+          <StayKoshLogo size="sm" theme="light" href="/" />
         </div>
 
         {/* Desktop left space (logo is positioned inside AuthMarketing directly on background) */}

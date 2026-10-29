@@ -43,7 +43,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <StayKoshLogo
-          size={36}
+          size="md"
           theme="light"
           href={isCompleteUser ? dashboardPath : "/"}
         />

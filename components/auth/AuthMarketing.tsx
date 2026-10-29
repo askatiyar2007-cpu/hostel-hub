@@ -37,7 +37,7 @@ export function AuthMarketing() {
     <div className="flex flex-col justify-center h-full max-w-xl py-2 select-none animate-auth-marketing-enter">
       {/* 1. Real StayKosh Logo directly on the background */}
       <div className="mb-7">
-        <StayKoshLogo size={40} theme="light" href="/" />
+        <StayKoshLogo size="lg" theme="light" href="/" />
       </div>
 
       {/* 2. Editorial Typography: Slate-900 with rich #0F766E accent for high contrast */}

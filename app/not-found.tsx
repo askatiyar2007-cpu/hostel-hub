@@ -20,7 +20,7 @@ export default function NotFound() {
 
       {/* Header */}
       <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <StayKoshLogo size={36} theme="light" href="/" />
+        <StayKoshLogo size="md" theme="light" href="/" />
       </header>
 
       {/* Main 404 message */}

@@ -124,7 +124,7 @@ export default function SetupPasswordPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <StayKoshLogo size={36} theme="light" href="/" />
+            <StayKoshLogo size="md" theme="light" href="/" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight font-display">Complete Your Account Setup</h2>
           <p className="mt-2 text-sm text-muted-foreground">

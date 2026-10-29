@@ -20,12 +20,11 @@ export function HostelHubLogo({
   href = '/',
   className = '',
 }: HostelHubLogoProps) {
-  const pixelSize = size === 'sm' ? 32 : size === 'lg' ? 44 : 36;
   const theme = variant === 'light' ? 'dark' : 'light';
 
   return (
     <StayKoshLogo
-      size={pixelSize}
+      size={size}
       theme={theme}
       href={href}
       className={className}

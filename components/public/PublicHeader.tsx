@@ -46,7 +46,7 @@ export default function PublicHeader() {
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Real Brand Logo Component */}
-        <StayKoshLogo size={36} theme="light" href="/" />
+        <StayKoshLogo size="md" theme="light" href="/" />
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
@@ -105,7 +105,7 @@ export default function PublicHeader() {
             <div>
               {/* Header inside drawer */}
               <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
-                <StayKoshLogo size={30} theme="light" href="/" />
+                <StayKoshLogo size="sm" theme="light" href="/" />
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 
 export interface StayKoshLogoProps {
-  size?: number;
+  size?: 'sm' | 'md' | 'lg' | number;
   showWordmark?: boolean;
   theme?: 'dark' | 'light';
   badgeText?: string;
@@ -13,7 +13,7 @@ export interface StayKoshLogoProps {
 }
 
 export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
-  size = 36,
+  size = 'md',
   showWordmark = true,
   theme = 'light',
   badgeText,
@@ -24,16 +24,62 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
   const stayColor = isPermanentDark ? '#FFFFFF' : '#0F172A';
   const koshColor = isPermanentDark ? '#34D399' : '#0D6E5B';
 
+  // Resolve responsive icon dimensions & typography scale matching HostelHub's design system
+  let numericSize: number;
+  let iconClass = '';
+  let textClass = '';
+  let gapClass = 'gap-2.5';
+  let badgeClass = 'text-[10px] px-1.5 py-0.5';
+
+  if (size === 'sm') {
+    numericSize = 32;
+    iconClass = 'w-8 h-8';
+    textClass = 'text-lg leading-tight';
+    gapClass = 'gap-2';
+    badgeClass = 'text-[9px] px-1.5 py-0.5';
+  } else if (size === 'lg') {
+    numericSize = 48;
+    iconClass = 'w-12 h-12 sm:w-[52px] sm:h-[52px]';
+    textClass = 'text-2xl sm:text-3xl leading-tight';
+    gapClass = 'gap-3 sm:gap-3.5';
+    badgeClass = 'text-xs px-2 py-0.5';
+  } else if (size === 'md') {
+    numericSize = 40;
+    iconClass = 'w-10 h-10 sm:w-11 sm:h-11';
+    textClass = 'text-xl sm:text-2xl leading-tight';
+    gapClass = 'gap-2.5 sm:gap-3';
+    badgeClass = 'text-[10px] px-1.5 py-0.5';
+  } else {
+    // Custom numeric size
+    numericSize = typeof size === 'number' ? size : 36;
+    if (numericSize >= 46) {
+      iconClass = 'w-12 h-12 sm:w-[52px] sm:h-[52px]';
+      textClass = 'text-2xl sm:text-3xl leading-tight';
+      gapClass = 'gap-3 sm:gap-3.5';
+      badgeClass = 'text-xs px-2 py-0.5';
+    } else if (numericSize >= 36) {
+      iconClass = 'w-10 h-10 sm:w-11 sm:h-11';
+      textClass = 'text-xl sm:text-2xl leading-tight';
+      gapClass = 'gap-2.5 sm:gap-3';
+      badgeClass = 'text-[10px] px-1.5 py-0.5';
+    } else {
+      iconClass = 'w-8 h-8';
+      textClass = 'text-lg leading-tight';
+      gapClass = 'gap-2';
+      badgeClass = 'text-[9px] px-1.5 py-0.5';
+    }
+  }
+
   const logoMark = (
-    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+    <div className={`inline-flex items-center ${gapClass} select-none ${className}`}>
       {/* Flat 2D "Roof-S + Twin Coins" Vector Mark */}
       <svg
-        width={size}
-        height={size}
+        width={numericSize}
+        height={numericSize}
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 transition-transform duration-200 group-hover:scale-105"
+        className={`shrink-0 transition-transform duration-200 group-hover:scale-105 ${iconClass}`}
         aria-hidden="true"
       >
         {/* Flat Deep Emerald Squircle Background */}
@@ -73,13 +119,12 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
       {showWordmark && (
         <div className="flex items-center gap-2">
           <span
-            className={`font-extrabold tracking-tight font-display leading-none ${
+            className={`font-bold tracking-tight font-display ${textClass} ${
               isPermanentDark
                 ? 'text-white'
                 : 'text-slate-900 dark:text-white'
             }`}
             style={{
-              fontSize: Math.max(16, Math.round(size * 0.55)),
               color: isPermanentDark ? stayColor : undefined,
             }}
           >
@@ -99,7 +144,7 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
           </span>
           {badgeText && (
             <span
-              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider leading-none uppercase ${
+              className={`inline-flex items-center rounded font-extrabold tracking-wider leading-none uppercase ${badgeClass} ${
                 isPermanentDark
                   ? 'text-[#34D399]'
                   : 'text-[#0D6E5B] dark:text-[#34D399]'

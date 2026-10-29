@@ -14,7 +14,7 @@ export default function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 pb-12 border-b border-slate-800/80">
           {/* Col 1: Brand & Identity */}
           <div className="space-y-4">
-            <StayKoshLogo size={36} theme="dark" href="/" />
+            <StayKoshLogo size="md" theme="dark" href="/" />
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Modern student accommodation platform and hostel management system connecting students and verified property owners.
             </p>
