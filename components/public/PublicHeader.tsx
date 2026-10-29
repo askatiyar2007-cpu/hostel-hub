@@ -40,7 +40,7 @@ export default function PublicHeader() {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 h-20 ${
         scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-xs border-b border-slate-200/80'
+          ? 'bg-white/95 dark:bg-[#07131d]/95 backdrop-blur-md shadow-xs border-b border-slate-200/80 dark:border-slate-800/80'
           : 'bg-transparent border-b border-transparent'
       }`}
     >
@@ -54,7 +54,7 @@ export default function PublicHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-slate-600 hover:text-[#0F766E] transition-colors duration-150 py-1 font-medium"
+              className="text-slate-600 dark:text-slate-300 hover:text-[#0F766E] dark:hover:text-teal-400 transition-colors duration-150 py-1 font-medium"
             >
               {link.label}
             </Link>
@@ -65,7 +65,7 @@ export default function PublicHeader() {
         <div className="hidden lg:flex items-center gap-4">
           <Link
             href="/login"
-            className="text-sm font-semibold text-slate-700 hover:text-[#0F766E] transition-colors duration-150 px-3 py-2"
+            className="text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-[#0F766E] dark:hover:text-teal-400 transition-colors duration-150 px-3 py-2"
           >
             Sign In
           </Link>
@@ -82,7 +82,7 @@ export default function PublicHeader() {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(true)}
-          className="lg:hidden inline-flex items-center justify-center p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-600 transition-colors"
+          className="lg:hidden inline-flex items-center justify-center p-2.5 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600 transition-colors"
           aria-label="Open main menu"
           aria-expanded={mobileMenuOpen}
         >
@@ -101,15 +101,15 @@ export default function PublicHeader() {
           />
 
           {/* Drawer panel */}
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-xs bg-white shadow-2xl flex flex-col justify-between p-6 z-50 animate-slide-in">
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-xs bg-white dark:bg-[#0e222e] shadow-2xl flex flex-col justify-between p-6 z-50 animate-slide-in border-l border-slate-200 dark:border-slate-800">
             <div>
               {/* Header inside drawer */}
-              <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
                 <StayKoshLogo size={30} theme="light" href="/" />
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
                   aria-label="Close menu"
                 >
                   <X className="h-5 w-5" />
@@ -123,7 +123,7 @@ export default function PublicHeader() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2.5 rounded-lg text-base font-medium text-slate-700 hover:bg-teal-50 hover:text-[#0F766E] transition-colors"
+                    className="block px-3 py-2.5 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-[#0F766E] dark:hover:text-teal-400 transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -132,11 +132,11 @@ export default function PublicHeader() {
             </div>
 
             {/* Auth actions inside drawer */}
-            <div className="pt-6 border-t border-slate-100 space-y-3">
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-3">
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                className="block w-full text-center px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#122b3b] transition-colors"
               >
                 Sign In
               </Link>

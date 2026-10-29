@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { dashboardPathForRole } from '@/lib/auth/dashboard';
 import { supabase } from '@/lib/supabase/client';
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import {
   Building2,
   MapPin,
@@ -14,8 +14,6 @@ import {
   ShieldCheck,
   Sparkles,
   Compass,
-  Menu,
-  X,
   CheckCircle2,
   Search,
   Bed,
@@ -53,7 +51,6 @@ export default function PublicHomePage() {
   const router = useRouter();
   const [hostels, setHostels] = useState<HostelListing[]>([]);
   const [loadingHostels, setLoadingHostels] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAuthPayload, setMobileAuthPayload] = useState<string | null>(null);
 
   // Mobile App OAuth Bridge: If Supabase redirects here after a mobile OAuth sign-in,
@@ -203,101 +200,6 @@ export default function PublicHomePage() {
 
   return (
     <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100 selection:bg-teal-100 dark:selection:bg-teal-900 selection:text-teal-900 dark:selection:text-teal-100 overflow-x-hidden">
-      {/* Animated Navigation */}
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#07131d]/90 backdrop-blur-md border-b border-slate-200/60 dark:border-[#1a3d52]/60"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-20 items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F766E] to-[#042F2E] text-white shadow-lg">
-                <Building2 className="h-6 w-6" />
-                <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[#042f2e] ring-2 ring-white dark:ring-[#07131d]">
-                  <Sparkles className="h-2.5 w-2.5 fill-current" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display leading-tight">
-                  Hostel<span className="text-[#0F766E] dark:text-teal-400">Hub</span>
-                </span>
-                <span className="text-[10px] font-medium tracking-wider text-[#0F766E]/80 dark:text-teal-300/80 uppercase">
-                  Your Stay, Simplified
-                </span>
-              </div>
-            </Link>
-
-            <nav className="hidden items-center gap-1 md:flex">
-              <Link href="/find-hostel" className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:hover:text-white transition-all duration-200">
-                Browse Hostels
-              </Link>
-              <Link href="/#how-it-works" className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:hover:text-white transition-all duration-200">
-                How it Works
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              <Link href="/login" className="hidden sm:block">
-                <button className="rounded-full px-6 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-900 dark:hover:text-white transition-colors">
-                  Sign in
-                </button>
-              </Link>
-              <Link href="/signup">
-                <button className="rounded-full bg-[#0F766E] px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 transition-colors shadow-lg shadow-teal-900/15">
-                  Get started
-                </button>
-              </Link>
-              <button onClick={() => setMobileMenuOpen(true)} className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#122b3b]">
-                <Menu className="h-6 w-6 text-slate-600 dark:text-slate-300" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-72 bg-white dark:bg-[#0e222e] border-l border-slate-200 dark:border-[#1a3d52] shadow-2xl p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button onClick={() => setMobileMenuOpen(false)} className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#122b3b]">
-                <X className="h-6 w-6 text-slate-600 dark:text-slate-300" />
-              </button>
-              <nav className="mt-16 space-y-2">
-                <Link href="/find-hostel" className="block py-3 px-4 text-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                  Browse Hostels
-                </Link>
-                <Link href="/#how-it-works" className="block py-3 px-4 text-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                  How it Works
-                </Link>
-                <div className="pt-4 border-t border-slate-200 dark:border-[#1a3d52] mt-4">
-                  <Link href="/login" className="block py-3 px-4 text-lg font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#122b3b] rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                    Sign in
-                  </Link>
-                  <Link href="/signup" className="block py-3 px-4 text-lg font-medium text-[#0F766E] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                    Get started
-                  </Link>
-                </div>
-              </nav>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* CINEMATIC HERO WITH SCROLL TRANSFORMATION */}
       <section ref={heroRef} className="relative min-h-[90vh] sm:h-screen overflow-hidden">

@@ -15,13 +15,14 @@ export interface StayKoshLogoProps {
 export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
   size = 36,
   showWordmark = true,
-  theme = 'dark',
+  theme = 'light',
   badgeText,
   href,
   className = '',
 }) => {
-  const stayColor = theme === 'dark' ? '#FFFFFF' : '#0F172A';
-  const koshColor = theme === 'dark' ? '#34D399' : '#0D6E5B';
+  const isPermanentDark = theme === 'dark';
+  const stayColor = isPermanentDark ? '#FFFFFF' : '#0F172A';
+  const koshColor = isPermanentDark ? '#34D399' : '#0D6E5B';
 
   const logoMark = (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
@@ -72,22 +73,41 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
       {showWordmark && (
         <div className="flex items-center gap-2">
           <span
-            className="font-extrabold tracking-tight font-display leading-none"
+            className={`font-extrabold tracking-tight font-display leading-none ${
+              isPermanentDark
+                ? 'text-white'
+                : 'text-slate-900 dark:text-white'
+            }`}
             style={{
               fontSize: Math.max(16, Math.round(size * 0.55)),
-              color: stayColor,
+              color: isPermanentDark ? stayColor : undefined,
             }}
           >
             Stay
-            <span style={{ color: koshColor }}>Kosh</span>
+            <span
+              className={
+                isPermanentDark
+                  ? 'text-[#34D399]'
+                  : 'text-[#0D6E5B] dark:text-[#34D399]'
+              }
+              style={{
+                color: isPermanentDark ? koshColor : undefined,
+              }}
+            >
+              Kosh
+            </span>
           </span>
           {badgeText && (
             <span
-              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider leading-none uppercase"
+              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider leading-none uppercase ${
+                isPermanentDark
+                  ? 'text-[#34D399]'
+                  : 'text-[#0D6E5B] dark:text-[#34D399]'
+              }`}
               style={{
                 backgroundColor: 'rgba(16, 185, 129, 0.16)',
                 border: '1px solid rgba(52, 211, 153, 0.35)',
-                color: theme === 'dark' ? '#34D399' : '#0D6E5B',
+                color: isPermanentDark ? '#34D399' : undefined,
               }}
             >
               {badgeText}
