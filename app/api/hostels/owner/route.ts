@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/server';
  * GET /api/hostels/owner
  * Returns hostels owned by the authenticated user
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

@@ -231,6 +231,23 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Scoped autofill override for dark authentication card inputs (e.g. AuthCard / AuthInput) */
+.auth-autofill-input:-webkit-autofill,
+.auth-autofill-input:-webkit-autofill:hover,
+.auth-autofill-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #032B28 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.auth-autofill-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #053E3A inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 
 /* ============================================================
    AUTH BACKGROUND ANIMATIONS

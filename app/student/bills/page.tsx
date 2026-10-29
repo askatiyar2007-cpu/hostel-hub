@@ -16,8 +16,10 @@ import {
   Upload,
   FileText,
   X,
-  Loader2
+  Loader2,
+  Zap
 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -170,6 +172,21 @@ export default function StudentBillsPage() {
           }
         }
 
+        // Fetch electricity charges for student to integrate into final bill
+        const { data: electricityChargesData } = await supabase
+          .from('student_electricity_charges')
+          .select('id, segment_id, charge_amount_paise, billing_month')
+          .eq('student_id', student.id);
+
+        const electricityByMonth = new Map<string, number>();
+        (electricityChargesData || []).forEach((c: any) => {
+          const key = c.billing_month;
+          if (key) {
+            const current = electricityByMonth.get(key) || 0;
+            electricityByMonth.set(key, current + (c.charge_amount_paise || 0));
+          }
+        });
+
         const formattedFees = feeList.map((fee: any) => {
           const matchingPayments = payments.filter((p: any) => 
             p.fee_id === fee.id || p.student_fees_id === fee.id
@@ -178,15 +195,36 @@ export default function StudentBillsPage() {
             p.payment_status === 'completed' || p.status === 'completed' || p.payment_status === 'pending_verification' || p.status === 'pending_verification'
           ) || matchingPayments[0] || null;
 
-          const feeAmount = Number(fee.amount_due ?? fee.amount ?? 0);
+          const monthKey = fee.month_year || fee.billing_period || (fee.due_date ? String(fee.due_date).substring(0, 7) : '');
+          const electricityPaise = electricityByMonth.get(monthKey) || 0;
+          const electricityRupees = electricityPaise / 100;
+          const rentAmount = Number(fee.amount_due ?? fee.amount ?? 0);
+          const totalBillAmount = rentAmount + electricityRupees;
+
+          const totalPaidForFee = matchingPayments
+            .filter((p: any) => p.payment_status === 'completed' || p.status === 'completed')
+            .reduce((sum: number, p: any) => sum + Number(p.amount || p.amount_paid || 0), 0);
+
+          let finalStatus = fee.status || 'pending';
+          if (totalPaidForFee >= totalBillAmount && totalBillAmount > 0) {
+            finalStatus = 'paid';
+          } else if (totalPaidForFee > 0 && totalPaidForFee < totalBillAmount) {
+            finalStatus = 'partially_paid';
+          } else if (matchingPayments.some((p: any) => p.payment_status === 'pending_verification' || p.status === 'pending_verification')) {
+            finalStatus = 'pending_verification';
+          }
+
           return {
             ...fee,
-            amount: feeAmount,
+            rent_amount: rentAmount,
+            electricity_amount: electricityRupees,
+            amount: totalBillAmount,
+            balance_due: Math.max(0, totalBillAmount - totalPaidForFee),
             month_year: fee.month_year || fee.billing_period,
             reference_number: payment?.reference_number,
             payment_method: payment?.payment_method || fee.payment_method,
             paid_date: payment?.paid_date || payment?.paid_at || fee.paid_date,
-            payment_status: payment?.payment_status || payment?.status || fee.status
+            payment_status: finalStatus
           };
         });
 
@@ -198,8 +236,8 @@ export default function StudentBillsPage() {
         });
 
         const isFeeOverdue = (fee: any) => {
-          if (fee.status === 'paid' || fee.status === 'pending_verification') return false;
-          if (fee.status === 'overdue') return true;
+          if (fee.payment_status === 'paid' || fee.status === 'paid' || fee.payment_status === 'pending_verification' || fee.status === 'pending_verification') return false;
+          if (fee.payment_status === 'overdue' || fee.status === 'overdue') return true;
           if (!fee.due_date) return false;
           const due = new Date(fee.due_date);
           const today = new Date();
@@ -531,9 +569,12 @@ export default function StudentBillsPage() {
                     </p>
                     <div className="flex items-baseline gap-2">
                       <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                        ₹{(summaryFee.status === 'paid' ? 0 : Number(summaryFee.amount)).toLocaleString('en-IN')}
+                        ₹{(summaryFee.payment_status === 'paid' ? 0 : Number(summaryFee.balance_due ?? summaryFee.amount)).toLocaleString('en-IN')}
                       </h2>
-                      <span className="text-sm text-slate-500 dark:text-slate-400">due of ₹{Number(summaryFee.amount).toLocaleString('en-IN')} rent</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        due of ₹{Number(summaryFee.amount).toLocaleString('en-IN')} total
+                        {summaryFee.electricity_amount > 0 && ` (₹${Number(summaryFee.rent_amount ?? summaryFee.amount).toLocaleString('en-IN')} rent + ₹${summaryFee.electricity_amount.toFixed(2)} electricity)`}
+                      </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
                       <span className="flex items-center gap-1">
@@ -541,11 +582,14 @@ export default function StudentBillsPage() {
                         Due: {new Date(summaryFee.due_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                       <span className={cn("font-medium", 
-                        summaryFee.status === 'paid' ? 'text-green-600 dark:text-green-400' :
-                        summaryFee.status === 'pending_verification' ? 'text-amber-600 dark:text-amber-400' :
-                        summaryFee.status === 'overdue' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
+                        summaryFee.payment_status === 'paid' ? 'text-green-600 dark:text-green-400' :
+                        summaryFee.payment_status === 'partially_paid' ? 'text-amber-600 dark:text-amber-400' :
+                        summaryFee.payment_status === 'pending_verification' ? 'text-amber-600 dark:text-amber-400' :
+                        summaryFee.payment_status === 'overdue' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
                       )}>
-                        {summaryFee.status === 'pending_verification' ? 'Pending Verification' : summaryFee.status ? summaryFee.status.charAt(0).toUpperCase() + summaryFee.status.slice(1).toLowerCase() : ''}
+                        {summaryFee.payment_status === 'pending_verification' ? 'Pending Verification' :
+                         summaryFee.payment_status === 'partially_paid' ? 'Partially Paid' :
+                         summaryFee.payment_status ? summaryFee.payment_status.charAt(0).toUpperCase() + summaryFee.payment_status.slice(1).toLowerCase() : ''}
                       </span>
                     </div>
                   </div>
@@ -609,15 +653,49 @@ export default function StudentBillsPage() {
                           <div className="text-right">
                             <p className="font-bold text-slate-900 dark:text-slate-100">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
                             <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", 
-                              fee.status === 'paid'
+                              (fee.payment_status || fee.status) === 'paid'
                                 ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300' 
-                                : fee.status === 'pending_verification'
+                                : (fee.payment_status || fee.status) === 'partially_paid'
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                                : (fee.payment_status || fee.status) === 'pending_verification'
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' 
-                                : fee.status === 'overdue'
+                                : (fee.payment_status || fee.status) === 'overdue'
                                 ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' 
                                 : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
                             )}>
-                              {fee.status === 'pending_verification' ? 'Pending Verification' : fee.status ? fee.status.charAt(0).toUpperCase() + fee.status.slice(1).toLowerCase() : ''}
+                              {(fee.payment_status || fee.status) === 'pending_verification' ? 'Pending Verification' :
+                               (fee.payment_status || fee.status) === 'partially_paid' ? 'Partially Paid' :
+                               (fee.payment_status || fee.status) ? (fee.payment_status || fee.status).charAt(0).toUpperCase() + (fee.payment_status || fee.status).slice(1).toLowerCase() : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Breakdown: Room Rent + Electricity */}
+                        <div className="grid grid-cols-3 gap-2 my-2.5 p-2.5 rounded-lg bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 text-xs">
+                          <div>
+                            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Room Rent</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">
+                              ₹{Number(fee.rent_amount ?? fee.amount).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 dark:text-slate-400 block text-[11px] flex items-center gap-1">
+                              <Zap className="h-3 w-3 text-amber-500" /> Electricity
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">
+                              {(fee.electricity_amount || 0) > 0 ? (
+                                <Link href="/student/electricity" className="text-teal-600 dark:text-teal-400 hover:underline">
+                                  ₹{Number(fee.electricity_amount).toFixed(2)}
+                                </Link>
+                              ) : (
+                                <span className="text-slate-400 font-normal">₹0.00 / In cycle</span>
+                              )}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Total Due</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">
+                              ₹{Number(fee.amount).toLocaleString('en-IN')}
                             </span>
                           </div>
                         </div>
@@ -786,17 +864,25 @@ export default function StudentBillsPage() {
 
           {selectedFeeForPayment && (
             <form onSubmit={handleSubmitPaymentProof} className="space-y-4 pt-2">
-              {/* Fee summary card */}
-              <div className="p-3 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Billing Period</p>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
-                    {formatBillingMonth(selectedFeeForPayment.month_year, selectedFeeForPayment.due_date)}
-                  </p>
+              {/* Fee summary card with Rent & Electricity breakdown */}
+              <div className="p-3.5 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Billing Period</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
+                      {formatBillingMonth(selectedFeeForPayment.month_year, selectedFeeForPayment.due_date)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Amount Due</p>
+                    <p className="font-bold text-teal-700 dark:text-teal-400 text-base">
+                      ₹{Number(selectedFeeForPayment.amount).toLocaleString('en-IN')}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Amount Due</p>
-                  <p className="font-bold text-teal-700 dark:text-teal-400 text-base">₹{Number(selectedFeeForPayment.amount).toLocaleString('en-IN')}</p>
+                <div className="pt-2 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                  <span>Room Rent: ₹{Number(selectedFeeForPayment.rent_amount ?? selectedFeeForPayment.amount).toLocaleString('en-IN')}</span>
+                  <span>Electricity: ₹{Number(selectedFeeForPayment.electricity_amount || 0).toFixed(2)}</span>
                 </div>
               </div>
 

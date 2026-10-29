@@ -1,14 +1,14 @@
 /**
  * POST /api/readings/record
  * 
- * Records a meter reading with validation and segment operations
+ * Records a meter reading with automatic allocation detection, validation, and segment operations.
  * 
- * Requirements: REQ-3.1, REQ-13.1, REQ-13.3
+ * Requirements: REQ-3.1, REQ-13.1, REQ-13.3, REQ-5 (Automatic Allocation Detection)
  * Design: Section 6.3.1
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, supabaseServer } from '@/lib/supabase/server';
 import { recordMeterReadingWithLock } from '@/lib/electricity';
 import { z } from 'zod';
 
@@ -34,6 +34,8 @@ interface RecordReadingResponse {
   } | null;
   consumption: number;
   warnings: string[];
+  detected_reason?: string;
+  occupancy_changed?: boolean;
 }
 
 interface ErrorResponse {
@@ -125,15 +127,78 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
     
+    // -------------------------------------------------------------------------
+    // AUTOMATIC ALLOCATION CHANGE DETECTION
+    // Determine the authoritative reason based on database state
+    // -------------------------------------------------------------------------
+    let effectiveReason = reason;
+    let occupancyChanged = false;
+    const warnings: string[] = [];
+
+    if (!previousReading) {
+      // First reading on this meter must establish baseline benchmark
+      effectiveReason = 'initial';
+    } else {
+      // Meter has prior readings. Check authoritative room allocations vs. open segment occupants
+      const { data: openSegment } = await supabaseServer
+        .from('billing_segments')
+        .select(`
+          id,
+          segment_occupants (
+            id,
+            allocation_id,
+            student_id
+          )
+        `)
+        .eq('room_id', meter.room_id)
+        .is('end_date', null)
+        .order('start_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { data: activeAllocations } = await supabaseServer
+        .from('room_allocations')
+        .select('id, student_id, student_name, active')
+        .eq('room_id', meter.room_id)
+        .eq('active', true);
+
+      const { data: pendingEvents } = await supabaseServer
+        .from('occupancy_change_events')
+        .select('id')
+        .eq('room_id', meter.room_id)
+        .eq('status', 'pending_reading');
+
+      const openOccupantAllocIds = new Set(
+        ((openSegment?.segment_occupants as any[]) || []).map((o: any) => o.allocation_id).filter(Boolean)
+      );
+      const currentAllocations = activeAllocations || [];
+      const currentAllocIds = new Set(currentAllocations.map((a: any) => a.id));
+
+      const hasJoining = currentAllocations.some((a: any) => !openOccupantAllocIds.has(a.id));
+      const hasLeaving = ((openSegment?.segment_occupants as any[]) || []).some((o: any) => !currentAllocIds.has(o.allocation_id));
+      const hasPendingEvents = Boolean(pendingEvents && pendingEvents.length > 0);
+      const hasNoOpenSegmentWithStudents = !openSegment && currentAllocations.length > 0;
+
+      if (hasJoining || hasLeaving || hasPendingEvents || hasNoOpenSegmentWithStudents) {
+        // An allocation change genuinely exists!
+        occupancyChanged = true;
+        effectiveReason = 'occupancy_change';
+        if (reason === 'initial') {
+          warnings.push('Room allocation change automatically detected; processed as a new allocation segment instead of initial baseline to protect prior billing.');
+        }
+      } else if (reason === 'initial') {
+        // Prior readings already exist and no allocation change occurred.
+        // Selecting initial would orphan the open segment. Convert to month_end.
+        effectiveReason = 'month_end';
+        warnings.push('Meter already has benchmark readings; recorded as month-end reading to close the current billing cycle.');
+      }
+    }
+
     // Record the reading with locking and segment operations
-    // This function handles:
-    // - Reading validation (REQ-3.3)
-    // - Segment closure/creation based on reason (REQ-3.7, REQ-3.8)
-    // - Warnings for high consumption (REQ-4.8)
     const result = await recordMeterReadingWithLock(
       meter_id,
       reading_value,
-      reason,
+      effectiveReason,
       user.id,
       notes,
       supabase
@@ -145,7 +210,6 @@ export async function POST(request: NextRequest) {
       : reading_value;
     
     // Compile warnings
-    const warnings: string[] = [];
     if (consumption > 1000) {
       warnings.push(`High consumption detected: ${consumption.toFixed(2)} units since last reading`);
     }
@@ -161,7 +225,9 @@ export async function POST(request: NextRequest) {
           timestamp: previousReading.reading_timestamp
         } : null,
         consumption,
-        warnings
+        warnings,
+        detected_reason: effectiveReason,
+        occupancy_changed: occupancyChanged
       },
       { status: 201 }
     );

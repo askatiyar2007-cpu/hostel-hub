@@ -299,6 +299,22 @@ export async function GET(req: NextRequest) {
       feesByStudentId.set(f.student_id, f);
     }
 
+    // 10b. Fetch payments recorded against these fees to verify true payment coverage
+    const feeIds = fees.map(f => f.id);
+    const paymentsByFeeId = new Map<string, any[]>();
+    if (feeIds.length > 0) {
+      const { data: paymentsData } = await supabaseServer
+        .from('payments')
+        .select('id, fee_id, amount, status')
+        .in('fee_id', feeIds);
+      for (const p of (paymentsData || [])) {
+        if (!p.fee_id) continue;
+        const arr = paymentsByFeeId.get(p.fee_id) || [];
+        arr.push(p);
+        paymentsByFeeId.set(p.fee_id, arr);
+      }
+    }
+
     // 11. Fetch room allocations overlapping this billing month
     const [year, monthNum] = validated.billing_month.split('-').map(Number);
     const startOfMonth = `${validated.billing_month}-01`;
@@ -393,10 +409,27 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        if (matchedFee?.status === 'paid') {
+        const feePayments = matchedFee ? (paymentsByFeeId.get(matchedFee.id) || []) : [];
+        const completedPaidAmount = feePayments
+          .filter(p => p.status === 'completed')
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        const pendingVerificationAmount = feePayments
+          .filter(p => p.status === 'pending_verification')
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+        const rentAmount = matchedFee ? Number(matchedFee.amount || 0) : 0;
+        const electricityAmountRupees = charge_amount_paise / 100;
+        const totalDueRupees = rentAmount + electricityAmountRupees;
+
+        // Accurate payment attribution:
+        // Rent being paid does NOT mark electricity paid unless total verified payments cover both rent + electricity.
+        if (completedPaidAmount >= totalDueRupees - 0.01 && totalDueRupees > 0) {
           status = 'paid';
           status_label = 'Billed (Paid)';
-        } else if (matchedFee?.status === 'pending_verification') {
+        } else if (completedPaidAmount + pendingVerificationAmount >= totalDueRupees - 0.01 && totalDueRupees > 0) {
+          status = 'pending_verification';
+          status_label = 'Billed (Pending Verification)';
+        } else if (matchedFee?.status === 'pending_verification' || pendingVerificationAmount > 0) {
           status = 'pending_verification';
           status_label = 'Billed (Pending Verification)';
         } else {

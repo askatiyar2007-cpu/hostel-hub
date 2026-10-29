@@ -42,11 +42,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
+  const hasValidHeaders = typeof Headers !== 'undefined' && req.headers instanceof Headers;
+  let response = hasValidHeaders
+    ? NextResponse.next({
+        request: {
+          headers: req.headers,
+        },
+      })
+    : NextResponse.next();
 
   const supabase = createServerClient(
     supabaseUrl,
@@ -58,11 +61,13 @@ export async function middleware(req: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          })
+          response = hasValidHeaders
+            ? NextResponse.next({
+                request: {
+                  headers: req.headers,
+                },
+              })
+            : NextResponse.next();
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           )
@@ -132,6 +137,9 @@ export async function middleware(req: NextRequest) {
   function redirectWithNoStore(destination: string): NextResponse {
     const url = req.nextUrl.clone();
     url.pathname = destination;
+    if (destination === '/auth/login' || destination.startsWith('/auth/login?')) {
+      url.search = '';
+    }
     const res = NextResponse.redirect(url);
     response.cookies.getAll().forEach(cookie => {
       res.cookies.set(cookie);

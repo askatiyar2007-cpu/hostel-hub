@@ -21,9 +21,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase/client';
 import { calculateHostelOccupancy } from '@/lib/utils/occupancy';
+import { useAuth } from '@/lib/auth/context';
+import { dashboardPathForRole } from '@/lib/auth/dashboard';
 
 export default function FindHostelPage() {
   const router = useRouter();
+  const { profile, loading: authLoading, password_set, accountCompletionStep } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -33,6 +37,7 @@ export default function FindHostelPage() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -222,16 +227,21 @@ export default function FindHostelPage() {
     // Suppress console spam for normal scan frames
   };
 
+  const isCompleteUser = mounted && !authLoading && password_set === true && accountCompletionStep === 'complete';
+  const dashboardPath = isCompleteUser ? dashboardPathForRole(profile?.role) : undefined;
+  const backHref = dashboardPath || '/';
+  const backLabel = dashboardPath ? 'Back to Dashboard' : 'Back to Home';
+
   return (
     <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100">
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
         {/* Navigation Breadcrumb */}
         <Link
-          href="/"
+          href={backHref}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition-colors mb-5 group"
         >
           <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
-          <span>Back to Home</span>
+          <span>{backLabel}</span>
         </Link>
 
         {/* Page Header */}

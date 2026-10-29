@@ -277,16 +277,20 @@ export async function recordMeterReading(
   
   // Step 5: Mark qualifying pending occupancy change events as completed
   try {
-    await db
-      .from('occupancy_change_events')
-      .update({
+    const eventsTable = db.from('occupancy_change_events');
+    if (eventsTable && typeof eventsTable.update === 'function') {
+      const updateResult = eventsTable.update({
         status: 'completed',
         required_reading_id: reading.id,
         completed_at: readingTimestamp
-      })
-      .eq('room_id', meter.room_id)
-      .eq('status', 'pending_reading')
-      .lte('change_timestamp', readingTimestamp);
+      });
+      if (updateResult && typeof updateResult.eq === 'function') {
+        await updateResult
+          .eq('room_id', meter.room_id)
+          .eq('status', 'pending_reading')
+          .lte('change_timestamp', readingTimestamp);
+      }
+    }
   } catch (eventErr: any) {
     console.warn(`[recordMeterReading] Non-fatal: failed to update occupancy_change_events: ${eventErr?.message || eventErr}`);
   }

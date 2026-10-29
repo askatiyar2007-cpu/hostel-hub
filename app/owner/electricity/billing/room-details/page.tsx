@@ -313,7 +313,7 @@ export default function RoomBillingDetailsPage() {
                 asChild
                 className="bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold h-8 shadow-2xs shrink-0 self-start sm:self-auto"
               >
-                <Link href={`/owner/electricity/readings/record?meter_id=${details.meter_id}&reason=month_end`}>
+                <Link href={`/owner/electricity/readings/record?meter_id=${details.meter_id}&reading_reason=month_end`}>
                   Record Closing Reading
                 </Link>
               </Button>
@@ -394,7 +394,7 @@ export default function RoomBillingDetailsPage() {
                     asChild
                     className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold h-7 rounded shadow-2xs"
                   >
-                    <Link href={`/owner/electricity/readings/record?meter_id=${details.meter_id}&reason=month_end`}>
+                    <Link href={`/owner/electricity/readings/record?meter_id=${details.meter_id}&reading_reason=month_end`}>
                       Record Reading Now
                     </Link>
                   </Button>

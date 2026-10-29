@@ -6,7 +6,7 @@ import Link from 'next/link';
 export interface StayKoshLogoProps {
   size?: 'sm' | 'md' | 'lg' | number;
   showWordmark?: boolean;
-  theme?: 'dark' | 'light';
+  theme?: 'dark' | 'light' | 'auto';
   badgeText?: string;
   href?: string;
   className?: string;
@@ -21,8 +21,9 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
   className = '',
 }) => {
   const isPermanentDark = theme === 'dark';
-  const stayColor = isPermanentDark ? '#FFFFFF' : '#0F172A';
-  const koshColor = isPermanentDark ? '#34D399' : '#0D6E5B';
+  const isPermanentLight = theme === 'light';
+  const stayColor = isPermanentDark ? '#FFFFFF' : isPermanentLight ? '#0F172A' : undefined;
+  const koshColor = isPermanentDark ? '#34D399' : isPermanentLight ? '#0D6E5B' : undefined;
 
   // Resolve responsive icon dimensions & typography scale matching HostelHub's design system
   let numericSize: number;
@@ -122,10 +123,12 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
             className={`font-bold tracking-tight font-display ${textClass} ${
               isPermanentDark
                 ? 'text-white'
+                : isPermanentLight
+                ? 'text-slate-900'
                 : 'text-slate-900 dark:text-white'
             }`}
             style={{
-              color: isPermanentDark ? stayColor : undefined,
+              color: stayColor,
             }}
           >
             Stay
@@ -133,10 +136,12 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
               className={
                 isPermanentDark
                   ? 'text-[#34D399]'
+                  : isPermanentLight
+                  ? 'text-[#0D6E5B]'
                   : 'text-[#0D6E5B] dark:text-[#34D399]'
               }
               style={{
-                color: isPermanentDark ? koshColor : undefined,
+                color: koshColor,
               }}
             >
               Kosh
@@ -147,12 +152,14 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
               className={`inline-flex items-center rounded font-extrabold tracking-wider leading-none uppercase ${badgeClass} ${
                 isPermanentDark
                   ? 'text-[#34D399]'
+                  : isPermanentLight
+                  ? 'text-[#0D6E5B]'
                   : 'text-[#0D6E5B] dark:text-[#34D399]'
               }`}
               style={{
                 backgroundColor: 'rgba(16, 185, 129, 0.16)',
                 border: '1px solid rgba(52, 211, 153, 0.35)',
-                color: isPermanentDark ? '#34D399' : undefined,
+                color: koshColor,
               }}
             >
               {badgeText}

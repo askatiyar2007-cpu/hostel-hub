@@ -12,6 +12,9 @@ interface FeeWithDetails {
   month_year: string;
   amount_due: number;
   amount?: number;
+  rent_amount: number;
+  electricity_amount: number;
+  total_amount: number;
   due_date: string;
   status: string;
   created_at: string;
@@ -86,6 +89,21 @@ export default function OwnerBillingPage() {
 
       if (feesError) throw feesError;
 
+      // 2b. Fetch student electricity charges for these hostels
+      const { data: electricityChargesData } = await supabase
+        .from('student_electricity_charges')
+        .select('student_id, billing_month, charge_amount_paise')
+        .in('hostel_id', hostelIds);
+
+      const electricityChargesMap = new Map<string, number>();
+      if (electricityChargesData) {
+        electricityChargesData.forEach((ec: any) => {
+          const key = `${ec.student_id}_${ec.billing_month}`;
+          const cur = electricityChargesMap.get(key) || 0;
+          electricityChargesMap.set(key, cur + (ec.charge_amount_paise || 0));
+        });
+      }
+
       // 3. Batch fetch allocations, profiles, and students
       const studentIds = Array.from(new Set((feesData || []).map(f => f.student_id).filter(Boolean)));
       const allocationIds = Array.from(new Set((feesData || []).map(f => f.allocation_id).filter(Boolean)));
@@ -159,11 +177,20 @@ export default function OwnerBillingPage() {
           studentInfo?.email ||
           '—';
 
+        const monthKey = f.month_year || f.billing_period || '';
+        const electricityPaise = electricityChargesMap.get(`${f.student_id}_${monthKey}`) || 0;
+        const electricityAmount = electricityPaise / 100;
+        const rentAmount = Number(f.amount_due ?? f.amount ?? 0);
+        const totalAmount = rentAmount + electricityAmount;
+
         return {
           id: f.id,
           month_year: f.month_year || '—',
-          amount_due: Number(f.amount_due ?? f.amount ?? 0),
-          amount: Number(f.amount ?? f.amount_due ?? 0),
+          amount_due: totalAmount,
+          amount: totalAmount,
+          rent_amount: rentAmount,
+          electricity_amount: electricityAmount,
+          total_amount: totalAmount,
           due_date: f.due_date,
           status: f.status || 'pending',
           created_at: f.created_at,
@@ -213,14 +240,16 @@ export default function OwnerBillingPage() {
 
   const handleExportCSV = () => {
     if (filteredFees.length === 0) return;
-    const headers = ['Fee ID', 'Student Name', 'Student Email', 'Hostel', 'Month', 'Amount', 'Due Date', 'Status'];
+    const headers = ['Fee ID', 'Student Name', 'Student Email', 'Hostel', 'Month', 'Rent (₹)', 'Electricity (₹)', 'Total Due (₹)', 'Due Date', 'Status'];
     const rows = filteredFees.map(f => [
       f.id,
       `"${f.student_name.replace(/"/g, '""')}"`,
       f.student_email,
       `"${f.hostel_name.replace(/"/g, '""')}"`,
       f.month_year,
-      f.amount_due,
+      f.rent_amount,
+      f.electricity_amount,
+      f.total_amount,
       f.due_date,
       f.status,
     ]);
@@ -243,6 +272,12 @@ export default function OwnerBillingPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage student fee schedules, rent dues, and payment records</p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/owner/electricity/billing"
+            className="inline-flex items-center gap-1.5 border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/40 text-teal-700 dark:text-teal-300 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors shadow-2xs"
+          >
+            <span>⚡ Electricity Billing</span>
+          </Link>
           <button 
             onClick={handleExportCSV}
             disabled={filteredFees.length === 0}
@@ -356,7 +391,21 @@ export default function OwnerBillingPage() {
                   <td className="px-6 py-4">
                     <span className="text-slate-700 font-medium">{formatFeeMonth(fee.month_year)}</span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-slate-900">₹{Number(fee.amount_due).toLocaleString('en-IN')}</td>
+                  <td className="px-6 py-4">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-slate-100">
+                        ₹{Number(fee.total_amount).toLocaleString('en-IN')}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Rent: ₹{Number(fee.rent_amount).toLocaleString('en-IN')}
+                        {fee.electricity_amount > 0 && (
+                          <span className="text-teal-600 dark:text-teal-400 font-semibold ml-1">
+                            + Power: ₹{Number(fee.electricity_amount).toLocaleString('en-IN')}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-slate-600">
                     {new Date(fee.due_date).toLocaleDateString()}
                   </td>

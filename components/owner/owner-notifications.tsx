@@ -178,24 +178,28 @@ export function OwnerNotifications() {
 
       // 5. Fetch direct user notifications from notifications table
       try {
-        const { data: userNotifs } = await supabase
+        const { data: userNotifs, error: notifErr } = await supabase
           .from('notifications')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10);
 
-        (userNotifs || []).forEach((n: any) => {
-          items.push({
-            id: `notif-${n.id}`,
-            title: n.title || 'Notification',
-            message: n.message || '',
-            type: 'system',
-            link: '/owner/dashboard',
-            created_at: n.created_at || new Date().toISOString(),
-            read: Boolean(n.read),
+        if (notifErr) {
+          console.warn('[OwnerNotifications] Notifications query warning:', notifErr.message);
+        } else {
+          (userNotifs || []).forEach((n: any) => {
+            items.push({
+              id: `notif-${n.id}`,
+              title: n.title || 'Notification',
+              message: n.message || '',
+              type: 'system',
+              link: '/owner/dashboard',
+              created_at: n.created_at || new Date().toISOString(),
+              read: Boolean(n.read),
+            });
           });
-        });
+        }
       } catch (err) {
         console.warn('[OwnerNotifications] Error querying notifications table:', err);
       }

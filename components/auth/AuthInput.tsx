@@ -48,7 +48,7 @@ export function AuthInput({
           id={id}
           type={inputType}
           required={required}
-          className={`w-full h-12 sm:h-[52px] rounded-xl bg-[#032B28] hover:bg-[#043632] focus:bg-[#053E3A] border text-white text-[15px] sm:text-[16px] placeholder:text-teal-200/50 transition-all duration-180 shadow-inner ${
+          className={`auth-autofill-input w-full h-12 sm:h-[52px] rounded-xl bg-[#032B28] hover:bg-[#043632] focus:bg-[#053E3A] border text-white text-[15px] sm:text-[16px] placeholder:text-teal-200/50 transition-all duration-180 shadow-inner ${
             Icon ? 'pl-12' : 'pl-4'
           } ${isPassword ? 'pr-12' : 'pr-4'} ${
             error

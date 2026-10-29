@@ -615,7 +615,7 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
           <Button 
             size="sm" 
             className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs"
-            onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}${meter.pending_reading ? '&reason=occupancy_change' : ''}`}
+            onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}${meter.pending_reading ? '&reading_reason=occupancy_change' : ''}`}
           >
             Record Reading
           </Button>

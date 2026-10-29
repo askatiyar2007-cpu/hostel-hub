@@ -110,7 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // We always attempt to fetch canonical state, but if transient errors occur,
       // we gracefully fall back without poisoning future authentications.
       try {
-        const response = await fetch('/api/auth/account-state');
+        const headers: Record<string, string> = {};
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        const response = await fetch('/api/auth/account-state', { headers });
         if (response.ok) {
           const state = await response.json();
           // Reset failure tracking on success
@@ -125,24 +129,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastAccountStateFailureTimeRef.current = Date.now();
           console.error('Failed to fetch account state:', response.status);
 
-          if (response.status === 401) {
+          // Graceful fallback: do NOT erase valid session data if user and profile are known
+          if (profileData) {
+            if (!profileData.role) {
+              setAccountCompletionStep('role');
+            } else if (profileData.password_set === false) {
+              setAccountCompletionStep('password');
+            } else {
+              setAccountCompletionStep('complete');
+            }
+            setPasswordSet(profileData.password_set ?? true);
+          } else {
             setAccountCompletionStep(null);
             setPasswordSet(null);
-          } else {
-            // Transient failure fallback for development or server hiccup
-            if (profileData) {
-              if (!profileData.role) {
-                setAccountCompletionStep('role');
-              } else if (!profileData.full_name) {
-                setAccountCompletionStep('password');
-              } else {
-                setAccountCompletionStep('complete');
-              }
-              setPasswordSet(profileData.password_set ?? true);
-            } else {
-              setAccountCompletionStep(null);
-              setPasswordSet(null);
-            }
           }
         }
       } catch (error) {
@@ -153,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (profileData) {
           if (!profileData.role) {
             setAccountCompletionStep('role');
-          } else if (!profileData.full_name) {
+          } else if (profileData.password_set === false) {
             setAccountCompletionStep('password');
           } else {
             setAccountCompletionStep('complete');

@@ -46,8 +46,8 @@ interface ListMetersResponse {
  */
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authenticate the owner using cookie-based client
-    const supabase = createClient();
+    // 1. Authenticate the owner using request-based client (Bearer or cookies)
+    const supabase = createClient(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

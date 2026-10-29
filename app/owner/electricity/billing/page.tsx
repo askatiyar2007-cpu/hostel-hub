@@ -751,7 +751,7 @@ export default function BillingOverviewPage() {
                                   asChild
                                   className="h-7 text-xs px-2.5 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-semibold"
                                 >
-                                  <Link href={`/owner/electricity/readings/record?meter_id=${room.meter_id}&reason=${room.detailed_status === 'awaiting_initial_reading' ? 'initial' : room.detailed_status === 'awaiting_allocation_reading' ? 'occupancy_change' : 'month_end'}`}>
+                                  <Link href={`/owner/electricity/readings/record?meter_id=${room.meter_id}&reading_reason=${room.detailed_status === 'awaiting_initial_reading' ? 'initial' : room.detailed_status === 'awaiting_allocation_reading' ? 'occupancy_change' : 'month_end'}`}>
                                     Record
                                   </Link>
                                 </Button>

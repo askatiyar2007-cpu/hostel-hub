@@ -27,6 +27,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { supabase } from '@/lib/supabase/client';
+
+const getAuthHeaders = async (customHeaders: Record<string, string> = {}) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      return { ...customHeaders, Authorization: `Bearer ${session.access_token}` };
+    }
+  } catch {}
+  return customHeaders;
+};
 
 interface MeterInfo {
   id: string;
@@ -40,6 +51,29 @@ interface MeterInfo {
     timestamp: string;
     reason: string;
   } | null;
+  open_segment?: {
+    id: string;
+    start_date: string;
+    occupant_count: number;
+    rate_per_unit: number;
+    occupants: { student_id: string; allocation_id: string; name: string }[];
+  } | null;
+  active_allocations?: {
+    allocation_id: string;
+    student_id: string;
+    name: string;
+    email: string | null;
+    start_date: string;
+    end_date: string | null;
+  }[];
+  detection?: {
+    detected_reason: 'initial' | 'occupancy_change' | 'month_end';
+    is_new_meter: boolean;
+    has_occupancy_change: boolean;
+    joining_students: { student_id: string; allocation_id: string; name: string }[];
+    leaving_students: { student_id: string; allocation_id: string; name: string }[];
+    explanation: string;
+  };
 }
 
 interface Meter {
@@ -51,7 +85,7 @@ interface Meter {
 function ReadingEntryContent() {
   const searchParams = useSearchParams();
   const meterIdFromUrl = searchParams.get('meter_id');
-  const reasonFromUrl = searchParams.get('reason');
+  const reasonFromUrl = searchParams.get('reading_reason') || searchParams.get('reason');
   
   // Meter selection state
   const [meters, setMeters] = useState<Meter[]>([]);
@@ -79,7 +113,9 @@ function ReadingEntryContent() {
     const loadMeters = async () => {
       try {
         // First get owner's hostels
-        const hostelsResponse = await fetch('/api/hostels/owner');
+        const hostelsResponse = await fetch('/api/hostels/owner', {
+          headers: await getAuthHeaders(),
+        });
         if (!hostelsResponse.ok) throw new Error('Failed to fetch hostels');
         const hostelsData = await hostelsResponse.json();
         
@@ -92,7 +128,9 @@ function ReadingEntryContent() {
         const hostelId = hostelsData.hostels[0].id;
         
         // Fetch meters for that hostel
-        const response = await fetch(`/api/meters?hostel_id=${hostelId}`);
+        const response = await fetch(`/api/meters?hostel_id=${hostelId}`, {
+          headers: await getAuthHeaders(),
+        });
         if (!response.ok) throw new Error('Failed to fetch meters');
         const data = await response.json();
         setMeters(data.meters || []);
@@ -122,7 +160,9 @@ function ReadingEntryContent() {
     const fetchMeterInfo = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/meters/${selectedMeterId}`);
+        const response = await fetch(`/api/meters/${selectedMeterId}`, {
+          headers: await getAuthHeaders(),
+        });
         
         if (!response.ok) {
           throw new Error('Failed to fetch meter information');
@@ -130,6 +170,9 @@ function ReadingEntryContent() {
         
         const data = await response.json();
         setMeterInfo(data.meter);
+        if (!reasonFromUrl && data.meter?.detection?.detected_reason) {
+          setReason(data.meter.detection.detected_reason);
+        }
       } catch (error: any) {
         console.error('Error fetching meter info:', error);
         toast.error(error.message || 'Failed to load meter information');
@@ -220,7 +263,7 @@ function ReadingEntryContent() {
     try {
       const response = await fetch('/api/readings/record', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           meter_id: selectedMeterId,
           reading_value: parseFloat(readingValue),
@@ -363,6 +406,59 @@ function ReadingEntryContent() {
             </Card>
           )}
 
+          {/* Automatic Allocation Detection Banner */}
+          {meterInfo.detection && (
+            <Card className={cn(
+              "border shadow-xs rounded-xl overflow-hidden",
+              meterInfo.detection.has_occupancy_change
+                ? "border-amber-300/80 bg-amber-50/50"
+                : meterInfo.detection.is_new_meter
+                ? "border-teal-300/80 bg-teal-50/50"
+                : "border-slate-200/90 bg-slate-50/50"
+            )}>
+              <CardContent className="p-4 sm:p-5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "flex h-2 w-2 rounded-full",
+                      meterInfo.detection.has_occupancy_change ? "bg-amber-500 animate-pulse" :
+                      meterInfo.detection.is_new_meter ? "bg-teal-500 animate-pulse" : "bg-slate-400"
+                    )} />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      {meterInfo.detection.is_new_meter ? 'New Physical Meter Setup' :
+                       meterInfo.detection.has_occupancy_change ? 'Automatic Allocation Change Detected' :
+                       'Current Active Billing Cycle'}
+                    </span>
+                  </div>
+                  <Badge className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5",
+                    meterInfo.detection.has_occupancy_change
+                      ? "bg-amber-100 text-amber-800 border-amber-300"
+                      : meterInfo.detection.is_new_meter
+                      ? "bg-teal-100 text-teal-800 border-teal-300"
+                      : "bg-slate-100 text-slate-700 border-slate-300"
+                  )}>
+                    {meterInfo.detection.is_new_meter ? 'Initial Setup' :
+                     meterInfo.detection.has_occupancy_change ? 'Occupancy Transition' : 'Active Cycle'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed">
+                  {meterInfo.detection.explanation}
+                </p>
+                {meterInfo.detection.joining_students && meterInfo.detection.joining_students.length > 0 && (
+                  <div className="text-[11px] text-amber-900 font-medium bg-amber-100/70 p-2 rounded-lg border border-amber-200/60">
+                    🟢 Incoming student(s) for next segment: {meterInfo.detection.joining_students.map(s => s.name).join(', ')}
+                  </div>
+                )}
+                {meterInfo.detection.leaving_students && meterInfo.detection.leaving_students.length > 0 && (
+                  <div className="text-[11px] text-rose-900 font-medium bg-rose-100/70 p-2 rounded-lg border border-rose-200/60">
+                    🔴 Outgoing student(s) finalized by this reading: {meterInfo.detection.leaving_students.map(s => s.name).join(', ')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Reading Form */}
           <Card className="border border-slate-200/90 bg-white shadow-xs rounded-xl overflow-hidden">
             <CardHeader className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80">
@@ -401,9 +497,9 @@ function ReadingEntryContent() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="initial">Initial Reading</SelectItem>
-                    <SelectItem value="occupancy_change">New Allocation</SelectItem>
-                    <SelectItem value="month_end">Month End</SelectItem>
+                    <SelectItem value="initial">Initial Meter Benchmark (New/Replaced Meter)</SelectItem>
+                    <SelectItem value="occupancy_change">New Allocation (Student Move-In / Move-Out)</SelectItem>
+                    <SelectItem value="month_end">Month End (Regular Monthly Billing)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -421,25 +517,25 @@ function ReadingEntryContent() {
                   <div className="space-y-2 text-xs">
                     <div className="font-semibold text-teal-800 flex items-center gap-1.5">
                       <span className="inline-block w-2 h-2 rounded-full bg-teal-500"></span>
-                      Initial Reading
+                      Initial Meter Benchmark (New/Replaced Meter)
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-slate-600">
                       <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
                         <p className="font-semibold text-slate-800 text-[11px] mb-1">🎯 Purpose</p>
                         <p className="text-[11px] leading-relaxed">
-                          Establishes the opening baseline benchmark when an electricity sub-meter is newly installed or first activated for a room.
+                          Establishes the initial baseline benchmark when an electricity sub-meter is physically installed or replaced for a room.
                         </p>
                       </div>
                       <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
                         <p className="font-semibold text-slate-800 text-[11px] mb-1">📋 Rules</p>
                         <p className="text-[11px] leading-relaxed">
-                          Must be the first reading on the meter. Reading value must be ≥ 0 kWh. Does not require a previous benchmark.
+                          Used only for brand new meters or meter hardware replacements. Does NOT close prior segments or recalculate previous student consumption.
                         </p>
                       </div>
                       <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
                         <p className="font-semibold text-slate-800 text-[11px] mb-1">⚡ Billing Effect</p>
                         <p className="text-[11px] leading-relaxed">
-                          Opens the initial active billing segment for the room at 0 consumption. No charges are billed immediately.
+                          Records baseline meter reading at 0 consumption. If students occupy the room, opens their starting segment without immediate billing.
                         </p>
                       </div>
                     </div>
@@ -450,25 +546,25 @@ function ReadingEntryContent() {
                   <div className="space-y-2 text-xs">
                     <div className="font-semibold text-amber-800 flex items-center gap-1.5">
                       <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
-                      New Allocation (Occupancy Change)
+                      New Allocation (Occupancy Change / Move-In / Move-Out)
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-slate-600">
                       <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
                         <p className="font-semibold text-slate-800 text-[11px] mb-1">🎯 Purpose</p>
                         <p className="text-[11px] leading-relaxed">
-                          Recorded whenever room occupancy changes — a new student joins or an existing occupant check-outs.
+                          Recorded whenever room occupancy changes — a new student joins, occupants transfer, or an existing occupant checks out.
                         </p>
                       </div>
                       <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
                         <p className="font-semibold text-slate-800 text-[11px] mb-1">📋 Rules</p>
                         <p className="text-[11px] leading-relaxed">
-                          Recorded on student check-in/out date. Value must be ≥ previous reading. Requires prior benchmark reading.
+                          Automatically detected from authoritative room allocations. Value must be ≥ previous reading.
                         </p>
                       </div>
                       <div className="p-2.5 bg-white rounded-lg border border-slate-200/80">
                         <p className="font-semibold text-slate-800 text-[11px] mb-1">⚡ Billing Effect</p>
                         <p className="text-[11px] leading-relaxed">
-                          Closes previous segment and divides consumption fairly among prior occupants, then opens a fresh segment for incoming occupants.
+                          Finalizes previous occupants' consumption and charges, then opens a fresh starting segment for incoming occupants at this reading.
                         </p>
                       </div>
                     </div>
