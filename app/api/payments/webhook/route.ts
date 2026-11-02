@@ -106,25 +106,81 @@ export async function POST(req: NextRequest) {
     }
 
     if (isSuccess) {
-      // Mark payment as completed
-      await supabaseServer
-        .from('payments')
-        .update({
-          payment_status: 'completed',
-          gateway_payment_id: paymentId || `pay_wh_${Math.random().toString(36).substring(2, 10)}`,
-          auto_verified: true,
-          notes: 'Online payment captured and verified via webhook callback.'
-        })
-        .eq('id', payment.id);
+      // 3a. Validate captured amount and currency strictly from webhook payload
+      const rawAmount =
+        payload.amount ??
+        payload.order_amount ??
+        payload.orderAmount ??
+        payload.payload?.payment?.entity?.amount;
 
-      // Mark student fee as paid
-      await supabaseServer
-        .from('student_fees')
-        .update({
-          status: 'paid',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', payment.student_fees_id);
+      const rawCurrency =
+        payload.currency ??
+        payload.order_currency ??
+        payload.orderCurrency ??
+        payload.payload?.payment?.entity?.currency ??
+        'INR';
+
+      if (rawAmount === undefined || rawAmount === null || rawAmount === '') {
+        return NextResponse.json({ error: 'Missing payment amount in webhook payload' }, { status: 400 });
+      }
+
+      const capturedAmount = Number(rawAmount);
+      if (isNaN(capturedAmount) || capturedAmount <= 0) {
+        return NextResponse.json({ error: 'Malformed or non-positive payment amount in webhook payload' }, { status: 400 });
+      }
+
+      const expectedAmount = Number(payment.amount_paid);
+      if (Math.abs(capturedAmount - expectedAmount) > 0.01) {
+        return NextResponse.json({
+          error: `Payment amount mismatch: captured amount (₹${capturedAmount}) does not match order amount (₹${expectedAmount})`
+        }, { status: 400 });
+      }
+
+      const capturedCurrency = String(rawCurrency).trim().toUpperCase();
+      if (capturedCurrency !== 'INR') {
+        return NextResponse.json({
+          error: `Unsupported currency: ${capturedCurrency}. Only INR is supported.`
+        }, { status: 400 });
+      }
+
+      const notes = 'Online payment captured and verified via webhook callback.';
+      const gatewayPaymentId = paymentId || `pay_wh_${Math.random().toString(36).substring(2, 10)}`;
+
+      // Atomic update via coordinating RPC
+      const { data: confirmResult, error: confirmRpcError } = await supabaseServer.rpc('confirm_gateway_payment', {
+        p_order_id: orderId,
+        p_gateway_payment_id: gatewayPaymentId,
+        p_amount: capturedAmount,
+        p_notes: notes
+      });
+
+      if (confirmResult && !confirmResult.success) {
+        return NextResponse.json({ error: confirmResult.error || 'Payment confirmation failed' }, { status: 400 });
+      }
+
+      if (confirmRpcError) {
+        console.warn('confirm_gateway_payment RPC unavailable or failed, executing fallback updates:', confirmRpcError);
+        // Fallback: update BOTH status and payment_status to completed
+        await supabaseServer
+          .from('payments')
+          .update({
+            status: 'completed',
+            payment_status: 'completed',
+            gateway_payment_id: gatewayPaymentId,
+            auto_verified: true,
+            notes
+          })
+          .eq('id', payment.id);
+
+        // Mark student fee as paid
+        await supabaseServer
+          .from('student_fees')
+          .update({
+            status: 'paid',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', payment.student_fees_id);
+      }
 
       // Dispatch student notification
       try {
@@ -163,14 +219,22 @@ export async function POST(req: NextRequest) {
       }
 
     } else if (isFailure) {
-      // Mark payment as failed
-      await supabaseServer
-        .from('payments')
-        .update({
-          payment_status: 'failed',
-          notes: `Online payment failed via webhook callback (Status: ${status}).`
-        })
-        .eq('id', payment.id);
+      const failNotes = `Online payment failed via webhook callback (Status: ${status}).`;
+      const { error: failRpcError } = await supabaseServer.rpc('fail_gateway_payment', {
+        p_order_id: orderId,
+        p_notes: failNotes
+      });
+
+      if (failRpcError) {
+        await supabaseServer
+          .from('payments')
+          .update({
+            status: 'failed',
+            payment_status: 'failed',
+            notes: failNotes
+          })
+          .eq('id', payment.id);
+      }
     }
 
     return NextResponse.json({ received: true, status_updated: true });

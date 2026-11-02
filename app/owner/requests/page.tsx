@@ -583,14 +583,16 @@ export default function OwnerRequestsPage() {
     },
   });
 
-  // 6.5 Mutation: Mark Monthly Fee Paid (calls mark_payment_paid RPC)
+  // 6.5 Mutation: Mark Monthly Fee Paid (calls authoritative mark_fee_paid_manual RPC)
   const markPaidMutation = useMutation({
     mutationFn: async (feeId: string) => {
       const timestamp = new Date().toISOString();
-      console.log(`[${timestamp}] [markPaidMutation] Calling RPC: mark_payment_paid with id:`, feeId);
+      console.log(`[${timestamp}] [markPaidMutation] Calling RPC: mark_fee_paid_manual with id:`, feeId);
       
-      const { data, error } = await supabase.rpc('mark_payment_paid', {
-        p_fee_id: feeId
+      const { data, error } = await supabase.rpc('mark_fee_paid_manual', {
+        p_student_fees_id: feeId,
+        p_payment_method: 'manual',
+        p_notes: 'Manual settlement by owner from allocations view'
       });
       
       if (error) {

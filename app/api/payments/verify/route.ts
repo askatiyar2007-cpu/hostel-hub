@@ -95,11 +95,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Validate transaction status
+    // 4. Validate transaction status, captured amount, and currency
     const isProd = process.env.NODE_ENV === 'production';
     const knitPayMode = process.env.KNITPAY_MODE || (isProd ? 'production' : 'sandbox');
     const isSandbox = !isProd && (knitPayMode === 'sandbox' || knitPayMode === 'test');
     let verified = false;
+    let capturedAmount = Number(payment.amount_paid);
+    let capturedCurrency = 'INR';
 
     if (isProd && order_id.startsWith('mock_')) {
       return NextResponse.json(
@@ -111,6 +113,8 @@ export async function POST(req: NextRequest) {
     if (isSandbox && order_id.startsWith('mock_')) {
       // In Sandbox/Development mode ONLY, accept mock order testing
       verified = true;
+      capturedAmount = Number(payment.amount_paid);
+      capturedCurrency = 'INR';
     } else {
       // Production mode / Real gateway verification
       const apiSecret = process.env.KNITPAY_API_SECRET;
@@ -131,8 +135,8 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Check B: Query gateway endpoint directly
-      if (!verified && process.env.KNITPAY_API_KEY) {
+      // Check B: Query gateway endpoint directly for authoritative status, amount, and currency
+      if (process.env.KNITPAY_API_KEY) {
         try {
           const response = await fetch(`https://knit-pay-upi.p.rapidapi.com/order/status/${order_id}`, {
             method: 'GET',
@@ -144,7 +148,16 @@ export async function POST(req: NextRequest) {
 
           if (response.ok) {
             const data = await response.json();
-            verified = data.status === 'SUCCESS' || data.status === 'PAID' || data.paid === true;
+            const gatewayStatusOk = data.status === 'SUCCESS' || data.status === 'PAID' || data.paid === true;
+            if (gatewayStatusOk) {
+              verified = true;
+              if (data.amount !== undefined || data.order_amount !== undefined) {
+                capturedAmount = Number(data.amount ?? data.order_amount);
+              }
+              if (data.currency !== undefined || data.order_currency !== undefined) {
+                capturedCurrency = String(data.currency ?? data.order_currency).trim().toUpperCase();
+              }
+            }
           }
         } catch (err) {
           console.error('Failed to verify payment via production gateway API:', err);
@@ -152,15 +165,49 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Validate captured amount and currency strictly
+    if (verified) {
+      if (isNaN(capturedAmount) || capturedAmount <= 0) {
+        return NextResponse.json(
+          { error: 'Payment verification failed: invalid or non-positive captured amount' },
+          { status: 400 }
+        );
+      }
+
+      const expectedAmount = Number(payment.amount_paid);
+      if (Math.abs(capturedAmount - expectedAmount) > 0.01) {
+        return NextResponse.json(
+          { error: `Payment verification failed: captured amount (₹${capturedAmount}) does not match order amount (₹${expectedAmount})` },
+          { status: 400 }
+        );
+      }
+
+      if (capturedCurrency !== 'INR') {
+        return NextResponse.json(
+          { error: `Payment verification failed: unsupported currency (${capturedCurrency}). Only INR is supported.` },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!verified) {
-      // Mark transaction as failed
-      await supabaseServer
-        .from('payments')
-        .update({
-          payment_status: 'failed',
-          notes: 'Online payment verification failed: invalid signature or unverified gateway status.'
-        })
-        .eq('id', payment.id);
+      // Mark transaction as failed via coordinating RPC
+      const failNotes = 'Online payment verification failed: invalid signature or unverified gateway status.';
+      const { error: failRpcError } = await supabaseServer.rpc('fail_gateway_payment', {
+        p_order_id: order_id,
+        p_notes: failNotes
+      });
+
+      if (failRpcError) {
+        await supabaseServer
+          .from('payments')
+          .update({
+            status: 'failed',
+            payment_status: 'failed',
+            notes: failNotes
+          })
+          .eq('id', payment.id);
+      }
 
       return NextResponse.json(
         { error: 'Payment verification failed' },
@@ -168,35 +215,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Perform atomic updates: payment completed & student fee marked paid
-    
-    // Update payment record
-    const { error: paymentUpdateError } = await supabaseServer
-      .from('payments')
-      .update({
-        payment_status: 'completed',
-        gateway_payment_id: payment_id || `pay_${Math.random().toString(36).substring(2, 10)}`,
-        gateway_signature: signature || 'mock_signature_sandbox',
-        auto_verified: true,
-        notes: `Online payment verified successfully via Knit Pay (${isSandbox ? 'Sandbox' : 'Production'})`
-      })
-      .eq('id', payment.id);
+    // 3. Perform atomic updates: payment completed & student fee marked paid via coordinating RPC
+    const notes = `Online payment verified successfully via Knit Pay (${isSandbox ? 'Sandbox' : 'Production'})`;
+    const gatewayPaymentId = payment_id || `pay_${Math.random().toString(36).substring(2, 10)}`;
+    const gatewaySig = signature || 'mock_signature_sandbox';
 
-    if (paymentUpdateError) {
-      throw paymentUpdateError;
+    const { data: confirmResult, error: confirmRpcError } = await supabaseServer.rpc('confirm_gateway_payment', {
+      p_order_id: order_id,
+      p_gateway_payment_id: gatewayPaymentId,
+      p_amount: capturedAmount,
+      p_gateway_signature: gatewaySig,
+      p_notes: notes
+    });
+
+    if (confirmResult && !confirmResult.success) {
+      return NextResponse.json(
+        { error: confirmResult.error || 'Payment confirmation failed' },
+        { status: 400 }
+      );
     }
 
-    // Update student fee status to paid
-    const { error: feeUpdateError } = await supabaseServer
-      .from('student_fees')
-      .update({
-        status: 'paid',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', payment.student_fees_id);
+    if (confirmRpcError) {
+      console.warn('confirm_gateway_payment RPC unavailable or failed, falling back to direct updates:', confirmRpcError);
+      // Fallback: update BOTH status and payment_status to completed
+      const { error: paymentUpdateError } = await supabaseServer
+        .from('payments')
+        .update({
+          status: 'completed',
+          payment_status: 'completed',
+          gateway_payment_id: gatewayPaymentId,
+          gateway_signature: gatewaySig,
+          auto_verified: true,
+          notes
+        })
+        .eq('id', payment.id);
 
-    if (feeUpdateError) {
-      throw feeUpdateError;
+      if (paymentUpdateError) {
+        throw paymentUpdateError;
+      }
+
+      // Update student fee status to paid
+      const { error: feeUpdateError } = await supabaseServer
+        .from('student_fees')
+        .update({
+          status: 'paid',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', payment.student_fees_id);
+
+      if (feeUpdateError) {
+        throw feeUpdateError;
+      }
     }
 
     // 4. Retrieve student user_id from profile to send notification

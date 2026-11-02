@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Zap, AlertTriangle, Info, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -482,10 +483,25 @@ function ReadingEntryContent() {
                   )}
                 />
                 {validationError && (
-                  <p className="text-xs text-rose-600 flex items-center gap-1 mt-1">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {validationError}
-                  </p>
+                  <div className="space-y-1.5 mt-1.5">
+                    <p className="text-xs text-rose-600 flex items-center gap-1">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      {validationError}
+                    </p>
+                    {meterInfo.last_reading && parseFloat(readingValue) < meterInfo.last_reading.value && (
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <span className="text-xs text-amber-900 dark:text-amber-200">
+                          Did you replace this room's physical electricity meter with a new unit?
+                        </span>
+                        <Link
+                          href="/owner/electricity/meters"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-teal-700 dark:text-teal-400 hover:underline shrink-0"
+                        >
+                          Use Physical Meter Replacement →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -497,7 +513,7 @@ function ReadingEntryContent() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="initial">Initial Meter Benchmark (New/Replaced Meter)</SelectItem>
+                    <SelectItem value="initial">Initial Meter Benchmark (Fresh Hardware Setup)</SelectItem>
                     <SelectItem value="occupancy_change">New Allocation (Student Move-In / Move-Out)</SelectItem>
                     <SelectItem value="month_end">Month End (Regular Monthly Billing)</SelectItem>
                   </SelectContent>

@@ -67,6 +67,81 @@ export default function MeterManagementPage() {
   
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [meterToReplace, setMeterToReplace] = useState<MeterWithDetails | null>(null);
+  const [replaceFormData, setReplaceFormData] = useState({
+    final_reading: '',
+    final_reading_unavailable: false,
+    new_meter_number: '',
+    initial_reading: '0',
+    notes: ''
+  });
+  const [replaceLoading, setReplaceLoading] = useState(false);
+
+  const handleOpenReplace = (m: MeterWithDetails) => {
+    setMeterToReplace(m);
+    setReplaceFormData({
+      final_reading: m.last_reading ? String(m.last_reading.value) : '',
+      final_reading_unavailable: false,
+      new_meter_number: `${m.meter_number}-NEW`,
+      initial_reading: '0',
+      notes: ''
+    });
+    setReplaceModalOpen(true);
+  };
+
+  const handleConfirmReplace = async () => {
+    if (!meterToReplace) return;
+    if (!replaceFormData.new_meter_number.trim()) {
+      toast.error('Please enter the new meter number');
+      return;
+    }
+    const initialVal = parseFloat(replaceFormData.initial_reading);
+    if (isNaN(initialVal) || initialVal < 0) {
+      toast.error('Initial reading must be a non-negative number');
+      return;
+    }
+
+    let finalVal: number | undefined = undefined;
+    if (!replaceFormData.final_reading_unavailable && replaceFormData.final_reading.trim()) {
+      finalVal = parseFloat(replaceFormData.final_reading);
+      if (isNaN(finalVal) || finalVal < 0) {
+        toast.error('Final reading must be a valid number');
+        return;
+      }
+      if (meterToReplace.last_reading && finalVal < meterToReplace.last_reading.value) {
+        toast.error(`Old meter final reading cannot be less than its last reading (${meterToReplace.last_reading.value} kWh)`);
+        return;
+      }
+    }
+
+    setReplaceLoading(true);
+    try {
+      const res = await fetch('/api/meters/replace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          old_meter_id: meterToReplace.id,
+          new_meter_number: replaceFormData.new_meter_number.trim(),
+          initial_reading: initialVal,
+          final_reading: replaceFormData.final_reading_unavailable ? null : (finalVal ?? null),
+          final_reading_unavailable: replaceFormData.final_reading_unavailable,
+          notes: replaceFormData.notes || undefined
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to replace meter');
+      }
+      toast.success(data.message || 'Physical meter replaced successfully');
+      setReplaceModalOpen(false);
+      fetchMeters();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to replace meter');
+    } finally {
+      setReplaceLoading(false);
+    }
+  };
   const [submitLoading, setSubmitLoading] = useState(false);
   
   // Form states
@@ -347,7 +422,7 @@ export default function MeterManagementPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMeters.map(meter => (
-            <MeterCard key={meter.id} meter={meter} onRefresh={fetchMeters} />
+            <MeterCard key={meter.id} meter={meter} onRefresh={fetchMeters} onReplace={handleOpenReplace} />
           ))}
         </div>
       )}
@@ -451,6 +526,110 @@ export default function MeterManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Replace Meter Modal */}
+      <Dialog open={replaceModalOpen} onOpenChange={setReplaceModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replace Physical Meter</DialogTitle>
+            <DialogDescription>
+              Record old meter final reading and configure new replacement hardware for Room {meterToReplace?.room_number}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-3 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+              <strong>Hardware Replacement Notice:</strong> This action permanently deactivates old meter <span className="font-mono font-bold">{meterToReplace?.meter_number}</span> and closes its billing segment. All historical readings, student charges, and payments remain preserved.
+            </div>
+
+            {/* Old Meter Final Reading */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">
+                  Old Meter Final Reading (kWh)
+                </Label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    id="final_reading_unavailable"
+                    checked={replaceFormData.final_reading_unavailable}
+                    onChange={(e) => setReplaceFormData(prev => ({
+                      ...prev,
+                      final_reading_unavailable: e.target.checked,
+                      final_reading: e.target.checked ? '' : prev.final_reading
+                    }))}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  <label htmlFor="final_reading_unavailable" className="text-[11px] text-amber-700 dark:text-amber-300 cursor-pointer font-medium">
+                    Display unreadable / burned out
+                  </label>
+                </div>
+              </div>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder={meterToReplace?.last_reading ? String(meterToReplace.last_reading.value) : '0'}
+                value={replaceFormData.final_reading}
+                disabled={replaceFormData.final_reading_unavailable}
+                onChange={(e) => setReplaceFormData(prev => ({ ...prev, final_reading: e.target.value }))}
+                className={replaceFormData.final_reading_unavailable ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : ''}
+              />
+              <p className="text-[11px] text-slate-500">
+                {replaceFormData.final_reading_unavailable
+                  ? `Will close billing segment using last verified physical reading (${meterToReplace?.last_reading ? `${meterToReplace.last_reading.value} kWh` : 'None'}) without fabricating estimates.`
+                  : `Last recorded reading: ${meterToReplace?.last_reading ? `${meterToReplace.last_reading.value} kWh` : 'None'}`}
+              </p>
+            </div>
+
+            {/* New Meter Number */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">
+                New Meter Number / Serial *
+              </Label>
+              <Input
+                placeholder="e.g. M-101-B"
+                value={replaceFormData.new_meter_number}
+                onChange={(e) => setReplaceFormData(prev => ({ ...prev, new_meter_number: e.target.value }))}
+              />
+            </div>
+
+            {/* New Meter Initial Reading */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">
+                New Meter Initial Reading (kWh) *
+              </Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="e.g. 15.00"
+                value={replaceFormData.initial_reading}
+                onChange={(e) => setReplaceFormData(prev => ({ ...prev, initial_reading: e.target.value }))}
+              />
+              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-medium">
+                ✓ Can be lower than the old meter's reading (e.g. 15 kWh on new meter vs 1,250 kWh on old meter).
+              </p>
+            </div>
+
+            {/* Replacement Reason / Notes */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Reason / Notes</Label>
+              <Input
+                placeholder="e.g. Display malfunction, burned out, digital upgrade"
+                value={replaceFormData.notes}
+                onChange={(e) => setReplaceFormData(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplaceModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmReplace} disabled={replaceLoading} className="bg-amber-600 hover:bg-amber-700 text-white">
+              {replaceLoading ? 'Replacing Meter...' : 'Confirm Replacement'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -459,9 +638,10 @@ export default function MeterManagementPage() {
 interface MeterCardProps {
   meter: MeterWithDetails;
   onRefresh: () => void;
+  onReplace?: (meter: MeterWithDetails) => void;
 }
 
-function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
+function MeterCard({ meter, onRefresh: _onRefresh, onReplace }: MeterCardProps) {
   const getReadingStatus = () => {
     if (meter.pending_reading) {
       return {
@@ -603,22 +783,34 @@ function MeterCard({ meter, onRefresh: _onRefresh }: MeterCardProps) {
         )}
         
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-1">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="flex-1 text-xs border-slate-200 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#122b3b] text-slate-700 dark:text-slate-200"
-            onClick={() => window.location.href = `/owner/electricity/readings/history?meter_id=${meter.id}`}
-          >
-            History
-          </Button>
-          <Button 
-            size="sm" 
-            className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs"
-            onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}${meter.pending_reading ? '&reading_reason=occupancy_change' : ''}`}
-          >
-            Record Reading
-          </Button>
+        <div className="flex flex-col gap-2 pt-1">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 text-xs border-slate-200 dark:border-[#1a3d52] hover:bg-slate-50 dark:hover:bg-[#122b3b] text-slate-700 dark:text-slate-200"
+              onClick={() => window.location.href = `/owner/electricity/readings/history?meter_id=${meter.id}`}
+            >
+              History
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-xs"
+              onClick={() => window.location.href = `/owner/electricity/readings/record?meter_id=${meter.id}${meter.pending_reading ? '&reading_reason=occupancy_change' : ''}`}
+            >
+              Record Reading
+            </Button>
+          </div>
+          {meter.status === 'active' && onReplace && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full text-xs text-slate-600 dark:text-slate-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-dashed border-slate-200 dark:border-[#1a3d52]"
+              onClick={() => onReplace(meter)}
+            >
+              Replace Physical Meter →
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

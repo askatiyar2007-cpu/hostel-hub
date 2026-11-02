@@ -426,27 +426,17 @@ export default function StudentBillsPage() {
         ? `[${paymentMode.toUpperCase()}] ${trimmedRef}`
         : `[${paymentMode.toUpperCase()}] Offline Payment`;
 
-      // Call authoritative record_student_payment RPC
+      // Call authoritative record_student_payment RPC with full payment parameters
       const { error: rpcError } = await supabase.rpc('record_student_payment', {
         p_student_fees_id: selectedFeeForPayment.id,
+        p_amount: selectedFeeForPayment.amount,
+        p_payment_method: paymentMode,
         p_reference_number: formattedRef,
-        p_proof_url: proofUrl
+        p_proof_url: proofUrl,
+        p_notes: paymentNotes.trim() || null
       });
 
       if (rpcError) throw rpcError;
-
-      // Dual-compatibility sync on payments table
-      await supabase
-        .from('payments')
-        .update({
-          student_fees_id: selectedFeeForPayment.id,
-          amount_paid: selectedFeeForPayment.amount,
-          payment_method: paymentMode,
-          payment_status: 'pending_verification',
-          notes: paymentNotes.trim() || null
-        })
-        .eq('fee_id', selectedFeeForPayment.id)
-        .eq('status', 'pending_verification');
 
       toast.success('Payment proof submitted successfully! Awaiting owner verification.');
       setIsPaymentModalOpen(false);

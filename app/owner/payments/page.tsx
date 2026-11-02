@@ -1011,7 +1011,7 @@ interface VerifyPaymentModalProps {
   onSuccess: () => void;
 }
 
-function VerifyPaymentModal({ fee, ownerUserId, onClose, onSuccess }: VerifyPaymentModalProps) {
+function VerifyPaymentModal({ fee, ownerUserId: _ownerUserId, onClose, onSuccess }: VerifyPaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const payment = fee.payment;
   const expectedAmount = Number(fee.amount);
@@ -1023,45 +1023,15 @@ function VerifyPaymentModal({ fee, ownerUserId, onClose, onSuccess }: VerifyPaym
   const handleAction = async (action: 'verify' | 'partial' | 'reject', override: boolean = false) => {
     setLoading(true);
     try {
-      let finalStatus: string = 'verified';
-      let feeStatus: string = 'paid';
-      let autoVerified = false;
+      // Call authoritative atomic verify_student_payment RPC
+      const { error: verifyError } = await supabase.rpc('verify_student_payment', {
+        p_payment_id: payment.id,
+        p_action: action,
+        p_verified_amount: receivedAmount,
+        p_notes: override ? 'Verified via owner override' : null
+      });
 
-      if (action === 'verify') {
-        finalStatus = 'verified';
-        feeStatus = 'paid';
-        autoVerified = amountsMatch && !override;
-      } else if (action === 'partial') {
-        finalStatus = 'partial';
-        feeStatus = 'pending';
-      } else if (action === 'reject') {
-        finalStatus = 'rejected';
-        feeStatus = 'pending';
-      }
-
-      // 1. Update payments table
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .update({
-          payment_status: finalStatus,
-          verified_at: new Date().toISOString(),
-          verified_by: ownerUserId,
-          auto_verified: autoVerified
-        })
-        .eq('id', payment.id);
-
-      if (paymentError) throw paymentError;
-
-      // 2. Update student_fees table
-      const { error: feeError } = await supabase
-        .from('student_fees')
-        .update({
-          status: feeStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', fee.id);
-
-      if (feeError) throw feeError;
+      if (verifyError) throw verifyError;
 
       // 3. Create Notification for the student
       const studentProfiles = fee.students?.profiles;

@@ -16,6 +16,13 @@ export {
   closeOpenSegment
 } from './segment-lifecycle';
 
+// Physical meter replacement workflow
+export {
+  replacePhysicalMeter,
+  type ReplaceMeterParams,
+  type ReplaceMeterResult
+} from './meter-replacement';
+
 // Occupancy change detection and processing (Task 9)
 export {
   processOccupancyChangeEvent,
