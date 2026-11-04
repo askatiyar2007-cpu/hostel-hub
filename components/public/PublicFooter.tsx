@@ -27,8 +27,8 @@ export default function PublicFooter() {
 
           {/* Col 2: For Students */}
           <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4">
-              Students & Parents
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4 mt-6 first:mt-0 sm:mt-0">
+              For Students
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -115,7 +115,7 @@ export default function PublicFooter() {
 
         {/* Bottom copyright row */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>© {currentYear} StayKosh Technologies. All rights reserved.</p>
+          <p className="text-xs sm:text-sm text-slate-400 text-center">© {currentYear} StayKosh Technologies. All rights reserved.</p>
           <div className="flex items-center gap-1">
             <span>Built for modern student accommodation</span>
             <Heart className="h-3 w-3 text-teal-400 fill-teal-400 inline mx-0.5" />

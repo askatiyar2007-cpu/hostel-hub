@@ -758,12 +758,23 @@ export default function OwnerRequestsPage() {
       <PageHeader 
         title="Room Requests"
         description="Review and manage student room requests, approve allocations, and track resident onboarding."
-      />
+      >
+        <Button 
+          onClick={handleManualRefresh}
+          disabled={isManualRefreshing || isRequestsFetching || isAllocationsFetching}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] text-slate-700 dark:text-slate-200 transition-all shadow-2xs font-semibold text-xs cursor-pointer disabled:opacity-60 shrink-0"
+        >
+          <RotateCcw size={14} className={isManualRefreshing || isRequestsFetching || isAllocationsFetching ? 'animate-spin text-teal-600 dark:text-teal-400' : ''} />
+          <span className="hidden sm:inline">{isManualRefreshing || isRequestsFetching || isAllocationsFetching ? 'Refreshing...' : 'Refresh'}</span>
+          <span className="sm:hidden">{isManualRefreshing || isRequestsFetching || isAllocationsFetching ? '...' : 'Refresh'}</span>
+        </Button>
+      </PageHeader>
 
       <div className="w-full max-w-[1150px] mx-auto">
         {/* 1. Tab Navigation */}
-      <div className="flex border-b border-slate-200/80 gap-2 pb-px justify-between items-center flex-wrap">
-        <div className="flex gap-2 overflow-x-auto">
+      <div className="w-full flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-slate-200 dark:border-white/10 pb-px">
           <TabButton 
             active={activeTab === 'pending'} 
             onClick={() => { setActiveTab('pending'); }} 
@@ -783,19 +794,6 @@ export default function OwnerRequestsPage() {
             count={rejectedRequests.length}
           />
         </div>
-        <div className="pb-2 md:pb-0">
-          <Button 
-            onClick={handleManualRefresh}
-            disabled={isManualRefreshing || isRequestsFetching || isAllocationsFetching}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1.5 h-9 rounded-xl border border-slate-200 dark:border-[#1a3d52] bg-white dark:bg-[#122b3b] hover:bg-slate-50 dark:hover:bg-[#16364a] text-slate-700 dark:text-slate-200 transition-all shadow-2xs font-semibold text-xs cursor-pointer disabled:opacity-60"
-          >
-            <RotateCcw size={14} className={isManualRefreshing || isRequestsFetching || isAllocationsFetching ? 'animate-spin text-teal-600 dark:text-teal-400' : ''} />
-            <span>{isManualRefreshing || isRequestsFetching || isAllocationsFetching ? 'Refreshing...' : 'Refresh'}</span>
-          </Button>
-        </div>
-      </div>
 
       {/* 2. Search & Filter Bar */}
       <div className="mt-4 flex flex-col gap-3.5 md:flex-row md:items-center justify-between bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52] p-3.5 sm:p-4 rounded-2xl shadow-xs">
@@ -818,50 +816,52 @@ export default function OwnerRequestsPage() {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <div className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
             <SlidersHorizontal size={14} /> Filters:
           </div>
 
-          {/* Filter by Hostel */}
-          <select 
-            value={hostelFilter}
-            onChange={(e) => {
-              setHostelFilter(e.target.value);
-              setRoomFilter('all');
-            }}
-            className="h-10 text-xs px-3 bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] rounded-xl text-slate-700 dark:text-slate-200 font-medium focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Hostels</option>
-            {uniqueHostels.map((hostel: any) => (
-              <option key={hostel.id} value={hostel.id}>{hostel.name}</option>
-            ))}
-          </select>
-
-          {/* Filter by Room */}
-          <select 
-            value={roomFilter}
-            onChange={(e) => setRoomFilter(e.target.value)}
-            className="h-10 text-xs px-3 bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] rounded-xl text-slate-700 dark:text-slate-200 font-medium focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Rooms</option>
-            {uniqueRooms.map((room: any) => (
-              <option key={room} value={room}>Room {room}</option>
-            ))}
-          </select>
-
-          {/* Sorting */}
-          <div className="flex items-center border border-border rounded-xl px-2 h-10">
-            <ArrowUpDown size={12} className="text-muted-foreground mr-1" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full sm:w-auto">
+            {/* Filter by Hostel (col-span-2 on mobile, col-span-1 on desktop) */}
             <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="h-full text-xs bg-transparent border-none focus:outline-none pr-1"
+              value={hostelFilter}
+              onChange={(e) => {
+                setHostelFilter(e.target.value);
+                setRoomFilter('all');
+              }}
+              className="col-span-2 sm:col-span-1 h-10 text-xs px-3 bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] rounded-xl text-slate-700 dark:text-slate-200 font-medium focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none cursor-pointer capitalize"
             >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="alpha">Alphabetical</option>
+              <option value="all">All Hostels</option>
+              {uniqueHostels.map((hostel: any) => (
+                <option key={hostel.id} value={hostel.id}>{hostel.name}</option>
+              ))}
             </select>
+
+            {/* Filter by Room */}
+            <select 
+              value={roomFilter}
+              onChange={(e) => setRoomFilter(e.target.value)}
+              className="h-10 text-xs px-3 bg-white dark:bg-[#122b3b] border border-slate-200 dark:border-[#1a3d52] rounded-xl text-slate-700 dark:text-slate-200 font-medium focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 focus:outline-none cursor-pointer"
+            >
+              <option value="all">All Rooms</option>
+              {uniqueRooms.map((room: any) => (
+                <option key={room} value={room}>Room {room}</option>
+              ))}
+            </select>
+
+            {/* Sorting */}
+            <div className="flex items-center border border-slate-200 dark:border-[#1a3d52] rounded-xl px-2 h-10 bg-white dark:bg-[#122b3b]">
+              <ArrowUpDown size={12} className="text-muted-foreground mr-1 shrink-0" />
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="h-full w-full text-xs bg-transparent border-none focus:outline-none pr-1 text-slate-700 dark:text-slate-200 font-medium cursor-pointer"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="alpha">Alphabetical</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -1082,20 +1082,29 @@ export default function OwnerRequestsPage() {
   );
 }
 
+function formatEmergencyContact(contact: string | null): string | null {
+  if (!contact) return null;
+  const parts = contact.split(/\s*[-:]\s*/);
+  if (parts.length === 2) {
+    return `${parts[0].trim()} · ${parts[1].trim()}`;
+  }
+  return contact.trim();
+}
+
 // ---------------- Helper Components ----------------
 
 function TabButton({ active, onClick, label, count }: { active: boolean; onClick: () => void; label: string; count: number }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 border-b-2 font-semibold text-xs transition-all whitespace-nowrap ${
+      className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 border-b-2 font-semibold text-xs sm:text-sm transition-all whitespace-nowrap shrink-0 ${
         active 
           ? 'border-teal-600 text-teal-700 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-950/40' 
           : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
       }`}
     >
       {label}
-      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+      <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] font-bold ${
         active 
           ? 'bg-teal-600 text-white' 
           : 'bg-slate-100 dark:bg-[#16364a] text-slate-600 dark:text-slate-300'
@@ -1180,7 +1189,7 @@ function PendingRequestCard({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate" title={studentName}>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate capitalize" title={studentName}>
                 {studentName}
               </h3>
               <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
@@ -1196,7 +1205,7 @@ function PendingRequestCard({
               {emergencyContact && (
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={`Emergency: ${emergencyContact}`}>
                   <ShieldCheck size={12} className="shrink-0 text-teal-600 dark:text-teal-400" />
-                  <span className="truncate">ICE: {emergencyContact}</span>
+                  <span className="truncate">Emergency: <span className="capitalize">{formatEmergencyContact(emergencyContact)}</span></span>
                 </div>
               )}
             </div>
@@ -1206,7 +1215,7 @@ function PendingRequestCard({
           <div className="flex flex-col justify-center min-w-0 md:border-l md:border-slate-100 dark:md:border-[#1a3d52] md:pl-4">
             <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100 text-sm">
               <Building2 size={15} className="text-teal-600 dark:text-teal-400 shrink-0" />
-              <span className="truncate">{req.hostels?.name || 'Hostel Property'}</span>
+              <span className="truncate capitalize">{req.hostels?.name || 'Hostel Property'}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold">
@@ -1358,7 +1367,7 @@ function ApprovedAllocationCard({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate" title={studentName}>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate capitalize" title={studentName}>
                 {studentName}
               </h3>
               <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5" title={studentEmail}>
@@ -1378,7 +1387,7 @@ function ApprovedAllocationCard({
           <div className="flex flex-col justify-center min-w-0 md:border-l md:border-slate-100 dark:md:border-[#1a3d52] md:pl-4">
             <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100 text-sm">
               <Building2 size={15} className="text-teal-600 dark:text-teal-400 shrink-0" />
-              <span className="truncate">{alloc.hostels?.name || 'Hostel Property'}</span>
+              <span className="truncate capitalize">{alloc.hostels?.name || 'Hostel Property'}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold">
@@ -1397,8 +1406,8 @@ function ApprovedAllocationCard({
                 <span>Joined {joinedDate}</span>
               </span>
               {emergencyContact && (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]" title={`Emergency: ${emergencyContact}`}>
-                  Emg: {emergencyContact}
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[240px]" title={`Emergency: ${emergencyContact}`}>
+                  Emergency: <span className="capitalize">{formatEmergencyContact(emergencyContact)}</span>
                 </span>
               )}
             </div>
@@ -1491,28 +1500,28 @@ function ApprovedAllocationCard({
 
         {/* B. Monthly Fees Schedule Box */}
         <div className="lg:col-span-8 p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#122b3b]/60 border border-slate-200/80 dark:border-[#1a3d52] flex flex-col justify-between gap-2.5">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              <CreditCard size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
-              Monthly Fees Schedule
-            </span>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 whitespace-nowrap text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <span className="flex items-center gap-1.5 uppercase tracking-wider font-bold">
+                <CreditCard size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
+                Monthly Fees Schedule
+              </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold bg-white dark:bg-[#0e222e] border border-slate-200/70 dark:border-[#1a3d52] px-2 py-0.5 rounded-full">
                 {sortedFees.length} scheduled
               </span>
-              {sortedFees.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllFees(!showAllFees)}
-                  className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
-                >
-                  {showAllFees ? 'Show Less' : `View All (${sortedFees.length})`}
-                </button>
-              )}
             </div>
+            {sortedFees.length > 2 && (
+              <button
+                type="button"
+                onClick={() => setShowAllFees(!showAllFees)}
+                className="text-xs font-medium text-teal-600 dark:text-teal-400 hover:underline cursor-pointer whitespace-nowrap shrink-0"
+              >
+                {showAllFees ? 'Show Less' : `View All (${sortedFees.length})`}
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {(() => {
               const earliestUnpaidIndex = sortedFees.findIndex(f => f.status !== 'paid');
               let displayFees: any[] = [];
@@ -1552,19 +1561,21 @@ function ApprovedAllocationCard({
                 return (
                   <div 
                     key={fee.id} 
-                    className="p-2.5 border rounded-lg bg-white dark:bg-[#0e222e] flex items-center justify-between gap-2 border-slate-200/80 dark:border-[#1a3d52] shadow-2xs"
+                    className="p-3 border rounded-xl bg-white dark:bg-[#0e222e] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 border-slate-200/80 dark:border-[#1a3d52] shadow-2xs"
                   >
-                    <div className="min-w-0">
-                      <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                        {displayPeriod} {isCurrent ? <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">(Current)</span> : ''}
+                    {/* Top line: Month label on left, Status badge on right */}
+                    <div className="flex items-center justify-between gap-2 w-full sm:w-auto">
+                      <div className="font-bold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-1.5 flex-wrap">
+                        <span>{displayPeriod}</span>
+                        {isCurrent && (
+                          <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold px-1.5 py-0.5 rounded bg-teal-50 dark:bg-teal-950/60 border border-teal-200/60 dark:border-teal-800/60 whitespace-nowrap">
+                            (Current)
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">₹{feeAmount.toLocaleString()}</span> &bull; Due: {dueDateFormatted}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md capitalize ${
+                      
+                      {/* Mobile-only status badge placement */}
+                      <span className={`sm:hidden text-[10px] font-bold px-2 py-0.5 rounded-md capitalize shrink-0 ${
                         fee.status === 'paid' 
                           ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
                           : fee.status === 'pending_verification' 
@@ -1573,29 +1584,50 @@ function ApprovedAllocationCard({
                       }`}>
                         {fee.status.replace('_', ' ')}
                       </span>
-                      {fee.status !== 'paid' && (
-                        <button 
-                          type="button"
-                          onClick={() => onMarkFeePaid(fee.id)}
-                          className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 py-0.5 rounded-md text-xs transition-colors shadow-2xs cursor-pointer"
-                        >
-                          Mark Paid
-                        </button>
-                      )}
-                      {hasProof && (
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const pendingPayment = alloc.payments?.find((p: any) => p.payment_status === 'pending_verification' || p.status === 'pending_verification');
-                            const refNo = pendingPayment?.reference_number || 'N/A';
-                            const payMethod = pendingPayment?.payment_method || 'N/A';
-                            toast.info(`Payment Details - Method: ${payMethod}, Ref: ${refNo}`);
-                          }}
-                          className="border border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a] font-medium px-2 py-0.5 rounded-md text-xs transition-colors shadow-2xs cursor-pointer"
-                        >
-                          Details
-                        </button>
-                      )}
+                    </div>
+
+                    {/* Bottom line: Due info on left, action button on right */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                      <div className="text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">₹{feeAmount.toLocaleString()}</span> &middot; Due: {dueDateFormatted}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Desktop-only status badge */}
+                        <span className={`hidden sm:inline-flex text-[10px] font-bold px-2 py-0.5 rounded-md capitalize ${
+                          fee.status === 'paid' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
+                            : fee.status === 'pending_verification' 
+                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800' 
+                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                        }`}>
+                          {fee.status.replace('_', ' ')}
+                        </span>
+
+                        {fee.status !== 'paid' && (
+                          <button 
+                            type="button"
+                            onClick={() => onMarkFeePaid(fee.id)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-3 py-1.5 rounded-lg text-xs transition-colors shadow-2xs cursor-pointer shrink-0"
+                          >
+                            Mark Paid
+                          </button>
+                        )}
+                        {hasProof && (
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const pendingPayment = alloc.payments?.find((p: any) => p.payment_status === 'pending_verification' || p.status === 'pending_verification');
+                              const refNo = pendingPayment?.reference_number || 'N/A';
+                              const payMethod = pendingPayment?.payment_method || 'N/A';
+                              toast.info(`Payment Details - Method: ${payMethod}, Ref: ${refNo}`);
+                            }}
+                            className="border border-slate-200 dark:border-[#1a3d52] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#16364a] font-medium px-2.5 py-1.5 rounded-lg text-xs transition-colors shadow-2xs cursor-pointer shrink-0"
+                          >
+                            Details
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

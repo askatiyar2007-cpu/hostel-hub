@@ -95,59 +95,57 @@ export default function PublicHeader() {
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Drawer panel */}
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-xs bg-white dark:bg-[#0e222e] shadow-2xl flex flex-col justify-between p-6 z-50 animate-slide-in border-l border-slate-200 dark:border-slate-800">
-            <div>
-              {/* Header inside drawer */}
-              <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
-                <StayKoshLogo size="sm" theme="light" href="/" />
-                <button
-                  type="button"
+          {/* Full-width Opaque Mobile Menu Overlay */}
+          <div className="fixed inset-x-0 top-0 z-50 w-full bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-white/10 shadow-xl flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Header row spanning 100% of viewport */}
+            <div className="w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 dark:border-white/10">
+              <StayKoshLogo size="sm" theme="auto" href="/" />
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Navigation links with clean spacing */}
+            <nav className="flex flex-col gap-1 p-4 text-base font-medium text-slate-800 dark:text-slate-100">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#122b3b] hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
-                  aria-label="Close menu"
+                  className="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-800 dark:text-slate-100 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-[#0F766E] dark:hover:text-teal-400 transition-colors"
                 >
-                  <X className="h-5 w-5" />
-                </button>
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Clean footer inside menu for Sign In & Get Started */}
+              <div className="pt-3 mt-2 border-t border-slate-100 dark:border-white/10 flex flex-col gap-2.5">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center px-4 py-2.5 rounded-xl bg-[#0F766E] text-sm font-semibold text-white shadow-sm hover:bg-teal-800 transition-colors"
+                >
+                  Get Started
+                </Link>
               </div>
-
-              {/* Navigation links */}
-              <nav className="mt-6 space-y-1.5">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2.5 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-[#0F766E] dark:hover:text-teal-400 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            {/* Auth actions inside drawer */}
-            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-3">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#122b3b] transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center px-4 py-2.5 rounded-xl bg-[#0F766E] text-sm font-semibold text-white shadow-sm hover:bg-teal-800 transition-colors"
-              >
-                Get Started
-              </Link>
-            </div>
+            </nav>
           </div>
         </div>
       )}

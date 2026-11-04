@@ -256,7 +256,7 @@ export default function FindHostelPage() {
 
         {/* Cohesive Search Bar */}
         <div className="relative mb-6">
-          <div className="flex items-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e222e] shadow-xs focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-500 dark:focus-within:border-teal-500 transition-all p-1.5 gap-2">
+          <div className="w-full flex items-center gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/15 rounded-2xl shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-500 transition-all">
             <div className="pl-3.5 text-slate-400 dark:text-slate-500 shrink-0">
               <Search size={18} />
             </div>
@@ -266,7 +266,7 @@ export default function FindHostelPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 h-10 px-2 bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none dark:!bg-transparent dark:!border-0"
+              className="flex-1 min-w-0 text-sm px-2 bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none dark:!bg-transparent dark:!border-0"
             />
             {searchQuery && (
               <button
@@ -281,7 +281,7 @@ export default function FindHostelPage() {
             <Button
               onClick={handleSearch}
               disabled={loading}
-              className="h-10 px-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium shrink-0 transition-colors shadow-none"
+              className="shrink-0 px-4 py-2.5 text-sm font-medium rounded-xl bg-teal-600 hover:bg-teal-700 text-white transition-colors shadow-none h-auto"
             >
               {loading ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -442,10 +442,10 @@ export default function FindHostelPage() {
         </div>
 
         {/* Reassuring Footer Tip */}
-        <p className="text-xs text-slate-400 dark:text-slate-500 text-center flex items-center justify-center gap-1.5">
-          <Building2 size={13} className="shrink-0" />
+        <div className="flex items-start justify-center gap-2 text-xs text-slate-500 dark:text-slate-400 max-w-xs sm:max-w-md mx-auto text-center mt-6">
+          <Building2 size={14} className="shrink-0 mt-0.5 text-teal-600 dark:text-teal-400" />
           <span>Every verified property has a unique Hostel ID and QR code provided by the owner.</span>
-        </p>
+        </div>
       </div>
     </div>
   );

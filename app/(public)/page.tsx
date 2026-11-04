@@ -174,7 +174,7 @@ export default function PublicHomePage() {
     <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100 selection:bg-teal-100 dark:selection:bg-teal-900 selection:text-teal-900 dark:selection:text-teal-100 overflow-x-hidden">
 
       {/* 1. CINEMATIC HERO SECTION */}
-      <section ref={heroRef} className="relative min-h-[85vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-4 sm:pt-0">
+      <section ref={heroRef} className="relative flex md:items-center justify-center overflow-hidden md:min-h-screen pt-4 sm:pt-0">
         <motion.div
           style={{ scale: heroScale, opacity: heroOpacity, y: heroY, rotate: heroRotate }}
           className="absolute inset-0 pointer-events-none"
@@ -242,7 +242,7 @@ export default function PublicHomePage() {
         </motion.div>
 
         {/* Hero Content Container */}
-        <div className="relative z-10 w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-20 text-center">
+        <div className="relative z-10 w-full max-w-4xl px-4 sm:px-6 lg:px-8 pt-8 pb-12 md:py-24 text-center">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
