@@ -8,6 +8,7 @@ export interface StayKoshLogoProps {
   showWordmark?: boolean;
   theme?: 'dark' | 'light' | 'auto';
   badgeText?: string;
+  badgeClassName?: string;
   href?: string;
   className?: string;
 }
@@ -17,6 +18,7 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
   showWordmark = true,
   theme = 'light',
   badgeText,
+  badgeClassName,
   href,
   className = '',
 }) => {
@@ -120,7 +122,7 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
       {showWordmark && (
         <div className="flex items-center gap-2">
           <span
-            className={`font-bold tracking-tight font-display ${textClass} ${
+            className={`font-bold tracking-tight font-sans ${textClass} ${
               isPermanentDark
                 ? 'text-white'
                 : isPermanentLight
@@ -149,7 +151,7 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
           </span>
           {badgeText && (
             <span
-              className={`inline-flex items-center rounded font-extrabold tracking-wider leading-none uppercase ${badgeClass} ${
+              className={`inline-flex items-center rounded font-extrabold tracking-wider leading-none uppercase ${badgeClass} ${badgeClassName || ''} ${
                 isPermanentDark
                   ? 'text-[#34D399]'
                   : isPermanentLight

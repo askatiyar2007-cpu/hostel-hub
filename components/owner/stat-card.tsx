@@ -45,7 +45,7 @@ export function StatCard({
   const cardContent = (
     <div className="flex flex-col justify-between h-full">
       {/* 1. TITLE + ICON */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-2.5">
         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-snug">
           {title}
         </p>
@@ -83,7 +83,7 @@ export function StatCard({
 
         {/* 4. STATUS/SECONDARY INFORMATION */}
         {trend && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-[#1a3d52] flex items-center min-w-0">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-[#1a3d52] flex items-center min-w-0 px-0.5 pb-0.5">
             <span
               className={cn(
                 "text-[11px] font-semibold leading-tight truncate",
@@ -100,7 +100,7 @@ export function StatCard({
   );
 
   const cardClasses = cn(
-    "rounded-2xl border border-sky-100/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-4.5 sm:p-5 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.07),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 transition-all duration-200 flex flex-col justify-between h-full min-w-0 overflow-hidden",
+    "rounded-2xl border border-sky-100/90 dark:border-[#1a3d52] bg-white dark:bg-[#0e222e] p-4 sm:p-5 shadow-[0_4px_20px_-2px_rgba(14,42,71,0.07),0_2px_6px_-1px_rgba(14,42,71,0.04)] relative z-10 transition-all duration-200 flex flex-col justify-between h-full min-w-0 overflow-hidden",
     isClickable
       ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-4px_rgba(14,42,71,0.12),0_4px_8px_-2px_rgba(14,42,71,0.06)] hover:border-sky-300 dark:hover:border-teal-700 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
       : "cursor-default",

@@ -157,6 +157,7 @@ export default function OwnerDashboard() {
       {/* Welcome + Add Hostel */}
       <PageHeader 
         title={`Welcome back, ${user?.user_metadata?.full_name || 'Owner'}`}
+        className="capitalize"
         description="Here's what's happening across your hostels today."
       >
         <NewHostelDialog onCreated={() => qc.invalidateQueries({ queryKey: ["owner-hostels"] })} />
@@ -177,7 +178,7 @@ export default function OwnerDashboard() {
           value={totalRooms}
           subtitle={`${availableBeds} beds available`}
           icon={<Bed className="h-5 w-5" />}
-          color="blue"
+          color="teal"
           trend={{ value: `${totalBeds} total beds`, isPositive: true }}
         />
         <StatCard
@@ -185,7 +186,7 @@ export default function OwnerDashboard() {
           value={totalStudents}
           subtitle={`${overallOccupancy}% occupancy`}
           icon={<Users className="h-5 w-5" />}
-          color="purple"
+          color="teal"
           trend={{ value: `${totalStudents} currently residing`, isPositive: true }}
         />
         <StatCard
@@ -193,7 +194,7 @@ export default function OwnerDashboard() {
           value={`₹${monthlyRevenue.toLocaleString()}`}
           subtitle="Collected this month"
           icon={<CreditCard className="h-5 w-5" />}
-          color="emerald"
+          color="teal"
           trend={{ value: "Paid collections", isPositive: true }}
         />
         <StatCard

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Fraunces } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/context';
 import { QueryProvider } from '@/lib/query-provider';
 import { ThemeProvider } from '@/lib/theme-context';
@@ -11,11 +11,6 @@ import './globals.css';
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-sans',
-});
-
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-display',
 });
 
 export const viewport = {
@@ -48,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <meta charSet="utf-8" />
         <meta name="theme-color" content="#0d9488" />

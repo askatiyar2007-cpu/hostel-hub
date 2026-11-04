@@ -41,12 +41,12 @@ export default function PublicHeader() {
       className={`sticky top-0 z-50 w-full transition-all duration-300 h-20 ${
         scrolled
           ? 'bg-white/95 dark:bg-[#07131d]/95 backdrop-blur-md shadow-xs border-b border-slate-200/80 dark:border-slate-800/80'
-          : 'bg-transparent border-b border-transparent'
+          : 'bg-white/95 dark:bg-[#07131d]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 sm:bg-transparent sm:backdrop-blur-none sm:border-transparent'
       }`}
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Real Brand Logo Component */}
-        <StayKoshLogo size="md" theme="light" href="/" />
+        <StayKoshLogo size="md" theme="auto" href="/" />
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">

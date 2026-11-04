@@ -476,7 +476,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
         isCollapsed ? "left-0 md:left-20" : "left-0 md:left-64"
       )}>
         {/* Left Side: Sidebar Toggle & Branding */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Mobile Menu Button */}
           <Button 
             variant="ghost" 
@@ -501,14 +501,14 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           </Button>
 
           {/* Desktop StayKosh Branding context */}
-          <StayKoshLogo size={28} theme="dark" badgeText="OWNER" />
+          <StayKoshLogo size={28} theme="dark" badgeText="OWNER" badgeClassName="hidden sm:inline-flex" />
         </div>
 
           {/* Center: Clean Empty Area (No giant global search bar on dashboard) */}
           <div className="flex-1" />
 
           {/* Right Side Actions: Theme Toggle | Notification Bell | Separator | Owner Profile Dropdown */}
-          <div className="flex items-center gap-2.5 sm:gap-3 md:gap-3.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3.5">
             {/* Quick Theme Toggle Button */}
             <button
               type="button"

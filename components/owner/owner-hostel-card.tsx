@@ -47,10 +47,20 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
   const availableBeds = hostel.availableBeds ?? Math.max(0, totalBeds - hostel.occupiedBeds);
   const occupancyRate = hostel.occupancy ?? (totalBeds > 0 ? Math.round((hostel.occupiedBeds / totalBeds) * 100) : 0);
 
-  const locationText = [hostel.city, hostel.area || hostel.state].filter(Boolean).join(', ');
+  // Deduplicate identical city and area/state (e.g. "Jalore, Jalore" -> "Jalore")
+  const formatLocation = () => {
+    const city = hostel.city?.trim();
+    const secondPart = (hostel.area || hostel.state || '').trim();
+    if (!city) return secondPart;
+    if (!secondPart || city.toLowerCase() === secondPart.toLowerCase()) {
+      return city;
+    }
+    return `${city}, ${secondPart}`;
+  };
+  const locationText = formatLocation();
 
   return (
-    <div className="group relative z-10 flex flex-col overflow-hidden rounded-2xl border border-sky-200/80 bg-white shadow-[0_8px_30px_-4px_rgba(14,42,71,0.12),0_4px_12px_-2px_rgba(14,42,71,0.08)] hover:shadow-[0_16px_40px_-6px_rgba(14,42,71,0.16),0_6px_16px_-3px_rgba(14,42,71,0.1)] hover:border-sky-300 transition-all duration-200">
+    <div className="group relative z-10 flex flex-col overflow-hidden rounded-2xl border border-sky-200/80 bg-white shadow-[0_8px_30px_-4px_rgba(14,42,71,0.12),0_4px_12px_-2px_rgba(14,42,71,0.08)] hover:shadow-[0_16px_40px_-6px_rgba(14,42,71,0.16),0_6px_16px_-3px_rgba(14,42,71,0.1)] hover:border-sky-300 transition-all duration-200" style={{ isolation: "isolate" }}>
       {/* ========================================================================= */}
       {/* 1. MEDIA / IMAGE REGION (Strictly Bounded, Never Bleeds Outside)          */}
       {/* ========================================================================= */}
@@ -69,7 +79,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
         ) : (
           <Link
             href={`/owner/hostels/${hostel.id}`}
-            className="relative block w-full h-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 group/img"
+            className="relative block w-full h-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 group/img overflow-hidden"
           >
             {/* Architectural SVG Illustration strictly bounded inside this container */}
             <svg
@@ -77,7 +87,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               preserveAspectRatio="xMidYMax slice"
-              className="w-full h-full absolute inset-0 pointer-events-none"
+              className="w-full h-full absolute inset-0 pointer-events-none overflow-hidden"
             >
               <defs>
                 <linearGradient id={`hostelSky-${hostel.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -175,7 +185,7 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
             className="group/title block cursor-pointer focus-visible:outline-none focus-visible:underline"
           >
             <h3 
-              className="text-lg sm:text-xl font-bold text-slate-900 leading-snug truncate group-hover/title:text-teal-700 transition-colors" 
+              className="text-lg sm:text-xl font-bold text-slate-900 leading-snug truncate group-hover/title:text-teal-700 transition-colors capitalize" 
               title={hostel.name}
             >
               {hostel.name}
@@ -183,13 +193,13 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-teal-600" />
-            <span className="truncate font-medium">{locationText || 'Location not specified'}</span>
+            <span className="truncate font-medium capitalize">{locationText || 'Location not specified'}</span>
           </div>
         </div>
 
         {/* Short Description */}
         {hostel.description ? (
-          <p className="text-xs text-slate-500 line-clamp-1 mb-3.5 leading-relaxed">
+          <p className="text-xs text-slate-500 line-clamp-1 mb-3.5 leading-relaxed first-letter:uppercase">
             {hostel.description}
           </p>
         ) : (
@@ -202,17 +212,17 @@ export function OwnerHostelCard({ hostel, variant = 'dashboard', onDelete }: Own
         <div className="flex items-center justify-between mb-3.5 border-y border-slate-100 py-2.5">
           <div className="flex flex-col min-w-0 text-left">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Rooms</span>
-            <span className="text-sm font-bold text-slate-900">{hostel.totalRooms}</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-white">{hostel.totalRooms}</span>
           </div>
           <div className="w-px h-8 bg-slate-200" />
           <div className="flex flex-col min-w-0 text-center">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Residents</span>
-            <span className="text-sm font-bold text-purple-700">{hostel.occupiedBeds}</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-white">{hostel.occupiedBeds}</span>
           </div>
           <div className="w-px h-8 bg-slate-200" />
           <div className="flex flex-col min-w-0 text-right">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Available</span>
-            <span className="text-sm font-bold text-teal-700">{availableBeds}</span>
+            <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">{availableBeds}</span>
           </div>
         </div>
 
