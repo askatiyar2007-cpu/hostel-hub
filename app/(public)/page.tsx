@@ -171,7 +171,7 @@ export default function PublicHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100 selection:bg-teal-100 dark:selection:bg-teal-900 selection:text-teal-900 dark:selection:text-teal-100 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FAFCFB] dark:bg-[#07131d] text-slate-900 dark:text-slate-100 selection:bg-teal-100 dark:selection:bg-teal-900 selection:text-teal-900 dark:selection:text-teal-100 overflow-x-clip">
 
       {/* 1. CINEMATIC HERO SECTION */}
       <section ref={heroRef} className="relative flex md:items-center justify-center overflow-hidden md:min-h-screen pt-4 sm:pt-0">
@@ -356,14 +356,14 @@ export default function PublicHomePage() {
       {/* 2. DISCOVERY - PLATFORM SEARCH & CAMPUS ACCOMMODATION PORTAL */}
       <section id="discover" ref={discoveryRef} className="relative py-12 md:py-24 bg-gradient-to-b from-[#F5FBFF] to-[#FAFCFB] dark:from-[#07131d] dark:to-[#091823]">
         <motion.div
-          style={{ y: discoveryY, scale: discoveryScale, opacity: discoveryOpacity }}
+          style={isMobile ? undefined : { y: discoveryY, scale: discoveryScale, opacity: discoveryOpacity }}
           className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
         >
           {/* Restored Section Header Entrance */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-14"
           >
@@ -384,7 +384,7 @@ export default function PublicHomePage() {
             <motion.div
               initial={{ opacity: 0, y: isMobile ? 20 : 0, x: isMobile ? 0 : -30 }}
               whileInView={{ opacity: 1, y: 0, x: 0 }}
-              viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{ duration: 0.7 }}
               className="relative"
             >
@@ -399,8 +399,8 @@ export default function PublicHomePage() {
                   {/* Grid background */}
                   <rect width="100%" height="100%" fill="url(#mapGrid)" opacity="0.15" />
 
-                  {/* Concentric radar rings with continuous subtle pulse & ripple */}
-                  <motion.circle
+                  {/* Concentric radar rings with continuous subtle pulse & ripple - Cross-platform SVG SMIL */}
+                  <circle
                     cx="300"
                     cy="175"
                     r="55"
@@ -408,10 +408,11 @@ export default function PublicHomePage() {
                     stroke="#0F766E"
                     strokeWidth="1.5"
                     strokeDasharray="4 4"
-                    animate={{ r: [50, 65, 50], opacity: [0.2, 0.45, 0.2] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  />
-                  <motion.circle
+                  >
+                    <animate attributeName="r" values="50;65;50" dur="4s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.2;0.45;0.2" dur="4s" repeatCount="indefinite" />
+                  </circle>
+                  <circle
                     cx="300"
                     cy="175"
                     r="115"
@@ -419,10 +420,11 @@ export default function PublicHomePage() {
                     stroke="#0F766E"
                     strokeWidth="1.5"
                     strokeDasharray="4 4"
-                    animate={{ r: [110, 125, 110], opacity: [0.12, 0.3, 0.12] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                  />
-                  <motion.circle
+                  >
+                    <animate attributeName="r" values="110;125;110" dur="4s" begin="1s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.12;0.3;0.12" dur="4s" begin="1s" repeatCount="indefinite" />
+                  </circle>
+                  <circle
                     cx="300"
                     cy="175"
                     r="175"
@@ -430,19 +432,22 @@ export default function PublicHomePage() {
                     stroke="#0F766E"
                     strokeWidth="1.5"
                     strokeDasharray="4 4"
-                    animate={{ r: [170, 185, 170], opacity: [0.06, 0.2, 0.06] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                  />
+                  >
+                    <animate attributeName="r" values="170;185;170" dur="4s" begin="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.06;0.2;0.06" dur="4s" begin="2s" repeatCount="indefinite" />
+                  </circle>
                   {/* Subtle Radar Pulse Wave */}
-                  <motion.circle
+                  <circle
                     cx="300"
                     cy="175"
+                    r="35"
                     fill="none"
                     stroke="#0F766E"
                     strokeWidth="1.5"
-                    animate={{ r: [35, 185], opacity: [0.45, 0] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: 'easeOut' }}
-                  />
+                  >
+                    <animate attributeName="r" values="35;185" dur="3.5s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.45;0" dur="3.5s" repeatCount="indefinite" />
+                  </circle>
 
                   {/* Connection Lines from nodes to central hub */}
                   {[
@@ -460,10 +465,9 @@ export default function PublicHomePage() {
                       strokeWidth="1.75"
                       strokeDasharray="4 4"
                       fill="none"
-                      opacity="0.4"
-                      initial={{ pathLength: 0 }}
-                      whileInView={{ pathLength: 1 }}
-                      viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 0.4 }}
+                      viewport={{ once: true, amount: 0.05 }}
                       transition={{ duration: 0.8, delay: line.delay }}
                     />
                   ))}
@@ -479,6 +483,7 @@ export default function PublicHomePage() {
                   ].map((node, idx) => (
                     <motion.g
                       key={`map-node-${idx}`}
+                      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
                       animate={{ y: [0, -4, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: node.delay }}
                     >
@@ -512,13 +517,15 @@ export default function PublicHomePage() {
                   {/* Central Hub in SVG */}
                   <g>
                     <circle cx="300" cy="175" r="32" fill="#0F766E" opacity="0.15" />
-                    <foreignObject x="272" y="147" width="56" height="56">
-                      <div className="w-14 h-14 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-xl ring-4 ring-teal-500/25">
-                        <Building2 className="h-7 w-7 text-white" />
-                      </div>
-                    </foreignObject>
                   </g>
                 </svg>
+
+                {/* Central Hub Overlay: Guaranteed cross-platform positioning without foreignObject bugs */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-xl ring-4 ring-teal-500/25">
+                    <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+                  </div>
+                </div>
               </div>
 
               {/* Map Stats - Restored Staggered Entrance */}
@@ -532,7 +539,7 @@ export default function PublicHomePage() {
                     key={idx}
                     initial={{ opacity: 0, y: 12 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ duration: 0.4, delay: 0.15 + idx * 0.1 }}
                     className="bg-white dark:bg-[#0e222e] rounded-xl p-2 sm:p-3 border border-slate-200/90 dark:border-[#1a3d52]/90 text-center shadow-xs min-w-0 flex flex-col justify-center"
                   >
@@ -553,7 +560,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, y: isMobile ? 15 : 0, x: isMobile ? 0 : 25 }}
                 whileInView={{ opacity: 1, y: 0, x: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="rounded-2xl bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52]/90 p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#0F766E]/40 dark:hover:border-teal-500/40 transition-all duration-300"
               >
@@ -592,7 +599,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, y: isMobile ? 15 : 0, x: isMobile ? 0 : 25 }}
                 whileInView={{ opacity: 1, y: 0, x: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.5, delay: 0.22 }}
                 className="rounded-2xl bg-white dark:bg-[#0e222e] border border-slate-200/90 dark:border-[#1a3d52]/90 p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#0F766E]/40 dark:hover:border-teal-500/40 transition-all duration-300"
               >
@@ -631,7 +638,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.5, delay: 0.34 }}
                 className="rounded-2xl bg-gradient-to-br from-[#0F766E] via-[#0D655E] to-[#042F2E] p-5 sm:p-6 text-white shadow-lg"
               >
@@ -669,7 +676,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-14"
           >
@@ -697,7 +704,7 @@ export default function PublicHomePage() {
                   key={idx}
                   initial={{ opacity: 0, y: isMobile ? 15 : 0, x: isMobile ? 0 : -20 }}
                   whileInView={{ opacity: 1, y: 0, x: 0 }}
-                  viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
                   className="group bg-white dark:bg-[#0e222e] rounded-xl p-3.5 sm:p-5 border border-slate-200/90 dark:border-[#1a3d52]/90 hover:border-[#0F766E]/40 dark:hover:border-teal-500/40 shadow-sm hover:shadow-md transition-all duration-300"
                 >
@@ -722,10 +729,10 @@ export default function PublicHomePage() {
 
             {/* Dominant choice on the right - Restored Entrance Pop + Scroll Scale */}
             <motion.div
-              style={{ scale: selectedCardScale }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+              style={isMobile ? undefined : { scale: selectedCardScale }}
+              initial={{ opacity: 0, y: isMobile ? 15 : 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
@@ -756,7 +763,7 @@ export default function PublicHomePage() {
                       key={idx}
                       initial={{ opacity: 0, x: isMobile ? 0 : -10, y: isMobile ? 8 : 0 }}
                       whileInView={{ opacity: 1, x: 0, y: 0 }}
-                      viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                      viewport={{ once: true, amount: 0.05 }}
                       transition={{ duration: 0.3, delay: 0.25 + idx * 0.05 }}
                       className="flex items-center gap-2 min-w-0"
                     >
@@ -789,7 +796,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-16"
           >
@@ -828,7 +835,7 @@ export default function PublicHomePage() {
                   key={idx}
                   initial={{ opacity: 0, y: 15 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.4, delay: idx * 0.06 }}
                   className="bg-white/95 dark:bg-[#0e222e]/95 backdrop-blur-md rounded-2xl p-3 sm:p-3.5 shadow-xs border border-slate-200/90 dark:border-[#1a3d52]/90 text-center min-w-0"
                 >
@@ -912,7 +919,7 @@ export default function PublicHomePage() {
                       style={{ rotate: lifestyleCounterRotation }}
                       initial={{ opacity: 0, scale: 0 }}
                       whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                      viewport={{ once: true, amount: 0.05 }}
                       transition={{ duration: 0.5, delay: 0.1 + idx * 0.08 }}
                       className="pointer-events-auto"
                     >
@@ -943,7 +950,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-12"
           >
@@ -962,7 +969,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95, rotate: isMobile ? 0 : -2 }}
             whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7, delay: 0.2 }}
             className="bg-slate-800/50 rounded-2xl p-3.5 sm:p-5 border border-slate-700/50 backdrop-blur-sm"
           >
@@ -970,7 +977,7 @@ export default function PublicHomePage() {
             <motion.div
               initial={{ opacity: 0, y: -12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{ duration: 0.4, delay: 0.3 }}
               className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4 border-b border-slate-700/50 pb-3"
             >
@@ -995,10 +1002,10 @@ export default function PublicHomePage() {
               ].map((module, idx) => (
                 <motion.div
                   key={idx}
-                  style={{ y: moduleY, opacity: moduleOpacity }}
+                  style={isMobile ? undefined : { y: moduleY, opacity: moduleOpacity }}
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.4, delay: module.delay }}
                   className="bg-slate-700/50 rounded-xl p-2.5 sm:p-3 border border-slate-600/50 hover:bg-slate-600/50 transition-colors group min-w-0"
                 >
@@ -1026,7 +1033,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-12"
           >
@@ -1045,7 +1052,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20, rotate: isMobile ? 0 : -0.5 }}
             whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0e222e] dark:to-[#122b3b] rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-[#1a3d52] shadow-xl"
           >
@@ -1070,7 +1077,7 @@ export default function PublicHomePage() {
                   key={idx}
                   initial={{ opacity: 0, x: isMobile ? 0 : -15, y: isMobile ? 10 : 0 }}
                   whileInView={{ opacity: 1, x: 0, y: 0 }}
-                  viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.4, delay: item.delay }}
                   className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-[#1a3d52] text-sm"
                 >
@@ -1083,7 +1090,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.5, delay: 0.36 }}
                 className="flex justify-between items-center py-3 bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/40 rounded-lg px-3.5 sm:px-4 border border-teal-100/50 dark:border-teal-800/40"
               >
@@ -1096,7 +1103,7 @@ export default function PublicHomePage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{ duration: 0.4, delay: 0.42 }}
               className="mt-4 text-center"
             >
@@ -1118,7 +1125,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-16"
           >
@@ -1149,10 +1156,9 @@ export default function PublicHomePage() {
                     strokeWidth="1.75"
                     strokeDasharray="4 4"
                     fill="none"
-                    opacity="0.5"
-                    initial={{ pathLength: 0 }}
-                    whileInView={{ pathLength: 1 }}
-                    viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 0.5 }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ duration: 0.8, delay: 0.15 + idx * 0.05 }}
                   />
                   {/* Right curve: Central hub out to Owner card edge */}
@@ -1162,10 +1168,9 @@ export default function PublicHomePage() {
                     strokeWidth="1.75"
                     strokeDasharray="4 4"
                     fill="none"
-                    opacity="0.5"
-                    initial={{ pathLength: 0 }}
-                    whileInView={{ pathLength: 1 }}
-                    viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 0.5 }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ duration: 0.8, delay: 0.2 + idx * 0.05 }}
                   />
                 </React.Fragment>
@@ -1177,7 +1182,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.6, delay: 0.15 }}
                 className="relative flex items-center justify-center"
               >
@@ -1201,7 +1206,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, y: isMobile ? 20 : 0, x: isMobile ? 0 : -25 }}
                 whileInView={{ opacity: 1, y: 0, x: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.6 }}
                 className="space-y-2.5"
               >
@@ -1223,7 +1228,7 @@ export default function PublicHomePage() {
                     key={idx}
                     initial={{ opacity: 0, y: 12 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ duration: 0.4, delay: 0.15 + idx * 0.07 }}
                     className="flex items-center gap-2.5 sm:gap-3 bg-slate-800/70 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 border border-slate-700/60 hover:border-teal-500/50 hover:bg-slate-800 transition-all duration-200 group shadow-sm min-w-0"
                   >
@@ -1252,7 +1257,7 @@ export default function PublicHomePage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
                   className="relative z-10 w-24 h-24 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center shadow-2xl ring-4 ring-teal-500/30"
                 >
@@ -1275,7 +1280,7 @@ export default function PublicHomePage() {
               <motion.div
                 initial={{ opacity: 0, y: isMobile ? 20 : 0, x: isMobile ? 0 : 25 }}
                 whileInView={{ opacity: 1, y: 0, x: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="space-y-2.5"
               >
@@ -1297,7 +1302,7 @@ export default function PublicHomePage() {
                     key={idx}
                     initial={{ opacity: 0, y: 12 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ duration: 0.4, delay: 0.2 + idx * 0.07 }}
                     className="flex items-center gap-2.5 sm:gap-3 bg-slate-800/70 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 border border-slate-700/60 hover:border-teal-500/50 hover:bg-slate-800 transition-all duration-200 group shadow-sm min-w-0"
                   >
@@ -1327,7 +1332,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7 }}
             className="text-center mb-10 sm:mb-14"
           >
@@ -1361,7 +1366,7 @@ export default function PublicHomePage() {
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                  viewport={{ once: true, amount: 0.05 }}
                   transition={{ duration: 0.6, delay: idx * 0.12 }}
                   className="relative flex md:flex-col items-center md:items-center gap-3.5 sm:gap-4 md:gap-0 text-left md:text-center"
                 >
@@ -1369,7 +1374,7 @@ export default function PublicHomePage() {
                   <motion.div
                     initial={{ scale: 0.8 }}
                     whileInView={{ scale: 1 }}
-                    viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                    viewport={{ once: true, amount: 0.05 }}
                     transition={{ duration: 0.4, delay: 0.1 + idx * 0.1 }}
                     className="w-12 h-12 bg-gradient-to-br from-[#0F766E] to-[#042F2E] rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg shrink-0 md:mx-auto md:mb-3 shadow-md z-10 ring-4 ring-white dark:ring-[#07131d]"
                   >
@@ -1399,7 +1404,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.6 }}
             className="text-center mb-8 sm:mb-10"
           >
@@ -1418,7 +1423,7 @@ export default function PublicHomePage() {
                 key={idx}
                 initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 className="bg-white dark:bg-[#0e222e] rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-[#1a3d52]/90 text-center shadow-xs"
               >
@@ -1438,7 +1443,7 @@ export default function PublicHomePage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+          viewport={{ once: true, amount: 0.05 }}
           transition={{ duration: 0.8 }}
           className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center"
         >
@@ -1446,7 +1451,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ scale: 0.8 }}
             whileInView={{ scale: 1 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.7, delay: 0.2 }}
             className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4"
           >
@@ -1465,7 +1470,7 @@ export default function PublicHomePage() {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.08, margin: "-20px" }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-3 justify-center w-full max-w-xs sm:max-w-none mx-auto"
           >
@@ -1495,7 +1500,7 @@ export default function PublicHomePage() {
 // Animated number counter component
 function AnimatedCounter({ value, prefix, className }: { value: number; prefix: string; className?: string }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
+  const isInView = useInView(ref, { once: true, amount: 0.05 });
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
