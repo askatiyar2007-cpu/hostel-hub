@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, supabaseServer } from '@/lib/supabase/server';
 import { z } from 'zod';
@@ -225,7 +226,9 @@ export async function GET(req: NextRequest) {
       total: allReadings.length
     });
 
-    return NextResponse.json(response, { status: 200 });
+    const res = NextResponse.json(response, { status: 200 });
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    return res;
 
   } catch (error: any) {
     // Handle Zod validation errors
