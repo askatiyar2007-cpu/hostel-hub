@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase/client';
 import { Profile } from '@/types/database';
+import { QueryClientContext } from '@tanstack/react-query';
 
 export type AccountCompletionStep = 'role' | 'password' | 'student_onboarding' | 'complete';
 
@@ -34,12 +35,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const queryClient = React.useContext(QueryClientContext);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [accountCompletionStep, setAccountCompletionStep] = useState<AccountCompletionStep | null>(null);
   const [passwordSet, setPasswordSet] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   
   // Resilient synchronization and in-flight deduplication refs
   const inFlightSyncRef = React.useRef<Promise<void> | null>(null);
@@ -284,41 +287,110 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleActualSignOut = async (): Promise<void> => {
+    setLoggingOut(true);
+    const currentUserId = user?.id;
+
     try {
-      // 1. Authoritative server-side sign out to clear HTTP-only cookies and revoke session
-      await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {});
-      // 2. Revoke client-side Supabase tokens
-      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
-      await supabase.auth.signOut({ scope: 'global' }).catch(() => {});
+      // 1. Dispatch authoritative server-side sign out FIRST before local token destruction.
+      // This ensures session cookies (sb-*-auth-token) and credentials remain attached to the request
+      // so Supabase GoTrue can identify and revoke the server session remotely.
+      // We bound the wait with an AbortController (1500ms) to ensure responsive UX even if the network hangs.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+      try {
+        await fetch('/api/auth/signout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          keepalive: true,
+          signal: controller.signal,
+        });
+      } catch (fetchErr) {
+        // Network errors, timeouts, or aborts do not block logout; local state must still be cleared.
+        console.warn('[AuthContext] Server signout network notice:', fetchErr);
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (err) {
-      console.error('Sign out exception:', err);
+      console.error('[AuthContext] Sign out dispatch exception:', err);
     } finally {
-      // 3. Clear client cookies manually if accessible
+      // 2. Clear local client auth session in Supabase JS SDK
+      try {
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      } catch {
+        // ignore
+      }
+
+      // 3. Explicitly purge in-memory React Query cache so Account A queries are never exposed to Account B
+      if (queryClient) {
+        try {
+          queryClient.clear();
+        } catch (e) {
+          console.warn('[AuthContext] React Query client cache clear warning:', e);
+        }
+      }
+
+      // 4. Clear client-accessible cookies manually as safety net
       if (typeof document !== 'undefined') {
-        const cookies = document.cookie.split(';');
-        for (const c of cookies) {
-          const name = c.split('=')[0]?.trim();
-          if (name && (name.startsWith('sb-') || name.includes('auth') || name.includes('token'))) {
-            document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        try {
+          const cookies = document.cookie.split(';');
+          for (const c of cookies) {
+            const name = c.split('=')[0]?.trim();
+            if (name && (name.startsWith('sb-') || name.includes('auth') || name.includes('token') || name.includes('session'))) {
+              document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+            }
           }
+        } catch {
+          // ignore
         }
       }
-      // 4. Clear storage
+
+      // 5. Clear user-specific storage (notification dismissals, tokens, auth state)
+      // NOTE: Preserves non-auth user preferences such as 'hostelhub_theme'
       if (typeof localStorage !== 'undefined') {
-        for (const key of Object.keys(localStorage)) {
-          if (key.startsWith('sb-') || key.includes('auth') || key.includes('token') || key.includes('session')) {
-            localStorage.removeItem(key);
+        try {
+          if (currentUserId) {
+            localStorage.removeItem(`hostelhub_dismissed_owner_notifs_${currentUserId}`);
+            localStorage.removeItem(`hostelhub_dismissed_student_notifs_${currentUserId}`);
           }
+          for (const key of Object.keys(localStorage)) {
+            if (key === 'hostelhub_theme') {
+              continue; // preserve application theme preference
+            }
+            if (
+              key.startsWith('sb-') ||
+              key.startsWith('hostelhub_dismissed_') ||
+              key.includes('notif') ||
+              key.includes('auth') ||
+              key.includes('token') ||
+              key.includes('session')
+            ) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch {
+          // ignore
         }
       }
+
+      if (typeof sessionStorage !== 'undefined') {
+        try {
+          sessionStorage.clear();
+        } catch {
+          // ignore
+        }
+      }
+
+      // 6. Reset all local React state
       setUser(null);
       setProfile(null);
       setAccountCompletionStep(null);
       setPasswordSet(null);
       setLoading(false);
       setShowLogoutConfirm(false);
+      setLoggingOut(false);
 
-      // Hard redirect to clear browser in-memory caches, React Query cache, and bfcache snapshots
+      // 7. Hard redirect to /auth/login to guarantee all in-memory closures, timers, and bfcache are reset
       if (typeof window !== 'undefined') {
         window.location.replace('/auth/login');
       } else {
@@ -346,18 +418,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
 
-      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+      <Dialog open={showLogoutConfirm} onOpenChange={(open) => !loggingOut && setShowLogoutConfirm(open)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Confirm Logout</DialogTitle>
             <DialogDescription>Are you sure you want to logout?</DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>
+            <Button variant="outline" disabled={loggingOut} onClick={() => setShowLogoutConfirm(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => void handleActualSignOut()}>
-              Logout
+            <Button variant="destructive" disabled={loggingOut} onClick={() => void handleActualSignOut()}>
+              {loggingOut ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                  Logging out...
+                </>
+              ) : (
+                'Logout'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
