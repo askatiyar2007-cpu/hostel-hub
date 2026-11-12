@@ -143,7 +143,10 @@ function AuthContent() {
     if (accountCompletionStep === 'complete' && profile.role) {
       const destination = dashboardPathForRole(profile.role);
       if (destination) {
-        window.location.assign(destination);
+        if (typeof window !== 'undefined' && window.location?.assign) {
+          window.location.assign(destination);
+        }
+        router.push(destination);
       }
     }
   }, [isAuthenticated, profile, accountCompletionStep, refreshAuthState]);
@@ -449,7 +452,16 @@ function AuthContent() {
   return (
     <AuthShell activeTab={activeTab} onTabChange={handleTabChange}>
       <AuthCard>
-        {/* Auth Message Alert (only shown when present) */}
+        {/* TAB HEADER: Stable tab bar at the top of the card */}
+        <div className="shrink-0 pb-3">
+          <AuthTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            disabled={loading || googleLoading}
+          />
+        </div>
+
+        {/* Auth Message Alert (only shown when present, cleanly positioned below tabs) */}
         {authMessage && (
           <div className="mb-4 shrink-0">
             <AuthMessage
@@ -458,19 +470,9 @@ function AuthContent() {
               description={authMessage.description}
               action={authMessage.action}
               onDismiss={() => setAuthMessage(null)}
-              className="bg-rose-950/60 border-rose-500/40 text-rose-100 [&_p.font-semibold]:text-rose-200 [&_p]:text-rose-300"
             />
           </div>
         )}
-
-        {/* TAB HEADER: Stable tab bar at the top of the card */}
-        <div className="shrink-0 pb-1">
-          <AuthTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            disabled={loading || googleLoading}
-          />
-        </div>
 
         {/* Form Panels: Login vs Sign Up (Zero card movement on switch) */}
         <div className="relative min-h-[460px]">

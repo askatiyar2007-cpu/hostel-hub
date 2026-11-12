@@ -2,7 +2,6 @@
 
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
 export interface AuthMessageAction {
   label: string;
@@ -26,8 +25,10 @@ export function AuthMessage({ variant, title, description, action, onDismiss, cl
       role={isError ? 'alert' : 'status'}
       aria-live={isError ? 'assertive' : 'polite'}
       className={cn(
-        'relative rounded-2xl border p-4 flex flex-col gap-2',
-        isError ? 'border-destructive bg-destructive/5' : 'border-primary bg-primary/5',
+        'relative rounded-xl border p-3.5 flex flex-col gap-2 transition-all',
+        isError
+          ? 'border-rose-400/30 bg-rose-950/40 text-rose-100 shadow-sm'
+          : 'border-emerald-400/30 bg-emerald-950/40 text-emerald-100 shadow-sm',
         className,
       )}
     >
@@ -36,34 +37,33 @@ export function AuthMessage({ variant, title, description, action, onDismiss, cl
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss message"
-          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+          className="absolute right-3 top-3 text-rose-300/80 hover:text-white transition-colors cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
       )}
 
-      <div className="flex items-start gap-2 pr-6">
+      <div className="flex items-start gap-2.5 pr-6">
         {isError ? (
-          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-destructive" />
+          <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5 text-rose-400" />
         ) : (
-          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+          <CheckCircle2 className="h-4.5 w-4.5 shrink-0 mt-0.5 text-emerald-400" />
         )}
         <div className="flex flex-col gap-1">
-          <p className="font-semibold text-sm text-foreground">{title}</p>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="font-semibold text-sm text-white">{title}</p>
+          <p className="text-xs sm:text-sm text-rose-200/90 leading-relaxed">{description}</p>
         </div>
       </div>
 
       {action && (
-        <div className="pl-6">
-          <Button
+        <div className="pl-7 pt-1">
+          <button
             type="button"
-            size="sm"
-            variant={isError ? 'outline' : 'default'}
             onClick={action.onClick}
+            className="inline-flex items-center justify-center rounded-lg bg-white px-3.5 py-1.5 text-xs font-bold text-[#07534C] shadow-sm hover:bg-slate-100 transition-colors cursor-pointer"
           >
             {action.label}
-          </Button>
+          </button>
         </div>
       )}
     </div>

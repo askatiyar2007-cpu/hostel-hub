@@ -3,15 +3,22 @@ import { render, cleanup, screen, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentSearch = 'tab=login';
+let currentParams = new URLSearchParams(currentSearch);
 const mockRouterReplace = vi.fn();
 const mockRouterPush = vi.fn();
+const mockRouter = {
+  replace: mockRouterReplace,
+  push: mockRouterPush,
+};
+
+function setSearch(val: string) {
+  currentSearch = val;
+  currentParams = new URLSearchParams(val);
+}
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    replace: mockRouterReplace,
-    push: mockRouterPush,
-  }),
-  useSearchParams: () => new URLSearchParams(currentSearch),
+  useRouter: () => mockRouter,
+  useSearchParams: () => currentParams,
 }));
 
 vi.mock('next/link', () => ({
@@ -54,7 +61,7 @@ import LoginPage from '@/app/auth/login/page';
 describe('LoginPage Routing Logic', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    currentSearch = 'tab=login';
+    setSearch('tab=login');
     mockAuthState = {
       isAuthenticated: false,
       profile: null,
@@ -108,7 +115,7 @@ describe('LoginPage Routing Logic', () => {
   });
 
   it('does NOT redirect to /auth/select-role when opening /auth/login?tab=signup', () => {
-    currentSearch = 'tab=signup';
+    setSearch('tab=signup');
     mockAuthState = {
       isAuthenticated: false,
       profile: null,
@@ -198,5 +205,32 @@ describe('LoginPage Routing Logic', () => {
     expect(mockRouterReplace).toHaveBeenCalledWith('/auth/login?tab=login');
 
     expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('displays Account Not Found alert when ?reason=no-account and switches to signup tab on Go to Sign Up click', () => {
+    setSearch('reason=no-account');
+    mockAuthState = {
+      isAuthenticated: false,
+      profile: null,
+      accountCompletionStep: null,
+      password_set: null,
+      refreshAuthState: vi.fn(),
+    };
+
+    render(<LoginPage />);
+
+    expect(screen.getByText('Account Not Found')).toBeDefined();
+    expect(
+      screen.getByText(
+        'This Google account is not associated with a StayKosh account. Please create an account from the Sign Up tab first.'
+      )
+    ).toBeDefined();
+
+    const goToSignUpBtn = screen.getByRole('button', { name: /Go to Sign Up/i });
+    expect(goToSignUpBtn).toBeDefined();
+
+    fireEvent.click(goToSignUpBtn);
+
+    expect(screen.queryByText('Account Not Found')).toBeNull();
   });
 });
