@@ -261,7 +261,7 @@ export default function PublicHomePage() {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-slate-900 dark:text-white font-sans font-bold leading-[1.12] sm:leading-[1.1] tracking-tight break-words"
+            className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-slate-900 dark:text-white font-display leading-[1.12] sm:leading-[1.1] tracking-tight break-words"
           >
             <motion.span
               initial={{ opacity: 0 }}
@@ -370,7 +370,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-2 sm:mb-3">
               02 • DISCOVER
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Find Your Perfect Stay
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -570,7 +570,7 @@ export default function PublicHomePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-sans font-bold truncate">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display truncate">
                         Student Hostels &amp; PGs
                       </h3>
                       <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
@@ -609,7 +609,7 @@ export default function PublicHomePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-sans font-bold truncate">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display truncate">
                         Shared Rooms &amp; Co-Living
                       </h3>
                       <span className="text-[10px] font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded-full border border-teal-200/60 dark:border-teal-800/60 shrink-0">
@@ -648,7 +648,7 @@ export default function PublicHomePage() {
                       <ShieldCheck className="h-3.5 w-3.5 text-teal-300" />
                       100% Direct Owner Connection
                     </div>
-                    <h3 className="text-lg sm:text-xl font-bold font-sans font-bold text-white">
+                    <h3 className="text-lg sm:text-xl font-bold font-display text-white">
                       Explore All Accommodations
                     </h3>
                     <p className="text-xs sm:text-sm text-teal-100 mt-1 max-w-md">
@@ -683,7 +683,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-2 sm:mb-3">
               03 • CHOOSE
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Choose What Fits Your Life
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -751,7 +751,7 @@ export default function PublicHomePage() {
                     <Home className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-xl sm:text-2xl font-bold font-sans font-bold text-white truncate">2BHK Flat</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold font-display text-white truncate">2BHK Flat</h3>
                     <p className="line-clamp-2 text-xs sm:text-sm text-teal-200 mt-0.5 leading-snug">Complete independence &amp; premium comfort</p>
                   </div>
                 </div>
@@ -776,7 +776,7 @@ export default function PublicHomePage() {
                 {/* Bottom Price & Utility row - Fully contained with flex-col on small viewports */}
                 <div className="border-t border-white/15 pt-4 flex flex-col xs:flex-row xs:items-baseline justify-between gap-2.5 sm:gap-3">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-2xl sm:text-3xl font-bold font-sans font-bold text-white">₹18,000</span>
+                    <span className="text-2xl sm:text-3xl font-bold font-display text-white">₹18,000</span>
                     <span className="text-teal-200 text-xs sm:text-sm">/month total</span>
                   </div>
                   <span className="inline-flex self-start xs:self-auto text-[11px] sm:text-xs text-teal-300 bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/10 font-medium">
@@ -803,7 +803,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-2 sm:mb-3">
               04 • LIVE
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               More Than Just A Room
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -957,7 +957,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-teal-400 block mb-2 sm:mb-3">
               05 • MANAGE
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display tracking-tight">
               Manage Everything In One Place
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -1040,7 +1040,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-2 sm:mb-3">
               06 • PAY
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Transparent Billing
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -1132,7 +1132,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-teal-400 block mb-2 sm:mb-3">
               07 • CONNECT
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display tracking-tight">
               One Platform. Everyone Connected.
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -1191,7 +1191,7 @@ export default function PublicHomePage() {
                   <Building2 className="h-8 w-8 text-white" />
                 </div>
               </motion.div>
-              <p className="font-bold text-sm tracking-widest text-teal-400 font-sans font-bold mt-3">
+              <p className="font-bold text-sm tracking-widest text-teal-400 font-display mt-3">
                 STAYKOSH CORE
               </p>
               <p className="text-xs text-slate-300 mt-0.5">Real-Time Sync Engine</p>
@@ -1265,7 +1265,7 @@ export default function PublicHomePage() {
                 </motion.div>
 
                 <div className="text-center mt-4 z-10">
-                  <p className="font-bold text-base tracking-widest text-teal-400 font-sans font-bold">
+                  <p className="font-bold text-base tracking-widest text-teal-400 font-display">
                     STAYKOSH CORE
                   </p>
                   <p className="text-xs text-slate-300 mt-0.5">Real-Time Sync Engine</p>
@@ -1339,7 +1339,7 @@ export default function PublicHomePage() {
             <span className="text-xs font-bold uppercase tracking-wider text-[#0F766E] dark:text-teal-400 block mb-2 sm:mb-3">
               08 • PROCESS
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-sans font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               How StayKosh Works
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-3 sm:mt-4 px-2">
@@ -1408,7 +1408,7 @@ export default function PublicHomePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-8 sm:mb-10"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white font-sans font-bold tracking-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
               Why Students Choose StayKosh
             </h2>
           </motion.div>
@@ -1458,7 +1458,7 @@ export default function PublicHomePage() {
             <Building2 className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </motion.div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-sans font-bold tracking-tight mb-3">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display tracking-tight mb-3">
             Your Stay. Your Place.
             <span className="text-teal-300 block">StayKosh.</span>
           </h2>

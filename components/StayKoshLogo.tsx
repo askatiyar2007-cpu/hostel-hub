@@ -122,7 +122,7 @@ export const StayKoshLogo: React.FC<StayKoshLogoProps> = ({
       {showWordmark && (
         <div className="flex items-center gap-2">
           <span
-            className={`font-bold tracking-tight font-sans ${textClass} ${
+            className={`font-bold tracking-tight font-display ${textClass} ${
               isPermanentDark
                 ? 'text-white'
                 : isPermanentLight
