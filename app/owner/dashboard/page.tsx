@@ -34,7 +34,7 @@ import { PageHeader } from "@/components/owner/page-header";
 import Link from "next/link";
 
 export default function OwnerDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const qc = useQueryClient();
 
   const { data: hostels } = useQuery({
@@ -156,7 +156,7 @@ export default function OwnerDashboard() {
     <div className="w-full">
       {/* Welcome + Add Hostel */}
       <PageHeader 
-        title={`Welcome back, ${user?.user_metadata?.full_name || 'Owner'}`}
+        title={`Welcome back, ${profile?.full_name || user?.user_metadata?.full_name || 'Owner'}`}
         className="capitalize"
         description="Here's what's happening across your hostels today."
       >
